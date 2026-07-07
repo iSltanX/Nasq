@@ -1348,3 +1348,261 @@ textarea:focus {
   direction: ltr;
   text-align: left;
 }
+
+
+/* ---------- وضع شَذْب (v4.4): حُمرة المصحِّح على هوية المخطوطة نفسها ----------
+   في تقاليد المخطوطات: الناسخ يكتب ويُذهِّب، والمصحِّح يعلّم بالحُمرة —
+   وضعان بحبرين تحت هوية واحدة. الحُمرة إشارة الوضع لا ثيمًا جديدًا:
+   الخلفيات والنصوص والثيمات الست كما هي، ولوحة شَذْب تظهر عبر data-mode
+   على الجذر — بغيابه لا أثر لشيء من هذا إطلاقًا */
+:root {
+  --prune-accent: #c4674e;
+  --prune-rgb: 196, 103, 78;
+}
+
+/* المبدّل: تبويبان هادئان في الشريط — الذهب لنسق والحُمرة لشَذْب */
+.mode-switch {
+  display: flex;
+  border: 1px solid var(--tool-border);
+  border-radius: 8px;
+  overflow: hidden;
+  flex-shrink: 0;
+  align-self: center;
+  margin-inline-end: 10px;
+}
+
+.mode-btn {
+  background: transparent;
+  color: var(--text-dim);
+  border: none;
+  padding: 4px 14px;
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+.mode-btn.active {
+  color: var(--accent-text);
+  background: var(--accent);
+  font-weight: 700;
+}
+
+#mode-shadhb-btn.active {
+  background: var(--prune-accent);
+  color: #12100c;
+}
+
+/* الإظهار كله بقيادة data-mode: لوحة شَذْب محل لوحة النتيجة، وأدوات نسق
+   (المحاور والتوجيهات) تغيب — حالة نسق نفسها لا تُمس بالتبديل */
+#shadhb-pane { display: none; }
+[data-mode="shadhb"] #shadhb-pane { display: flex; }
+[data-mode="shadhb"] #nasaq-output-pane { display: none; }
+[data-mode="shadhb"] .controls { display: none; }
+[data-mode="shadhb"] .directives-field { display: none; }
+
+.shadhb-covenant-hint {
+  font-size: 11px;
+  color: #d8a08c;
+  border-inline-start: 2px solid var(--prune-accent);
+  padding: 2px 10px;
+  margin-bottom: 8px;
+}
+
+.shadhb-primary {
+  background: var(--prune-accent);
+  color: #12100c;
+  border-color: transparent;
+  font-weight: 700;
+}
+
+.shadhb-primary:hover {
+  background: #d07a5f;
+  color: #12100c;
+}
+
+.shadhb-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.shadhb-placeholder {
+  color: var(--text-dim);
+  font-size: 13px;
+  margin: 24px 8px;
+  text-align: center;
+}
+
+.shadhb-loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-dim);
+  font-size: 13px;
+  padding: 12px;
+}
+
+/* بطاقة القراءة: وصف يسبق المقص — إجابات أسئلة المشذِّب عن هذا النص */
+.reading-card {
+  background: var(--bg-raised);
+  border: 1px solid rgba(var(--metal-rgb), 0.18);
+  border-radius: 10px;
+  padding: 10px 14px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 4px 16px;
+  font-size: 12.5px;
+}
+
+.reading-card .card-label {
+  color: var(--accent);
+}
+
+/* القصّات: الاقتباس بالحُمرة، وقرار الكاتب يغيّر هيئة المدخل */
+.cuts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cuts-empty {
+  color: var(--text-dim);
+  font-size: 13px;
+  padding: 6px 10px;
+}
+
+.cut-entry {
+  border: 1px solid rgba(var(--prune-rgb), 0.35);
+  border-radius: 10px;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  transition: border-color 0.2s ease, opacity 0.2s ease;
+}
+
+.cut-entry.cut .cut-quote {
+  text-decoration: line-through;
+  text-decoration-color: var(--prune-accent);
+  opacity: 0.75;
+}
+
+.cut-entry.kept {
+  border-color: rgba(var(--metal-rgb), 0.3);
+  opacity: 0.85;
+}
+
+.cut-entry.stale {
+  opacity: 0.55;
+}
+
+.cut-quote {
+  color: #d8a08c;
+}
+
+.cut-meta {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.cut-effect {
+  font-size: 11.5px;
+  color: var(--tool-text);
+}
+
+.cut-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 2px;
+}
+
+.cut-do {
+  background: var(--prune-accent);
+  color: #12100c;
+  border: none;
+  border-radius: 7px;
+  padding: 3px 14px;
+  font-size: 12px;
+  font-family: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.cut-keep {
+  background: transparent;
+  color: var(--tool-text);
+  border: 1px solid var(--tool-border);
+  border-radius: 7px;
+  padding: 3px 14px;
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.cut-chip {
+  font-size: 11px;
+  border-radius: 6px;
+  padding: 2px 10px;
+}
+
+.cut-chip.cut {
+  background: var(--prune-accent);
+  color: #12100c;
+  font-weight: 700;
+}
+
+.cut-chip.kept {
+  border: 1px solid rgba(var(--metal-rgb), 0.35);
+  color: var(--accent);
+}
+
+.cut-chip.stale {
+  border: 1px solid var(--tool-border);
+  color: var(--text-dim);
+}
+
+.dropped-note {
+  font-size: 11px;
+  color: var(--text-dim);
+  margin: 0;
+}
+
+.prune-preview-wrap h3 {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin: 0 0 4px;
+  font-weight: 400;
+}
+
+.prune-preview {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-family: var(--font-text);
+  font-size: 14.5px;
+  line-height: 2;
+  white-space: pre-wrap;
+}
+
+/* شريط الضمانة: العهد مفحوصًا لا موعودًا — زيتوني هادئ عند السلامة
+   وألوان الخطأ عند الخرق (لا يحدث بالبناء، لكنه يُعرض لا يُفترض) */
+.covenant-bar {
+  font-size: 11.5px;
+  border-radius: 8px;
+  padding: 5px 12px;
+  border: 1px solid rgba(143, 163, 126, 0.4);
+  color: #8fa37e;
+}
+
+.covenant-bar.fail {
+  border-color: var(--error-text);
+  color: var(--error-text);
+  background: var(--error-bg);
+}

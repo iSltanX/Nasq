@@ -1847,7 +1847,7 @@ dependencies = [
 
 [[package]]
 name = "nasaq"
-version = "4.3.0"
+version = "5.0.0"
 dependencies = [
  "reqwest 0.12.28",
  "serde",

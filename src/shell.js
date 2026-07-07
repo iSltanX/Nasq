@@ -785,11 +785,32 @@ if (window.__TAURI__) {
   })();
 }
 
+// ---------- الجسر الوحيد بين الوضعين (v4.4) ----------
+// نصٌّ اعتمده وضع آخر يصير خامًا لنسق كنصٍّ جديد تمامًا: حدث الإدخال نفسه
+// الذي يطلقه اللصق — فجلسة نسق تتصفّر بطبيعتها (كلمات جديدة = جلسة جديدة).
+// كل عبور آخر بين الوضعين ممنوع — من لم يمرّ من هنا فهو خرق للعزل
+function sendToNasaq(text) {
+  const input = el("input-text");
+  input.value = String(text || "");
+  input.dispatchEvent(new Event("input"));
+  input.focus();
+}
+
+// مفتاح شَذْب (v4.4): المرحلة 4 مرحلة الظهور فالافتراضي مفعَّل، ومفتاح
+// الإطفاء الموعود منذ المرحلة 2 باقٍ: localStorage["nasaq-shadhb"] = "off"
+// يخفي الوضع كليًا فتعود الواجهة مطابقة لـ v4.3 حرفيًا — بتر بلا جراحة
+function readShadhbFlag() {
+  try {
+    return (localStorage.getItem("nasaq-shadhb") || "on") !== "off";
+  } catch {
+    return true;
+  }
+}
+
 // ---------- واجهة القشرة الرسمية ----------
 // العقد الأمامي بين القشرة والأوضاع: نسق يستعمل عوام القشرة مباشرة (ملفان
-// في نطاق عام واحد)، أما «شَذْب» يوم يُبنى فيستهلك هذا الكائن حصرًا ولا
-// يلمس دوال نسق ولا حالته. shadhbEnabled مفتاح الإطفاء: ما دام false لا
-// أثر مرئيًا ولا سلوكيًا لشذب إطلاقًا — الواجهة تطابق ما قبله تمامًا
+// في نطاق عام واحد)، أما «شَذْب» فيستهلك هذا الكائن حصرًا ولا يلمس دوال
+// نسق ولا حالته — وجسر sendToNasaq معبره الوحيد إلى خانة النص
 window.NasaqShell = {
   el,
   invoke,
@@ -799,7 +820,8 @@ window.NasaqShell = {
   clearError,
   copyText,
   updateCount,
-  flags: { shadhbEnabled: false },
+  sendToNasaq,
+  flags: { shadhbEnabled: readShadhbFlag() },
   registerEscapeCloser,
   drafts: {
     configureDisplay: configureDraftsDisplay,

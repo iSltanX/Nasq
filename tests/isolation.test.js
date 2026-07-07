@@ -42,15 +42,43 @@ test("نسق لا يشير إلى هيكل شَذْب ولا يستهلك واج
   assert.ok(!nasaq.includes("NasaqPrune"), "nasaq.js يستهلك المقص — ليس من شأنه");
 });
 
-test("هيكل شَذْب خامد وآمن: درع، بوابة مفتاح، ولا نداء نواة ولا نموذج", () => {
+test("وضع شَذْب مدروع ومنضبط: درع، بوابة، نداء نواة وحيد، ولا عقد في الواجهة", () => {
   assert.ok(shadhb.includes("try {") && shadhb.includes("} catch"), "لا درع try/catch");
   assert.ok(shadhb.includes("shadhbEnabled !== true"), "لا بوابة مفتاح");
-  assert.ok(!shadhb.includes("invoke("), "شَذْب ينادي النواة");
-  assert.ok(!/temperature|prompt|عقد النموذج/i.test(shadhb), "أثر عقد نموذج في الهيكل");
+  // النداء الوحيد المسموح: prune_text — أوامر نسق والتخزين محظورة عليه
+  assert.ok(shadhb.includes('invoke("prune_text"'), "نداء الفحص غائب");
+  for (const banned of [
+    'invoke("format_text"',
+    'invoke("generate_variation"',
+    'invoke("adjust_lines"',
+    'invoke("save_drafts"',
+    'invoke("save_settings"',
+    'invoke("export_drafts"',
+  ]) {
+    assert.ok(!shadhb.includes(banned), `شَذْب ينادي ${banned}`);
+  }
+  assert.ok(!/temperature|prompt/i.test(shadhb), "أثر عقد نموذج في الواجهة");
 });
 
-test("مفتاح الإطفاء موجود في القشرة ومعطَّل افتراضيًا", () => {
-  assert.ok(shell.includes("shadhbEnabled: false"));
+test("شَذْب لا يلمس دواخل نسق ولا يكتب في الخانة إلا عبر الجسر", () => {
+  // دوال نسق وحالته محظورة بالاسم — الوصلة الوحيدة واجهة القشرة والمقص
+  assert.ok(
+    !/formatText|recordSessionVersion|lastFormatMeta|sessionVersions|adjustLines|outputUndoStack|syncResultTools/.test(shadhb),
+    "شَذْب يلمس دواخل نسق"
+  );
+  // القراءة من الخانة مسموحة، والكتابة عبر sendToNasaq حصرًا
+  assert.ok(!/inputText\.value\s*=/.test(shadhb), "شَذْب يكتب في الخانة مباشرة");
+  assert.ok(shadhb.includes("shell.sendToNasaq("), "الجسر الوحيد غير مستعمل");
+  const bridgeUses = (shadhb.match(/sendToNasaq/g) || []).length;
+  assert.ok(bridgeUses >= 1, "لا عبور عبر الجسر");
+});
+
+test("المفتاح في القشرة مع مسار إطفاء يعيد واجهة v4.3", () => {
+  assert.ok(shell.includes("readShadhbFlag()"), "المفتاح لا يُقرأ من دالته");
+  assert.ok(shell.includes('"off"'), "مسار الإطفاء غائب");
+  assert.ok(shell.includes("sendToNasaq"), "الجسر غائب من القشرة");
+  // المبدّل مخفي في الهيكل — شَذْب وحده يُظهره حين يكون المفتاح مفعَّلًا
+  assert.ok(/<div id="mode-switch"[^>]*hidden>/.test(html), "المبدّل ليس مخفيًا افتراضيًا");
 });
 
 test("لا إعلانات عليا مكررة بين القشرة ونسق — التكرار يقتل الملف الثاني", () => {
