@@ -1,8 +1,9 @@
-// خارج التطبيق (معاينة متصفح) تبقى الواجهة والأدوات المحلية تعمل، وتفشل أوامر النواة برسالة واضحة
-const invoke = window.__TAURI__?.core?.invoke
-  ?? (async () => { throw "هذه معاينة متصفح — التشغيل الكامل عبر التطبيق نفسه."; });
-
-const el = (id) => document.getElementById(id);
+// وحدة وضع «نسق» — منطق التنسيق كاملًا: المحاور الثلاثة، التنظيف المحلي،
+// نداءات النموذج، ذاكرة الجلسة والتراجع، أدوات النتيجة، بطاقة الشذرة،
+// لوحة التنويعات، عدسة القراءة، وعدّاد المنصات. تستعمل عوام القشرة
+// (shell.js تُحمَّل قبلها) وتصل نفسها بها بالتسجيل في ذيل هذا الملف.
+// لا تعرف شيئًا عن «شَذْب» ولا تستورد منه. (انقسمت عن main.js نقلًا
+// حرفيًا في المرحلة 2 — v4.2)
 
 const inputText = el("input-text");
 const outputText = el("output-text");
@@ -10,18 +11,11 @@ const outputPlaceholder = el("output-placeholder");
 const formatBtn = el("format-btn");
 const copyBtn = el("copy-btn");
 const loading = el("loading");
-const errorBar = el("error-bar");
 const notesBox = el("notes-box");
 const notesList = el("notes-list");
 const rhythmFingerprint = el("rhythm-fingerprint");
-const toast = el("toast");
 const inputCount = el("input-count");
 const outputCount = el("output-count");
-
-// ---------- عدّاد الأحرف ----------
-function updateCount(node, text) {
-  node.textContent = text.length ? `${text.length} حرفًا` : "";
-}
 
 // علاج علّة مؤشر WebKit: plaintext مع وجود نص، وisolate عند الفراغ حتى يبقى المؤشر يمينًا دائمًا
 function syncCaretBidi() {
@@ -163,17 +157,6 @@ function syncInterventionControls() {
 interventionSel.addEventListener("change", syncInterventionControls);
 platformSel.addEventListener("change", syncInterventionControls);
 syncInterventionControls();
-
-// ---------- عرض الخطأ ----------
-function showError(msg) {
-  errorBar.textContent = msg;
-  errorBar.hidden = false;
-}
-
-function clearError() {
-  errorBar.hidden = true;
-  errorBar.textContent = "";
-}
 
 // ---------- تنظيف فقط: يعمل محليًا بالكامل، بلا أي طلب خارجي ----------
 // إصلاح ميكانيكي مضمون: مسافات، فراغات، علامات ترقيم، أسطر زائدة — دون مساس بأي كلمة
@@ -361,35 +344,6 @@ document.addEventListener("keydown", (e) => {
     formatText();
   }
 });
-
-// ---------- رسالة التنبيه ----------
-let toastTimer = null;
-function showToast(text) {
-  toast.textContent = text;
-  toast.hidden = false;
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => (toast.hidden = true), 1800);
-}
-
-// ---------- النسخ ----------
-// نص عادي UTF-8 مباشرة عبر Clipboard API، وعند تعذّره نلجأ لنواة التطبيق
-async function copyText(text) {
-  try {
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      await navigator.clipboard.writeText(text);
-    } else {
-      await invoke("copy_to_clipboard", { text });
-    }
-    return true;
-  } catch {
-    try {
-      await invoke("copy_to_clipboard", { text });
-      return true;
-    } catch {
-      return false;
-    }
-  }
-}
 
 // خريطة سابستاك اليدوية إرشاد للعرض فقط — تُجرَّد قبل النسخ فلا يصل رمز واحد
 // إلى الحافظة (خارج سابستاك النص أصلًا بلا رموز، فالتجريد بلا أثر)
@@ -838,563 +792,6 @@ readingLensOverlay.addEventListener("click", (e) => {
   if (e.target === readingLensOverlay) closeReadingLens();
 });
 
-// ---------- الإعدادات ----------
-const overlay = el("settings-overlay");
-const apiKeyInput = el("api-key");
-const baseUrlInput = el("base-url");
-const modelInput = el("model-name");
-const settingsMsg = el("settings-msg");
-
-// مزوّدات جاهزة — تملأ Base URL وModel Name فقط، ولا تمسّ المفتاح
-const PROVIDERS = {
-  gemini: {
-    baseUrl: "https://generativelanguage.googleapis.com/v1beta/openai/",
-    model: "gemini-2.5-flash",
-  },
-  groq: {
-    baseUrl: "https://api.groq.com/openai/v1",
-    model: "llama-3.3-70b-versatile",
-  },
-  openrouter: {
-    baseUrl: "https://openrouter.ai/api/v1",
-    model: "google/gemini-2.5-flash",
-  },
-};
-
-const DEFAULTS = PROVIDERS.gemini;
-
-function showSettingsMsg(text, isError) {
-  settingsMsg.textContent = text;
-  settingsMsg.classList.toggle("error", Boolean(isError));
-  settingsMsg.hidden = false;
-}
-
-function closeSettings() {
-  overlay.hidden = true;
-  settingsMsg.hidden = true;
-}
-
-async function openSettings() {
-  let s = {};
-  try {
-    s = (await invoke("load_settings")) || {};
-  } catch {
-    // إن تعذّرت القراءة تُملأ الحقول بالقيم الافتراضية أدناه
-  }
-  apiKeyInput.value = s.apiKey || "";
-  baseUrlInput.value = s.baseUrl || DEFAULTS.baseUrl;
-  modelInput.value = s.model || DEFAULTS.model;
-  apiKeyInput.type = "password";
-  el("toggle-key").textContent = "إظهار";
-  settingsMsg.hidden = true;
-  switchTab("general");
-  overlay.hidden = false;
-  if (!apiKeyInput.value) apiKeyInput.focus();
-}
-
-el("settings-btn").addEventListener("click", openSettings);
-
-// الإغلاق: يغلق فقط، بلا حفظ وبلا مسح قيم
-el("close-settings").addEventListener("click", closeSettings);
-
-overlay.addEventListener("click", (e) => {
-  if (e.target === overlay) closeSettings();
-});
-
-// أزرار المزوّدات
-for (const btn of document.querySelectorAll(".provider-btn")) {
-  btn.addEventListener("click", () => {
-    const p = PROVIDERS[btn.dataset.provider];
-    if (!p) return;
-    baseUrlInput.value = p.baseUrl;
-    modelInput.value = p.model;
-    settingsMsg.hidden = true;
-  });
-}
-
-el("toggle-key").addEventListener("click", () => {
-  const hidden = apiKeyInput.type === "password";
-  apiKeyInput.type = hidden ? "text" : "password";
-  el("toggle-key").textContent = hidden ? "إخفاء" : "إظهار";
-});
-
-el("save-settings").addEventListener("click", async () => {
-  const apiKey = apiKeyInput.value.trim();
-  if (!apiKey) {
-    showSettingsMsg("أدخل مفتاح المزود أولًا.", true);
-    return;
-  }
-
-  const baseUrl = baseUrlInput.value.trim() || DEFAULTS.baseUrl;
-  const model = modelInput.value.trim() || DEFAULTS.model;
-  baseUrlInput.value = baseUrl;
-  modelInput.value = model;
-
-  try {
-    await invoke("save_settings", {
-      settings: { apiKey, baseUrl, model },
-    });
-    showSettingsMsg("حُفظت الإعدادات محليًا.");
-    setTimeout(closeSettings, 600);
-  } catch (err) {
-    showSettingsMsg(String(err), true);
-  }
-});
-
-// ---------- تبويبات لوحة الإعدادات ----------
-const tabGeneralBtn = el("tab-general-btn");
-const tabAppearanceBtn = el("tab-appearance-btn");
-const tabGeneral = el("tab-general");
-const tabAppearance = el("tab-appearance");
-
-function switchTab(name) {
-  const general = name === "general";
-  tabGeneral.hidden = !general;
-  tabAppearance.hidden = general;
-  tabGeneralBtn.classList.toggle("active", general);
-  tabAppearanceBtn.classList.toggle("active", !general);
-  tabGeneralBtn.setAttribute("aria-selected", String(general));
-  tabAppearanceBtn.setAttribute("aria-selected", String(!general));
-  settingsMsg.hidden = true;
-}
-
-tabGeneralBtn.addEventListener("click", () => switchTab("general"));
-tabAppearanceBtn.addEventListener("click", () => switchTab("appearance"));
-
-// ---------- الثيمات ----------
-// المعرّفات لاتينية لأنها مفاتيح تقنية في CSS والتخزين، والأسماء المعروضة عربية.
-// المعرّفات القديمة أبقيت كما هي حفاظًا على الاختيار المحفوظ، والعائلات الباردة
-// استُبدلت بدافئة على صيغة المخطوطة (داكن دافئ + فاتح دافئ + معدن هادئ)
-const THEMES = [
-  { id: "dark", name: "نسق الداكن" },
-  { id: "paper", name: "ورق دافئ" },
-  { id: "ink", name: "حبر هادئ" },
-  { id: "night", name: "برونز" },
-  { id: "sand", name: "فضة دافئة" },
-  { id: "ash", name: "لؤلؤ عتيق" },
-];
-const THEME_KEY = "nasaq-theme";
-
-function currentTheme() {
-  const t = document.documentElement.getAttribute("data-theme");
-  return THEMES.some((x) => x.id === t) ? t : "dark";
-}
-
-function applyTheme(id) {
-  document.documentElement.setAttribute("data-theme", id);
-  try {
-    localStorage.setItem(THEME_KEY, id);
-  } catch {
-    // تعذّر الحفظ لا يمنع تطبيق الثيم في الجلسة الحالية
-  }
-  renderThemeGrid();
-}
-
-function renderThemeGrid() {
-  const grid = el("theme-grid");
-  grid.innerHTML = "";
-  const active = currentTheme();
-
-  for (const t of THEMES) {
-    const card = document.createElement("button");
-    card.type = "button";
-    // البطاقة تحمل data-theme الخاص بها فتعرض ألوان ثيمها الحقيقية كمعاينة حية
-    card.className = "theme-card" + (t.id === active ? " active" : "");
-    card.dataset.theme = t.id;
-    card.setAttribute("aria-pressed", String(t.id === active));
-
-    const name = document.createElement("span");
-    name.className = "theme-name";
-    name.textContent = t.name;
-    if (t.id === active) {
-      const check = document.createElement("span");
-      check.className = "theme-check";
-      check.textContent = "✓";
-      name.appendChild(check);
-    }
-
-    const dots = document.createElement("span");
-    dots.className = "theme-dots";
-    for (const cls of ["dot-accent", "dot-raised", "dot-text"]) {
-      const d = document.createElement("span");
-      d.className = "dot " + cls;
-      dots.appendChild(d);
-    }
-
-    card.append(name, dots);
-    card.addEventListener("click", () => applyTheme(t.id));
-    grid.appendChild(card);
-  }
-}
-
-// قيمة محفوظة قديمة أو تالفة → العودة للافتراضي بهدوء
-document.documentElement.setAttribute("data-theme", currentTheme());
-renderThemeGrid();
-
-// ---------- المسودات: تخزين محلي بالكامل، لا يغادر الجهاز ----------
-// داخل التطبيق تُحفظ في drafts.json بجوار الإعدادات، وفي معاينة المتصفح في localStorage
-const DRAFTS_KEY = "nasaq-drafts";
-const DRAFTS_MAX = 100; // سقف هادئ يمنع تضخم الملف — الأقدم يخرج أولًا
-
-const draftsOverlay = el("drafts-overlay");
-const draftsList = el("drafts-list");
-const draftsEmpty = el("drafts-empty");
-const draftsCountBadge = el("drafts-count");
-const draftsSearch = el("drafts-search");
-
-// تنبيه: لا تسمِّ هذا المتغير «isTauri» — نواة Tauri تحقن خاصية عامة بهذا الاسم،
-// وإعلان const يظللها يرمي SyntaxError يعطّل الملف كله داخل التطبيق
-const insideTauri = Boolean(window.__TAURI__);
-
-// المسودات هرمية: قائمة أمّهات، لكل أمّ نصها الخام وقائمة صيغها
-// (النموذج والترحيل في drafts-model.js — دوال نقية تُنادى عبر window.NasaqDrafts)
-let drafts = [];
-
-// حالة العرض الهرمي: أمّ مفتوحة ← نوع مفتوح ← صيغة مفتوحة
-let expandedMotherKey = null;
-let expandedTypeName = null;
-let openVersionId = null;
-
-async function loadDraftsFromStore() {
-  let raw = [];
-  if (insideTauri) {
-    try {
-      raw = await invoke("load_drafts");
-    } catch {
-      raw = [];
-    }
-  } else {
-    try {
-      raw = JSON.parse(localStorage.getItem(DRAFTS_KEY)) || [];
-    } catch {
-      raw = [];
-    }
-  }
-
-  // الترحيل من المسطّح إلى الهرمي يحدث هنا مرة واحدة عند أول قراءة:
-  // المتطابقات (بعد التطبيع) تُجمَّع تحت أمّ واحدة، ولا تُفقد أي مسودة قائمة
-  const { mothers, changed } = window.NasaqDrafts.migrateDrafts(raw);
-  if (changed && mothers.length) {
-    drafts = mothers;
-    try {
-      await persistDrafts();
-    } catch {
-      // تعذّر كتابة الترحيل لا يمنع العرض — سيُعاد الترحيل في الجلسة القادمة
-    }
-  }
-  return mothers;
-}
-
-async function persistDrafts() {
-  if (insideTauri) {
-    await invoke("save_drafts", { drafts });
-  } else {
-    localStorage.setItem(DRAFTS_KEY, JSON.stringify(drafts));
-  }
-}
-
-// الشارة تعدّ الصيغ المحفوظة كلها لا الأمّهات — هي «عدد المحفوظ» الفعلي
-function totalVersions() {
-  return drafts.reduce((sum, m) => sum + m.versions.length, 0);
-}
-
-function updateDraftsBadge() {
-  const total = totalVersions();
-  draftsCountBadge.textContent = String(total);
-  draftsCountBadge.hidden = total === 0;
-}
-
-const draftDateFmt = new Intl.DateTimeFormat("ar", {
-  dateStyle: "medium",
-  timeStyle: "short",
-});
-
-// ---------- نوع الصيغة وترتيبه في العرض ----------
-// النوع = المستوى، إلا تحت «تنسيق منصة» فالنوع هو المنصة نفسها
-function versionType(v) {
-  return v.intervention === LEVELS.PLATFORM && v.platform ? v.platform : (v.intervention || "غير محدد");
-}
-
-// ترتيب ثابت: المستويات ثم المنصات (تُعرض الأنواع المحفوظة فقط)
-const TYPE_ORDER = [
-  LEVELS.CLEAN,
-  LEVELS.READ,
-  LEVELS.RHYTHM,
-  LEVELS.RHYTHM_DOTTED,
-  LEVELS.PUBLISH,
-  ...PLATFORMS,
-];
-
-function orderedTypes(mother) {
-  const present = new Set(mother.versions.map(versionType));
-  const known = TYPE_ORDER.filter((t) => present.has(t));
-  // نوع قديم غير معروف (مسودة من إصدار سابق) يُلحق في الآخر ولا يُفقد
-  const unknown = [...present].filter((t) => !TYPE_ORDER.includes(t));
-  return [...known, ...unknown];
-}
-
-// «صيغة واحدة / صيغتان / ٥ صيغ» — بجمع عربي سليم وأرقام عربية
-function versionsCountLabel(n) {
-  if (n === 1) return "صيغة واحدة";
-  if (n === 2) return "صيغتان";
-  const num = n.toLocaleString("ar");
-  return n <= 10 ? `${num} صيغ` : `${num} صيغة`;
-}
-
-function mkToolBtn(label) {
-  const b = document.createElement("button");
-  b.type = "button";
-  b.className = "tool-btn";
-  b.textContent = label;
-  return b;
-}
-
-// شارة «± أسطر» على الصيغة الناتجة عن تعديل أسطر — وسم خفيف لا نوع مستقل
-function mkLinesBadge() {
-  const b = document.createElement("span");
-  b.className = "lines-badge";
-  b.textContent = "± أسطر";
-  b.title = "نتجت عن «سطور أقل/أكثر»";
-  return b;
-}
-
-// الحذف بتأكيد على خطوتين بدل نافذة نظام — النمط المتبع في التطبيق كله
-function armTwoStepDelete(btn, onConfirm) {
-  let confirmTimer = null;
-  btn.addEventListener("click", () => {
-    if (!btn.classList.contains("confirming")) {
-      btn.classList.add("confirming");
-      btn.textContent = "تأكيد الحذف";
-      confirmTimer = setTimeout(() => {
-        btn.classList.remove("confirming");
-        btn.textContent = "حذف";
-      }, 3000);
-      return;
-    }
-    clearTimeout(confirmTimer);
-    onConfirm();
-  });
-}
-
-// حذف صيغة: تُزال من أمّها فقط، وإن فرغت الأمّ من كل صيغها حُذفت كاملة.
-// الأرقام لا تُخزَّن فتُعاد بلا فجوات تلقائيًا في العرض التالي
-async function deleteVersion(mother, version) {
-  mother.versions = mother.versions.filter((v) => v.id !== version.id);
-  if (mother.versions.length === 0) {
-    drafts = drafts.filter((m) => m.key !== mother.key);
-    if (expandedMotherKey === mother.key) expandedMotherKey = null;
-  }
-  openVersionId = null;
-  try {
-    await persistDrafts();
-  } catch {
-    showToast("تعذّر تحديث ملف المسودات.");
-  }
-  renderDrafts();
-  showToast("حُذفت الصيغة.");
-}
-
-// ---------- الطبقة 3: تفصيل الصيغة ----------
-// النص الأصلي حاضر على مستوى الأمّ فلا يُكرَّر هنا — المنسّق وأزراره فقط
-function buildVersionDetail(mother, version) {
-  const detail = document.createElement("div");
-  detail.className = "version-detail";
-
-  const t = document.createElement("div");
-  t.className = "draft-text";
-  t.textContent = version.formatted || "";
-  detail.appendChild(t);
-
-  const actions = document.createElement("div");
-  actions.className = "draft-actions";
-
-  const copyB = mkToolBtn("نسخ النص المنسّق");
-  copyB.addEventListener("click", async () => {
-    showToast((await copyText(version.formatted || "")) ? "نُسخ النص المنسّق." : "تعذّر النسخ إلى الحافظة.");
-  });
-
-  const restoreB = mkToolBtn("استعادة إلى الواجهة");
-  restoreB.addEventListener("click", () => restoreDraft(mother, version));
-
-  const deleteB = mkToolBtn("حذف");
-  deleteB.classList.add("danger");
-  armTwoStepDelete(deleteB, () => deleteVersion(mother, version));
-
-  actions.append(copyB, restoreB, deleteB);
-  detail.appendChild(actions);
-  return detail;
-}
-
-// ---------- الطبقة 2: الأنواع داخل الأمّ ----------
-function buildTypeSection(mother, type, versions) {
-  const section = document.createElement("div");
-  section.className = "type-section";
-
-  const sorted = window.NasaqDrafts.sortVersions(versions);
-  const single = sorted.length === 1;
-
-  const typeBtn = document.createElement("button");
-  typeBtn.type = "button";
-  typeBtn.className = "type-btn";
-
-  const name = document.createElement("span");
-  name.textContent = type;
-  typeBtn.appendChild(name);
-
-  if (single) {
-    // نوع بصيغة واحدة: الضغط على اسمه يفتح تفصيلها مباشرة
-    if (sorted[0].linesAdjusted) typeBtn.appendChild(mkLinesBadge());
-    typeBtn.classList.toggle("open", openVersionId === sorted[0].id);
-    typeBtn.addEventListener("click", () => {
-      openVersionId = openVersionId === sorted[0].id ? null : sorted[0].id;
-      expandedTypeName = openVersionId === null ? null : type;
-      renderDrafts();
-    });
-    section.appendChild(typeBtn);
-    if (openVersionId === sorted[0].id) {
-      section.appendChild(buildVersionDetail(mother, sorted[0]));
-    }
-    return section;
-  }
-
-  // نوع بعدة صيغ (حفظات من جلسات مختلفة على النص نفسه): الضغط يفتح قائمة
-  // «صيغة ١/٢/٣» بترتيب وقت الحفظ (الأقدم = ١)
-  const count = document.createElement("span");
-  count.className = "chip";
-  count.textContent = versionsCountLabel(sorted.length);
-  typeBtn.appendChild(count);
-  typeBtn.classList.toggle("open", expandedTypeName === type);
-  typeBtn.addEventListener("click", () => {
-    expandedTypeName = expandedTypeName === type ? null : type;
-    openVersionId = null;
-    renderDrafts();
-  });
-  section.appendChild(typeBtn);
-
-  if (expandedTypeName === type) {
-    const list = document.createElement("div");
-    list.className = "version-list";
-    sorted.forEach((v, i) => {
-      const vBtn = document.createElement("button");
-      vBtn.type = "button";
-      vBtn.className = "version-btn";
-      vBtn.classList.toggle("open", openVersionId === v.id);
-
-      const label = document.createElement("span");
-      label.textContent = `صيغة ${(i + 1).toLocaleString("ar")}`;
-      vBtn.appendChild(label);
-      if (v.linesAdjusted) vBtn.appendChild(mkLinesBadge());
-
-      const date = document.createElement("time");
-      date.className = "draft-date";
-      date.textContent = draftDateFmt.format(new Date(v.createdAt));
-      vBtn.appendChild(date);
-
-      vBtn.addEventListener("click", () => {
-        openVersionId = openVersionId === v.id ? null : v.id;
-        renderDrafts();
-      });
-      list.appendChild(vBtn);
-      if (openVersionId === v.id) {
-        list.appendChild(buildVersionDetail(mother, v));
-      }
-    });
-    section.appendChild(list);
-  }
-
-  return section;
-}
-
-// ---------- الطبقة 1: بطاقة الأمّ ----------
-function buildMotherCard(mother) {
-  const card = document.createElement("article");
-  card.className = "draft-card";
-  const isOpen = expandedMotherKey === mother.key;
-
-  // رأس الأمّ: مقتطف النص الخام + عدد الصيغ + تاريخ أحدثها، والنقر يفتح/يطوي
-  const summary = document.createElement("button");
-  summary.type = "button";
-  summary.className = "draft-summary";
-  summary.title = isOpen ? "طيّ المسودة" : "عرض صيغ المسودة";
-
-  const excerpt = document.createElement("div");
-  excerpt.className = "draft-excerpt";
-  excerpt.textContent = window.NasaqDrafts.draftExcerpt(mother.original);
-
-  const meta = document.createElement("div");
-  meta.className = "draft-meta";
-  const count = document.createElement("span");
-  count.className = "chip";
-  count.textContent = versionsCountLabel(mother.versions.length);
-  meta.appendChild(count);
-
-  const sorted = window.NasaqDrafts.sortVersions(mother.versions);
-  const newest = sorted[sorted.length - 1];
-  if (newest) {
-    const date = document.createElement("time");
-    date.className = "draft-date";
-    date.textContent = draftDateFmt.format(new Date(newest.createdAt));
-    meta.appendChild(date);
-  }
-
-  summary.append(excerpt, meta);
-  summary.addEventListener("click", () => {
-    expandedMotherKey = isOpen ? null : mother.key;
-    expandedTypeName = null;
-    openVersionId = null;
-    renderDrafts();
-  });
-  card.appendChild(summary);
-
-  if (isOpen) {
-    const body = document.createElement("div");
-    body.className = "draft-texts";
-
-    // النص الأصلي مرة واحدة على مستوى الأمّ — لا يتكرر داخل كل صيغة
-    const box = document.createElement("div");
-    const h = document.createElement("h3");
-    h.textContent = "النص الأصلي";
-    const t = document.createElement("div");
-    t.className = "draft-text";
-    t.textContent = mother.original || "";
-    box.append(h, t);
-    body.appendChild(box);
-
-    const types = document.createElement("div");
-    types.className = "type-list";
-    for (const type of orderedTypes(mother)) {
-      const versions = mother.versions.filter((v) => versionType(v) === type);
-      types.appendChild(buildTypeSection(mother, type, versions));
-    }
-    body.appendChild(types);
-    card.appendChild(body);
-  }
-
-  return card;
-}
-
-function renderDrafts() {
-  draftsList.innerHTML = "";
-  // البحث ترشيح للعرض فقط (v4.1) — القائمة المخزنة والشارة لا تتأثران
-  const visible = window.NasaqDrafts.filterMothers(drafts, draftsSearch.value);
-  draftsEmpty.textContent =
-    drafts.length === 0 ? "لا توجد مسودات محفوظة بعد." : "لا مسودة تطابق البحث.";
-  draftsEmpty.hidden = visible.length > 0;
-  for (const m of visible) {
-    draftsList.appendChild(buildMotherCard(m));
-  }
-  updateDraftsBadge();
-}
-
-// كتابة في البحث تعيد الرسم مرشَّحًا، وتطوي المفتوح كي لا يبقى تفصيل
-// مفتوح لأمّ اختفت من العرض
-draftsSearch.addEventListener("input", () => {
-  expandedMotherKey = null;
-  expandedTypeName = null;
-  openVersionId = null;
-  renderDrafts();
-});
-
 // استعادة صيغة: النص الخام من الأمّ، والمنسّق والمحاور الثلاثة من الصيغة —
 // لو ضغط «نسّق» بعدها لأنتج على الأساس نفسه. المسودة تبقى محفوظة
 function restoreDraft(mother, version) {
@@ -1431,7 +828,8 @@ function restoreDraft(mother, version) {
 }
 
 // «حفظ» يودع الدفعة: آخر صيغة من كل نوع جُرّب على هذا النص منذ آخر حفظ،
-// كلها تحت الأمّ المطابقة بالمفتاح المطبَّع (تُنشأ إن لم توجد).
+// كلها تحت الأمّ المطابقة بالمفتاح المطبَّع (تُنشأ إن لم توجد) — النصف
+// التخزيني في القشرة (depositDraftVersions)، وهنا نصف الجلسة فقط.
 // ما حُفظ من قبل لا يُعاد إيداعه — علامة saved لكل مدخل تمنع التكرار
 el("save-draft-btn").addEventListener("click", async () => {
   if (sessionVersions.size === 0) {
@@ -1445,8 +843,6 @@ el("save-draft-btn").addEventListener("click", async () => {
     return;
   }
 
-  // لقطة للتراجع إن فشل الحفظ — لا تبقى الذاكرة مخالفة للملف
-  const snapshot = JSON.stringify(drafts);
   const base = Date.now();
   const newVersions = pending.map((v, i) => ({
     id: base + i,
@@ -1459,150 +855,39 @@ el("save-draft-btn").addEventListener("click", async () => {
     linesAdjusted: v.linesAdjusted,
   }));
 
-  const existing = drafts.find((m) => m.key === sessionKey);
-  if (existing) {
-    existing.versions.push(...newVersions);
-    // الأمّ ذات النشاط الأحدث تتصدر القائمة
-    drafts = [existing, ...drafts.filter((m) => m.key !== sessionKey)];
-  } else {
-    drafts.unshift({
-      key: sessionKey,
-      original: sessionOriginal,
-      createdAt: new Date().toISOString(),
-      versions: newVersions,
-    });
-    if (drafts.length > DRAFTS_MAX) drafts.length = DRAFTS_MAX;
-  }
-
   try {
-    await persistDrafts();
+    await depositDraftVersions(sessionKey, sessionOriginal, newVersions);
     // خفض «متسخة» بعد نجاح الحفظ فقط — الخريطة تبقى، وما يُنتج بعدها يتجمع طبيعيًا
     for (const v of pending) v.saved = true;
-    renderDrafts();
     showToast(`حُفظت ${versionsCountLabel(pending.length)}.`);
   } catch (err) {
-    drafts = JSON.parse(snapshot);
-    updateDraftsBadge();
     showError(String(err));
   }
 });
 
-// فتح لوحة المسودات وإغلاقها — الفتح يبدأ ببحث فارغ (عرض كامل)
-function openDrafts() {
-  expandedMotherKey = null;
-  expandedTypeName = null;
-  openVersionId = null;
-  draftsSearch.value = "";
-  renderDrafts();
-  draftsOverlay.hidden = false;
+
+// ---------- وصل نسق بالقشرة ----------
+// مفردات عرض المسودات من قاموس نسق: النوع = المستوى، إلا تحت «تنسيق منصة»
+// فالنوع هو المنصة نفسها؛ والترتيب الثابت: المستويات ثم المنصات
+function versionType(v) {
+  return v.intervention === LEVELS.PLATFORM && v.platform ? v.platform : (v.intervention || "غير محدد");
 }
 
-function closeDrafts() {
-  draftsOverlay.hidden = true;
-}
+const TYPE_ORDER = [
+  LEVELS.CLEAN,
+  LEVELS.READ,
+  LEVELS.RHYTHM,
+  LEVELS.RHYTHM_DOTTED,
+  LEVELS.PUBLISH,
+  ...PLATFORMS,
+];
 
-// ---------- النسخة الاحتياطية: تصدير واستيراد المسودات (v4.1) ----------
-// التصدير نسخ لملف drafts.json كما هو (المسودات تُحفظ فور كل تغيير فالملف
-// مطابق للذاكرة)، والاستيراد دمج لا استبدال: يمر بالترحيل نفسه فيقبل النسخ
-// القديمة المسطّحة، والمطابق يُتخطى — فشل القراءة أو الحفظ لا يمس المحفوظ
-function backupStamp() {
-  const d = new Date();
-  const p = (n) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}`;
-}
+configureDraftsDisplay({ versionTypeOf: versionType, typeOrder: TYPE_ORDER });
+registerRestoreHandler(restoreDraft);
 
-el("export-drafts-btn").addEventListener("click", async () => {
-  if (totalVersions() === 0) {
-    showToast("لا توجد مسودات للنسخ الاحتياطي بعد.");
-    return;
-  }
-  const fileName = `nasaq-drafts-${backupStamp()}.json`;
-  if (insideTauri) {
-    try {
-      const saved = await invoke("export_drafts", { fileName });
-      showToast(`حُفظت النسخة في التنزيلات: ${saved}`);
-    } catch (err) {
-      showError(String(err));
-    }
-  } else {
-    // معاينة المتصفح: تنزيل مباشر من بيانات الجلسة
-    const blob = new Blob([JSON.stringify(drafts, null, 2)], { type: "application/json" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = fileName;
-    a.click();
-    URL.revokeObjectURL(a.href);
-    showToast("نُزّلت نسخة المسودات.");
-  }
-});
+// لوحتا نسق تتقدمان لوحات القشرة في الإغلاق بالمفتاح، والعدسة قبل
+// التنويعات — التسجيل بالأحدث أولًا يجعل الفحص:
+// [العدسة، التنويعات، المسودات، الإعدادات] كسلوك v4.1 حرفيًا
+registerEscapeCloser(() => !variationsOverlay.hidden, closeVariations);
+registerEscapeCloser(() => !readingLensOverlay.hidden, closeReadingLens);
 
-const importDraftsInput = el("import-drafts-input");
-el("import-drafts-btn").addEventListener("click", () => importDraftsInput.click());
-importDraftsInput.addEventListener("change", async () => {
-  const file = importDraftsInput.files && importDraftsInput.files[0];
-  importDraftsInput.value = ""; // ليقبل اختيار الملف نفسه مرة أخرى لاحقًا
-  if (!file) return;
-
-  let raw;
-  try {
-    raw = JSON.parse(await file.text());
-  } catch {
-    showError("ملف النسخة غير صالح (ليس JSON) — لم يتغير شيء في مسوداتك.");
-    return;
-  }
-
-  const { mothers } = window.NasaqDrafts.migrateDrafts(raw);
-  const merged = window.NasaqDrafts.mergeImportedDrafts(drafts, mothers);
-  if (merged.added === 0) {
-    showToast("لا جديد في النسخة — كل ما فيها محفوظ أصلًا.");
-    return;
-  }
-
-  // لقطة للتراجع إن فشل الحفظ — كما في مسار «حفظ» تمامًا
-  const snapshot = JSON.stringify(drafts);
-  drafts = merged.mothers;
-  if (drafts.length > DRAFTS_MAX) drafts.length = DRAFTS_MAX;
-  try {
-    await persistDrafts();
-    renderDrafts();
-    showToast(`استُوردت ${versionsCountLabel(merged.added)}.`);
-  } catch (err) {
-    drafts = JSON.parse(snapshot);
-    updateDraftsBadge();
-    showError(String(err));
-  }
-});
-
-el("drafts-btn").addEventListener("click", openDrafts);
-el("close-drafts").addEventListener("click", closeDrafts);
-draftsOverlay.addEventListener("click", (e) => {
-  if (e.target === draftsOverlay) closeDrafts();
-});
-
-// Escape يغلق اللوحة المفتوحة
-document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape") {
-    if (!readingLensOverlay.hidden) closeReadingLens();
-    else if (!variationsOverlay.hidden) closeVariations();
-    else if (!draftsOverlay.hidden) closeDrafts();
-    else if (!overlay.hidden) closeSettings();
-  }
-});
-
-// تحميل المسودات المحفوظة عند فتح التطبيق
-(async () => {
-  drafts = await loadDraftsFromStore();
-  updateDraftsBadge();
-})();
-
-// إن لم يكن هناك مفتاح محفوظ، افتح الإعدادات عند أول تشغيل (داخل التطبيق فقط)
-if (window.__TAURI__) {
-  (async () => {
-    try {
-      const s = await invoke("load_settings");
-      if (!s.apiKey) openSettings();
-    } catch {
-      openSettings();
-    }
-  })();
-}
