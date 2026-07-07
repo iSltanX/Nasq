@@ -101,7 +101,8 @@ pub(crate) async fn format_text(
     let max_tokens = (text.chars().count() as u64 + 500).clamp(1500, 16384);
 
     let content =
-        request_completion(&settings, &messages, max_tokens, CREATIVE_TEMPERATURE).await?;
+        request_completion(&settings, &messages, max_tokens, CREATIVE_TEMPERATURE, FORMAT_THINKING_BUDGET)
+            .await?;
     parse_format_result(&content, &intervention)
 }
 
@@ -147,7 +148,8 @@ pub(crate) async fn generate_variation(
     let max_tokens = (text.chars().count() as u64 + 500).clamp(1500, 16384);
 
     let content =
-        request_completion(&settings, &messages, max_tokens, VARIATIONS_TEMPERATURE).await?;
+        request_completion(&settings, &messages, max_tokens, VARIATIONS_TEMPERATURE, FORMAT_THINKING_BUDGET)
+            .await?;
     parse_format_result(&content, &intervention)
 }
 
@@ -218,6 +220,7 @@ pub(crate) async fn adjust_lines(
     let max_tokens = (current.chars().count() as u64 + 500).clamp(1500, 16384);
 
     let content =
-        request_completion(&settings, &messages, max_tokens, CREATIVE_TEMPERATURE).await?;
+        request_completion(&settings, &messages, max_tokens, CREATIVE_TEMPERATURE, FORMAT_THINKING_BUDGET)
+            .await?;
     parse_format_result(&content, &intervention)
 }

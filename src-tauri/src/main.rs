@@ -21,7 +21,8 @@ fn main() {
             shared::clipboard::copy_to_clipboard,
             nasaq::commands::format_text,
             nasaq::commands::generate_variation,
-            nasaq::commands::adjust_lines
+            nasaq::commands::adjust_lines,
+            shadhb::commands::prune_text
         ])
         .run(tauri::generate_context!())
         .expect("فشل تشغيل نَسَق");

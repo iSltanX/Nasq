@@ -37,12 +37,15 @@ pub(crate) fn extract_json(content: &str) -> Option<Value> {
 
 /// يبني جسم طلب Chat Completions.
 /// المحاولة الأولى تضيف response_format، وإذا رُفض الطلب تُعاد المحاولة
-/// بجسم خالٍ منه. أما تعطيل «التفكير» لمزود Gemini حصرًا — بصيغة
-/// OpenAI-compatible الموثقة من Google:
-/// extra_body.google.thinking_config.thinking_budget = 0
-/// فقرار تكلفة غير قابل للإسقاط: يُرسل في كل محاولة بلا استثناء، حتى لا
-/// تشغّل إعادةُ المحاولة التفكيرَ الديناميكي بصمت (أبطأ وأغلى بأضعاف).
-/// إن رفض المزود هذا الحقل يومًا فليفشل الطلب بخطأ ظاهر، لا أن يمرّ غاليًا.
+/// بجسم خالٍ منه. أما ميزانية «التفكير» فقرار تكلفة يحدده الوضع المنادي
+/// (نسق: صفر مقفول — التنسيق شكل لا حُكم؛ شَذْب: ميزانية محدودة — الحُكم
+/// وظيفته) ويُرسل في كل محاولة بلا استثناء، حتى لا تشغّل إعادةُ المحاولة
+/// التفكيرَ الديناميكي بصمت (أبطأ وأغلى بأضعاف). لكل مزود صيغته:
+/// - Gemini المباشر: extra_body.google.thinking_config.thinking_budget
+/// - OpenRouter (v4.3): الحقل reasoning — صفر يعني تعطيلًا صريحًا، وما
+///   فوقه سقف توكنات تفكير. قبل هذا كان تعطيل التفكير لا يسري عبر
+///   OpenRouter فيُدفع ثمن التفكير الديناميكي بصمت على نماذج Gemini.
+/// إن رفض المزود حقله يومًا فليفشل الطلب بخطأ ظاهر، لا أن يمرّ غاليًا.
 pub(crate) fn build_request_body(
     model: &str,
     messages: &Value,
@@ -50,6 +53,8 @@ pub(crate) fn build_request_body(
     temperature: f64,
     include_response_format: bool,
     is_gemini: bool,
+    is_openrouter: bool,
+    thinking_budget: u64,
 ) -> Value {
     let mut body = json!({
         "model": model,
@@ -62,7 +67,14 @@ pub(crate) fn build_request_body(
     }
     if is_gemini {
         body["extra_body"] =
-            json!({ "google": { "thinking_config": { "thinking_budget": 0 } } });
+            json!({ "google": { "thinking_config": { "thinking_budget": thinking_budget } } });
+    }
+    if is_openrouter {
+        body["reasoning"] = if thinking_budget == 0 {
+            json!({ "enabled": false })
+        } else {
+            json!({ "max_tokens": thinking_budget })
+        };
     }
     body
 }
@@ -88,12 +100,14 @@ pub(crate) async fn call_api(
         })
 }
 
-/// يرسل الرسائل إلى المزود ويعيد نص المحتوى الخام — مشترك بين «نسّق» و«أسطر أقل/أكثر»
+/// يرسل الرسائل إلى المزود ويعيد نص المحتوى الخام — نقل مشترك بين الوضعين،
+/// وميزانية التفكير يمررها الوضع المنادي (لا قيمة افتراضية هنا عمدًا)
 pub(crate) async fn request_completion(
     settings: &Settings,
     messages: &Value,
     max_tokens: u64,
     temperature: f64,
+    thinking_budget: u64,
 ) -> Result<String, String> {
     let api_key = settings.api_key.trim();
     if api_key.is_empty() {
@@ -110,11 +124,10 @@ pub(crate) async fn request_completion(
         .build()
         .map_err(|_| "تعذّر تهيئة الاتصال.".to_string())?;
 
-    // تعطيل «التفكير» يُرسل لمزود Gemini حصرًا حتى لا يكسر Groq أو OpenRouter
-    let is_gemini = settings
-        .base_url
-        .to_lowercase()
-        .contains("generativelanguage.googleapis.com");
+    // حقل ضبط التفكير يُرسل بصيغة المزود المطابق حصرًا حتى لا يكسر البقية
+    let base_lower = settings.base_url.to_lowercase();
+    let is_gemini = base_lower.contains("generativelanguage.googleapis.com");
+    let is_openrouter = base_lower.contains("openrouter.ai");
 
     let first_body = build_request_body(
         &settings.model,
@@ -123,11 +136,13 @@ pub(crate) async fn request_completion(
         temperature,
         true,
         is_gemini,
+        is_openrouter,
+        thinking_budget,
     );
     let mut response = call_api(&client, &url, api_key, &first_body).await?;
 
     // إن رفض المزود response_format (400 أو 422) نعيد المحاولة دونه —
-    // تعطيل التفكير يبقى في جسم الإعادة (انظر build_request_body)
+    // ضبط التفكير يبقى في جسم الإعادة (انظر build_request_body)
     let first_status = response.status().as_u16();
     if first_status == 400 || first_status == 422 {
         let plain_body = build_request_body(
@@ -137,6 +152,8 @@ pub(crate) async fn request_completion(
             temperature,
             false,
             is_gemini,
+            is_openrouter,
+            thinking_budget,
         );
         response = call_api(&client, &url, api_key, &plain_body).await?;
     }
@@ -181,9 +198,9 @@ mod tests {
     use super::*;
 
     #[test]
-    fn gemini_first_attempt_disables_thinking() {
+    fn gemini_first_attempt_carries_thinking_budget() {
         let messages = json!([{ "role": "user", "content": "نص" }]);
-        let body = build_request_body("gemini-2.5-flash", &messages, 2000, 0.85, true, true);
+        let body = build_request_body("gemini-2.5-flash", &messages, 2000, 0.85, true, true, false, 0);
         assert_eq!(
             body["extra_body"]["google"]["thinking_config"]["thinking_budget"],
             0
@@ -191,48 +208,71 @@ mod tests {
         assert_eq!(body["response_format"]["type"], "json_object");
         assert_eq!(body["max_tokens"], 2000);
         assert_eq!(body["temperature"], 0.85);
+        // وميزانية غير صفرية تمر كما هي — لوضعٍ يريد حُكمًا لا شكلًا
+        let thinking = build_request_body("gemini-2.5-flash", &messages, 2000, 0.3, true, true, false, 1024);
+        assert_eq!(
+            thinking["extra_body"]["google"]["thinking_config"]["thinking_budget"],
+            1024
+        );
     }
 
     #[test]
-    fn other_providers_never_receive_gemini_fields() {
+    fn other_providers_never_receive_thinking_fields() {
         let messages = json!([]);
-        let body = build_request_body("llama-3.3-70b-versatile", &messages, 2000, 0.85, true, false);
+        let body = build_request_body("llama-3.3-70b-versatile", &messages, 2000, 0.85, true, false, false, 0);
         assert!(body.get("extra_body").is_none());
+        assert!(body.get("reasoning").is_none());
         assert_eq!(body["response_format"]["type"], "json_object");
     }
 
     #[test]
-    fn retry_body_drops_response_format_but_never_thinking_disable() {
-        // جسم الإعادة يسقط response_format فقط — تعطيل تفكير Gemini لا يسقط
-        // أبدًا، فلا تشغّل إعادةُ المحاولة التفكيرَ الديناميكي بصمت
+    fn openrouter_gets_reasoning_field_disabled_at_zero_and_capped_above() {
+        // فجوة اكتشفتها معايرة v4.3: تعطيل التفكير كان لا يسري عبر OpenRouter
+        // فيُدفع ثمن التفكير الديناميكي بصمت — الحقل reasoning يقفلها
         let messages = json!([]);
-        let body = build_request_body("any-model", &messages, 2000, 0.85, false, true);
+        let off = build_request_body("google/gemini-2.5-flash", &messages, 2000, 0.85, true, false, true, 0);
+        assert_eq!(off["reasoning"]["enabled"], false);
+        assert!(off.get("extra_body").is_none());
+        let capped = build_request_body("google/gemini-2.5-flash", &messages, 2000, 0.3, true, false, true, 1024);
+        assert_eq!(capped["reasoning"]["max_tokens"], 1024);
+    }
+
+    #[test]
+    fn retry_body_drops_response_format_but_never_thinking_control() {
+        // جسم الإعادة يسقط response_format فقط — ضبط التفكير لا يسقط أبدًا،
+        // فلا تشغّل إعادةُ المحاولة التفكيرَ الديناميكي بصمت (لدى أي مزود)
+        let messages = json!([]);
+        let body = build_request_body("any-model", &messages, 2000, 0.85, false, true, false, 0);
         assert!(body.get("response_format").is_none());
         assert_eq!(
             body["extra_body"]["google"]["thinking_config"]["thinking_budget"],
             0
         );
-        assert_eq!(body["model"], "any-model");
-        assert_eq!(body["max_tokens"], 2000);
-        // ولغير Gemini: جسم الإعادة مجرد تمامًا كما كان
-        let plain = build_request_body("any-model", &messages, 2000, 0.85, false, false);
+        let or_retry = build_request_body("any-model", &messages, 2000, 0.85, false, false, true, 0);
+        assert!(or_retry.get("response_format").is_none());
+        assert_eq!(or_retry["reasoning"]["enabled"], false);
+        // ولغير الاثنين: جسم الإعادة مجرد تمامًا كما كان
+        let plain = build_request_body("any-model", &messages, 2000, 0.85, false, false, false, 0);
         assert!(plain.get("extra_body").is_none());
+        assert!(plain.get("reasoning").is_none());
         assert!(plain.get("response_format").is_none());
     }
 
     #[test]
-    fn gemini_thinking_disabled_on_every_attempt_regardless_of_model() {
-        // الضمان الصلب: أي طلب وجهته Gemini يحمل thinking_budget = 0 في كل
-        // محاولة وأيًّا كان النموذج المكتوب في الإعدادات — قرار تكلفة لا إعداد
+    fn thinking_budget_flows_untouched_on_every_attempt_regardless_of_model() {
+        // الضمان الصلب: الميزانية التي يقررها الوضع تصل جسم الطلب كما هي في
+        // كل محاولة وأيًّا كان النموذج — النقل لا يملك رأيًا في التكلفة
         let messages = json!([{ "role": "user", "content": "نص" }]);
         for model in ["gemini-2.5-flash", "gemini-2.5-pro", "أي-نموذج-مستقبلي"] {
             for include_rf in [true, false] {
-                let body = build_request_body(model, &messages, 3000, 0.85, include_rf, true);
-                assert_eq!(
-                    body["extra_body"]["google"]["thinking_config"]["thinking_budget"],
-                    0,
-                    "تعطيل التفكير غائب عن {model} (include_rf={include_rf})"
-                );
+                for budget in [0u64, 1024] {
+                    let body = build_request_body(model, &messages, 3000, 0.85, include_rf, true, false, budget);
+                    assert_eq!(
+                        body["extra_body"]["google"]["thinking_config"]["thinking_budget"],
+                        budget,
+                        "الميزانية تاهت عن {model} (include_rf={include_rf})"
+                    );
+                }
             }
         }
     }

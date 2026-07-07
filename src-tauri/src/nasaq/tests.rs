@@ -4,6 +4,31 @@ use super::commands::*;
 use super::contracts::*;
 
 #[test]
+fn nasaq_thinking_budget_is_locked_at_zero() {
+    // قرار تكلفة مقفول: التنسيق شكل لا حُكم — الصفر ثابت صلب لا إعداد،
+    // وميزانية برج التشذيب في برجه ولا سبيل لها إلى هنا (العزل يمنع الاستيراد)
+    assert_eq!(FORMAT_THINKING_BUDGET, 0);
+}
+
+#[test]
+fn nasaq_contracts_frozen_after_prune_nucleus() {
+    // حارس تجميد المرحلة 3: بناء نواة التشذيب لم يغيّر حرفًا في عقود نسق
+    assert_eq!(
+        CONTRACT,
+        "أعد ترتيب الشكل والتنفّس البصري فقط. لا تضف أفكارًا جديدة ولا تغيّر المعنى."
+    );
+    assert_eq!(
+        ADJUST_CONTRACT,
+        "عدّل كثافة الأسطر والتنفّس البصري فقط، لا تلخّص النص ولا تضف معنى جديدًا."
+    );
+    assert!((CREATIVE_TEMPERATURE - 0.85).abs() < f64::EPSILON);
+    assert!((VARIATIONS_TEMPERATURE - 0.92).abs() < f64::EPSILON);
+    for phrase in ["أنت «نسق»", "لا تكتب بدل الكاتب", "لا تحلل النص ولا تنقده"] {
+        assert!(SYSTEM_PROMPT.contains(phrase), "عبارة مؤسِّسة مفقودة: {phrase}");
+    }
+}
+
+#[test]
 fn creative_temperature_is_in_variation_range() {
     assert!((0.7..=0.9).contains(&CREATIVE_TEMPERATURE));
 }
