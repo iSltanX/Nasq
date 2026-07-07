@@ -1,0 +1,12 @@
+{
+  "name": "nasaq",
+  "private": true,
+  "version": "4.1.0",
+  "scripts": {
+    "tauri": "tauri",
+    "test": "node --test tests/lines.test.js tests/drafts-model.test.js tests/fragments.test.js tests/substack-markers.test.js"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2"
+  }
+}

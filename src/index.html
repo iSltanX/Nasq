@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>نَسَق</title>
+  <script>
+    // تطبيق الثيم المحفوظ قبل تحميل الأنماط حتى لا تومض الألوان الافتراضية
+    try {
+      var nasaqTheme = localStorage.getItem("nasaq-theme");
+      if (nasaqTheme) document.documentElement.setAttribute("data-theme", nasaqTheme);
+    } catch (e) {}
+  </script>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <img class="app-mark" src="nasaq-mark.svg" alt="" />
+    <h1 class="app-title">نَسَق</h1>
+    <span class="app-subtitle">يرتّب النص ويجهّزه للنشر — كما كتبه صاحبه</span>
+    <button id="drafts-btn" class="ghost-btn icon-text-btn" type="button" title="المسودات المحفوظة">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M2.5 8.7 L4.2 3.8 a1 1 0 0 1 .95-.68 h5.7 a1 1 0 0 1 .95.68 L13.5 8.7 v3.3 a1.2 1.2 0 0 1-1.2 1.2 h-8.6 a1.2 1.2 0 0 1-1.2-1.2 z" />
+        <path d="M2.5 8.7 h3.3 a2.2 2.2 0 0 0 4.4 0 h3.3" />
+      </svg>
+      المسودات
+      <span id="drafts-count" class="count-badge" hidden></span>
+    </button>
+    <button id="settings-btn" class="ghost-btn icon-btn" type="button" title="الإعدادات" aria-label="الإعدادات">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true">
+        <line x1="2" y1="4.2" x2="7.6" y2="4.2" /><line x1="12.4" y1="4.2" x2="14" y2="4.2" /><circle cx="10" cy="4.2" r="1.9" />
+        <line x1="2" y1="11.8" x2="3.6" y2="11.8" /><line x1="8.4" y1="11.8" x2="14" y2="11.8" /><circle cx="6" cy="11.8" r="1.9" />
+      </svg>
+    </button>
+  </header>
+
+  <section class="controls">
+    <!-- خيارات المحاور الثلاثة تُملأ من ثوابت main.js — مصدر الحقيقة الوحيد -->
+    <label class="control">
+      <span>نمط التنسيق</span>
+      <select id="format-style"></select>
+    </label>
+    <label class="control">
+      <span>مستوى التدخل</span>
+      <select id="intervention"></select>
+    </label>
+    <label class="control" id="platform-control" hidden>
+      <span>المنصة</span>
+      <select id="platform"></select>
+    </label>
+    <span id="intervention-hint" class="control-hint"></span>
+    <button id="format-btn" class="primary-btn">نسّق النص</button>
+    <!-- لوحة التنويعات — تظهر عند وجهة سابستاك فقط -->
+    <button id="variations-btn" class="ghost-btn" type="button" title="ثلاث تنويعات تختلف في مواضع كسر السطر" hidden>أرِني تنويعات</button>
+  </section>
+
+  <div id="error-bar" class="error-bar" hidden></div>
+
+  <main class="panes">
+    <section class="pane">
+      <div class="pane-head">
+        <h2>النص الخام</h2>
+        <span id="input-count" class="char-count"></span>
+      </div>
+      <textarea id="input-text" dir="rtl" placeholder="الصق نصّك هنا… ثم اضغط «نسّق النص» أو ⌘+Enter" spellcheck="false"></textarea>
+      <!-- التوجيهات الخاصة (v4.0): قرارات موضعية لا يغطيها زر — تنسيق فقط، لا إعادة صياغة -->
+      <label class="directives-field">
+        <span class="directives-label">توجيهات خاصة (اختياري)</span>
+        <textarea id="custom-directives" dir="rtl" rows="3" placeholder="مثال: اجعل الجملة الأخيرة في سطر مستقل، واحفظ علامات الحوار كما هي." spellcheck="false"></textarea>
+      </label>
+    </section>
+
+    <section class="pane">
+      <div class="pane-head">
+        <h2>النص المنسّق</h2>
+        <button id="fewer-lines-btn" class="tool-btn" type="button" title="سطور أقل">⇤⇥</button>
+        <button id="more-lines-btn" class="tool-btn" type="button" title="سطور أكثر">⇥⇤</button>
+        <button id="undo-btn" class="tool-btn" type="button" title="التراجع عن آخر تعديل على النتيجة — محلي، حتى ٢٠ خطوة">تراجع</button>
+        <button id="clean-btn" class="tool-btn" type="button" title="حذف السطور الفارغة من النتيجة">حذف الفراغات</button>
+        <button id="split-sentences-btn" class="tool-btn" type="button" title="كسر سطر بعد كل جملة — محلي، يتجاهل النقطة العشرية (3.14)">فصل الجمل</button>
+        <button id="save-draft-btn" class="tool-btn" type="button" title="حفظ النص الأصلي والنتيجة كمسودة محلية">حفظ كمسودة</button>
+        <button id="export-btn" class="tool-btn" type="button" title="نسخ بكسور السطر محفوظة وبلا أسطر فارغة — كما سيظهر عند النشر" hidden>تصدير لسابستاك</button>
+        <button id="reading-lens-btn" class="tool-btn" type="button" title="معاينة النص بعرض هاتف ضيّق — للعرض فقط">عدسة القراءة</button>
+        <button id="copy-btn" class="tool-btn accent" type="button" title="نسخ النتيجة">نسخ</button>
+        <span id="output-count" class="char-count"></span>
+      </div>
+      <div id="output-wrap" class="output-wrap">
+        <div id="output-text" class="output-text" dir="rtl"></div>
+        <div id="output-placeholder" class="output-placeholder">ستظهر النتيجة هنا. نصّك الأصلي يبقى كما هو في خانة الإدخال.</div>
+        <div id="loading" class="loading" hidden>
+          <span class="spinner"></span>
+          <span>جارٍ التنسيق…</span>
+        </div>
+      </div>
+      <!-- بصمة الإيقاع: وصف محايد لتنفّس النص، للمستويين الإيقاعيين فقط — للعرض لا يُنسخ ولا يُحفظ -->
+      <span id="rhythm-fingerprint" class="rhythm-fingerprint" hidden></span>
+      <!-- بطاقة الشذرة: كسر المنعطف مرئيًا وقابلًا للاختيار — الكسر وحده، لا علامة تُضاف -->
+      <div id="fragment-card" class="fragment-card" hidden>
+        <div class="fragment-card-head">
+          <h3>بطاقة الشذرة — المنعطف</h3>
+          <span class="fragment-card-hint">كسر السطر وحده يُبرز الالتفاتة. اختر شكلها:</span>
+        </div>
+        <div class="fragment-options">
+          <div class="fragment-option">
+            <h4>مكسورة عند المنعطف</h4>
+            <div id="fragment-broken" class="fragment-preview"></div>
+            <button id="adopt-broken" class="tool-btn" type="button">اعتمد المكسورة</button>
+          </div>
+          <div class="fragment-option">
+            <h4>موصولة</h4>
+            <div id="fragment-joined" class="fragment-preview"></div>
+            <button id="adopt-joined" class="tool-btn" type="button">اعتمد الموصولة</button>
+          </div>
+        </div>
+      </div>
+      <details id="notes-box" class="notes" hidden>
+        <summary>ملاحظات التنسيق</summary>
+        <ul id="notes-list"></ul>
+      </details>
+    </section>
+  </main>
+
+  <footer class="credit">برمجة وتصميم : سلطان <span class="version">· V4.1</span></footer>
+
+  <div id="toast" class="toast" hidden>نُسخت النتيجة</div>
+
+  <div id="settings-overlay" class="overlay" hidden>
+    <div class="settings-panel">
+      <div class="panel-head">
+        <h2>الإعدادات</h2>
+        <button id="close-settings" class="ghost-btn icon-btn" type="button" title="إغلاق" aria-label="إغلاق">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
+            <line x1="2" y1="2" x2="10" y2="10" /><line x1="10" y1="2" x2="2" y2="10" />
+          </svg>
+        </button>
+      </div>
+      <div class="tabs" role="tablist">
+        <button id="tab-general-btn" class="tab-btn active" type="button" role="tab" aria-selected="true">عام</button>
+        <button id="tab-appearance-btn" class="tab-btn" type="button" role="tab" aria-selected="false">المظهر</button>
+      </div>
+      <div id="tab-general" class="tab-body">
+        <div class="provider-row">
+          <span class="provider-label">مزوّدات جاهزة:</span>
+          <button type="button" class="ghost-btn provider-btn" data-provider="gemini">Gemini</button>
+          <button type="button" class="ghost-btn provider-btn" data-provider="groq">Groq</button>
+          <button type="button" class="ghost-btn provider-btn" data-provider="openrouter">OpenRouter</button>
+        </div>
+        <label class="field">
+          <span>API Key</span>
+          <div class="key-row">
+            <input id="api-key" type="password" dir="ltr" autocomplete="off" placeholder="أدخل المفتاح هنا" />
+            <button id="toggle-key" class="ghost-btn" type="button">إظهار</button>
+          </div>
+        </label>
+        <label class="field">
+          <span>Base URL</span>
+          <input id="base-url" type="text" dir="ltr" autocomplete="off" />
+        </label>
+        <label class="field">
+          <span>Model Name</span>
+          <input id="model-name" type="text" dir="ltr" autocomplete="off" />
+        </label>
+        <p class="hint">أزرار المزوّدات تملأ الرابط واسم النموذج فقط ولا تغيّر المفتاح. يُحفظ كل شيء محليًا على جهازك فقط، ولا يُرسل أي نص إلا عند ضغط «نسّق النص».</p>
+        <div class="settings-actions">
+          <button id="save-settings" class="primary-btn">حفظ</button>
+        </div>
+      </div>
+      <div id="tab-appearance" class="tab-body" hidden>
+        <div id="theme-grid" class="theme-grid"></div>
+        <p class="hint">يُطبَّق الثيم فورًا ويُحفَظ تلقائيًا، فيعود معك عند فتح التطبيق من جديد.</p>
+      </div>
+      <div id="settings-msg" class="settings-msg" hidden></div>
+    </div>
+  </div>
+
+  <div id="drafts-overlay" class="overlay" hidden>
+    <div class="drafts-panel">
+      <div class="panel-head">
+        <h2>المسودات</h2>
+        <button id="close-drafts" class="ghost-btn icon-btn" type="button" title="إغلاق" aria-label="إغلاق">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
+            <line x1="2" y1="2" x2="10" y2="10" /><line x1="10" y1="2" x2="2" y2="10" />
+          </svg>
+        </button>
+      </div>
+      <!-- شريط المسودات (v4.1): بحث مرشِّح للعرض فقط + نسخة احتياطية تصديرًا واستيرادًا -->
+      <div class="drafts-toolbar">
+        <input id="drafts-search" type="search" dir="rtl" placeholder="ابحث في نصوص المسودات…" spellcheck="false" />
+        <button id="export-drafts-btn" class="tool-btn" type="button" title="حفظ نسخة احتياطية من كل المسودات في مجلد التنزيلات">تصدير نسخة</button>
+        <button id="import-drafts-btn" class="tool-btn" type="button" title="استيراد نسخة احتياطية — دمج لا استبدال، المحفوظ لا يُمسّ">استيراد</button>
+        <input id="import-drafts-input" type="file" accept=".json,application/json" hidden />
+      </div>
+      <p id="drafts-empty" class="drafts-empty" hidden>لا توجد مسودات محفوظة بعد.</p>
+      <div id="drafts-list" class="drafts-list"></div>
+    </div>
+  </div>
+
+  <!-- لوحة تنويعات سابستاك — حبر وذهب المخطوطة، ثلاث تنويعات تختلف في مواضع الكسر -->
+  <div id="variations-overlay" class="overlay" hidden>
+    <div class="variations-panel" dir="rtl">
+      <div class="panel-head">
+        <h2>تنويعات سابستاك <span id="variations-face" class="variations-face"></span></h2>
+        <button id="close-variations" class="ghost-btn icon-btn" type="button" title="إغلاق" aria-label="إغلاق">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
+            <line x1="2" y1="2" x2="10" y2="10" /><line x1="10" y1="2" x2="2" y2="10" />
+          </svg>
+        </button>
+      </div>
+      <p class="variations-note">ثلاث تنويعات تختلف في مواضع كسر السطر وتوزيع الوقفات — الكلمات والمعنى كما هي. اختر أنقاها.</p>
+      <div id="variations-grid" class="variations-grid"></div>
+      <div class="variations-actions">
+        <button id="regen-variations" class="regen-btn" type="button">ولّد ثلاثًا جديدة</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- عدسة القراءة: معاينة النص بعرض هاتف ضيّق، للعرض فقط — لا تحرير -->
+  <div id="reading-lens-overlay" class="overlay" hidden>
+    <div class="reading-lens-panel" dir="rtl">
+      <div class="panel-head">
+        <h2>عدسة القراءة</h2>
+        <button id="close-reading-lens" class="ghost-btn icon-btn" type="button" title="إغلاق" aria-label="إغلاق">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
+            <line x1="2" y1="2" x2="10" y2="10" /><line x1="10" y1="2" x2="2" y2="10" />
+          </svg>
+        </button>
+      </div>
+      <p class="reading-lens-note">معاينة كيف تتكسّر الأسطر على شاشة هاتف — النص للعرض فقط، لا تحرير هنا.</p>
+      <div class="reading-lens-frame">
+        <div id="reading-lens-text" class="reading-lens-text" dir="rtl"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="lines.js"></script>
+  <script src="drafts-model.js"></script>
+  <script src="fragments.js"></script>
+  <script src="substack-markers.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>

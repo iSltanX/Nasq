@@ -1,0 +1,42 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <!-- نَسَق — أيقونة تطبيق macOS (شبكة 1024، جسم 824 بهوامش آبل القياسية) -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#282219"/>
+      <stop offset="1" stop-color="#161310"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.72" cy="0.18" r="0.95">
+      <stop offset="0" stop-color="#D8B172" stop-opacity="0.10"/>
+      <stop offset="0.55" stop-color="#D8B172" stop-opacity="0.03"/>
+      <stop offset="1" stop-color="#D8B172" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#DDBA7C"/>
+      <stop offset="1" stop-color="#B08148"/>
+    </linearGradient>
+    <linearGradient id="goldBright" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#EBCD92"/>
+      <stop offset="1" stop-color="#C39158"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="14" stdDeviation="18" flood-color="#000000" flood-opacity="0.38"/>
+    </filter>
+  </defs>
+
+  <g filter="url(#shadow)">
+    <rect x="100" y="100" width="824" height="824" rx="182" fill="url(#bg)"/>
+    <rect x="100" y="100" width="824" height="824" rx="182" fill="url(#glow)"/>
+    <rect x="107" y="107" width="810" height="810" rx="175" fill="none" stroke="#D8B172" stroke-opacity="0.14" stroke-width="2.5"/>
+  </g>
+
+  <!-- أسطر متفاوتة الطول، محاذاة لليمين (إيقاع: طويل، قصير، متوسط، قصير) -->
+  <g fill="url(#gold)">
+    <rect x="250" y="285" width="524" height="58" rx="29"/>
+    <rect x="444" y="417" width="330" height="58" rx="29"/>
+    <rect x="334" y="549" width="440" height="58" rx="29"/>
+    <rect x="558" y="681" width="216" height="58" rx="29"/>
+  </g>
+
+  <!-- نقطة الخطّاط: معيّن ختامي، وحدة القياس في الخط العربي -->
+  <rect x="437" y="677" width="66" height="66" rx="9" transform="rotate(45 470 710)" fill="url(#goldBright)"/>
+</svg>

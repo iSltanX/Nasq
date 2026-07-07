@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "قدرات النافذة الرئيسية",
+  "windows": ["main"],
+  "permissions": ["core:default"]
+}

@@ -1,0 +1,42 @@
+<svg width="460" height="240" viewBox="0 0 460 240" xmlns="http://www.w3.org/2000/svg">
+  <!-- نَسَق — الشعار الأفقي (الرمز يمينًا وفق اتجاه القراءة، والاسم يساره) -->
+  <!-- الكلمة مسارات مستخرجة من خط Almarai Bold (رخصة OFL) — لا تعتمد على خطوط النظام -->
+  <defs>
+    <linearGradient id="lbg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#282219"/>
+      <stop offset="1" stop-color="#161310"/>
+    </linearGradient>
+    <linearGradient id="lgold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#DDBA7C"/>
+      <stop offset="1" stop-color="#B08148"/>
+    </linearGradient>
+    <linearGradient id="lgoldBright" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#EBCD92"/>
+      <stop offset="1" stop-color="#C39158"/>
+    </linearGradient>
+    <linearGradient id="lgoldText" gradientUnits="userSpaceOnUse" x1="0" y1="912" x2="0" y2="-239">
+      <stop offset="0" stop-color="#E5C388"/>
+      <stop offset="1" stop-color="#BC8E52"/>
+    </linearGradient>
+  </defs>
+
+  <g transform="translate(269 35) scale(0.708)">
+    <rect x="4" y="4" width="232" height="232" rx="52" fill="url(#lbg)"/>
+    <rect x="6" y="6" width="228" height="228" rx="50" fill="none" stroke="#D8B172" stroke-opacity="0.2" stroke-width="1.5"/>
+    <g fill="url(#lgold)">
+      <rect x="46.2" y="56.2" width="147.6" height="16.3" rx="8.15"/>
+      <rect x="100.9" y="93.4" width="93"    height="16.3" rx="8.15"/>
+      <rect x="69.9"  y="130.6" width="124"  height="16.3" rx="8.15"/>
+      <rect x="133"   y="167.8" width="60.9" height="16.3" rx="8.15"/>
+    </g>
+    <rect x="98.6" y="166.7" width="18.6" height="18.6" rx="2.6" transform="rotate(45 107.9 176)" fill="url(#lgoldBright)"/>
+  </g>
+
+  <g fill="url(#lgoldText)" transform="translate(22.12 148.96) scale(0.092000 -0.092000)">
+    <path d="M458 680Q485 680 504 661Q523 642 523 615Q523 589 504 570Q485 551 458 551Q432 551 413 570Q394 589 394 615Q394 642 413 661Q432 680 458 680ZM611 680Q638 680 656.5 661Q675 642 675 615Q675 588 656.5 569.5Q638 551 611 551Q584 551 565 570Q546 589 546 615Q546 642 565 661Q584 680 611 680ZM527 0Q418 0 353 78Q301 143 301 246Q301 340 361 405Q428 472 533 472Q610 472 664 435Q736 383 736 287V102H768V0H735Q728 -112 652 -175Q577 -239 452 -239H353Q215 -239 139 -162Q69 -94 69 24V135L131 185H191V35Q191 -59 238.5 -97.5Q286 -136 402 -136Q503 -136 547 -111Q603 -79 611 0ZM614 287Q614 326 587 350Q564 370 533 370Q485 370 456 338Q422 304 422 235Q422 179 451 144Q483 102 545 102H614Z"/>
+    <path d="M1479 662 1273 604 1254 628V652L1479 714Z"/>
+    <path d="M1822 460V133V102H1873V0H1834L1801 41H1799Q1765 0 1714 0H1500L1467 41H1464Q1431 0 1380 0H1165L1132 41H1129Q1096 0 1045 0H761V102H1006Q1031 102 1031 127V345H1153V133Q1153 112 1152 102H1341Q1366 102 1366 127V403H1488V136Q1488 130 1487 118Q1487 107 1487 102H1675Q1700 102 1700 127V460Z"/>
+    <path d="M2211 860 2005 802 1986 826V850L2211 912Z"/>
+    <path d="M2106 680Q2133 680 2152 661Q2171 642 2171 615Q2171 589 2152 570Q2133 551 2106 551Q2080 551 2061 570Q2042 589 2042 615Q2042 642 2061 661Q2080 680 2106 680ZM2167 460V110Q2167 71 2141 38Q2108 0 2059 0H1866V102H2020Q2031 102 2039 110Q2046 117 2046 127V460Z"/>
+  </g>
+</svg>

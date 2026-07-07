@@ -1,0 +1,1350 @@
+@font-face {
+  font-family: "Cairo";
+  src: url("fonts/Cairo-Variable.ttf") format("truetype-variations");
+  font-weight: 200 1000;
+}
+
+@font-face {
+  font-family: "Almarai";
+  src: url("fonts/Almarai-Regular.ttf") format("truetype");
+  font-weight: 400;
+}
+
+@font-face {
+  font-family: "Almarai";
+  src: url("fonts/Almarai-Bold.ttf") format("truetype");
+  font-weight: 700;
+}
+
+/* خطا المخطوطة — للوحة تنويعات سابستاك: نسخ منضبط للنص ورقعة حرة للترقيم */
+@font-face {
+  font-family: "Amiri";
+  src: url("fonts/Amiri-Regular.ttf") format("truetype");
+  font-weight: 400;
+}
+
+@font-face {
+  font-family: "Aref Ruqaa";
+  src: url("fonts/ArefRuqaa-Regular.ttf") format("truetype");
+  font-weight: 400;
+}
+
+:root {
+  /* صيغة المخطوطة: داكن دافئ + فاتح دافئ + معدن هادئ.
+     كل ثيم يعرّف عائلته فقط (الخلفيات، النصوص، المعدن ومثلثه الرقمي
+     --metal-rgb)، والمشتقات أدناه (الحدود وألوان البطاقات) تُحسب من العائلة
+     تلقائيًا — وصلة الثيمات بالألوان كلها تمر من هنا، والبطاقات ضمن النظام.
+     الافتراضي «نسق الداكن»: حبر ليلي + ورق عتيق + ذهب هادئ (المرجع). */
+  --bg: #12100c;
+  --bg-raised: #1a1712;
+  --bg-input: #0d0b08;
+  --text: #e8dfd0;
+  --text-dim: #aba18c;
+  --accent: #c9a55c;
+  --metal-rgb: 201, 165, 92;
+  --accent-text: #12100c;
+  --tool-text: #cdc3ab;
+  --error-bg: #3a2620;
+  --error-text: #e2b1a5;
+  --veil: rgba(18, 16, 12, 0.85);
+  /* مثلث الظل الدافئ: أسود دافئ/بني محروق من حرارة العائلة — لا رمادي بارد.
+     كل ثيم يعرّف مثلثه، وكل ظلال العمق تُشتق منه */
+  --shadow-rgb: 8, 5, 2;
+
+  /* مشتقات تقرأ من العائلة — لا تُكرَّر في كتل الثيمات */
+  --border: rgba(var(--metal-rgb), 0.35);
+  /* حد الأزرار الثانوية: أخفت درجةً من حد الحقول (صقل v3.1) —
+     حضور يميّز الزر دون منافسة المعدن الممتلئ في «نسّق النص» و«نسخ» */
+  --tool-border: rgba(var(--metal-rgb), 0.22);
+  --card-bg: var(--bg);
+  --card-text: var(--text);
+  --card-metal: var(--accent);
+  --backdrop: rgba(var(--shadow-rgb), 0.65);
+  --shadow: rgba(var(--shadow-rgb), 0.55);
+  --font-ui: "Cairo", "Geeza Pro", system-ui, sans-serif;
+  --font-text: "Almarai", "Geeza Pro", system-ui, sans-serif;
+}
+
+/* ---------- الثيمات ----------
+   ست عائلات على صيغة المخطوطة نفسها (داكن دافئ + فاتح دافئ + معدن هادئ)،
+   تختلف بحرارة المعدن ومسحة الداكن فقط — لا عائلة باردة. التبديل عبر
+   data-theme على الجذر، والبطاقات (لوحة التنويعات) تقرأ المتغيرات نفسها
+   فتتبع الثيم. «نسق الداكن» هو الافتراضي في :root أعلاه. */
+
+[data-theme="ink"] {
+  /* حبر هادئ: داكن أعمق قليلًا + ذهب أخفت */
+  --bg: #0d0b08;
+  --bg-raised: #141109;
+  --bg-input: #080705;
+  --text: #e2d9c8;
+  --text-dim: #a49a84;
+  --accent: #b3924e;
+  --metal-rgb: 179, 146, 78;
+  --accent-text: #0d0b08;
+  --tool-text: #c5bba2;
+  --error-bg: #362420;
+  --error-text: #ddaea1;
+  --veil: rgba(13, 11, 8, 0.85);
+  --shadow-rgb: 5, 4, 2;
+}
+
+[data-theme="paper"] {
+  /* ورق دافئ: داكن بنّي دافئ + معدن نحاسي */
+  --bg: #1b120b;
+  --bg-raised: #251912;
+  --bg-input: #140d07;
+  --text: #eee1d2;
+  --text-dim: #b5a58f;
+  --accent: #c98a5a;
+  --metal-rgb: 201, 138, 90;
+  --accent-text: #1b120b;
+  --tool-text: #d0bfa9;
+  --error-bg: #40261c;
+  --error-text: #e6b3a0;
+  --veil: rgba(27, 18, 11, 0.85);
+  --shadow-rgb: 12, 6, 2;
+}
+
+[data-theme="night"] {
+  /* برونز: داكن زيتوني دافئ + معدن برونزي */
+  --bg: #131006;
+  --bg-raised: #1c170b;
+  --bg-input: #0d0b04;
+  --text: #e6ddc4;
+  --text-dim: #aaa084;
+  --accent: #ad8b45;
+  --metal-rgb: 173, 139, 69;
+  --accent-text: #131006;
+  --tool-text: #c9bfa0;
+  --error-bg: #38251c;
+  --error-text: #dfae9e;
+  --veil: rgba(19, 16, 6, 0.85);
+  --shadow-rgb: 9, 7, 2;
+}
+
+[data-theme="sand"] {
+  /* فضة دافئة: داكن ترابي + معدن فضي دافئ */
+  --bg: #171310;
+  --bg-raised: #211b16;
+  --bg-input: #100d0a;
+  --text: #eae3d7;
+  --text-dim: #aea595;
+  --accent: #c8beac;
+  --metal-rgb: 200, 190, 172;
+  --accent-text: #171310;
+  --tool-text: #cfc7b8;
+  --error-bg: #3a2822;
+  --error-text: #e0b2a6;
+  --veil: rgba(23, 19, 16, 0.85);
+  --shadow-rgb: 11, 8, 5;
+}
+
+[data-theme="ash"] {
+  /* لؤلؤ عتيق: داكن دافئ بمسحة وردية + معدن لؤلئي كريمي */
+  --bg: #1a1512;
+  --bg-raised: #241d19;
+  --bg-input: #130f0c;
+  --text: #ede5da;
+  --text-dim: #b2a898;
+  --accent: #d9cbb6;
+  --metal-rgb: 217, 203, 182;
+  --accent-text: #1a1512;
+  --tool-text: #d2c9bb;
+  --error-bg: #3b2823;
+  --error-text: #e2b4a8;
+  --veil: rgba(26, 21, 18, 0.85);
+  --shadow-rgb: 13, 9, 6;
+}
+
+* {
+  box-sizing: border-box;
+  /* لا ميلان إطلاقًا: خط Cairo المتغيّر يحمل محور slnt وقد يميله WebKit تلقائيًا */
+  font-style: normal !important;
+  font-synthesis: none;
+  font-variation-settings: "slnt" 0;
+}
+
+::placeholder {
+  font-style: normal;
+  font-family: inherit;
+}
+
+[hidden] { display: none !important; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-ui);
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  padding: 14px 20px 18px;
+  gap: 12px;
+}
+
+/* ---------- الرأس ---------- */
+.topbar {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.app-mark {
+  width: 22px;
+  height: 22px;
+  align-self: center;
+  flex-shrink: 0;
+  margin-inline-end: 5px; /* مسافة إضافية بين الرمز وكلمة «نَسَق» فوق فجوة الرأس */
+}
+
+.app-title {
+  font-size: 17px;
+  font-weight: 700;
+  margin: 0;
+  color: var(--accent);
+}
+
+.app-subtitle {
+  font-size: 12px;
+  color: var(--text-dim);
+  flex: 1;
+}
+
+/* ---------- عناصر التحكم ---------- */
+.controls {
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.control {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+select {
+  background: var(--bg-raised);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-family: inherit;
+  font-size: 13px;
+  /* مرفوعة: حافة علوية بلمحة معدن الثيم وظل خارجي دافئ — مادية ورق مقوّى */
+  box-shadow:
+    inset 0 1px 0 rgba(var(--metal-rgb), 0.1),
+    0 1px 2px rgba(var(--shadow-rgb), 0.45);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+select:focus { border-color: var(--accent); outline: none; }
+
+/* تلميح قصير بجانب عناصر التحكم — يشرح سلوك «تنظيف فقط» المحلي */
+.control-hint {
+  font-size: 11px;
+  color: var(--text-dim);
+  align-self: flex-end;
+  padding-bottom: 8px;
+  flex: 1;
+  text-align: start;
+}
+
+.primary-btn {
+  background: var(--accent);
+  color: var(--accent-text);
+  border: none;
+  border-radius: 8px;
+  padding: 8px 24px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  /* مرفوع بظل دافئ من مثلث الثيم — مادية الجلد لا البلاستيك، وبلا scale */
+  box-shadow: 0 1px 2px rgba(var(--shadow-rgb), 0.5), 0 3px 8px rgba(var(--shadow-rgb), 0.35);
+  transition: filter 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+.primary-btn:hover { filter: brightness(1.08); }
+
+/* الضغط: تغميق خفيف للمعدن وتحوّل الظل للداخل — استجابة لونية لا حركية */
+.primary-btn:active:not(:disabled) {
+  filter: brightness(0.94);
+  box-shadow: inset 0 1px 3px rgba(var(--shadow-rgb), 0.55);
+}
+
+.primary-btn:disabled { opacity: 0.4; cursor: default; }
+
+.ghost-btn {
+  background: transparent;
+  color: var(--text-dim);
+  /* حد الأزرار الثانوية الهادئ نفسه — لا حد الحقول الأوضح */
+  border: 1px solid var(--tool-border);
+  border-radius: 8px;
+  padding: 5px 12px;
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  /* حافة علوية بلمحة معدن وظل دافئ خفيف — قابلية النقر دون منافسة الممتلئ */
+  box-shadow:
+    inset 0 1px 0 rgba(var(--metal-rgb), 0.08),
+    0 1px 2px rgba(var(--shadow-rgb), 0.4);
+  transition: color 0.2s ease, border-color 0.2s ease, background-color 0.2s ease,
+    box-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+/* التحويم: تفتيح المعدن في الحد — لا قفزة لونية */
+.ghost-btn:hover { color: var(--text); border-color: rgba(var(--metal-rgb), 0.5); }
+
+.ghost-btn:active {
+  background: rgba(var(--metal-rgb), 0.08);
+  box-shadow: inset 0 1px 3px rgba(var(--shadow-rgb), 0.45);
+}
+
+/* زر أيقونة فقط (الإعدادات، الإغلاق): مربع صغير هادئ */
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+}
+
+.icon-btn svg { display: block; }
+
+/* زر أيقونة مع نص (المسودات) */
+.icon-text-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.icon-text-btn svg { flex-shrink: 0; }
+
+/* عدّاد المسودات الصغير على الزر */
+.count-badge {
+  background: var(--accent);
+  color: var(--accent-text);
+  border-radius: 9px;
+  padding: 0 6px;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 15px;
+  direction: ltr;
+}
+
+/* ---------- شريط الخطأ ---------- */
+.error-bar {
+  background: var(--error-bg);
+  color: var(--error-text);
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 13px;
+}
+
+/* ---------- المساحتان ---------- */
+.panes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  flex: 1;
+  min-height: 0;
+}
+
+@media (max-width: 860px) {
+  .panes { grid-template-columns: 1fr; }
+}
+
+.pane {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 0;
+  transition: opacity 0.2s ease;
+}
+
+.pane-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pane-head h2 {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-dim);
+  margin: 0;
+  flex: 1;
+}
+
+.char-count {
+  font-size: 11px;
+  color: var(--text-dim);
+  direction: ltr;
+}
+
+/* تجاوز حدّ المنصة (v4.1): تحذير هادئ بلون الخطأ الدافئ — لا إنذار ولا منع */
+.char-count.over-limit {
+  color: var(--error-text);
+  direction: rtl;
+}
+
+textarea, .output-wrap {
+  flex: 1;
+  min-height: 0;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  /* غائرة مستعدة للنص: ظل داخلي دافئ من مثلث الثيم، وشفة سفلية بلمحة
+     معدن خافتة كضوء يلامس حافة الورقة — لا أبيض ولا زجاج */
+  box-shadow:
+    inset 0 2px 6px rgba(var(--shadow-rgb), 0.45),
+    inset 0 -1px 0 rgba(var(--metal-rgb), 0.07);
+  caret-color: var(--accent);
+  transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+textarea {
+  color: var(--text);
+  padding: 16px 18px;
+  font-family: var(--font-text);
+  font-size: 15px;
+  line-height: 1.5; /* ارتفاع المؤشر يساوي ارتفاع السطر — القيمة الأقل تجعله بحجم النص تقريبًا */
+  resize: none;
+  outline: none;
+  direction: rtl;
+  text-align: right;
+  /* علّة WebKit: بلا plaintext يلتصق المؤشر يسارًا أثناء الكتابة العربية،
+     ومع plaintext ينعكس في الحقل الفارغ — لذلك تُضبط ديناميكيًا من main.js */
+  unicode-bidi: plaintext;
+}
+
+textarea.empty-bidi {
+  unicode-bidi: isolate;
+}
+
+/* ---------- التوجيهات الخاصة (v4.0) ----------
+   حقل صغير هادئ تحت النص الأصلي لقرارات تنسيق موضعية لا يغطيها زر.
+   يتجاوز flex:1 العامة ليبقى بارتفاع سطوره، بحد أخفت من حد الحقول
+   (حد الأزرار الثانوية) فلا يزاحم صندوق النص الأصلي بصريًا */
+.directives-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+#custom-directives {
+  flex: 0 0 auto;
+  min-height: unset;
+  padding: 8px 12px;
+  font-size: 13px;
+  line-height: 1.6;
+  border-color: var(--tool-border);
+  border-radius: 8px;
+  box-shadow: inset 0 1px 4px rgba(var(--shadow-rgb), 0.35);
+}
+
+/* التفعيل: خلفية الحقل تُضاء درجة واحدة نحو الدفء وتُؤطَّر بحد رفيع بمعدن
+   الثيم — توجيه هادئ لعين الكاتب، لا توهّج. لا حلقة تركيز باردة */
+textarea:focus {
+  border-color: var(--accent);
+  background: var(--bg-raised);
+  outline: none;
+}
+
+/* حين يخلو الكاتب بنصه في الخام، تخفت مساحة المخرَج قليلًا */
+.panes:has(textarea:focus) .pane:not(:focus-within) { opacity: 0.93; }
+
+.output-wrap {
+  position: relative;
+  overflow-y: auto;
+}
+
+.output-text {
+  padding: 16px 18px;
+  font-family: var(--font-text);
+  font-size: 15px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  direction: rtl;
+  text-align: right;
+  unicode-bidi: plaintext;
+}
+
+.output-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  color: var(--text-dim);
+  font-size: 12px;
+  text-align: center;
+  pointer-events: none;
+}
+
+/* ---------- التحميل ---------- */
+.loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: var(--veil);
+  font-size: 13px;
+  color: var(--text);
+}
+
+.spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ---------- بصمة الإيقاع ---------- */
+/* سطر هادئ واحد بأسلوب تلميحة سابستاك (نفس الحجم واللون)، بلا خصائص
+   flex-child الخاصة بـ.control-hint فذاك سياق مختلف (.controls) */
+.rhythm-fingerprint {
+  display: block;
+  font-size: 11px;
+  color: var(--text-dim);
+  padding: 2px 2px 0;
+}
+
+/* ---------- الملاحظات ---------- */
+.notes {
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.notes summary { cursor: pointer; }
+
+.notes ul {
+  margin: 6px 0 0;
+  padding-inline-start: 18px;
+}
+
+/* ملاحظة إرشادات سابستاك متعددة الأسطر تُعرض سطرًا بسطر — بلا أثر على
+   الملاحظات القصيرة العادية أحادية السطر */
+.notes li {
+  white-space: pre-line;
+}
+
+/* ---------- سطر التوقيع ---------- */
+.credit {
+  text-align: center;
+  font-size: 10px;
+  color: var(--text-dim);
+  opacity: 0.75;
+  padding-top: 2px;
+}
+
+.credit .version {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
+/* ---------- التنبيه ---------- */
+.toast {
+  position: fixed;
+  bottom: 26px;
+  right: 50%;
+  transform: translateX(50%);
+  background: var(--accent);
+  color: var(--accent-text);
+  padding: 8px 22px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* ---------- الإعدادات ---------- */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--backdrop);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.settings-panel {
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px 24px 22px;
+  width: min(520px, 92vw);
+  max-height: 86vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0 12px 40px var(--shadow);
+}
+
+.settings-panel h2 {
+  margin: 0;
+  font-size: 15px;
+}
+
+/* رأس اللوحات: عنوان يمينًا وزر إغلاق يسارًا */
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.panel-head h2 {
+  margin: 0;
+  font-size: 15px;
+}
+
+/* ---------- تبويبات الإعدادات ---------- */
+.tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--border);
+}
+
+.tab-btn {
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-dim);
+  font-family: inherit;
+  font-size: 13px;
+  padding: 6px 14px 8px;
+  cursor: pointer;
+  margin-bottom: -1px;
+}
+
+.tab-btn:hover { color: var(--text); }
+
+.tab-btn.active {
+  color: var(--text);
+  font-weight: 700;
+  border-bottom-color: var(--accent);
+}
+
+.tab-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ---------- شبكة الثيمات ---------- */
+.theme-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+@media (max-width: 560px) {
+  .theme-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* البطاقة تحمل data-theme الخاص بها، فتعرض ألوان ثيمها الحقيقية كمعاينة حية */
+.theme-card {
+  background: var(--bg);
+  color: var(--text);
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-align: start;
+  position: relative;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.theme-card:hover { border-color: var(--text-dim); }
+
+.theme-card.active { border-color: var(--accent); }
+
+.theme-card .theme-name {
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.theme-card .theme-check {
+  color: var(--accent);
+  font-size: 13px;
+  line-height: 1;
+}
+
+.theme-card .theme-dots {
+  display: flex;
+  gap: 5px;
+}
+
+.theme-card .dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+}
+
+.theme-card .dot-accent { background: var(--accent); }
+.theme-card .dot-raised { background: var(--bg-input); }
+.theme-card .dot-text { background: var(--text); }
+
+/* ---------- لوحة المسودات ---------- */
+.drafts-panel {
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px 24px 22px;
+  width: min(640px, 94vw);
+  max-height: 84vh;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 12px 40px var(--shadow);
+}
+
+/* شريط المسودات (v4.1): بحث + نسخة احتياطية — على صف واحد فوق القائمة */
+.drafts-toolbar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.drafts-toolbar input[type="search"] {
+  flex: 1;
+  background: var(--bg-input);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 7px 10px;
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  box-shadow: inset 0 1px 4px rgba(var(--shadow-rgb), 0.4);
+  caret-color: var(--accent);
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.drafts-toolbar input[type="search"]:focus {
+  border-color: var(--accent);
+  background: var(--bg-raised);
+}
+
+.drafts-toolbar input[type="search"]::placeholder {
+  color: var(--text-dim);
+}
+
+.drafts-empty {
+  color: var(--text-dim);
+  font-size: 13px;
+  text-align: center;
+  padding: 36px 10px;
+  margin: 0;
+}
+
+.drafts-list {
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+}
+
+.draft-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* رأس البطاقة قابل للنقر لعرض النصين كاملين */
+.draft-summary {
+  background: transparent;
+  border: none;
+  padding: 0;
+  font-family: inherit;
+  color: inherit;
+  text-align: start;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.draft-excerpt {
+  font-family: var(--font-text);
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text);
+}
+
+.draft-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.chip {
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  color: var(--text-dim);
+  font-size: 10px;
+  padding: 1px 9px;
+}
+
+.draft-date {
+  color: var(--text-dim);
+  font-size: 10px;
+  margin-inline-start: auto;
+}
+
+/* النصان الكاملان عند فتح المسودة */
+.draft-texts {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+}
+
+.draft-texts h3 {
+  margin: 0 0 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+
+.draft-text {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-family: var(--font-text);
+  font-size: 13px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.draft-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* ---------- العرض الهرمي: الأنواع داخل الأمّ ثم الصيغ ثم التفصيل ---------- */
+.type-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.type-btn,
+.version-btn {
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-family: inherit;
+  font-size: 12px;
+  color: var(--text);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-align: start;
+}
+
+.type-btn:hover,
+.version-btn:hover {
+  border-color: var(--text-dim);
+}
+
+.type-btn.open,
+.version-btn.open {
+  border-color: var(--accent);
+}
+
+/* قائمة «تنسيق ١/٢/٣» تنزاح قليلًا عن نوعها الأمّ (بداية السطر في RTL) */
+.version-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-block-start: 6px;
+  margin-inline-start: 18px;
+}
+
+.version-btn {
+  font-size: 11px;
+}
+
+.version-btn .draft-date {
+  margin-inline-start: auto;
+}
+
+/* شارة «± أسطر» — وسم خفيف على الصيغة الناتجة عن تعديل أسطر */
+.lines-badge {
+  background: transparent;
+  border: 1px dashed var(--border);
+  border-radius: 20px;
+  color: var(--text-dim);
+  font-size: 9px;
+  padding: 0 7px;
+  direction: ltr;
+}
+
+/* تفصيل الصيغة المفتوحة */
+.version-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-block-start: 6px;
+  margin-inline-start: 18px;
+}
+
+/* زر الحذف وتأكيده */
+.tool-btn.danger {
+  color: var(--error-text);
+  border-color: var(--error-text);
+}
+
+.tool-btn.danger.confirming {
+  background: var(--error-bg);
+  font-weight: 700;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.field input {
+  background: var(--bg-input);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  width: 100%;
+  /* غائر بظل داخلي دافئ خفيف، والمؤشر بمعدن الثيم */
+  box-shadow: inset 0 1px 4px rgba(var(--shadow-rgb), 0.4);
+  caret-color: var(--accent);
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.field input:focus { border-color: var(--accent); background: var(--bg-raised); }
+
+.key-row {
+  display: flex;
+  gap: 8px;
+}
+
+.key-row input { flex: 1; }
+
+.hint {
+  font-size: 11px;
+  color: var(--text-dim);
+  margin: 0;
+}
+
+.settings-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.settings-msg {
+  font-size: 12px;
+  color: var(--accent);
+}
+
+.settings-msg.error {
+  color: var(--error-text);
+}
+
+.provider-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.provider-label {
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.provider-btn {
+  direction: ltr;
+}
+
+/* أزرار الأدوات المحلية في سطر عنوان النص المنسّق */
+.tool-btn {
+  background: transparent;
+  color: var(--tool-text); /* أوضح من --text-dim وأخفت من --text، حتى تُقرأ رموز الأسهم دون منافسة زر «نسخ» */
+  border: 1px solid var(--tool-border);
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-family: inherit;
+  font-size: 11px;
+  cursor: pointer;
+  direction: ltr; /* حتى لا يعكس اتجاهُ الصفحة رمزَي الأسهم */
+  /* حافة علوية بلمحة معدن وظل دافئ خفيف — كأزرار الحد الرفيع كلها */
+  box-shadow:
+    inset 0 1px 0 rgba(var(--metal-rgb), 0.08),
+    0 1px 2px rgba(var(--shadow-rgb), 0.4);
+  transition: color 0.2s ease, border-color 0.2s ease, background-color 0.2s ease,
+    box-shadow 0.2s ease, opacity 0.2s ease, filter 0.2s ease;
+}
+
+/* التحويم: تفتيح المعدن في الحد */
+.tool-btn:hover {
+  color: var(--text);
+  border-color: rgba(var(--metal-rgb), 0.5);
+}
+
+.tool-btn:not(.accent):active {
+  background: rgba(var(--metal-rgb), 0.08);
+  box-shadow: inset 0 1px 3px rgba(var(--shadow-rgb), 0.45);
+}
+
+/* أثناء نداء «سطور أقل/أكثر» عبر النموذج */
+.tool-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* زر النسخ: خلفية واضحة بلون الزر الرئيسي، لكنه أصغر حتى لا ينافسه */
+.tool-btn.accent {
+  background: var(--accent);
+  color: var(--accent-text);
+  border-color: var(--accent);
+  font-weight: 700;
+  padding: 2px 12px;
+  box-shadow: 0 1px 2px rgba(var(--shadow-rgb), 0.5), 0 2px 6px rgba(var(--shadow-rgb), 0.3);
+}
+
+.tool-btn.accent:hover {
+  color: var(--accent-text);
+  border-color: var(--accent);
+  filter: brightness(1.08);
+}
+
+.tool-btn.accent:active:not(:disabled) {
+  filter: brightness(0.94);
+  box-shadow: inset 0 1px 3px rgba(var(--shadow-rgb), 0.55);
+}
+
+/* ---------- لوحة تنويعات سابستاك: صيغة المخطوطة ----------
+   البطاقات ضمن نظام الثيمات: تقرأ متغيرات البطاقة (--card-bg/--card-text/
+   --card-metal) المشتقة من عائلة الثيم النشط — فتتبدل مع التطبيق وتبقى
+   على رقيّ المخطوطة في كل عائلة */
+.variations-panel {
+  background: var(--card-bg);
+  color: var(--card-text);
+  border: 1px solid rgba(var(--metal-rgb), 0.4);
+  border-radius: 14px;
+  /* ظل دافئ من مثلث الثيم وحافة علوية بلمحة معدنه */
+  box-shadow:
+    0 16px 48px rgba(var(--shadow-rgb), 0.55),
+    inset 0 1px 0 rgba(var(--metal-rgb), 0.1);
+  width: min(1080px, 94vw);
+  max-height: 88vh;
+  padding: 18px 24px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.variations-panel .panel-head h2 {
+  color: var(--card-metal);
+  font-family: "Aref Ruqaa", var(--font-ui);
+  font-weight: 400;
+  font-size: 20px;
+}
+
+.variations-face {
+  font-size: 12px;
+  font-family: var(--font-ui);
+  color: var(--card-text);
+  opacity: 0.7;
+  margin-inline-start: 8px;
+}
+
+.variations-panel .ghost-btn { color: var(--card-text); border-color: rgba(var(--metal-rgb), 0.35); }
+.variations-panel .ghost-btn:hover { color: var(--card-metal); border-color: var(--card-metal); }
+
+.variations-note {
+  margin: 0;
+  font-size: 12px;
+  color: var(--card-text);
+  opacity: 0.6;
+}
+
+.variations-grid {
+  display: grid;
+  grid-template-columns: 1fr 14px 1fr 14px 1fr;
+  column-gap: 12px;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 240px;
+}
+
+.variation-col {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 8px 2px 14px;
+  min-width: 0;
+}
+
+/* ترقيم المذهِّب: الرقم العربي بمعدن الثيم وبخط الرقعة الحر */
+.variation-num {
+  font-family: "Aref Ruqaa", serif;
+  color: var(--card-metal);
+  font-size: 32px;
+  line-height: 1.2;
+  text-align: center;
+}
+
+/* النص بالقاهرة — نظيف حديث، وزن متوسط يوازن الوضوح والأناقة.
+   var(--font-ui) = "Cairo" فعليًا (مضمومة محليًا أصلًا)، بمخرج أنيق كامل */
+.variation-text {
+  font-family: var(--font-ui);
+  font-weight: 450;
+  font-size: 16px;
+  line-height: 2.05;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  flex: 1;
+}
+
+/* وجه النوت: النص ينتظم يسارًا تقليدًا لسلوك المنصة — عناصر الواجهة تبقى RTL */
+.variation-text.note-face,
+.fragment-preview.note-face {
+  direction: ltr;
+  text-align: left;
+}
+
+/* الفاصل بين الأعمدة: زخرفة عربية عمودية رفيعة بمعدن الثيم — لا خط بارد.
+   الشكل قناع (mask) والتلوين من --card-metal، فالزخرفة تتبع عائلة الثيم */
+.variation-sep {
+  background-color: var(--card-metal);
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='64' viewBox='0 0 14 64'%3E%3Cg fill='none' stroke='%23000' stroke-width='0.7' opacity='0.75'%3E%3Cpath d='M7 0 V20'/%3E%3Cpath d='M7 20 C 2.5 25, 2.5 31, 7 32 C 11.5 33, 11.5 39, 7 44'/%3E%3Cpath d='M7 20 C 11.5 25, 11.5 31, 7 32 C 2.5 33, 2.5 39, 7 44'/%3E%3Cpath d='M7 44 V64'/%3E%3C/g%3E%3Cpath d='M7 27.5 l2.2 4.5 L7 36.5 l-2.2 -4.5 z' fill='%23000' opacity='0.9'/%3E%3Ccircle cx='7' cy='12' r='1' fill='%23000' opacity='0.7'/%3E%3Ccircle cx='7' cy='52' r='1' fill='%23000' opacity='0.7'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='64' viewBox='0 0 14 64'%3E%3Cg fill='none' stroke='%23000' stroke-width='0.7' opacity='0.75'%3E%3Cpath d='M7 0 V20'/%3E%3Cpath d='M7 20 C 2.5 25, 2.5 31, 7 32 C 11.5 33, 11.5 39, 7 44'/%3E%3Cpath d='M7 20 C 11.5 25, 11.5 31, 7 32 C 2.5 33, 2.5 39, 7 44'/%3E%3Cpath d='M7 44 V64'/%3E%3C/g%3E%3Cpath d='M7 27.5 l2.2 4.5 L7 36.5 l-2.2 -4.5 z' fill='%23000' opacity='0.9'/%3E%3Ccircle cx='7' cy='12' r='1' fill='%23000' opacity='0.7'/%3E%3Ccircle cx='7' cy='52' r='1' fill='%23000' opacity='0.7'/%3E%3C/svg%3E");
+  -webkit-mask-repeat: repeat-y;
+  mask-repeat: repeat-y;
+  -webkit-mask-position: center top;
+  mask-position: center top;
+  -webkit-mask-size: 14px 64px;
+  mask-size: 14px 64px;
+}
+
+.variation-status {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  opacity: 0.6;
+  text-align: center;
+  padding: 20px 6px;
+}
+
+.variation-status.error { color: var(--error-text); opacity: 0.9; font-size: 12px; }
+
+/* «اعتمد هذه»: حد معدني خفيف لا يصرخ */
+.adopt-btn {
+  align-self: center;
+  background: transparent;
+  color: var(--card-metal);
+  border: 1px solid rgba(var(--metal-rgb), 0.5);
+  border-radius: 8px;
+  padding: 5px 20px;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.adopt-btn,
+.regen-btn {
+  transition: color 0.2s ease, border-color 0.2s ease, background-color 0.2s ease, opacity 0.2s ease;
+}
+
+.adopt-btn:hover { background: rgba(var(--metal-rgb), 0.12); border-color: var(--card-metal); }
+.adopt-btn:active { background: rgba(var(--metal-rgb), 0.18); }
+
+.variations-actions {
+  display: flex;
+  justify-content: center;
+  border-top: 1px solid rgba(var(--metal-rgb), 0.18);
+}
+
+.regen-btn {
+  margin-top: 10px;
+  background: transparent;
+  color: var(--card-text);
+  opacity: 0.85;
+  border: 1px solid rgba(var(--metal-rgb), 0.25);
+  border-radius: 8px;
+  padding: 6px 22px;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.regen-btn:hover { color: var(--card-metal); border-color: rgba(var(--metal-rgb), 0.5); opacity: 1; }
+.regen-btn:disabled { opacity: 0.4; cursor: default; }
+
+/* ---------- بطاقة الشذرة: المنعطف مكسورًا أم موصولًا ---------- */
+.fragment-card {
+  margin-top: 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  background: var(--bg-raised);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.fragment-card-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.fragment-card-head h3 {
+  margin: 0;
+  font-size: 13px;
+  color: var(--accent);
+}
+
+.fragment-card-hint {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.fragment-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.fragment-option {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.fragment-option h4 {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-dim);
+}
+
+.fragment-preview {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-input);
+  padding: 10px 12px;
+  font-family: var(--font-text);
+  font-size: 13px;
+  line-height: 1.9;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  flex: 1;
+}
+
+.fragment-option .tool-btn { align-self: flex-start; }
+
+/* ---------- عدسة القراءة: معاينة عرض هاتف، للعرض فقط ---------- */
+.reading-lens-panel {
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px 24px 24px;
+  max-height: 86vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 12px 40px var(--shadow);
+}
+
+.reading-lens-note {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+/* الإطار يحاكي عرض هاتف نموذجي — عام لا يتبع منصة بعينها */
+.reading-lens-frame {
+  align-self: center;
+  width: 380px;
+  max-width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--bg-input);
+  padding: 18px 16px;
+  box-shadow: inset 0 1px 4px rgba(var(--shadow-rgb), 0.4);
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.reading-lens-text {
+  font-family: var(--font-text);
+  font-size: 15px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  direction: rtl;
+  text-align: right;
+  unicode-bidi: plaintext;
+  color: var(--text);
+}
+
+/* وجه النوت يُعرض يسارًا تقليدًا لسلوك المنصة — كبقية معاينات النص في نسق */
+.reading-lens-text.note-face {
+  direction: ltr;
+  text-align: left;
+}

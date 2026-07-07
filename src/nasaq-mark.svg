@@ -1,0 +1,29 @@
+<svg width="240" height="240" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
+  <!-- نَسَق — الرمز وحده (بدون ظل)، للاستخدام داخل الواجهات والترويسات -->
+  <defs>
+    <linearGradient id="mbg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#282219"/>
+      <stop offset="1" stop-color="#161310"/>
+    </linearGradient>
+    <linearGradient id="mgold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#DDBA7C"/>
+      <stop offset="1" stop-color="#B08148"/>
+    </linearGradient>
+    <linearGradient id="mgoldBright" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#EBCD92"/>
+      <stop offset="1" stop-color="#C39158"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="4" y="4" width="232" height="232" rx="52" fill="url(#mbg)"/>
+  <rect x="6" y="6" width="228" height="228" rx="50" fill="none" stroke="#D8B172" stroke-opacity="0.2" stroke-width="1.5"/>
+
+  <g fill="url(#mgold)">
+    <rect x="46.2" y="56.2" width="147.6" height="16.3" rx="8.15"/>
+    <rect x="100.9" y="93.4" width="93"    height="16.3" rx="8.15"/>
+    <rect x="69.9"  y="130.6" width="124"  height="16.3" rx="8.15"/>
+    <rect x="133"   y="167.8" width="60.9" height="16.3" rx="8.15"/>
+  </g>
+
+  <rect x="98.6" y="166.7" width="18.6" height="18.6" rx="2.6" transform="rotate(45 107.9 176)" fill="url(#mgoldBright)"/>
+</svg>

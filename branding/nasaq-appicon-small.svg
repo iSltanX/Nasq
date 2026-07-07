@@ -1,0 +1,27 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <!-- نَسَق — نسخة مبسّطة للأحجام الصغيرة (16px / 32px): ثلاثة أسطر أسمك ونقطة أكبر -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#282219"/>
+      <stop offset="1" stop-color="#161310"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#DDBA7C"/>
+      <stop offset="1" stop-color="#B08148"/>
+    </linearGradient>
+    <linearGradient id="goldBright" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#EBCD92"/>
+      <stop offset="1" stop-color="#C39158"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="100" y="100" width="824" height="824" rx="182" fill="url(#bg)"/>
+
+  <g fill="url(#gold)">
+    <rect x="250" y="200" width="524" height="120" rx="60"/>
+    <rect x="454" y="452" width="320" height="120" rx="60"/>
+    <rect x="574" y="704" width="200" height="120" rx="60"/>
+  </g>
+
+  <rect x="404" y="709" width="110" height="110" rx="14" transform="rotate(45 459 764)" fill="url(#goldBright)"/>
+</svg>
