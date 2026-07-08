@@ -1,7 +1,7 @@
 {
   "name": "nasaq",
   "private": true,
-  "version": "5.2.0",
+  "version": "5.2.2",
   "scripts": {
     "tauri": "tauri",
     "test": "node --test tests/lines.test.js tests/drafts-model.test.js tests/fragments.test.js tests/substack-markers.test.js tests/prune.test.js tests/prune-fixtures.test.js tests/isolation.test.js"

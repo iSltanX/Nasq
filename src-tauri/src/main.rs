@@ -8,6 +8,10 @@
 // - كل ما يغيّر سلوك النموذج في وضعٍ ما يعيش داخل وحدة وضعه وحده.
 mod nasaq;
 mod shadhb;
+// أداة تسجيل تجربة شَذْب — مؤقتة، خلف مفتاح الواجهة، ومعزولة عن الأبراج
+// الثلاثة كليًا (انظر رأس الملف). تُزال بحذف mod هذا وسطري invoke_handler
+// أدناه وshadhb_trial_log.rs نفسه.
+mod shadhb_trial_log;
 mod shared;
 
 fn main() {
@@ -22,7 +26,9 @@ fn main() {
             nasaq::commands::format_text,
             nasaq::commands::generate_variation,
             nasaq::commands::adjust_lines,
-            shadhb::commands::prune_text
+            shadhb::commands::prune_text,
+            shadhb_trial_log::save_shadhb_trial,
+            shadhb_trial_log::renew_shadhb_trial_log
         ])
         .run(tauri::generate_context!())
         .expect("فشل تشغيل نَسَق");

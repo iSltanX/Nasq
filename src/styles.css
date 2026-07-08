@@ -1696,10 +1696,20 @@ textarea:focus {
   margin: 0;
 }
 
+/* رأس صندوق «بعد التشذيب»: العنوان وزر «نسخ» جنبًا إلى جنب — الزر تابع
+   لهذا الصندوق حصرًا، بنمط .tool-btn القائم (لا نمط جديد) */
+.prune-preview-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0 0 4px;
+}
+
 .prune-preview-wrap h3 {
   font-size: 12px;
   color: var(--text-dim);
-  margin: 0 0 4px;
+  margin: 0;
   font-weight: 400;
 }
 

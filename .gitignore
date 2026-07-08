@@ -3,3 +3,6 @@ src-tauri/target/
 dist/
 .DS_Store
 *.log
+
+# سجلّ تجربة شَذْب (أداة مؤقتة) — نصوص كاتب حقيقية، لا تُرفع
+data/shathb-trials/

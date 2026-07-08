@@ -146,7 +146,10 @@
         <div id="cuts-list" class="cuts-list"></div>
         <p id="dropped-note" class="dropped-note" hidden></p>
         <div id="prune-preview-wrap" class="prune-preview-wrap" hidden>
-          <h3>بعد التشذيب — من نصّك فقط</h3>
+          <div class="prune-preview-head">
+            <h3>بعد التشذيب — من نصّك فقط</h3>
+            <button id="copy-pruned-btn" class="tool-btn" type="button" title="نسخ النص المشذَّب فقط">نسخ</button>
+          </div>
           <div id="prune-preview" class="prune-preview" dir="rtl"></div>
         </div>
       </div>
@@ -159,7 +162,7 @@
     </section>
   </main>
 
-  <footer class="credit">برمجة وتصميم : سلطان <span class="version">· V5.2</span></footer>
+  <footer class="credit">برمجة وتصميم : سلطان <span class="version">· V5.2.2</span></footer>
 
   <div id="toast" class="toast" hidden>نُسخت النتيجة</div>
 
@@ -282,5 +285,8 @@
   <script src="shell.js"></script>
   <script src="nasaq.js"></script>
   <script src="shadhb.js"></script>
+  <!-- سجلّ تجربة شَذْب — أداة مؤقتة خلف مفتاح، تُزال بحذف هذا السطر
+       وshadhb-trial-log.js وshadhb_trial_log.rs (انظر رأس كل ملف) -->
+  <script src="shadhb-trial-log.js"></script>
 </body>
 </html>

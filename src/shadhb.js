@@ -27,6 +27,7 @@
     const droppedNote = el("dropped-note");
     const previewWrap = el("prune-preview-wrap");
     const previewBox = el("prune-preview");
+    const copyPrunedBtn = el("copy-pruned-btn");
     const covenantBar = el("covenant-bar");
 
     const AR = (n) => Number(n).toLocaleString("ar");
@@ -266,6 +267,13 @@
         pruneBtn.disabled = false;
         loading.hidden = true;
       }
+    });
+
+    // ---------- نسخ النص المشذَّب: قراءة فقط، لا يمسّ الحالة ولا يرسل ----------
+    copyPrunedBtn.addEventListener("click", async () => {
+      if (!state) return;
+      const ok = await shell.copyText(state.currentText);
+      shell.showToast(ok ? "نُسخ النص المشذّب." : "تعذّر النسخ إلى الحافظة.");
     });
 
     // ---------- الجسر إلى نَسَق: المعبر الوحيد، وبشرطي أمان ----------
