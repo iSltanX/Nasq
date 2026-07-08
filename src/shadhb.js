@@ -77,8 +77,11 @@
         const l = document.createElement("span");
         l.className = "card-label";
         l.textContent = `${label}: `;
-        row.appendChild(l);
-        row.appendChild(document.createTextNode(value));
+        // القيمة من عالم نصّ الكاتب — تُغلَّف لتأخذ خط المتن (v5.1)
+        const v = document.createElement("span");
+        v.className = "card-value";
+        v.textContent = value;
+        row.append(l, v);
         cardBox.appendChild(row);
       }
       cardBox.hidden = cardBox.children.length === 0;
@@ -126,7 +129,8 @@
         keepBtn.className = "cut-keep";
         keepBtn.textContent = "أبقِ";
         keepBtn.addEventListener("click", () => keepCutAt(index));
-        actions.append(doBtn, keepBtn);
+        // «أبقِ» أولًا فيقع يمينًا في RTL — خيار محترم لا ثانويًا (v5.1)
+        actions.append(keepBtn, doBtn);
       } else {
         const chip = document.createElement("span");
         chip.className = "cut-chip " + cut.status;
@@ -137,12 +141,35 @@
       return box;
     }
 
+    // صياغة الإسقاط بعدده — الجملة المفردة كما في مواصفة v5.1 حرفيًا
+    function droppedLabel(n) {
+      if (n === 1) return "أُسقط اقتراح واحد لأنه لم يطابق النص حرفيًا أو تجاوز سقف الحجم.";
+      if (n === 2) return "أُسقط اقتراحان لأنهما لم يطابقا النص حرفيًا أو تجاوزا سقف الحجم.";
+      return `أُسقطت ${AR(n)} ${n <= 10 ? "اقتراحات" : "اقتراحًا"} لأنها لم تطابق النص حرفيًا أو تجاوزت سقف الحجم.`;
+    }
+
     function renderCuts() {
       cutsList.innerHTML = "";
       if (state.cuts.length === 0) {
+        // حالتا فراغ مختلفتان جوهريًا (v5.1): قائمة فرغت لأن التحقق أسقط
+        // كل المقترحات ≠ نموذج لم يجد ما يُحذف — الأولى رسالة تقنية تسمّي
+        // السبب، والثانية هادئة محايدة. لا حكم أدبي («مُحكَمة») في الحالين:
+        // إحكام الشذرة لم يُفحص أصلًا
         const empty = document.createElement("div");
-        empty.className = "cuts-empty";
-        empty.textContent = "لا زوائد مقترحة — الشذرة مُحكَمة كما هي.";
+        const main = document.createElement("p");
+        main.className = "cuts-empty-main";
+        if (state.droppedCuts > 0) {
+          empty.className = "cuts-empty dropped-all";
+          main.textContent = "لم يبقَ اقتراح حذف صالح بعد التحقق.";
+          const detail = document.createElement("p");
+          detail.className = "cuts-empty-detail";
+          detail.textContent = droppedLabel(state.droppedCuts);
+          empty.append(main, detail);
+        } else {
+          empty.className = "cuts-empty";
+          main.textContent = "لم يجد شَذْب موضع حذف آمن.";
+          empty.appendChild(main);
+        }
         cutsList.appendChild(empty);
         return;
       }
@@ -167,13 +194,18 @@
       placeholder.hidden = true;
       renderCard();
       renderCuts();
-      droppedNote.textContent =
-        state.droppedCuts > 0
-          ? `أسقط التحقق الآلي ${AR(state.droppedCuts)} من مقترحات النموذج (غير حرفي أو فوق سقف الحجم).`
-          : "";
-      droppedNote.hidden = state.droppedCuts === 0;
-      previewBox.textContent = state.currentText;
-      previewWrap.hidden = false;
+      // سطر الإسقاط الصغير فقط حين نجت قصّات — الإسقاط الكامل تحمله
+      // حالة الفراغ الكهرمانية في renderCuts بنفسها (v5.1)
+      const partialDrop = state.droppedCuts > 0 && state.cuts.length > 0;
+      droppedNote.textContent = partialDrop
+        ? `أسقط التحقق الآلي ${AR(state.droppedCuts)} من مقترحات النموذج (غير حرفي أو فوق سقف الحجم).`
+        : "";
+      droppedNote.hidden = !partialDrop;
+      // «بعد التشذيب» لا يظهر إلا بعد حذف فعلي (v5.1) — قبله هو نسخة
+      // مطابقة للأصل لا تحمل معلومة
+      const anyCutApplied = state.cuts.some((c) => c.status === "cut");
+      previewBox.textContent = anyCutApplied ? state.currentText : "";
+      previewWrap.hidden = !anyCutApplied;
       renderCovenant();
     }
 

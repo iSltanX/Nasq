@@ -12,6 +12,7 @@ const html = src("index.html");
 const shell = src("shell.js");
 const nasaq = src("nasaq.js");
 const shadhb = src("shadhb.js");
+const css = src("styles.css");
 
 test("ترتيب التحميل: القشرة قبل نسق، وشَذْب أخيرًا، وmain.js زال", () => {
   const order = [...html.matchAll(/<script src="([^"]+)"><\/script>/g)].map((m) => m[1]);
@@ -147,4 +148,43 @@ test("نسق يسجّل وصلاته الأربع لدى القشرة", () => {
   assert.ok(nasaq.includes("registerRestoreHandler(restoreDraft)"));
   assert.ok(nasaq.includes("registerEscapeCloser(() => !variationsOverlay.hidden, closeVariations)"));
   assert.ok(nasaq.includes("registerEscapeCloser(() => !readingLensOverlay.hidden, closeReadingLens)"));
+});
+
+// ---------- حرّاس صقل الواجهة (المرحلة 5 — v5.1) ----------
+// عرضٌ فقط: تثبيت الصياغات والمواضع الجديدة كي لا تنزلق، وبنفس أسلوب
+// فحص نصوص المصدر المتبع أعلاه
+
+test("v5.1: حالتا فراغ القصّات صريحتان والصياغة القديمة الموهِمة زالت", () => {
+  assert.ok(shadhb.includes("لم يبقَ اقتراح حذف صالح بعد التحقق."), "حالة الإسقاط الكامل غائبة");
+  assert.ok(shadhb.includes("لم يجد شَذْب موضع حذف آمن."), "حالة اللا-اقتراحات غائبة");
+  // «مُحكَمة كما هي» كانت تدّعي حكمًا أدبيًا سببه الفعلي فشل التحقق
+  assert.ok(!shadhb.includes("مُحكَمة كما هي"), "الصياغة القديمة ما زالت في shadhb.js");
+  // الحالتان تفترقان على droppedCuts — الفارق الجوهري لا الشكلي
+  assert.ok(/droppedCuts > 0/.test(shadhb), "التمييز بعدّاد الإسقاط غائب");
+});
+
+test("v5.1: «بعد التشذيب» مشروط بحذف فعلي وعنوانه ينسب النص لصاحبه", () => {
+  assert.ok(/status === "cut"/.test(shadhb), "شرط الحذف الفعلي غائب من shadhb.js");
+  assert.ok(html.includes("بعد التشذيب — من نصّك فقط"), "عنوان المعاينة الجديد غائب من الهيكل");
+});
+
+test("v5.1: شريط الفحص في لوحة الإدخال خلف data-mode — لا أثر له خارج شَذْب", () => {
+  assert.ok(/<div id="shadhb-inspect-bar"/.test(html), "شريط الفحص غائب من الهيكل");
+  // الزر داخل لوحة الإدخال (بين خانة النص ولوحة نتائج نسق) لا في لوحة النتائج
+  const inputPane = html.slice(html.indexOf('id="input-text"'), html.indexOf('id="nasaq-output-pane"'));
+  assert.ok(inputPane.includes('id="prune-btn"'), "زر الفحص ليس في لوحة الإدخال");
+  // مخفي افتراضيًا في CSS ولا يُظهره إلا data-mode — فبإطفاء المفتاح لا أثر له
+  assert.ok(/\.shadhb-inspect-bar\s*\{\s*display:\s*none;?\s*\}/.test(css), "الشريط ليس مخفيًا افتراضيًا");
+  assert.ok(css.includes('[data-mode="shadhb"] .shadhb-inspect-bar'), "إظهار الشريط ليس بقيادة data-mode");
+});
+
+test("v5.1: تذييل النتائج ثابت خارج جسد التمرير وفيه الضمانة والجسر", () => {
+  const pane = html.slice(html.indexOf('id="shadhb-pane"'));
+  const bodyStart = pane.indexOf('class="shadhb-body"');
+  const footerStart = pane.indexOf('class="shadhb-footer"');
+  assert.ok(bodyStart !== -1 && footerStart > bodyStart, "التذييل غائب أو قبل جسد التمرير");
+  const body = pane.slice(bodyStart, footerStart);
+  const footer = pane.slice(footerStart);
+  assert.ok(!body.includes('id="covenant-bar"') && footer.includes('id="covenant-bar"'), "الضمانة ليست في التذييل الثابت");
+  assert.ok(!body.includes('id="send-to-nasaq-btn"') && footer.includes('id="send-to-nasaq-btn"'), "زر الجسر ليس في التذييل الثابت");
 });

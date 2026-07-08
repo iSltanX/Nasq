@@ -38,10 +38,10 @@
   --bg: #12100c;
   --bg-raised: #1a1712;
   --bg-input: #0d0b08;
-  --text: #e8dfd0;
-  --text-dim: #aba18c;
-  --accent: #c9a55c;
-  --metal-rgb: 201, 165, 92;
+  --text: #f1e8d8;
+  --text-dim: #b9aa91;
+  --accent: #d8b45f;
+  --metal-rgb: 216, 180, 95;
   --accent-text: #12100c;
   --tool-text: #cdc3ab;
   --error-bg: #3a2620;
@@ -56,6 +56,10 @@
   /* حد الأزرار الثانوية: أخفت درجةً من حد الحقول (صقل v3.1) —
      حضور يميّز الزر دون منافسة المعدن الممتلئ في «نسّق النص» و«نسخ» */
   --tool-border: rgba(var(--metal-rgb), 0.22);
+  /* صبغة التفعيل (v5.1): خلفية شفافة بمعدن الثيم للحالات النشطة — مشتقة
+     من --metal-rgb فتسري على العائلات الست تلقائيًا، وتقابلها صبغة
+     الحُمرة (--prune-tint) في قسم شَذْب أدناه */
+  --accent-tint: rgba(var(--metal-rgb), 0.14);
   --card-bg: var(--bg);
   --card-text: var(--text);
   --card-metal: var(--accent);
@@ -183,7 +187,8 @@ html, body {
 body {
   display: flex;
   flex-direction: column;
-  padding: 14px 20px 18px;
+  /* حشوة سفلية أوسع (v5.1): مساحة تنفّس تحت اللوحات فلا يلاصق زرٌّ الحافة */
+  padding: 14px 20px 22px;
   gap: 12px;
 }
 
@@ -211,6 +216,7 @@ body {
 
 .app-subtitle {
   font-size: 12px;
+  font-weight: 300;
   color: var(--text-dim);
   flex: 1;
 }
@@ -251,6 +257,7 @@ select:focus { border-color: var(--accent); outline: none; }
 /* تلميح قصير بجانب عناصر التحكم — يشرح سلوك «تنظيف فقط» المحلي */
 .control-hint {
   font-size: 11px;
+  font-weight: 300;
   color: var(--text-dim);
   align-self: flex-end;
   padding-bottom: 8px;
@@ -374,6 +381,9 @@ select:focus { border-color: var(--accent); outline: none; }
   display: flex;
   align-items: center;
   gap: 10px;
+  /* التفاف بدل القص (v5.1): أزرار الرأس تنزل سطرًا في النوافذ الضيقة */
+  flex-wrap: wrap;
+  row-gap: 6px;
 }
 
 .pane-head h2 {
@@ -490,6 +500,7 @@ textarea:focus {
   padding: 20px;
   color: var(--text-dim);
   font-size: 12px;
+  font-weight: 300;
   text-align: center;
   pointer-events: none;
 }
@@ -553,7 +564,7 @@ textarea:focus {
   font-size: 10px;
   color: var(--text-dim);
   opacity: 0.75;
-  padding-top: 2px;
+  padding-top: 8px;
 }
 
 .credit .version {
@@ -1020,9 +1031,10 @@ textarea:focus {
   color: var(--tool-text); /* أوضح من --text-dim وأخفت من --text، حتى تُقرأ رموز الأسهم دون منافسة زر «نسخ» */
   border: 1px solid var(--tool-border);
   border-radius: 6px;
-  padding: 2px 8px;
+  /* هدف نقر أرحب (v5.1) — كان 2px×8px بخط 11px */
+  padding: 4px 10px;
   font-family: inherit;
-  font-size: 11px;
+  font-size: 12px;
   cursor: pointer;
   direction: ltr; /* حتى لا يعكس اتجاهُ الصفحة رمزَي الأسهم */
   /* حافة علوية بلمحة معدن وظل دافئ خفيف — كأزرار الحد الرفيع كلها */
@@ -1056,7 +1068,7 @@ textarea:focus {
   color: var(--accent-text);
   border-color: var(--accent);
   font-weight: 700;
-  padding: 2px 12px;
+  padding: 4px 14px;
   box-shadow: 0 1px 2px rgba(var(--shadow-rgb), 0.5), 0 2px 6px rgba(var(--shadow-rgb), 0.3);
 }
 
@@ -1356,16 +1368,30 @@ textarea:focus {
    الخلفيات والنصوص والثيمات الست كما هي، ولوحة شَذْب تظهر عبر data-mode
    على الجذر — بغيابه لا أثر لشيء من هذا إطلاقًا */
 :root {
-  --prune-accent: #c4674e;
-  --prune-rgb: 196, 103, 78;
+  --prune-accent: #d96f52;
+  --prune-rgb: 217, 111, 82;
+  /* صبغة تفعيل الحُمرة — مقابل --accent-tint الذهبية في الأساس المشترك */
+  --prune-tint: rgba(var(--prune-rgb), 0.14);
+  /* لونا حالة ثابتان عبر الثيمات (حالة لا هوية): شهادة الضمانة زيتونية
+     هادئة، وتنبيه الإسقاط كهرمان هادئ — رسالة تقنية لا إنذار */
+  --verify-green: #8fa36a;
+  --verify-bg: rgba(143, 163, 106, 0.12);
+  --verify-border: rgba(143, 163, 106, 0.3);
+  --warn-bg: rgba(201, 154, 74, 0.1);
+  --warn-border: rgba(201, 154, 74, 0.28);
 }
 
-/* المبدّل: تبويبان هادئان في الشريط — الذهب لنسق والحُمرة لشَذْب */
+/* المبدّل (أعيد بناؤه في v5.1): حاوية غائرة بحشوة داخلية وكل زر بزواياه
+   الخاصة — التفعيل صبغة وحد رقيق لا تعبئة صلبة تُقص عند حواف الحاوية،
+   فزال الكسر البصري. الذهب لنسق والحُمرة لشَذْب، والوزن ثابت فلا يقفز
+   عرض الزر بين الحالتين */
 .mode-switch {
   display: flex;
+  gap: 2px;
+  padding: 2px;
+  background: var(--bg-input);
   border: 1px solid var(--tool-border);
   border-radius: 8px;
-  overflow: hidden;
   flex-shrink: 0;
   align-self: center;
   margin-inline-end: 10px;
@@ -1374,23 +1400,28 @@ textarea:focus {
 .mode-btn {
   background: transparent;
   color: var(--text-dim);
-  border: none;
+  border: 1px solid transparent;
+  border-radius: 6px;
   padding: 4px 14px;
   font-size: 12px;
+  font-weight: 600;
   font-family: inherit;
   cursor: pointer;
-  transition: color 0.2s ease, background-color 0.2s ease;
+  line-height: 1.4;
+  white-space: nowrap;
+  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
 }
 
 .mode-btn.active {
-  color: var(--accent-text);
-  background: var(--accent);
-  font-weight: 700;
+  color: var(--accent);
+  background: var(--accent-tint);
+  border-color: rgba(var(--metal-rgb), 0.35);
 }
 
 #mode-shadhb-btn.active {
-  background: var(--prune-accent);
-  color: #12100c;
+  color: var(--prune-accent);
+  background: var(--prune-tint);
+  border-color: rgba(var(--prune-rgb), 0.35);
 }
 
 /* الإظهار كله بقيادة data-mode: لوحة شَذْب محل لوحة النتيجة، وأدوات نسق
@@ -1403,23 +1434,47 @@ textarea:focus {
 
 .shadhb-covenant-hint {
   font-size: 11px;
+  font-weight: 300;
   color: #d8a08c;
   border-inline-start: 2px solid var(--prune-accent);
   padding: 2px 10px;
-  margin-bottom: 8px;
 }
 
-.shadhb-primary {
+/* شريط الفحص (v5.1): سطر العهد فوق الفعل الرئيس، تحت خانة الكتابة مباشرة —
+   يظهر في وضع شَذْب حصرًا بقيادة data-mode، فبإطفاء المفتاح لا أثر له */
+.shadhb-inspect-bar { display: none; }
+
+[data-mode="shadhb"] .shadhb-inspect-bar {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding-top: 4px;
+}
+
+/* زر «افحص الشذرة»: قرين «نسّق النص» في الحجم والمادية — بحُمرة المصحِّح */
+.prune-primary-btn {
   background: var(--prune-accent);
   color: #12100c;
-  border-color: transparent;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 24px;
+  font-family: inherit;
+  font-size: 13px;
   font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(var(--shadow-rgb), 0.5), 0 3px 8px rgba(var(--shadow-rgb), 0.35);
+  transition: filter 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
 }
 
-.shadhb-primary:hover {
-  background: #d07a5f;
-  color: #12100c;
+.prune-primary-btn:hover { filter: brightness(1.08); }
+
+.prune-primary-btn:active:not(:disabled) {
+  filter: brightness(0.94);
+  box-shadow: inset 0 1px 3px rgba(var(--shadow-rgb), 0.55);
 }
+
+.prune-primary-btn:disabled { opacity: 0.4; cursor: default; }
 
 .shadhb-body {
   flex: 1;
@@ -1428,11 +1483,14 @@ textarea:focus {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  /* مسافة تنفّس قبل التذييل الثابت — لا عنصر يلاصق حدّه */
+  padding-bottom: 8px;
 }
 
 .shadhb-placeholder {
   color: var(--text-dim);
   font-size: 13px;
+  font-weight: 300;
   margin: 24px 8px;
   text-align: center;
 }
@@ -1462,6 +1520,11 @@ textarea:focus {
   color: var(--accent);
 }
 
+/* قيم البطاقة من عالم نصّ الكاتب (الجملة المركزية اقتباس حرفي) — خط المتن */
+.reading-card .card-value {
+  font-family: var(--font-text);
+}
+
 /* القصّات: الاقتباس بالحُمرة، وقرار الكاتب يغيّر هيئة المدخل */
 .cuts-list {
   display: flex;
@@ -1469,40 +1532,87 @@ textarea:focus {
   gap: 8px;
 }
 
+/* حالتا الفراغ (v5.1): «لا اقتراحات» هادئة محايدة، و«أُسقط الكل» كهرمانية
+   تقنية تسمّي السبب — لا حكم أدبي على نصٍّ لم يُفحص إحكامه */
 .cuts-empty {
+  background: var(--bg-raised);
+  border: 1px solid var(--tool-border);
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+
+.cuts-empty.dropped-all {
+  background: var(--warn-bg);
+  border-color: var(--warn-border);
+}
+
+.cuts-empty-main {
+  margin: 0;
+  font-family: var(--font-text);
+  font-size: 13.5px;
+  color: var(--tool-text);
+}
+
+.cuts-empty-detail {
+  margin: 4px 0 0;
+  font-size: 11.5px;
   color: var(--text-dim);
-  font-size: 13px;
-  padding: 6px 10px;
 }
 
 .cut-entry {
+  /* المعلّقة بصبغة الحُمرة — قرار ينتظر؛ والمحسومة تخفت وتتحيّد أدناه */
+  background: var(--prune-tint);
   border: 1px solid rgba(var(--prune-rgb), 0.35);
   border-radius: 10px;
-  padding: 8px 12px;
+  padding: 12px 14px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 5px;
   font-size: 13px;
-  transition: border-color 0.2s ease, opacity 0.2s ease;
+  transition: border-color 0.2s ease, opacity 0.2s ease, background-color 0.2s ease;
+}
+
+.cut-entry.cut {
+  background: transparent;
+  border-color: var(--tool-border);
+  opacity: 0.7;
 }
 
 .cut-entry.cut .cut-quote {
-  text-decoration: line-through;
-  text-decoration-color: var(--prune-accent);
-  opacity: 0.75;
+  color: var(--text-dim);
+  text-decoration-color: var(--text-dim);
 }
 
 .cut-entry.kept {
+  background: transparent;
   border-color: rgba(var(--metal-rgb), 0.3);
   opacity: 0.85;
 }
 
+/* «أبقِ» احترام: الاقتباس يعود نصًا سليمًا بلا شطب */
+.cut-entry.kept .cut-quote {
+  color: var(--text);
+  text-decoration: none;
+}
+
 .cut-entry.stale {
+  background: transparent;
+  border-color: var(--tool-border);
   opacity: 0.55;
 }
 
+.cut-entry.stale .cut-quote { text-decoration: none; }
+
+/* الاقتباس نصُّ الكاتب فخطُّه خط المتن — والمقترح حذفُه يُعرض مشطوبًا
+   بحُمرة خافتة قبل القرار: البطاقة معاينة حذفٍ لا نصًا يُقرأ */
 .cut-quote {
-  color: #d8a08c;
+  font-family: var(--font-text);
+  font-size: 14px;
+  line-height: 1.85;
+  color: var(--prune-accent);
+  text-decoration: line-through;
+  text-decoration-color: rgba(var(--prune-rgb), 0.65);
+  text-decoration-thickness: 1.5px;
 }
 
 .cut-meta {
@@ -1519,31 +1629,44 @@ textarea:focus {
   display: flex;
   gap: 8px;
   align-items: center;
-  margin-top: 2px;
+  margin-top: 6px;
 }
 
+/* زوجا القرار بعرض متساوٍ (v5.1): «أبقِ» أولًا (يمين RTL) محترمًا بحدّ
+   محايد لا خيارًا ثانويًا هزيلًا، و«احذف» واضح غير عدواني — صبغة وحد
+   بالحُمرة لا تعبئة صلبة */
+.cut-keep,
 .cut-do {
-  background: var(--prune-accent);
-  color: #12100c;
-  border: none;
-  border-radius: 7px;
-  padding: 3px 14px;
-  font-size: 12px;
+  flex: 1;
+  border-radius: 8px;
+  padding: 7px 0;
+  font-size: 13px;
   font-family: inherit;
-  font-weight: 700;
   cursor: pointer;
+  text-align: center;
+  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
 }
 
 .cut-keep {
   background: transparent;
   color: var(--tool-text);
   border: 1px solid var(--tool-border);
-  border-radius: 7px;
-  padding: 3px 14px;
-  font-size: 12px;
-  font-family: inherit;
-  cursor: pointer;
+  font-weight: 500;
 }
+
+.cut-keep:hover {
+  color: var(--text);
+  border-color: rgba(var(--metal-rgb), 0.5);
+}
+
+.cut-do {
+  background: rgba(var(--prune-rgb), 0.09);
+  color: var(--prune-accent);
+  border: 1px solid rgba(var(--prune-rgb), 0.4);
+  font-weight: 600;
+}
+
+.cut-do:hover { background: rgba(var(--prune-rgb), 0.18); }
 
 .cut-chip {
   font-size: 11px;
@@ -1591,18 +1714,53 @@ textarea:focus {
   white-space: pre-wrap;
 }
 
-/* شريط الضمانة: العهد مفحوصًا لا موعودًا — زيتوني هادئ عند السلامة
-   وألوان الخطأ عند الخرق (لا يحدث بالبناء، لكنه يُعرض لا يُفترض) */
+/* التذييل الثابت (v5.1): الضمانة والجسر خارج منطقة التمرير فلا يُقصّان —
+   ولا يظهر التذييل إلا حين يحمل ابنًا مرئيًا (قبل الفحص كلاهما مخفي) */
+.shadhb-footer { display: none; }
+
+.shadhb-footer:has(> :not([hidden])) {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex-shrink: 0;
+  padding-top: 8px;
+  border-top: 1px solid rgba(var(--prune-rgb), 0.18);
+}
+
+/* شريط الضمانة: العهد مفحوصًا لا موعودًا — زيتوني بخلفية صبغية عند
+   السلامة وألوان الخطأ عند الخرق (لا يحدث بالبناء، لكنه يُعرض لا يُفترض) */
 .covenant-bar {
   font-size: 11.5px;
   border-radius: 8px;
-  padding: 5px 12px;
-  border: 1px solid rgba(143, 163, 126, 0.4);
-  color: #8fa37e;
+  padding: 8px 12px;
+  background: var(--verify-bg);
+  border: 1px solid var(--verify-border);
+  color: var(--verify-green);
 }
 
 .covenant-bar.fail {
   border-color: var(--error-text);
   color: var(--error-text);
   background: var(--error-bg);
+}
+
+/* الجسر إلى نَسَق بهوية الذهب: الوجهة غرفة الناسخ — شَذْب مرحلة قبل
+   النشر لا تطبيقًا مستقلًا */
+.send-to-nasaq-btn {
+  width: 100%;
+  background: var(--accent-tint);
+  color: var(--accent);
+  border: 1px solid rgba(var(--metal-rgb), 0.3);
+  border-radius: 8px;
+  padding: 8px 0;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.send-to-nasaq-btn:hover {
+  background: rgba(var(--metal-rgb), 0.22);
+  border-color: rgba(var(--metal-rgb), 0.45);
 }

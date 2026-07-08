@@ -74,6 +74,13 @@
         <span class="directives-label">توجيهات خاصة (اختياري)</span>
         <textarea id="custom-directives" dir="rtl" rows="3" placeholder="مثال: اجعل الجملة الأخيرة في سطر مستقل، واحفظ علامات الحوار كما هي." spellcheck="false"></textarea>
       </label>
+      <!-- شريط فحص شَذْب (v5.1): الفعل الرئيس ملاصق لمنطقة الكتابة — يظهر
+           في وضع شَذْب حصرًا بقيادة data-mode في CSS، فبإطفاء المفتاح
+           لا أثر له إطلاقًا -->
+      <div id="shadhb-inspect-bar" class="shadhb-inspect-bar">
+        <span class="shadhb-covenant-hint">شَذْب يقترح الحذف ولا يضيف كلمة — أنت من يقرر كل قصّة.</span>
+        <button id="prune-btn" class="prune-primary-btn" type="button" title="فحص واحد يعيد بطاقة قراءة وقصّات حذف مقترحة — لا يغيّر نصك شيئًا حتى تقرر">افحص الشذرة</button>
+      </div>
     </section>
 
     <section class="pane" id="nasaq-output-pane">
@@ -131,10 +138,7 @@
     <section class="pane" id="shadhb-pane">
       <div class="pane-head">
         <h2>فحص الشذرة</h2>
-        <button id="prune-btn" class="tool-btn shadhb-primary" type="button" title="فحص واحد يعيد بطاقة قراءة وقصّات حذف مقترحة — لا يغيّر نصك شيئًا حتى تقرر">افحص الشذرة</button>
-        <button id="send-to-nasaq-btn" class="tool-btn" type="button" title="النص المشذَّب يصير خامًا لنسق — جلسة جديدة" hidden>أرسل إلى نَسَق</button>
       </div>
-      <span class="shadhb-covenant-hint">شَذْب يقترح الحذف ولا يضيف كلمة — أنت من يقرر كل قصّة.</span>
       <div class="shadhb-body">
         <p id="shadhb-placeholder" class="shadhb-placeholder">الصق شذرتك في خانة النص الخام ثم اضغط «افحص الشذرة». الفحص يقترح ولا يغيّر.</p>
         <div id="shadhb-loading" class="shadhb-loading" hidden><span class="spinner"></span><span>جارٍ الفحص…</span></div>
@@ -142,15 +146,20 @@
         <div id="cuts-list" class="cuts-list"></div>
         <p id="dropped-note" class="dropped-note" hidden></p>
         <div id="prune-preview-wrap" class="prune-preview-wrap" hidden>
-          <h3>بعد التشذيب</h3>
+          <h3>بعد التشذيب — من نصّك فقط</h3>
           <div id="prune-preview" class="prune-preview" dir="rtl"></div>
         </div>
+      </div>
+      <!-- التذييل الثابت (v5.1): الضمانة والجسر خارج منطقة التمرير —
+           لا يُقصّان مع النص الطويل، ولا يظهر التذييل إلا حين يحمل شيئًا -->
+      <div class="shadhb-footer">
         <div id="covenant-bar" class="covenant-bar" hidden></div>
+        <button id="send-to-nasaq-btn" class="send-to-nasaq-btn" type="button" title="النص المشذَّب يصير خامًا لنسق — جلسة جديدة" hidden>أرسل إلى نَسَق</button>
       </div>
     </section>
   </main>
 
-  <footer class="credit">برمجة وتصميم : سلطان <span class="version">· V5.0</span></footer>
+  <footer class="credit">برمجة وتصميم : سلطان <span class="version">· V5.1</span></footer>
 
   <div id="toast" class="toast" hidden>نُسخت النتيجة</div>
 
