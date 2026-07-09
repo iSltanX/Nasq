@@ -206,6 +206,13 @@ body {
   margin-inline-end: 5px; /* مسافة إضافية بين الرمز وكلمة «نَسَق» فوق فجوة الرأس */
 }
 
+/* توأما الرمز (v6.3): نسخة الورق الفاتح ونسخة الوضع الليلي بالهندسة نفسها
+   والحجم والموضع نفسيهما — data-appearance وحده يبدّل أيّهما ظاهر، فالرمز
+   لا يبقى ملصقًا أبيض فوق الخلفية الداكنة */
+.app-mark-dark { display: none; }
+[data-appearance="dark"] .app-mark-light { display: none; }
+[data-appearance="dark"] .app-mark-dark { display: block; }
+
 .app-title {
   font-size: 16px;
   font-weight: 700;

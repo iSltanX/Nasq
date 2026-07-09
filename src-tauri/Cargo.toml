@@ -1,6 +1,6 @@
 [package]
 name = "nasaq"
-version = "6.0.0"
+version = "6.1.0"
 description = "أداة شخصية لتنسيق النصوص العربية إيقاعيًا للنشر"
 edition = "2021"
 
