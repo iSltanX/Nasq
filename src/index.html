@@ -15,29 +15,36 @@
 </head>
 <body>
   <header class="topbar">
-    <img class="app-mark" src="nasaq-mark.svg" alt="" />
-    <h1 class="app-title">نَسَق</h1>
-    <span class="app-subtitle">يرتّب النص ويجهّزه للنشر — كما كتبه صاحبه</span>
+    <!-- ثلاث مجموعات في الشريط (v6.1): طرفان مرنان متساويان يوسّطان المبدّل
+         بينهما مهما اختلف عرضهما — تقسيمة بصرية فقط، لا منطق ولا تغيّر بالوصول
+         عبر المعرّفات -->
+    <div class="topbar-side topbar-start">
+      <img class="app-mark" src="nasaq-mark.svg" alt="" />
+      <h1 class="app-title">نَسَق</h1>
+      <span class="app-subtitle">يرتّب النص ويجهّزه للنشر — كما كتبه صاحبه</span>
+    </div>
     <!-- مبدّل الوضعين (v4.4): مخفي افتراضيًا — هيكل شَذْب وحده يُظهره حين
          يكون المفتاح مفعَّلًا، وبغيابه الواجهة مطابقة لما قبله حرفيًا -->
     <div id="mode-switch" class="mode-switch" hidden>
       <button id="mode-nasaq-btn" class="mode-btn active" type="button" title="وضع التنسيق — لا تتغير كلمة">نَسَق</button>
       <button id="mode-shadhb-btn" class="mode-btn" type="button" title="وضع التشذيب — يقترح الحذف ولا يضيف، وأنت من يقرر">شَذْب</button>
     </div>
-    <button id="drafts-btn" class="ghost-btn icon-text-btn" type="button" title="المسودات المحفوظة">
-      <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M2.5 8.7 L4.2 3.8 a1 1 0 0 1 .95-.68 h5.7 a1 1 0 0 1 .95.68 L13.5 8.7 v3.3 a1.2 1.2 0 0 1-1.2 1.2 h-8.6 a1.2 1.2 0 0 1-1.2-1.2 z" />
-        <path d="M2.5 8.7 h3.3 a2.2 2.2 0 0 0 4.4 0 h3.3" />
-      </svg>
-      المسودات
-      <span id="drafts-count" class="count-badge" hidden></span>
-    </button>
-    <button id="settings-btn" class="ghost-btn icon-btn" type="button" title="الإعدادات" aria-label="الإعدادات">
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true">
-        <line x1="2" y1="4.2" x2="7.6" y2="4.2" /><line x1="12.4" y1="4.2" x2="14" y2="4.2" /><circle cx="10" cy="4.2" r="1.9" />
-        <line x1="2" y1="11.8" x2="3.6" y2="11.8" /><line x1="8.4" y1="11.8" x2="14" y2="11.8" /><circle cx="6" cy="11.8" r="1.9" />
-      </svg>
-    </button>
+    <div class="topbar-side topbar-end">
+      <button id="drafts-btn" class="ghost-btn icon-text-btn" type="button" title="المسودات المحفوظة">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M2.5 8.7 L4.2 3.8 a1 1 0 0 1 .95-.68 h5.7 a1 1 0 0 1 .95.68 L13.5 8.7 v3.3 a1.2 1.2 0 0 1-1.2 1.2 h-8.6 a1.2 1.2 0 0 1-1.2-1.2 z" />
+          <path d="M2.5 8.7 h3.3 a2.2 2.2 0 0 0 4.4 0 h3.3" />
+        </svg>
+        المسودات
+        <span id="drafts-count" class="count-badge" hidden></span>
+      </button>
+      <button id="settings-btn" class="ghost-btn icon-btn" type="button" title="الإعدادات" aria-label="الإعدادات">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <line x1="2" y1="4.2" x2="7.6" y2="4.2" /><line x1="12.4" y1="4.2" x2="14" y2="4.2" /><circle cx="10" cy="4.2" r="1.9" />
+          <line x1="2" y1="11.8" x2="3.6" y2="11.8" /><line x1="8.4" y1="11.8" x2="14" y2="11.8" /><circle cx="6" cy="11.8" r="1.9" />
+        </svg>
+      </button>
+    </div>
   </header>
 
   <section class="controls">
@@ -55,7 +62,7 @@
       <select id="platform"></select>
     </label>
     <span id="intervention-hint" class="control-hint"></span>
-    <button id="format-btn" class="primary-btn">نسّق النص</button>
+    <button id="format-btn" class="primary-btn">نسق</button>
     <!-- لوحة التنويعات — تظهر عند وجهة سابستاك فقط -->
     <button id="variations-btn" class="ghost-btn" type="button" title="ثلاث تنويعات تختلف في مواضع كسر السطر" hidden>أرِني تنويعات</button>
   </section>
@@ -68,7 +75,7 @@
         <h2>النص الخام</h2>
         <span id="input-count" class="char-count"></span>
       </div>
-      <textarea id="input-text" dir="rtl" placeholder="الصق نصّك هنا… ثم اضغط «نسّق النص» أو ⌘+Enter" spellcheck="false"></textarea>
+      <textarea id="input-text" dir="rtl" placeholder="الصق نصّك هنا… ثم اضغط «نسق» أو ⌘+Enter" spellcheck="false"></textarea>
       <!-- التوجيهات الخاصة (v4.0): قرارات موضعية لا يغطيها زر — تنسيق فقط، لا إعادة صياغة -->
       <label class="directives-field">
         <span class="directives-label">توجيهات خاصة (اختياري)</span>
@@ -84,18 +91,27 @@
     </section>
 
     <section class="pane" id="nasaq-output-pane">
+      <!-- رأس النتيجة (v6.1): العنوان والعدّاد يمينًا، وفعلا النتيجة القريبان
+           منها — العدسة والنسخ — يسارًا. بقية الأدوات في صفّها المستقل أدناه،
+           فلا يتشتّت الرأس ولا يلتفّ العنوان -->
       <div class="pane-head">
         <h2>النص المنسّق</h2>
-        <button id="fewer-lines-btn" class="tool-btn" type="button" title="سطور أقل">⇤⇥</button>
-        <button id="more-lines-btn" class="tool-btn" type="button" title="سطور أكثر">⇥⇤</button>
-        <button id="undo-btn" class="tool-btn" type="button" title="التراجع عن آخر تعديل على النتيجة — محلي، حتى ٢٠ خطوة">تراجع</button>
-        <button id="clean-btn" class="tool-btn" type="button" title="حذف السطور الفارغة من النتيجة">حذف الفراغات</button>
-        <button id="split-sentences-btn" class="tool-btn" type="button" title="كسر سطر بعد كل جملة — محلي، يتجاهل النقطة العشرية (3.14)">فصل الجمل</button>
-        <button id="save-draft-btn" class="tool-btn" type="button" title="حفظ النص الأصلي والنتيجة كمسودة محلية">حفظ كمسودة</button>
-        <button id="export-btn" class="tool-btn" type="button" title="نسخ بكسور السطر محفوظة وبلا أسطر فارغة — كما سيظهر عند النشر" hidden>تصدير لسابستاك</button>
-        <button id="reading-lens-btn" class="tool-btn" type="button" title="معاينة النص بعرض هاتف ضيّق — للعرض فقط">عدسة القراءة</button>
-        <button id="copy-btn" class="tool-btn accent" type="button" title="نسخ النتيجة">نسخ</button>
         <span id="output-count" class="char-count"></span>
+        <div class="head-actions">
+          <button id="reading-lens-btn" class="tool-btn" type="button" title="معاينة النص بعرض هاتف ضيّق — للعرض فقط">عدسة القراءة</button>
+          <button id="copy-btn" class="tool-btn accent" type="button" title="نسخ النتيجة">نسخ</button>
+        </div>
+      </div>
+      <!-- صف أدوات النتيجة (v6.1): أزرار متساوية بارتفاع واحد وحدّ خفيف بلا ظل
+           — إعادة ترتيب بصري فقط، الأزرار ومعرّفاتها ومنطقها كما هي -->
+      <div class="result-tools">
+        <button id="save-draft-btn" class="tool-btn" type="button" title="حفظ النص الأصلي والنتيجة كمسودة محلية">حفظ كمسودة</button>
+        <button id="split-sentences-btn" class="tool-btn" type="button" title="كسر سطر بعد كل جملة — محلي، يتجاهل النقطة العشرية (3.14)">فصل الجمل</button>
+        <button id="clean-btn" class="tool-btn" type="button" title="حذف السطور الفارغة من النتيجة">حذف الفراغات</button>
+        <button id="undo-btn" class="tool-btn" type="button" title="التراجع عن آخر تعديل على النتيجة — محلي، حتى ٢٠ خطوة">تراجع</button>
+        <button id="more-lines-btn" class="tool-btn" type="button" title="سطور أكثر">⇥⇤</button>
+        <button id="fewer-lines-btn" class="tool-btn" type="button" title="سطور أقل">⇤⇥</button>
+        <button id="export-btn" class="tool-btn" type="button" title="نسخ بكسور السطر محفوظة وبلا أسطر فارغة — كما سيظهر عند النشر" hidden>تصدير لسابستاك</button>
       </div>
       <div id="output-wrap" class="output-wrap">
         <div id="output-text" class="output-text" dir="rtl"></div>
@@ -202,7 +218,7 @@
           <span>Model Name</span>
           <input id="model-name" type="text" dir="ltr" autocomplete="off" />
         </label>
-        <p class="hint">أزرار المزوّدات تملأ الرابط واسم النموذج فقط ولا تغيّر المفتاح. يُحفظ كل شيء محليًا على جهازك فقط، ولا يُرسل أي نص إلا عند ضغط «نسّق النص».</p>
+        <p class="hint">أزرار المزوّدات تملأ الرابط واسم النموذج فقط ولا تغيّر المفتاح. يُحفظ كل شيء محليًا على جهازك فقط، ولا يُرسل أي نص إلا عند ضغط «نسق».</p>
         <div class="settings-actions">
           <button id="save-settings" class="primary-btn">حفظ</button>
         </div>

@@ -40,7 +40,9 @@
   --bg-input: #efe8d9;
   --text: #1c1710;
   --text-dim: #5f5747;
-  --accent: #9c7724;
+  /* الفعل الرئيس حبر داكن حاسم (مطابقة روح Figma) — الذهب لمسة واحدة فقط */
+  --accent: #1c1710;
+  --brand: #9c7724;
   --metal-rgb: 156, 119, 36;
   --accent-text: #f7f1e4;
   --tool-text: #4c4434;
@@ -51,20 +53,18 @@
      كل ظلال العمق تُشتق منه، وعلى الورق الفاتح تبقى ناعمة */
   --shadow-rgb: 84, 64, 40;
 
-  /* مشتقات تقرأ من العائلة — لا تُكرَّر في كتل الثيمات */
-  --border: rgba(var(--metal-rgb), 0.30);
-  /* حد الأزرار الثانوية: حضور يجعلها تبدو قابلة للنقر على الورق الفاتح
-     (ضبط v6.0 — أوضح قليلًا من حد الحقول لا أخفت) */
-  --tool-border: rgba(var(--metal-rgb), 0.36);
-  /* صبغة التفعيل: خلفية شفافة بمعدن الثيم للحالات النشطة — مشتقة من
-     --metal-rgb فتسري على العائلات الست تلقائيًا، وتقابلها صبغة الحُمرة
-     (--prune-tint) في قسم شَذْب أدناه */
-  --accent-tint: rgba(var(--metal-rgb), 0.13);
+  /* حدود محايدة رفيعة (مطابقة روح Figma: الحبر لا الذهب في الحدود)،
+     وصبغة تفعيل محايدة خفيفة — لا ذهب. الذهب يبقى لمسة الشعار وحده */
+  --line-rgb: 28, 23, 16;
+  --border: rgba(var(--line-rgb), 0.10);
+  --tool-border: rgba(var(--line-rgb), 0.14);
+  --accent-tint: rgba(var(--line-rgb), 0.06);
   --card-bg: var(--bg);
   --card-text: var(--text);
   --card-metal: var(--accent);
-  --backdrop: rgba(var(--shadow-rgb), 0.55);
-  --shadow: rgba(var(--shadow-rgb), 0.5);
+  /* ظلال ناعمة جدًا كـFigma — تعتيم الخلفية أخف، وظل اللوحات همسة */
+  --backdrop: rgba(var(--shadow-rgb), 0.32);
+  --shadow: rgba(var(--shadow-rgb), 0.16);
   --font-ui: "Cairo", "Geeza Pro", system-ui, sans-serif;
   --font-text: "Almarai", "Geeza Pro", system-ui, sans-serif;
 }
@@ -148,11 +148,25 @@ body {
 }
 
 /* ---------- الرأس ---------- */
+/* شريط بثلاث مجموعات (v6.1 — روح Figma): طرفان مرنان متساويان يوسّطان
+   المبدّل بينهما مهما اختلف عرض الطرفين، وبغياب المبدّل ينقسم الطرفان
+   بتوازن — العنوان يمينًا والأدوات يسارًا */
 .topbar {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 12px;
 }
+
+.topbar-side {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.topbar-start { justify-content: flex-start; }
+.topbar-end { justify-content: flex-end; }
 
 .app-mark {
   width: 22px;
@@ -163,17 +177,23 @@ body {
 }
 
 .app-title {
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 700;
   margin: 0;
-  color: var(--accent);
+  flex-shrink: 0;
+  color: var(--brand); /* لمسة الذهب الوحيدة */
 }
 
 .app-subtitle {
   font-size: 12px;
   font-weight: 300;
   color: var(--text-dim);
-  flex: 1;
+  opacity: 0.85;
+  /* يتقلّص ولا يدفع — يبقى سطرًا واحدًا وينتهي بحذف لطيف في أضيق النوافذ */
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* ---------- عناصر التحكم ---------- */
@@ -193,21 +213,19 @@ body {
 }
 
 select {
-  background: var(--bg-raised);
+  background: var(--bg);
   color: var(--text);
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 6px 10px;
   font-family: inherit;
   font-size: 13px;
-  /* مرفوعة: حافة علوية بلمحة معدن الثيم وظل خارجي دافئ — مادية ورق مقوّى */
-  box-shadow:
-    inset 0 1px 0 rgba(var(--metal-rgb), 0.1),
-    0 1px 2px rgba(var(--shadow-rgb), 0.45);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  /* قائمة ناعمة كـFigma: حدّ رفيع، خلفية ورقية، بلا ظل ولا حافة معدنية */
+  transition: border-color 0.2s ease, background-color 0.2s ease;
 }
 
-select:focus { border-color: var(--accent); outline: none; }
+select:hover { border-color: rgba(var(--line-rgb), 0.2); }
+select:focus { border-color: rgba(var(--line-rgb), 0.28); outline: none; }
 
 /* تلميح قصير بجانب عناصر التحكم — يشرح سلوك «تنظيف فقط» المحلي */
 .control-hint {
@@ -220,56 +238,44 @@ select:focus { border-color: var(--accent); outline: none; }
   text-align: start;
 }
 
+/* الفعل الرئيس بسيط حاسم (روح Figma): حبر داكن مضبوط بارتفاع قريب من
+   القوائم والأدوات المجاورة — صغير ومرتّب ضمن منظومة الأدوات لا كتلة منفصلة */
 .primary-btn {
   background: var(--accent);
   color: var(--accent-text);
   border: none;
   border-radius: 8px;
-  padding: 8px 24px;
+  padding: 6px 18px;
   font-family: inherit;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
+  line-height: 1.4;
   cursor: pointer;
-  /* مرفوع بظل دافئ من مثلث الثيم — مادية الجلد لا البلاستيك، وبلا scale */
-  box-shadow: 0 1px 2px rgba(var(--shadow-rgb), 0.5), 0 3px 8px rgba(var(--shadow-rgb), 0.35);
-  transition: filter 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+  transition: opacity 0.2s ease;
 }
 
-.primary-btn:hover { filter: brightness(1.08); }
-
-/* الضغط: تغميق خفيف للمعدن وتحوّل الظل للداخل — استجابة لونية لا حركية */
-.primary-btn:active:not(:disabled) {
-  filter: brightness(0.94);
-  box-shadow: inset 0 1px 3px rgba(var(--shadow-rgb), 0.55);
-}
-
-.primary-btn:disabled { opacity: 0.4; cursor: default; }
+.primary-btn:hover { opacity: 0.82; }
+.primary-btn:active:not(:disabled) { opacity: 0.7; }
+.primary-btn:disabled { opacity: 0.3; cursor: default; }
 
 .ghost-btn {
   background: transparent;
   color: var(--text-dim);
-  /* حد الأزرار الثانوية الهادئ نفسه — لا حد الحقول الأوضح */
   border: 1px solid var(--tool-border);
   border-radius: 8px;
   padding: 5px 12px;
   font-family: inherit;
   font-size: 12px;
   cursor: pointer;
-  /* حافة علوية بلمحة معدن وظل دافئ خفيف — قابلية النقر دون منافسة الممتلئ */
-  box-shadow:
-    inset 0 1px 0 rgba(var(--metal-rgb), 0.08),
-    0 1px 2px rgba(var(--shadow-rgb), 0.4);
+  /* مسطّح كـFigma: حدّ رفيع محايد بلا ظل ولا حافة معدنية */
   transition: color 0.2s ease, border-color 0.2s ease, background-color 0.2s ease,
-    box-shadow 0.2s ease, opacity 0.2s ease;
+    opacity 0.2s ease;
 }
 
-/* التحويم: تفتيح المعدن في الحد — لا قفزة لونية */
-.ghost-btn:hover { color: var(--text); border-color: rgba(var(--metal-rgb), 0.5); }
+/* التحويم: تعتيم خفيف محايد للخلفية — لا قفزة لونية */
+.ghost-btn:hover { color: var(--text); background: var(--accent-tint); }
 
-.ghost-btn:active {
-  background: rgba(var(--metal-rgb), 0.08);
-  box-shadow: inset 0 1px 3px rgba(var(--shadow-rgb), 0.45);
-}
+.ghost-btn:active { background: rgba(var(--line-rgb), 0.1); }
 
 /* زر أيقونة فقط (الإعدادات، الإغلاق): مربع صغير هادئ */
 .icon-btn {
@@ -290,14 +296,21 @@ select:focus { border-color: var(--accent); outline: none; }
 
 .icon-text-btn svg { flex-shrink: 0; }
 
-/* عدّاد المسودات الصغير على الزر */
+/* أزرار الشريط العلوي (مسودات/إعدادات) بلا صندوق — أيقونات خفيفة كـFigma */
+.topbar .ghost-btn {
+  border-color: transparent;
+  color: var(--text-dim);
+}
+.topbar .ghost-btn:hover { background: var(--accent-tint); border-color: transparent; }
+
+/* عدّاد المسودات: شارة صغيرة محايدة هادئة — لا بطاقة ذهبية */
 .count-badge {
-  background: var(--accent);
-  color: var(--accent-text);
+  background: rgba(var(--line-rgb), 0.09);
+  color: var(--text-dim);
   border-radius: 9px;
   padding: 0 6px;
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 15px;
   direction: ltr;
 }
@@ -361,19 +374,39 @@ select:focus { border-color: var(--accent); outline: none; }
   direction: rtl;
 }
 
+/* رأس النتيجة (v6.1): العنوان لا يلتفّ، والعدّاد ملاصق له يمينًا، وفعلا
+   النتيجة القريبان (العدسة والنسخ) يُدفعان إلى أقصى اليسار كصفٍّ صغير تابع */
+#nasaq-output-pane .pane-head { flex-wrap: nowrap; }
+#nasaq-output-pane .pane-head h2 {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+.head-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-inline-start: auto;
+}
+
+/* صف أدوات النتيجة (v6.1): أزرار .tool-btn متساوية بارتفاع واحد وحدّ خفيف
+   بلا ظل — صفٌّ هادئ تابع للنتيجة لا يزاحم اللوحة ولا يطفو بعيدًا */
+.result-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+}
+
 textarea, .output-wrap {
   flex: 1;
   min-height: 0;
   background: var(--bg-input);
   border: 1px solid var(--border);
   border-radius: 10px;
-  /* غائرة مستعدة للنص: ظل داخلي دافئ من مثلث الثيم، وشفة سفلية بلمحة
-     معدن خافتة كضوء يلامس حافة الورقة — لا أبيض ولا زجاج */
-  box-shadow:
-    inset 0 2px 6px rgba(var(--shadow-rgb), 0.45),
-    inset 0 -1px 0 rgba(var(--metal-rgb), 0.07);
+  /* حقل نظيف كـFigma: حدّ رفيع فقط بلا ظل غائر ولا حافة معدنية */
   caret-color: var(--accent);
-  transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
 textarea {
@@ -415,14 +448,12 @@ textarea.empty-bidi {
   line-height: 1.6;
   border-color: var(--tool-border);
   border-radius: 8px;
-  box-shadow: inset 0 1px 4px rgba(var(--shadow-rgb), 0.35);
+  background: var(--bg);
 }
 
-/* التفعيل: خلفية الحقل تُضاء درجة واحدة نحو الدفء وتُؤطَّر بحد رفيع بمعدن
-   الثيم — توجيه هادئ لعين الكاتب، لا توهّج. لا حلقة تركيز باردة */
+/* التفعيل: حدّ أوضح قليلًا فقط — توجيه هادئ لعين الكاتب بلا توهّج ولا خلفية قافزة */
 textarea:focus {
-  border-color: var(--accent);
-  background: var(--bg-raised);
+  border-color: rgba(var(--line-rgb), 0.24);
   outline: none;
 }
 
@@ -494,13 +525,22 @@ textarea:focus {
   padding: 2px 2px 0;
 }
 
-/* ---------- الملاحظات ---------- */
+/* ---------- الملاحظات («ما تغيّر») ---------- */
+/* صندوق هادئ تابع للنتيجة (v6.1): حدّ خفيف وعنوان مضبوط وارتفاع غير مبالغ،
+   نصّه الثانوي مقروء — مطابقة روح Figma بلا ظل ولا ثقل */
 .notes {
   font-size: 12px;
   color: var(--text-dim);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
 }
 
-.notes summary { cursor: pointer; }
+.notes summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--tool-text);
+}
 
 .notes ul {
   margin: 6px 0 0;
@@ -711,7 +751,7 @@ textarea:focus {
   font-size: 13px;
   font-family: inherit;
   outline: none;
-  box-shadow: inset 0 1px 4px rgba(var(--shadow-rgb), 0.4);
+  box-shadow: none;
   caret-color: var(--accent);
   transition: border-color 0.2s ease, background-color 0.2s ease;
 }
@@ -930,7 +970,7 @@ textarea:focus {
   outline: none;
   width: 100%;
   /* غائر بظل داخلي دافئ خفيف، والمؤشر بمعدن الثيم */
-  box-shadow: inset 0 1px 4px rgba(var(--shadow-rgb), 0.4);
+  box-shadow: none;
   caret-color: var(--accent);
   transition: border-color 0.2s ease, background-color 0.2s ease;
 }
@@ -992,24 +1032,18 @@ textarea:focus {
   font-size: 12px;
   cursor: pointer;
   direction: ltr; /* حتى لا يعكس اتجاهُ الصفحة رمزَي الأسهم */
-  /* حافة علوية بلمحة معدن وظل دافئ خفيف — كأزرار الحد الرفيع كلها */
-  box-shadow:
-    inset 0 1px 0 rgba(var(--metal-rgb), 0.08),
-    0 1px 2px rgba(var(--shadow-rgb), 0.4);
+  /* مسطّح كـFigma: حدّ رفيع محايد بلا ظل، وارتفاع موحّد */
   transition: color 0.2s ease, border-color 0.2s ease, background-color 0.2s ease,
-    box-shadow 0.2s ease, opacity 0.2s ease, filter 0.2s ease;
+    opacity 0.2s ease;
 }
 
-/* التحويم: تفتيح المعدن في الحد */
+/* التحويم: تعتيم خفيف محايد للخلفية */
 .tool-btn:hover {
   color: var(--text);
-  border-color: rgba(var(--metal-rgb), 0.5);
+  background: var(--accent-tint);
 }
 
-.tool-btn:not(.accent):active {
-  background: rgba(var(--metal-rgb), 0.08);
-  box-shadow: inset 0 1px 3px rgba(var(--shadow-rgb), 0.45);
-}
+.tool-btn:not(.accent):active { background: rgba(var(--line-rgb), 0.1); }
 
 /* أثناء نداء «سطور أقل/أكثر» عبر النموذج */
 .tool-btn:disabled {
@@ -1017,26 +1051,21 @@ textarea:focus {
   cursor: default;
 }
 
-/* زر النسخ: خلفية واضحة بلون الزر الرئيسي، لكنه أصغر حتى لا ينافسه */
+/* زر النسخ: تمييز هادئ بنص أوضح وحدّ خفيف — لا ذهب مملوء ولا ظل */
 .tool-btn.accent {
-  background: var(--accent);
-  color: var(--accent-text);
-  border-color: var(--accent);
-  font-weight: 700;
+  color: var(--text);
+  border-color: rgba(var(--line-rgb), 0.2);
+  font-weight: 600;
   padding: 4px 14px;
-  box-shadow: 0 1px 2px rgba(var(--shadow-rgb), 0.5), 0 2px 6px rgba(var(--shadow-rgb), 0.3);
 }
 
 .tool-btn.accent:hover {
-  color: var(--accent-text);
-  border-color: var(--accent);
-  filter: brightness(1.08);
+  color: var(--text);
+  background: var(--accent-tint);
+  border-color: rgba(var(--line-rgb), 0.28);
 }
 
-.tool-btn.accent:active:not(:disabled) {
-  filter: brightness(0.94);
-  box-shadow: inset 0 1px 3px rgba(var(--shadow-rgb), 0.55);
-}
+.tool-btn.accent:active:not(:disabled) { background: rgba(var(--line-rgb), 0.1); }
 
 /* ---------- لوحة تنويعات سابستاك: صيغة المخطوطة ----------
    البطاقات ضمن نظام الثيمات: تقرأ متغيرات البطاقة (--card-bg/--card-text/
@@ -1293,7 +1322,7 @@ textarea:focus {
   border-radius: 20px;
   background: var(--bg-input);
   padding: 18px 16px;
-  box-shadow: inset 0 1px 4px rgba(var(--shadow-rgb), 0.4);
+  box-shadow: none;
   max-height: 70vh;
   overflow-y: auto;
 }
@@ -1341,43 +1370,42 @@ textarea:focus {
    الخاصة — التفعيل صبغة وحد رقيق لا تعبئة صلبة تُقص عند حواف الحاوية،
    فزال الكسر البصري. الذهب لنسق والحُمرة لشَذْب، والوزن ثابت فلا يقفز
    عرض الزر بين الحالتين */
+/* المبدّل (روح Figma): مسار دائري ناعم، والزر النشط حبّة ورقية بظل رفيع */
 .mode-switch {
   display: flex;
   gap: 2px;
-  padding: 2px;
-  background: var(--bg-input);
-  border: 1px solid var(--tool-border);
-  border-radius: 8px;
+  padding: 3px;
+  background: rgba(var(--line-rgb), 0.06);
+  border: none;
+  border-radius: 999px;
   flex-shrink: 0;
-  align-self: center;
-  margin-inline-end: 10px;
+  /* التوسيط يأتي من الطرفين المرنين حوله (v6.1) — لا هامش خاص */
 }
 
 .mode-btn {
   background: transparent;
   color: var(--text-dim);
-  border: 1px solid transparent;
-  border-radius: 6px;
-  padding: 4px 14px;
-  font-size: 12px;
+  border: none;
+  border-radius: 999px;
+  padding: 4px 16px;
+  font-size: 12.5px;
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
   line-height: 1.4;
   white-space: nowrap;
-  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+  transition: color 0.2s ease, background-color 0.2s ease;
 }
 
 .mode-btn.active {
-  color: var(--accent);
-  background: var(--accent-tint);
-  border-color: rgba(var(--metal-rgb), 0.35);
+  color: var(--text);
+  background: var(--bg);
+  box-shadow: 0 1px 3px rgba(var(--shadow-rgb), 0.22);
 }
 
+/* هوية شَذْب همسة: نص حُمرة على الحبّة الورقية نفسها — لا صبغة صاخبة */
 #mode-shadhb-btn.active {
   color: var(--prune-accent);
-  background: var(--prune-tint);
-  border-color: rgba(var(--prune-rgb), 0.35);
 }
 
 /* الإظهار كله بقيادة data-mode: لوحة شَذْب محل لوحة النتيجة، وأدوات نسق
@@ -1408,27 +1436,23 @@ textarea:focus {
   padding-top: 4px;
 }
 
-/* زر «افحص الشذرة»: قرين «نسّق النص» في الحجم والمادية — بحُمرة المصحِّح */
+/* زر «افحص الشذرة»: قرين «رتّب» بساطةً — بحُمرة المصحِّح، مسطّح بلا ظل */
 .prune-primary-btn {
   background: var(--prune-accent);
   color: var(--accent-text);
   border: none;
   border-radius: 8px;
-  padding: 8px 24px;
+  padding: 7px 20px;
   font-family: inherit;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
-  box-shadow: 0 1px 2px rgba(var(--shadow-rgb), 0.5), 0 3px 8px rgba(var(--shadow-rgb), 0.35);
-  transition: filter 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+  transition: opacity 0.2s ease;
 }
 
-.prune-primary-btn:hover { filter: brightness(1.08); }
+.prune-primary-btn:hover { opacity: 0.82; }
 
-.prune-primary-btn:active:not(:disabled) {
-  filter: brightness(0.94);
-  box-shadow: inset 0 1px 3px rgba(var(--shadow-rgb), 0.55);
-}
+.prune-primary-btn:active:not(:disabled) { opacity: 0.7; }
 
 .prune-primary-btn:disabled { opacity: 0.4; cursor: default; }
 
@@ -1463,7 +1487,7 @@ textarea:focus {
 /* بطاقة القراءة: وصف يسبق المقص — إجابات أسئلة المشذِّب عن هذا النص */
 .reading-card {
   background: var(--bg-raised);
-  border: 1px solid rgba(var(--metal-rgb), 0.18);
+  border: 1px solid var(--border);
   border-radius: 10px;
   padding: 10px 14px;
   display: grid;
@@ -1473,7 +1497,7 @@ textarea:focus {
 }
 
 .reading-card .card-label {
-  color: var(--accent);
+  color: var(--text-dim);
 }
 
 /* قيم البطاقة من عالم نصّ الكاتب (الجملة المركزية اقتباس حرفي) — خط المتن */
@@ -1541,7 +1565,7 @@ textarea:focus {
 
 .cut-entry.kept {
   background: transparent;
-  border-color: rgba(var(--metal-rgb), 0.3);
+  border-color: var(--tool-border);
   opacity: 0.85;
 }
 
@@ -1612,7 +1636,7 @@ textarea:focus {
 
 .cut-keep:hover {
   color: var(--text);
-  border-color: rgba(var(--metal-rgb), 0.5);
+  background: var(--accent-tint);
 }
 
 .cut-do {
@@ -1637,8 +1661,8 @@ textarea:focus {
 }
 
 .cut-chip.kept {
-  border: 1px solid rgba(var(--metal-rgb), 0.35);
-  color: var(--accent);
+  border: 1px solid var(--tool-border);
+  color: var(--text-dim);
 }
 
 .cut-chip.stale {
@@ -1715,8 +1739,8 @@ textarea:focus {
 .send-to-nasaq-btn {
   width: 100%;
   background: var(--accent-tint);
-  color: var(--accent);
-  border: 1px solid rgba(var(--metal-rgb), 0.3);
+  color: var(--text);
+  border: 1px solid var(--tool-border);
   border-radius: 8px;
   padding: 8px 0;
   font-family: inherit;
@@ -1727,6 +1751,6 @@ textarea:focus {
 }
 
 .send-to-nasaq-btn:hover {
-  background: rgba(var(--metal-rgb), 0.22);
-  border-color: rgba(var(--metal-rgb), 0.45);
+  background: rgba(var(--line-rgb), 0.1);
+  border-color: rgba(var(--line-rgb), 0.2);
 }
