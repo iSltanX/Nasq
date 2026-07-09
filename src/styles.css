@@ -374,8 +374,9 @@ select:focus { border-color: rgba(var(--line-rgb), 0.28); outline: none; }
   direction: rtl;
 }
 
-/* رأس النتيجة (v6.1): العنوان لا يلتفّ، والعدّاد ملاصق له يمينًا، وفعلا
-   النتيجة القريبان (العدسة والنسخ) يُدفعان إلى أقصى اليسار كصفٍّ صغير تابع */
+/* رأس النتيجة (v6.1.1): كتلة واحدة مجمّعة يمينًا — العنوان، فعدّاده ملاصقًا،
+   ففعلاه الصغيران (العدسة والنسخ) تباعًا بلا فراغ ضخم يفصلها. الأدوات في
+   صفّها أدناه بالمحاذاة نفسها فتقرأ المنطقة كتلةً لا جزرًا متفرّقة */
 #nasaq-output-pane .pane-head { flex-wrap: nowrap; }
 #nasaq-output-pane .pane-head h2 {
   flex: 0 0 auto;
@@ -385,11 +386,10 @@ select:focus { border-color: rgba(var(--line-rgb), 0.28); outline: none; }
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-inline-start: auto;
 }
 
 /* صف أدوات النتيجة (v6.1): أزرار .tool-btn متساوية بارتفاع واحد وحدّ خفيف
-   بلا ظل — صفٌّ هادئ تابع للنتيجة لا يزاحم اللوحة ولا يطفو بعيدًا */
+   بلا ظل — صفٌّ هادئ تابع للنتيجة بالمحاذاة نفسها، ملاصق للرأس لا منفصلًا */
 .result-tools {
   display: flex;
   flex-wrap: wrap;

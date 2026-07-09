@@ -61,10 +61,13 @@
       <span>المنصة</span>
       <select id="platform"></select>
     </label>
-    <span id="intervention-hint" class="control-hint"></span>
+    <!-- الفعل الرئيس ملاصق للقوائم يمينًا (v6.1.1): ضمن منظومة أوامر التنسيق
+         الأقرب لخانة الإدخال، لا يطفو وحده فوق عمود النتيجة -->
     <button id="format-btn" class="primary-btn">نسق</button>
     <!-- لوحة التنويعات — تظهر عند وجهة سابستاك فقط -->
     <button id="variations-btn" class="ghost-btn" type="button" title="ثلاث تنويعات تختلف في مواضع كسر السطر" hidden>أرِني تنويعات</button>
+    <!-- التلميح يملأ ما تبقّى يسارًا فتبقى الأوامر مجمّعة يمينًا قرب القوائم -->
+    <span id="intervention-hint" class="control-hint"></span>
   </section>
 
   <div id="error-bar" class="error-bar" hidden></div>
