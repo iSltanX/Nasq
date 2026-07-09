@@ -30,134 +30,89 @@
 }
 
 :root {
-  /* صيغة المخطوطة: داكن دافئ + فاتح دافئ + معدن هادئ.
-     كل ثيم يعرّف عائلته فقط (الخلفيات، النصوص، المعدن ومثلثه الرقمي
-     --metal-rgb)، والمشتقات أدناه (الحدود وألوان البطاقات) تُحسب من العائلة
-     تلقائيًا — وصلة الثيمات بالألوان كلها تمر من هنا، والبطاقات ضمن النظام.
-     الافتراضي «نسق الداكن»: حبر ليلي + ورق عتيق + ذهب هادئ (المرجع). */
-  --bg: #12100c;
-  --bg-raised: #1a1712;
-  --bg-input: #0d0b08;
-  --text: #f1e8d8;
-  --text-dim: #b9aa91;
-  --accent: #d8b45f;
-  --metal-rgb: 216, 180, 95;
-  --accent-text: #12100c;
-  --tool-text: #cdc3ab;
-  --error-bg: #3a2620;
-  --error-text: #e2b1a5;
-  --veil: rgba(18, 16, 12, 0.85);
-  /* مثلث الظل الدافئ: أسود دافئ/بني محروق من حرارة العائلة — لا رمادي بارد.
-     كل ثيم يعرّف مثلثه، وكل ظلال العمق تُشتق منه */
-  --shadow-rgb: 8, 5, 2;
+  /* صيغة المخطوطة الفاتحة (v6.0 — اعتماد المظهر الفاتح هويةً أساسية):
+     ورق دافئ فاتح + حبر داكن للمتن + معدن ذهبي هادئ. البنية نفسها حرفيًا
+     (المتغيرات والمشتقات)، تغيّرت القيم فقط — لا تخطيط ولا منطق تغيّر.
+     كل ثيم يعرّف معدنه، والمشتقات أدناه تُحسب منه تلقائيًا.
+     الهرمية (v6.0): المتن حبر داكن واضح، والثانوي رمادي دافئ مقروء لا باهت. */
+  --bg: #f4efe6;
+  --bg-raised: #ece4d4;
+  --bg-input: #efe8d9;
+  --text: #1c1710;
+  --text-dim: #5f5747;
+  --accent: #9c7724;
+  --metal-rgb: 156, 119, 36;
+  --accent-text: #f7f1e4;
+  --tool-text: #4c4434;
+  --error-bg: #f1dccf;
+  --error-text: #8c3f22;
+  --veil: rgba(244, 239, 230, 0.82);
+  /* مثلث الظل الدافئ الفاتح: بني دافئ خافت — لا رمادي بارد، ولا أسود حاد.
+     كل ظلال العمق تُشتق منه، وعلى الورق الفاتح تبقى ناعمة */
+  --shadow-rgb: 84, 64, 40;
 
   /* مشتقات تقرأ من العائلة — لا تُكرَّر في كتل الثيمات */
-  --border: rgba(var(--metal-rgb), 0.35);
-  /* حد الأزرار الثانوية: أخفت درجةً من حد الحقول (صقل v3.1) —
-     حضور يميّز الزر دون منافسة المعدن الممتلئ في «نسّق النص» و«نسخ» */
-  --tool-border: rgba(var(--metal-rgb), 0.22);
-  /* صبغة التفعيل (v5.1): خلفية شفافة بمعدن الثيم للحالات النشطة — مشتقة
-     من --metal-rgb فتسري على العائلات الست تلقائيًا، وتقابلها صبغة
-     الحُمرة (--prune-tint) في قسم شَذْب أدناه */
-  --accent-tint: rgba(var(--metal-rgb), 0.14);
+  --border: rgba(var(--metal-rgb), 0.30);
+  /* حد الأزرار الثانوية: حضور يجعلها تبدو قابلة للنقر على الورق الفاتح
+     (ضبط v6.0 — أوضح قليلًا من حد الحقول لا أخفت) */
+  --tool-border: rgba(var(--metal-rgb), 0.36);
+  /* صبغة التفعيل: خلفية شفافة بمعدن الثيم للحالات النشطة — مشتقة من
+     --metal-rgb فتسري على العائلات الست تلقائيًا، وتقابلها صبغة الحُمرة
+     (--prune-tint) في قسم شَذْب أدناه */
+  --accent-tint: rgba(var(--metal-rgb), 0.13);
   --card-bg: var(--bg);
   --card-text: var(--text);
   --card-metal: var(--accent);
-  --backdrop: rgba(var(--shadow-rgb), 0.65);
-  --shadow: rgba(var(--shadow-rgb), 0.55);
+  --backdrop: rgba(var(--shadow-rgb), 0.55);
+  --shadow: rgba(var(--shadow-rgb), 0.5);
   --font-ui: "Cairo", "Geeza Pro", system-ui, sans-serif;
   --font-text: "Almarai", "Geeza Pro", system-ui, sans-serif;
 }
 
 /* ---------- الثيمات ----------
-   ست عائلات على صيغة المخطوطة نفسها (داكن دافئ + فاتح دافئ + معدن هادئ)،
-   تختلف بحرارة المعدن ومسحة الداكن فقط — لا عائلة باردة. التبديل عبر
-   data-theme على الجذر، والبطاقات (لوحة التنويعات) تقرأ المتغيرات نفسها
-   فتتبع الثيم. «نسق الداكن» هو الافتراضي في :root أعلاه. */
+   ست عائلات على صيغة المخطوطة الفاتحة نفسها (ورق دافئ + حبر داكن + معدن
+   هادئ)، تختلف بحرارة المعدن ومسحة الورق فقط — لا عائلة باردة. التبديل
+   عبر data-theme على الجذر. كل ثيم يرث الأساس الفاتح من :root ويغيّر معدنه
+   ومسحة ورقه فقط (v6.0 — تبسيط: القيمة المشتركة تبقى في :root). */
 
 [data-theme="ink"] {
-  /* حبر هادئ: داكن أعمق قليلًا + ذهب أخفت */
-  --bg: #0d0b08;
-  --bg-raised: #141109;
-  --bg-input: #080705;
-  --text: #e2d9c8;
-  --text-dim: #a49a84;
-  --accent: #b3924e;
-  --metal-rgb: 179, 146, 78;
-  --accent-text: #0d0b08;
-  --tool-text: #c5bba2;
-  --error-bg: #362420;
-  --error-text: #ddaea1;
-  --veil: rgba(13, 11, 8, 0.85);
-  --shadow-rgb: 5, 4, 2;
+  /* ذهب هادئ: ورق ناصع + ذهب أخفت */
+  --bg: #f6f2ea;
+  --bg-raised: #efe9dd;
+  --accent: #8f7030;
+  --metal-rgb: 143, 112, 48;
 }
 
 [data-theme="paper"] {
-  /* ورق دافئ: داكن بنّي دافئ + معدن نحاسي */
-  --bg: #1b120b;
-  --bg-raised: #251912;
-  --bg-input: #140d07;
-  --text: #eee1d2;
-  --text-dim: #b5a58f;
-  --accent: #c98a5a;
-  --metal-rgb: 201, 138, 90;
-  --accent-text: #1b120b;
-  --tool-text: #d0bfa9;
-  --error-bg: #40261c;
-  --error-text: #e6b3a0;
-  --veil: rgba(27, 18, 11, 0.85);
-  --shadow-rgb: 12, 6, 2;
+  /* نحاس دافئ: ورق كريمي + معدن نحاسي */
+  --bg: #f5eee1;
+  --bg-raised: #ece2d1;
+  --accent: #a5673a;
+  --metal-rgb: 165, 103, 58;
 }
 
 [data-theme="night"] {
-  /* برونز: داكن زيتوني دافئ + معدن برونزي */
-  --bg: #131006;
-  --bg-raised: #1c170b;
-  --bg-input: #0d0b04;
-  --text: #e6ddc4;
-  --text-dim: #aaa084;
-  --accent: #ad8b45;
-  --metal-rgb: 173, 139, 69;
-  --accent-text: #131006;
-  --tool-text: #c9bfa0;
-  --error-bg: #38251c;
-  --error-text: #dfae9e;
-  --veil: rgba(19, 16, 6, 0.85);
-  --shadow-rgb: 9, 7, 2;
+  /* برونز فاتح: ورق زيتوني خافت + معدن برونزي */
+  --bg: #f3f0e4;
+  --bg-raised: #eae6d5;
+  --accent: #8d7738;
+  --metal-rgb: 141, 119, 56;
 }
 
 [data-theme="sand"] {
-  /* فضة دافئة: داكن ترابي + معدن فضي دافئ */
-  --bg: #171310;
-  --bg-raised: #211b16;
-  --bg-input: #100d0a;
-  --text: #eae3d7;
-  --text-dim: #aea595;
-  --accent: #c8beac;
-  --metal-rgb: 200, 190, 172;
-  --accent-text: #171310;
-  --tool-text: #cfc7b8;
-  --error-bg: #3a2822;
-  --error-text: #e0b2a6;
-  --veil: rgba(23, 19, 16, 0.85);
-  --shadow-rgb: 11, 8, 5;
+  /* فضة دافئة: ورق رملي محايد + معدن فضي دافئ */
+  --bg: #f4f1ea;
+  --bg-raised: #eae5da;
+  --accent: #7f7562;
+  --metal-rgb: 127, 117, 98;
 }
 
 [data-theme="ash"] {
-  /* لؤلؤ عتيق: داكن دافئ بمسحة وردية + معدن لؤلئي كريمي */
-  --bg: #1a1512;
-  --bg-raised: #241d19;
-  --bg-input: #130f0c;
-  --text: #ede5da;
-  --text-dim: #b2a898;
-  --accent: #d9cbb6;
-  --metal-rgb: 217, 203, 182;
-  --accent-text: #1a1512;
-  --tool-text: #d2c9bb;
-  --error-bg: #3b2823;
-  --error-text: #e2b4a8;
-  --veil: rgba(26, 21, 18, 0.85);
-  --shadow-rgb: 13, 9, 6;
+  /* لؤلؤ عتيق: ورق بمسحة وردية + معدن لؤلئي رمادي */
+  --bg: #f6f0ea;
+  --bg-raised: #ede5dd;
+  --accent: #857a68;
+  --metal-rgb: 133, 122, 104;
 }
 
 * {
@@ -1368,17 +1323,18 @@ textarea:focus {
    الخلفيات والنصوص والثيمات الست كما هي، ولوحة شَذْب تظهر عبر data-mode
    على الجذر — بغيابه لا أثر لشيء من هذا إطلاقًا */
 :root {
-  --prune-accent: #d96f52;
-  --prune-rgb: 217, 111, 82;
+  /* حُمرة المصحِّح — مُعمّقة لتُقرأ على الورق الفاتح (v6.0)، تبقى إشارة وضع لا ثيمًا */
+  --prune-accent: #b3583a;
+  --prune-rgb: 179, 88, 58;
   /* صبغة تفعيل الحُمرة — مقابل --accent-tint الذهبية في الأساس المشترك */
-  --prune-tint: rgba(var(--prune-rgb), 0.14);
+  --prune-tint: rgba(var(--prune-rgb), 0.13);
   /* لونا حالة ثابتان عبر الثيمات (حالة لا هوية): شهادة الضمانة زيتونية
-     هادئة، وتنبيه الإسقاط كهرمان هادئ — رسالة تقنية لا إنذار */
-  --verify-green: #8fa36a;
-  --verify-bg: rgba(143, 163, 106, 0.12);
-  --verify-border: rgba(143, 163, 106, 0.3);
-  --warn-bg: rgba(201, 154, 74, 0.1);
-  --warn-border: rgba(201, 154, 74, 0.28);
+     هادئة، وتنبيه الإسقاط كهرمان هادئ — رسالة تقنية لا إنذار، مُعمّقان للورق */
+  --verify-green: #5f7a45;
+  --verify-bg: rgba(95, 122, 69, 0.14);
+  --verify-border: rgba(95, 122, 69, 0.32);
+  --warn-bg: rgba(168, 120, 45, 0.12);
+  --warn-border: rgba(168, 120, 45, 0.32);
 }
 
 /* المبدّل (أعيد بناؤه في v5.1): حاوية غائرة بحشوة داخلية وكل زر بزواياه
@@ -1435,7 +1391,7 @@ textarea:focus {
 .shadhb-covenant-hint {
   font-size: 11px;
   font-weight: 300;
-  color: #d8a08c;
+  color: #9c5238;
   border-inline-start: 2px solid var(--prune-accent);
   padding: 2px 10px;
 }
@@ -1455,7 +1411,7 @@ textarea:focus {
 /* زر «افحص الشذرة»: قرين «نسّق النص» في الحجم والمادية — بحُمرة المصحِّح */
 .prune-primary-btn {
   background: var(--prune-accent);
-  color: #12100c;
+  color: var(--accent-text);
   border: none;
   border-radius: 8px;
   padding: 8px 24px;
@@ -1676,7 +1632,7 @@ textarea:focus {
 
 .cut-chip.cut {
   background: var(--prune-accent);
-  color: #12100c;
+  color: var(--accent-text);
   font-weight: 700;
 }
 
