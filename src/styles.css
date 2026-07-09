@@ -42,7 +42,10 @@
   --text-dim: #5f5747;
   /* الفعل الرئيس حبر داكن حاسم (مطابقة روح Figma) — الذهب لمسة واحدة فقط */
   --accent: #1c1710;
-  --brand: #9c7724;
+  /* ذهب العنوان مُعمّق (v6.2 — الإصلاح ١-و): كان #9c7724 بتباين 3.6:1 على
+     الورق، والقيمة الجديدة تبلغ ≥4.5:1 على أفتح ورق العائلات الست مع بقاء
+     الصبغة الذهبية نفسها */
+  --brand: #7a5c14;
   --metal-rgb: 156, 119, 36;
   --accent-text: #f7f1e4;
   --tool-text: #4c4434;
@@ -116,7 +119,7 @@
 }
 
 /* ---------- الوضع الليلي ----------
-   طبقة مستقلة عن عائلة الثيم (v6.2): مفتاحها data-appearance لا data-theme،
+   طبقة مستقلة عن عائلة الثيم (أُضيفت في v6.1): مفتاحها data-appearance لا data-theme،
    فتُعتِّم الخلفية والنص فقط بنخبة ليلية واحدة موحّدة — لا نسخة ليلية لكل
    عائلة معدن. تفوز على [data-theme] لتساوي الخصوصية وتأخّر الترتيب في الملف،
    فتُعتّم فوق أي عائلة مختارة سلفًا. المشتقات (الحدود/الظلال/بطاقات
@@ -172,19 +175,37 @@ html, body {
 body {
   display: flex;
   flex-direction: column;
-  /* حشوة سفلية أوسع (v5.1): مساحة تنفّس تحت اللوحات فلا يلاصق زرٌّ الحافة */
-  padding: 14px 20px 22px;
-  gap: 12px;
+  /* بنية v6.2 (مرجع التصميم): صفوف بعرض النافذة تفصلها خطوط رفيعة —
+     الحشوة داخل كل صف لا على الجسد، فالفواصل تمتد من حافة لحافة */
+  padding: 0;
+  gap: 0;
+}
+
+/* أداة إخفاء بصري تُبقي النص لقارئات الشاشة — تسميات القوائم الثلاث */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 /* ---------- الرأس ---------- */
 /* شريط بثلاث مجموعات (v6.1 — روح Figma): طرفان مرنان متساويان يوسّطان
    المبدّل بينهما مهما اختلف عرض الطرفين، وبغياب المبدّل ينقسم الطرفان
-   بتوازن — العنوان يمينًا والأدوات يسارًا */
+   بتوازن — العنوان يمينًا والأدوات يسارًا. v6.2: فاصل رفيع أسفله بعرض
+   النافذة، والحشوة داخل الشريط نفسه */
 .topbar {
   display: flex;
   align-items: center;
   gap: 12px;
+  min-height: 48px;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--border);
 }
 
 .topbar-side {
@@ -206,7 +227,7 @@ body {
   margin-inline-end: 5px; /* مسافة إضافية بين الرمز وكلمة «نَسَق» فوق فجوة الرأس */
 }
 
-/* توأما الرمز (v6.3): نسخة الورق الفاتح ونسخة الوضع الليلي بالهندسة نفسها
+/* توأما الرمز (أُضيفا في v6.1): نسخة الورق الفاتح ونسخة الوضع الليلي بالهندسة نفسها
    والحجم والموضع نفسيهما — data-appearance وحده يبدّل أيّهما ظاهر، فالرمز
    لا يبقى ملصقًا أبيض فوق الخلفية الداكنة */
 .app-mark-dark { display: none; }
@@ -225,7 +246,10 @@ body {
   font-size: 12px;
   font-weight: 300;
   color: var(--text-dim);
-  opacity: 0.85;
+  opacity: 0.75;
+  /* شعار جانبي بفاصل رأسي رفيع عن الاسم (v6.2 — مرجع التصميم) */
+  border-inline-start: 1px solid var(--border);
+  padding-inline-start: 10px;
   /* يتقلّص ولا يدفع — يبقى سطرًا واحدًا وينتهي بحذف لطيف في أضيق النوافذ */
   min-width: 0;
   overflow: hidden;
@@ -234,57 +258,121 @@ body {
 }
 
 /* ---------- عناصر التحكم ---------- */
+/* صف المحاور (v6.2 — مرجع التصميم): القوائم يمينًا، التلميح يتمدد بينها
+   وبين الفعل الرئيس أقصى اليسار، وفاصل رفيع أسفل الصف بعرض النافذة */
 .controls {
   display: flex;
-  align-items: flex-end;
-  gap: 14px;
+  align-items: center;
+  gap: 8px;
   flex-wrap: wrap;
+  min-height: 48px;
+  padding: 8px 20px;
+  border-bottom: 1px solid var(--border);
 }
 
+/* الحاوية مرساة لوحة القائمة المنبثقة — التسمية مخفية بصريًا (زر القائمة
+   يحملها aria-label)، والـselect نفسه مخفي والقيمة تُقرأ منه برمجيًا.
+   الإخفاء في CSS أيضًا فلا يومض العنصر الأصلي قبل تحميل nasaq.js */
 .control {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  font-size: 12px;
-  color: var(--text-dim);
+  position: relative;
 }
 
-select {
-  background: var(--bg);
-  color: var(--text);
-  border: 1px solid var(--border);
+.control select { display: none; }
+
+/* ---------- قائمة الهوية المنسدلة (v6.2 — جزء من هوية المخطوطة) ---------- */
+.dd-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 96px;
+  min-height: 32px;
+  padding: 5px 12px;
+  background: transparent;
+  color: var(--tool-text);
+  border: 1px solid var(--tool-border);
   border-radius: 8px;
-  padding: 6px 10px;
   font-family: inherit;
-  font-size: 13px;
-  /* قائمة ناعمة كـFigma: حدّ رفيع، خلفية ورقية، بلا ظل ولا حافة معدنية */
+  font-size: 12.5px;
+  cursor: pointer;
   transition: border-color 0.2s ease, background-color 0.2s ease;
 }
 
-select:hover { border-color: rgba(var(--line-rgb), 0.2); }
-select:focus { border-color: rgba(var(--line-rgb), 0.28); outline: none; }
+.dd-btn:hover,
+.dd-btn[aria-expanded="true"] {
+  border-color: rgba(var(--line-rgb), 0.24);
+  background: rgba(var(--line-rgb), 0.05);
+}
 
-/* تلميح قصير بجانب عناصر التحكم — يشرح سلوك «تنظيف فقط» المحلي */
+.dd-chevron {
+  color: var(--text-dim);
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+
+/* اللوحة المنبثقة: ورقية بظل ناعم، بنودها بعرضها كاملًا والمختار أدكن
+   وأثقل — شكل مرجع التصميم حرفيًا */
+.dd-popup {
+  position: absolute;
+  top: 100%;
+  inset-inline-start: 0;
+  margin-top: 4px;
+  min-width: 100%;
+  width: max-content;
+  background: var(--bg);
+  border: 1px solid rgba(var(--line-rgb), 0.12);
+  border-radius: 10px;
+  box-shadow:
+    0 8px 24px rgba(var(--shadow-rgb), 0.18),
+    0 0 0 0.5px rgba(var(--shadow-rgb), 0.05);
+  overflow: hidden;
+  z-index: 40;
+}
+
+.dd-option {
+  display: block;
+  width: 100%;
+  text-align: start;
+  padding: 8px 14px;
+  background: transparent;
+  color: var(--tool-text);
+  border: none;
+  font-family: inherit;
+  font-size: 12.5px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.dd-option:hover { background: rgba(var(--line-rgb), 0.04); }
+
+.dd-option[aria-selected="true"] {
+  background: rgba(var(--line-rgb), 0.06);
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* تلميح قصير بجانب عناصر التحكم — يشرح سلوك المستوى المختار */
 .control-hint {
-  font-size: 11px;
+  font-size: 11.5px;
   font-weight: 300;
   color: var(--text-dim);
-  align-self: flex-end;
-  padding-bottom: 8px;
+  opacity: 0.75;
   flex: 1;
+  min-width: 120px;
   text-align: start;
 }
 
-/* الفعل الرئيس بسيط حاسم (روح Figma): حبر داكن مضبوط بارتفاع قريب من
-   القوائم والأدوات المجاورة — صغير ومرتّب ضمن منظومة الأدوات لا كتلة منفصلة */
+/* الفعل الرئيس بسيط حاسم: حبر داكن بارتفاع القوائم نفسه (v6.2 — الإصلاح
+   ١-ب: min-height مشترك 32px فلا فرق ارتفاع في الصف) */
 .primary-btn {
   background: var(--accent);
   color: var(--accent-text);
   border: none;
   border-radius: 8px;
-  padding: 6px 18px;
+  min-height: 32px;
+  padding: 5px 18px;
   font-family: inherit;
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 600;
   line-height: 1.4;
   cursor: pointer;
@@ -304,6 +392,8 @@ select:focus { border-color: rgba(var(--line-rgb), 0.28); outline: none; }
   font-family: inherit;
   font-size: 12px;
   cursor: pointer;
+  /* في صف المحاور يقف بارتفاع القوائم والفعل الرئيس نفسه (١-ب) */
+  min-height: 32px;
   /* مسطّح كـFigma: حدّ رفيع محايد بلا ظل ولا حافة معدنية */
   transition: color 0.2s ease, border-color 0.2s ease, background-color 0.2s ease,
     opacity 0.2s ease;
@@ -363,107 +453,143 @@ select:focus { border-color: rgba(var(--line-rgb), 0.28); outline: none; }
   background: var(--error-bg);
   color: var(--error-text);
   border-radius: 8px;
+  margin: 10px 20px 0;
   padding: 8px 14px;
   font-size: 13px;
 }
 
 /* ---------- المساحتان ---------- */
+/* عمودان على سطح ورقي واحد (v6.2 — مرجع التصميم): الإدخال يمينًا بعرض 44%
+   وفاصل رأسي رفيع بينه وبين النتيجة — لا صناديق ولا حدود حول الخانات،
+   النص يجلس على الورق مباشرة */
 .panes {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  grid-template-columns: 44fr 56fr;
+  gap: 0;
   flex: 1;
   min-height: 0;
 }
 
 @media (max-width: 860px) {
   .panes { grid-template-columns: 1fr; }
+  .pane-input {
+    border-inline-end: none;
+    border-bottom: 1px solid var(--border);
+  }
+  #input-text { min-height: 150px; }
 }
 
 .pane {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 0;
   min-height: 0;
   transition: opacity 0.2s ease;
 }
 
+/* الفاصل الرأسي بين العمودين يحمله عمود الإدخال — يعمل للوضعين معًا */
+.pane-input { border-inline-end: 1px solid var(--border); }
+
+/* رأس العمود: عنوان يمينًا والعدّاد/الأدوات يسارًا، وخط رفيع أسفله.
+   يلتف بدل القص (v5.1) في النوافذ الضيقة */
 .pane-head {
   display: flex;
   align-items: center;
   gap: 10px;
-  /* التفاف بدل القص (v5.1): أزرار الرأس تنزل سطرًا في النوافذ الضيقة */
-  flex-wrap: wrap;
   row-gap: 6px;
+  flex-wrap: wrap;
+  min-height: 40px;
+  padding: 6px 20px;
+  border-bottom: 1px solid var(--border);
 }
 
 .pane-head h2 {
   font-size: 12px;
   font-weight: 600;
-  color: var(--text-dim);
+  color: var(--tool-text);
   margin: 0;
-  flex: 1;
+  white-space: nowrap;
+}
+
+/* العدّاد المباشر في رأس عمود الإدخال يلتصق بالطرف المقابل (أقصى اليسار).
+   هامش فيزيائي عمدًا: العدّاد نفسه direction:ltr فخاصيته المنطقية تنعكس،
+   والصف حاويه RTL دائمًا */
+.pane-head > .char-count {
+  margin-right: auto;
+  margin-left: 0;
 }
 
 .char-count {
   font-size: 11px;
   color: var(--text-dim);
+  opacity: 0.8;
   direction: ltr;
 }
 
 /* تجاوز حدّ المنصة (v4.1): تحذير هادئ بلون الخطأ الدافئ — لا إنذار ولا منع */
 .char-count.over-limit {
   color: var(--error-text);
+  opacity: 1;
   direction: rtl;
 }
 
-/* رأس النتيجة (v6.1.1): كتلة واحدة مجمّعة يمينًا — العنوان، فعدّاده ملاصقًا،
-   ففعلاه الصغيران (العدسة والنسخ) تباعًا بلا فراغ ضخم يفصلها. الأدوات في
-   صفّها أدناه بالمحاذاة نفسها فتقرأ المنطقة كتلةً لا جزرًا متفرّقة */
-#nasaq-output-pane .pane-head { flex-wrap: nowrap; }
-#nasaq-output-pane .pane-head h2 {
-  flex: 0 0 auto;
-  white-space: nowrap;
-}
-.head-actions {
+/* كتلة أدوات النتيجة (v6.2 — مرجع التصميم): مجموعة مقسّمة واحدة بحدّ
+   خفيف وفواصل داخلية، والعدّاد جوارها — الفجوة 10px كفجوة الرأس نفسها
+   (توحيد ١-ز: صفوف الأدوات غير المقسّمة كلها على 8px) */
+.head-tools {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 10px;
+  margin-inline-start: auto;
+  min-width: 0;
 }
 
-/* صف أدوات النتيجة (v6.1): أزرار .tool-btn متساوية بارتفاع واحد وحدّ خفيف
-   بلا ظل — صفٌّ هادئ تابع للنتيجة بالمحاذاة نفسها، ملاصق للرأس لا منفصلًا */
 .result-tools {
   display: flex;
-  flex-wrap: wrap;
+  align-items: center;
+  border: 1px solid var(--tool-border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.result-tools .tool-btn {
+  display: inline-flex;
   align-items: center;
   gap: 6px;
-  margin-top: 2px;
+  border: none;
+  border-radius: 0;
+  padding: 6px 9px;
+  color: var(--text-dim);
+  direction: rtl;
 }
 
-textarea, .output-wrap {
+.result-tools .tool-btn + .tool-btn {
+  border-inline-start: 1px solid var(--border);
+}
+
+.result-tools .tool-btn.accent {
+  padding: 6px 12px;
+  color: var(--tool-text);
+}
+
+/* الخانات على الورق مباشرة (v6.2): لا صندوق ولا حدّ — الفواصل تحدّ المناطق */
+textarea {
   flex: 1;
   min-height: 0;
-  background: var(--bg-input);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  /* حقل نظيف كـFigma: حدّ رفيع فقط بلا ظل غائر ولا حافة معدنية */
-  caret-color: var(--accent);
-  transition: background-color 0.2s ease, border-color 0.2s ease;
-}
-
-textarea {
+  background: transparent;
+  border: none;
   color: var(--text);
-  padding: 16px 18px;
+  padding: 16px 20px;
   font-family: var(--font-text);
-  font-size: 15px;
-  line-height: 1.5; /* ارتفاع المؤشر يساوي ارتفاع السطر — القيمة الأقل تجعله بحجم النص تقريبًا */
+  font-size: 16px;
+  line-height: 2; /* نَفَس المرجع — ويحمل التشكيل دون قصّ */
   resize: none;
   outline: none;
+  caret-color: var(--accent);
   direction: rtl;
   text-align: right;
   /* علّة WebKit: بلا plaintext يلتصق المؤشر يسارًا أثناء الكتابة العربية،
-     ومع plaintext ينعكس في الحقل الفارغ — لذلك تُضبط ديناميكيًا من main.js */
+     ومع plaintext ينعكس في الحقل الفارغ — لذلك تُضبط ديناميكيًا من nasaq.js */
   unicode-bidi: plaintext;
 }
 
@@ -472,66 +598,99 @@ textarea.empty-bidi {
 }
 
 /* ---------- التوجيهات الخاصة (v4.0) ----------
-   حقل صغير هادئ تحت النص الأصلي لقرارات تنسيق موضعية لا يغطيها زر.
-   يتجاوز flex:1 العامة ليبقى بارتفاع سطوره، بحد أخفت من حد الحقول
-   (حد الأزرار الثانوية) فلا يزاحم صندوق النص الأصلي بصريًا */
+   قسم صغير هادئ أسفل عمود الإدخال يفصله خط رفيع (v6.2 — مرجع التصميم):
+   تسمية خافتة وخانة حرة على الورق مباشرة بلا صندوق */
 .directives-field {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
+  padding: 12px 20px 16px;
+  border-top: 1px solid var(--border);
   font-size: 12px;
   color: var(--text-dim);
 }
 
 #custom-directives {
   flex: 0 0 auto;
-  min-height: unset;
-  padding: 8px 12px;
-  font-size: 13px;
-  line-height: 1.6;
-  border-color: var(--tool-border);
-  border-radius: 8px;
-  background: var(--bg);
+  min-height: 44px;
+  padding: 0;
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--tool-text);
 }
 
-/* التفعيل: حدّ أوضح قليلًا فقط — توجيه هادئ لعين الكاتب بلا توهّج ولا خلفية قافزة */
-textarea:focus {
-  border-color: rgba(var(--line-rgb), 0.24);
+/* ---------- مؤشر التركيز (v6.2) ----------
+   حلقة معدنية لملاحة لوحة المفاتيح على الأزرار والقوائم فقط — لا تشوّه شكلًا.
+   أما صناديق الكتابة (الخام، التوجيهات، الإعدادات، البحث) فبلا أي حلقة تركيز:
+   حدّها الأساس يكفي ويبقى ثابتًا سواء كتبت فيه أو لا، فلا يتغيّر شكله عند
+   النقر (قرار المالك) */
+:focus-visible {
+  outline: 2px solid rgba(var(--metal-rgb), 0.8);
+  outline-offset: 2px;
+}
+
+/* صناديق الكتابة: لا حلقة تركيز إطلاقًا — الحدّ الثابت وحده */
+textarea:focus,
+textarea:focus-visible,
+.field input:focus,
+.field input:focus-visible,
+.drafts-toolbar input[type="search"]:focus,
+.drafts-toolbar input[type="search"]:focus-visible {
   outline: none;
 }
 
 /* حين يخلو الكاتب بنصه في الخام، تخفت مساحة المخرَج قليلًا */
 .panes:has(textarea:focus) .pane:not(:focus-within) { opacity: 0.93; }
 
+/* جسد النتيجة: منطقة تمرير واحدة تضم النص وملحقاته (v6.2) */
 .output-wrap {
+  flex: 1;
+  min-height: 0;
   position: relative;
   overflow-y: auto;
+  padding: 16px 20px;
 }
 
 .output-text {
-  padding: 16px 18px;
   font-family: var(--font-text);
-  font-size: 15px;
-  line-height: 1.7;
+  font-size: 16px;
+  line-height: 2.05;
   white-space: pre-wrap;
   word-wrap: break-word;
   direction: rtl;
   text-align: right;
   unicode-bidi: plaintext;
+  padding-bottom: 8px;
 }
 
+/* حالة الفراغ (v6.2 — مرجع التصميم): علامة «نَسَق» مائية باهتة وتلميح */
 .output-placeholder {
   position: absolute;
   inset: 0;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 12px;
   padding: 20px;
-  color: var(--text-dim);
-  font-size: 12px;
-  font-weight: 300;
   text-align: center;
   pointer-events: none;
+}
+
+.placeholder-mark {
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 1;
+  color: rgba(var(--line-rgb), 0.08);
+}
+
+.placeholder-hint {
+  font-size: 12px;
+  font-weight: 300;
+  color: var(--text-dim);
+  opacity: 0.6;
+  max-width: 260px;
+  line-height: 1.9;
 }
 
 /* ---------- التحميل ---------- */
@@ -559,41 +718,76 @@ textarea:focus {
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* ---------- بصمة الإيقاع ---------- */
-/* سطر هادئ واحد بأسلوب تلميحة سابستاك (نفس الحجم واللون)، بلا خصائص
-   flex-child الخاصة بـ.control-hint فذاك سياق مختلف (.controls) */
+/* سطر هادئ واحد داخل منطقة التمرير بعد النص مباشرة */
 .rhythm-fingerprint {
   display: block;
   font-size: 11px;
   color: var(--text-dim);
-  padding: 2px 2px 0;
+  padding: 0 2px;
+  margin: -2px 0 14px;
 }
 
-/* ---------- الملاحظات («ما تغيّر») ---------- */
-/* صندوق هادئ تابع للنتيجة (v6.1): حدّ خفيف وعنوان مضبوط وارتفاع غير مبالغ،
-   نصّه الثانوي مقروء — مطابقة روح Figma بلا ظل ولا ثقل */
+/* ---------- صندوق «ما تغيّر» (v6.2 — مرجع التصميم) ----------
+   صندوق قابل للطي بحدّ خفيف وزوايا مستديرة: رأس بعنوان يمينًا وشيفرون
+   يسارًا يدور عند الفتح، وبنوده بنقطة وسطية خافتة */
 .notes {
   font-size: 12px;
-  color: var(--text-dim);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 8px 12px;
+  color: var(--tool-text);
+  border: 1px solid var(--tool-border);
+  border-radius: 10px;
+  overflow: hidden;
+  margin: 4px 0 14px;
 }
 
 .notes summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 14px;
   cursor: pointer;
   font-weight: 600;
   color: var(--tool-text);
+  list-style: none;
+  transition: background-color 0.2s ease;
 }
 
+.notes summary::-webkit-details-marker { display: none; }
+
+.notes summary:hover { background: rgba(var(--line-rgb), 0.03); }
+
+.notes .notes-chevron {
+  color: var(--text-dim);
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.notes[open] .notes-chevron { transform: rotate(180deg); }
+
+.notes[open] summary { border-bottom: 1px solid var(--border); }
+
 .notes ul {
-  margin: 6px 0 0;
-  padding-inline-start: 18px;
+  margin: 10px 14px 12px;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 /* ملاحظة إرشادات سابستاك متعددة الأسطر تُعرض سطرًا بسطر — بلا أثر على
    الملاحظات القصيرة العادية أحادية السطر */
 .notes li {
   white-space: pre-line;
+  display: flex;
+  gap: 8px;
+}
+
+.notes li::before {
+  content: "·";
+  color: var(--text-dim);
+  opacity: 0.7;
+  flex-shrink: 0;
 }
 
 /* ---------- سطر التوقيع ---------- */
@@ -601,8 +795,10 @@ textarea:focus {
   text-align: center;
   font-size: 10px;
   color: var(--text-dim);
-  opacity: 0.75;
-  padding-top: 8px;
+  opacity: 0.7;
+  letter-spacing: 0.05em;
+  padding: 7px 20px 9px;
+  border-top: 1px solid var(--border);
 }
 
 .credit .version {
@@ -799,8 +995,8 @@ textarea:focus {
   transition: border-color 0.2s ease, background-color 0.2s ease;
 }
 
+/* الحدّ ثابت عند التركيز — لا تغيّر لونه، خلفية مرفوعة خفيفة فقط بلا إطار قافز */
 .drafts-toolbar input[type="search"]:focus {
-  border-color: var(--accent);
   background: var(--bg-raised);
 }
 
@@ -1018,7 +1214,8 @@ textarea:focus {
   transition: border-color 0.2s ease, background-color 0.2s ease;
 }
 
-.field input:focus { border-color: var(--accent); background: var(--bg-raised); }
+/* الحدّ ثابت عند التركيز — لا تغيّر لونه، خلفية مرفوعة خفيفة فقط بلا إطار قافز */
+.field input:focus { background: var(--bg-raised); }
 
 .key-row {
   display: flex;
@@ -1273,7 +1470,7 @@ textarea:focus {
 
 /* ---------- بطاقة الشذرة: المنعطف مكسورًا أم موصولًا ---------- */
 .fragment-card {
-  margin-top: 10px;
+  margin: 0 0 14px;
   border: 1px solid var(--border);
   border-radius: 10px;
   padding: 12px 14px;
@@ -1401,12 +1598,28 @@ textarea:focus {
   /* صبغة تفعيل الحُمرة — مقابل --accent-tint الذهبية في الأساس المشترك */
   --prune-tint: rgba(var(--prune-rgb), 0.13);
   /* لونا حالة ثابتان عبر الثيمات (حالة لا هوية): شهادة الضمانة زيتونية
-     هادئة، وتنبيه الإسقاط كهرمان هادئ — رسالة تقنية لا إنذار، مُعمّقان للورق */
-  --verify-green: #5f7a45;
-  --verify-bg: rgba(95, 122, 69, 0.14);
-  --verify-border: rgba(95, 122, 69, 0.32);
+     هادئة، وتنبيه الإسقاط كهرمان هادئ — رسالة تقنية لا إنذار. الزيتوني
+     عُمّق في v6.2 (ش-٣): كان #5f7a45 بتباين 3.3:1 على خلفيته الصبغية */
+  --verify-green: #47602e;
+  --verify-bg: rgba(71, 96, 46, 0.13);
+  --verify-border: rgba(71, 96, 46, 0.32);
   --warn-bg: rgba(168, 120, 45, 0.12);
   --warn-border: rgba(168, 120, 45, 0.32);
+  /* حبر تلميح العهد — كان مقسوًّا #9c5238 في قاعدة التلميح نفسها؛ صار
+     متغيرًا (v6.2 — ش-٣) ليحمل نسخة ليلية مقروءة */
+  --covenant-ink: #9c5238;
+}
+
+/* ألوان شذب في الوضع الليلي (v6.2 — الإصلاح ش-٣، قيم لونية فقط):
+   الحُمرة والزيتوني وتلميح العهد تُضاء لتبلغ ≥4.5:1 على الورق الليلي —
+   لا مساس بأي منطق أو تخطيط أو نص في الوضع المجمَّد */
+[data-appearance="dark"] {
+  --prune-accent: #e59a76;
+  --prune-rgb: 229, 154, 118;
+  --verify-green: #a9c47f;
+  --verify-bg: rgba(169, 196, 127, 0.12);
+  --verify-border: rgba(169, 196, 127, 0.3);
+  --covenant-ink: #e0a284;
 }
 
 /* المبدّل (أعيد بناؤه في v5.1): حاوية غائرة بحشوة داخلية وكل زر بزواياه
@@ -1430,7 +1643,7 @@ textarea:focus {
   color: var(--text-dim);
   border: none;
   border-radius: 999px;
-  padding: 4px 16px;
+  padding: 5px 18px;
   font-size: 12.5px;
   font-weight: 600;
   font-family: inherit;
@@ -1462,7 +1675,7 @@ textarea:focus {
 .shadhb-covenant-hint {
   font-size: 11px;
   font-weight: 300;
-  color: #9c5238;
+  color: var(--covenant-ink);
   border-inline-start: 2px solid var(--prune-accent);
   padding: 2px 10px;
 }
@@ -1471,12 +1684,15 @@ textarea:focus {
    يظهر في وضع شَذْب حصرًا بقيادة data-mode، فبإطفاء المفتاح لا أثر له */
 .shadhb-inspect-bar { display: none; }
 
+/* حشوة الشريط شيم دمجٍ في قشرة v6.2 (زالت حشوة الجسد فيلزم حدّ وحشوة
+   حاويان) — لا مساس ببنية الوضع أو سلوكه */
 [data-mode="shadhb"] .shadhb-inspect-bar {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 8px;
-  padding-top: 4px;
+  padding: 12px 20px 16px;
+  border-top: 1px solid var(--border);
 }
 
 /* زر «افحص الشذرة»: قرين «رتّب» بساطةً — بحُمرة المصحِّح، مسطّح بلا ظل */
@@ -1506,8 +1722,9 @@ textarea:focus {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  /* مسافة تنفّس قبل التذييل الثابت — لا عنصر يلاصق حدّه */
-  padding-bottom: 8px;
+  /* الحشوة الأفقية والعليا شيم دمجٍ في قشرة v6.2 (زالت حشوة الجسد) —
+     والسفلية مسافة تنفّس قبل التذييل الثابت كما كانت */
+  padding: 12px 20px 8px;
 }
 
 .shadhb-placeholder {
@@ -1758,6 +1975,8 @@ textarea:focus {
   flex-shrink: 0;
   padding-top: 8px;
   border-top: 1px solid rgba(var(--prune-rgb), 0.18);
+  /* هامش الدمج في قشرة v6.2 — التذييل داخل حشوة العمود الجانبية والسفلية */
+  margin: 0 20px 14px;
 }
 
 /* شريط الضمانة: العهد مفحوصًا لا موعودًا — زيتوني بخلفية صبغية عند

@@ -15,8 +15,13 @@ pub(crate) fn load_drafts(app: tauri::AppHandle) -> Result<Value, String> {
         return Ok(json!([]));
     }
     let raw = fs::read_to_string(&path).map_err(|_| "تعذّرت قراءة المسودات.".to_string())?;
-    // ملف تالف لا يعطّل اللوحة — تُعرض قائمة فارغة وتُستبدل عند أول حفظ
-    Ok(serde_json::from_str(&raw).unwrap_or_else(|_| json!([])))
+    // ملف تالف لا يعطّل اللوحة — تُعرض قائمة فارغة. وقبل أن يكتب أول حفظ
+    // فوقه يُنحّى جانبًا باسم drafts.json.corrupt (الإصلاح ٢-ز) فيبقى ما
+    // كان قابلًا للإنقاذ اليدوي محفوظًا لا ممحوًّا
+    Ok(serde_json::from_str(&raw).unwrap_or_else(|_| {
+        let _ = fs::rename(&path, path.with_extension("json.corrupt"));
+        json!([])
+    }))
 }
 
 #[tauri::command]

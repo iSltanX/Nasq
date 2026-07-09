@@ -36,8 +36,9 @@ syncCaretBidi();
 
 // ---------- التوجيهات الخاصة (v4.0) ----------
 // خانة حرة صغيرة لقرارات تنسيق موضعية لا يغطيها زر. فارغة = السلوك القديم
-// حرفيًا (main.rs يبني رسالة مطابقة بايتًا لما قبلها). قيمتها تُقرأ لحظة كل
-// نداء وتُمرَّر للنداءات الإبداعية الثلاثة — تنسيق فقط، لا إعادة صياغة
+// حرفيًا (بناة الرسائل في nasaq/contracts.rs يبنون رسالة مطابقة بايتًا لما
+// قبلها). قيمتها تُقرأ لحظة كل نداء وتُمرَّر للنداءات الإبداعية الثلاثة —
+// تنسيق فقط، لا إعادة صياغة
 const directivesInput = el("custom-directives");
 
 function currentDirectives() {
@@ -58,7 +59,7 @@ inputText.focus();
 
 // ---------- المحاور الثلاثة: مصدر الحقيقة الوحيد ----------
 // القوائم تُملأ من هذه الثوابت، والمسودات ونداءات النموذج تستعمل القيم نفسها.
-// أي تعديل هنا يجب أن يطابق ثوابت main.rs حرفًا بحرف
+// أي تعديل هنا يجب أن يطابق ثوابت nasaq/contracts.rs حرفًا بحرف
 const STYLES = ["مقال", "منشور", "شذرة", "رسالة", "مخطط"];
 const LEVELS = {
   CLEAN: "تنظيف فقط",
@@ -81,14 +82,19 @@ const LEVEL_ORDER = [
 const PLATFORMS = ["مقال سابستاك", "نوت سابستاك", "إكس", "ثريدز", "إنستغرام", "واتساب"];
 const DEFAULT_LEVEL = LEVELS.READ;
 
-// وجها سابستاك — التنويعات والتصدير وبطاقة الشذرة تُفعَّل لهما فقط
+// وجها سابستاك — التنويعات والتصدير وبطاقة الشذرة تُفعَّل لهما فقط.
+// «سابستاك» بلا وجه هو الاسم القديم في المسودات المحفوظة — يُعامل كوجه
+// المقال مطابقةً لـis_substack في nasaq/contracts.rs، فلا تفقد المسودة
+// المستعادة أدواتها (الإصلاح ٢-و)
 const SUBSTACK_ARTICLE = "مقال سابستاك";
 const SUBSTACK_NOTE = "نوت سابستاك";
-const isSubstackFace = (p) => p === SUBSTACK_ARTICLE || p === SUBSTACK_NOTE;
+const isSubstackFace = (p) =>
+  p === SUBSTACK_ARTICLE || p === SUBSTACK_NOTE || p === "سابستاك";
 
 // خريطة سابستاك اليدوية: النموذج يضع رموز ++ / ** / --- داخل النص المعروض
-// (main.rs يحقن العقد لغير الشذرة على وجهي سابستاك) — هذه الملاحظة تشرحها
-// داخل «ملاحظات التنسيق» القائمة، بالشرط نفسه الذي يحقن به main.rs العقد
+// (compose_rules في nasaq/contracts.rs يحقن العقد لغير الشذرة على وجهي
+// سابستاك) — هذه الملاحظة تشرحها داخل صندوق «ما تغيّر» القائم، بالشرط
+// نفسه الذي يُحقن به العقد
 const SUBSTACK_MARKERS_NOTE =
   "إرشادات سابستاك:\n++ = Enter (فقرة جديدة)\n** = Shift+Enter (كسر ضيق)\n--- = Divider (انتقال محوري)";
 
@@ -126,6 +132,146 @@ const platformControl = el("platform-control");
 const interventionHint = el("intervention-hint");
 const platformSel = el("platform");
 const variationsBtn = el("variations-btn");
+
+// ---------- قائمة الهوية المنسدلة (v6.2 — مرجع التصميم) ----------
+// قائمة macOS الأصلية لا تُنسّق، ولوحة الخيارات جزء من هوية المخطوطة:
+// زر بحدّ رفيع وشيفرون يسارًا، ولوحة ورقية بظل ناعم بندها المختار أدكن
+// وأثقل. الـselect يبقى مصدر الحقيقة (القيمة والمعرّف والقراءة البرمجية
+// كما هي) ويُخفى؛ الاختيار هنا يكتب فيه ويطلق حدث change نفسه — لا يتغير
+// أي منطق تحته
+const identityDropdownRefreshers = [];
+let openIdentityDropdownCloser = null;
+
+function closeIdentityDropdowns() {
+  if (openIdentityDropdownCloser) openIdentityDropdownCloser();
+}
+
+function refreshIdentityDropdowns() {
+  for (const f of identityDropdownRefreshers) f();
+}
+
+function enhanceSelectAsDropdown(sel) {
+  const wrap = sel.closest(".control");
+  const labelText = wrap.querySelector("span")?.textContent || "";
+  sel.hidden = true;
+  sel.tabIndex = -1;
+
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "dd-btn";
+  btn.setAttribute("aria-haspopup", "listbox");
+  btn.setAttribute("aria-expanded", "false");
+  if (labelText) btn.setAttribute("aria-label", labelText);
+
+  const valueSpan = document.createElement("span");
+  valueSpan.className = "dd-value";
+  btn.appendChild(valueSpan);
+  btn.insertAdjacentHTML(
+    "beforeend",
+    '<svg class="dd-chevron" width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="4 6 8 10.2 12 6" /></svg>'
+  );
+
+  const popup = document.createElement("div");
+  popup.className = "dd-popup";
+  popup.setAttribute("role", "listbox");
+  popup.hidden = true;
+
+  function rebuildOptions() {
+    popup.innerHTML = "";
+    for (const opt of sel.options) {
+      const item = document.createElement("button");
+      item.type = "button";
+      item.className = "dd-option";
+      item.setAttribute("role", "option");
+      item.dataset.value = opt.value;
+      item.textContent = opt.textContent;
+      item.setAttribute("aria-selected", String(opt.value === sel.value));
+      item.addEventListener("click", () => {
+        sel.value = opt.value;
+        sel.dispatchEvent(new Event("change"));
+        refresh();
+        close();
+        btn.focus();
+      });
+      popup.appendChild(item);
+    }
+  }
+
+  function refresh() {
+    const current = sel.options[sel.selectedIndex];
+    valueSpan.textContent = current ? current.textContent : "";
+    for (const item of popup.children) {
+      item.setAttribute("aria-selected", String(item.dataset.value === sel.value));
+    }
+  }
+
+  function close() {
+    popup.hidden = true;
+    btn.setAttribute("aria-expanded", "false");
+    if (openIdentityDropdownCloser === close) openIdentityDropdownCloser = null;
+  }
+
+  function open() {
+    closeIdentityDropdowns(); // لوحة واحدة مفتوحة في اللحظة الواحدة
+    rebuildOptions();
+    refresh();
+    popup.hidden = false;
+    btn.setAttribute("aria-expanded", "true");
+    openIdentityDropdownCloser = close;
+    (popup.querySelector('[aria-selected="true"]') || popup.firstChild)?.focus();
+  }
+
+  btn.addEventListener("click", () => (popup.hidden ? open() : close()));
+  btn.addEventListener("keydown", (e) => {
+    if ((e.key === "ArrowDown" || e.key === "ArrowUp") && popup.hidden) {
+      e.preventDefault();
+      open();
+    }
+  });
+
+  // تنقّل لوحة المفاتيح داخل اللوحة — Escape يغلقها هي لا لوحات القشرة
+  popup.addEventListener("keydown", (e) => {
+    const items = [...popup.children];
+    const i = items.indexOf(document.activeElement);
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      items[Math.min(i + 1, items.length - 1)]?.focus();
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      items[Math.max(i - 1, 0)]?.focus();
+    } else if (e.key === "Home") {
+      e.preventDefault();
+      items[0]?.focus();
+    } else if (e.key === "End") {
+      e.preventDefault();
+      items[items.length - 1]?.focus();
+    } else if (e.key === "Escape") {
+      e.stopPropagation();
+      close();
+      btn.focus();
+    } else if (e.key === "Tab") {
+      close();
+    }
+  });
+
+  wrap.append(btn, popup);
+  rebuildOptions();
+  refresh();
+  // أي تغيير للقيمة عبر حدث change (ولو برمجيًا) يلحق بزر العرض فورًا
+  sel.addEventListener("change", refresh);
+  identityDropdownRefreshers.push(refresh);
+}
+
+// نقرة خارج اللوحة المفتوحة تغلقها — مستمع واحد للقوائم الثلاث
+document.addEventListener("mousedown", (e) => {
+  if (openIdentityDropdownCloser && !e.target.closest(".control")) {
+    closeIdentityDropdowns();
+  }
+});
+
+enhanceSelectAsDropdown(el("format-style"));
+enhanceSelectAsDropdown(interventionSel);
+enhanceSelectAsDropdown(platformSel);
 
 // تلميحة سابستاك الوحيدة (لا رسالة متكررة): الفراغ في العرض راحة مراجعة،
 // وما ينجو النشر هو كسر السطر — والنوت فوق ذلك لا يدعم RTL
@@ -203,6 +349,18 @@ function nextAttempt(key) {
 // لا كما تبدو القوائم لحظة الحفظ (قد يغيّرها المستخدم بعد ظهور النتيجة)
 let lastFormatMeta = null;
 
+// ---------- علم انشغال النداءات (v6.2 — الإصلاح ٢-أ) ----------
+// نداء نموذج واحد يكتب على النتيجة في اللحظة الواحدة: «نسق» و«سطور
+// أقل/أكثر» يتشاركان القفل، فلا يتسابق مستجيبان على المخرَج ولا تختلط
+// ذاكرة الجلسة بين نداءين متوازيين
+let modelCallActive = false;
+function setModelBusy(busy) {
+  modelCallActive = busy;
+  formatBtn.disabled = busy;
+  fewerBtn.disabled = busy;
+  moreBtn.disabled = busy;
+}
+
 function currentSelection() {
   const intervention = interventionSel.value;
   return {
@@ -257,6 +415,7 @@ function recordSessionVersion(originalText, meta, formatted) {
 }
 
 async function formatText() {
+  if (modelCallActive) return; // نداء آخر يكتب على النتيجة الآن — لا تزاحم
   const text = inputText.value.trim();
   clearError();
 
@@ -287,7 +446,7 @@ async function formatText() {
   const fingerprint = `${style}|${intervention}|${platform || ""}|${directives || ""}|${text}`;
   const attempt = nextAttempt(fingerprint);
 
-  formatBtn.disabled = true;
+  setModelBusy(true);
   loading.hidden = false;
   outputPlaceholder.hidden = true;
 
@@ -331,16 +490,20 @@ async function formatText() {
     showError(String(err));
     if (!outputText.textContent) outputPlaceholder.hidden = false;
   } finally {
-    formatBtn.disabled = false;
+    setModelBusy(false);
     loading.hidden = true;
   }
 }
 
 formatBtn.addEventListener("click", formatText);
 
-// اختصار ⌘+Enter
+// اختصار ⌘+Enter — قرين زر «نسق» تمامًا: لا يعمل إن كان الزر مخفيًّا
+// (وضع آخر يملأ الواجهة — الإصلاح ١-أ: كان النداء ينطلق خفيًا بلا أي أثر
+// مرئي) أو معطلًا (نداء جارٍ). فحص الظهور لا يعرف الأوضاع بأسمائها —
+// نسق يحكم على زره هو فحسب
 document.addEventListener("keydown", (e) => {
-  if ((e.metaKey || e.ctrlKey) && e.key === "Enter" && !formatBtn.disabled) {
+  if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+    if (formatBtn.offsetParent === null || formatBtn.disabled) return;
     formatText();
   }
 });
@@ -420,8 +583,8 @@ const fewerBtn = el("fewer-lines-btn");
 const moreBtn = el("more-lines-btn");
 
 function setAdjustBusy(busy) {
-  fewerBtn.disabled = busy;
-  moreBtn.disabled = busy;
+  // القفل المشترك نفسه (٢-أ): تعديل الأسطر عبر النموذج يقفل «نسق» أيضًا
+  setModelBusy(busy);
   loading.hidden = !busy;
 }
 
@@ -431,6 +594,7 @@ function setAdjustBusy(busy) {
 // سطر مجاور بالخطأ) — وجهة سابستاك تُعيد رموزًا جديدة على النتيجة المعدَّلة
 // عبر عقد compose_rules نفسه، فلا يُفقَد الإرشاد إلا عند فشل الاتصال
 async function adjustLines(direction) {
+  if (modelCallActive) return; // «نسق» أو تعديل آخر يعمل الآن — لا تزاحم
   const rawCurrent = getOutputOrWarn();
   if (rawCurrent === null) return;
   pushOutputUndo(); // كل مسارات التعديل الثلاثة أدناه تكتب فوق النتيجة
@@ -548,8 +712,11 @@ function metaSubstackFace() {
 }
 
 // ---------- عدّاد واعٍ بحدود المنصات (v4.1) ----------
-// حدود بالحرف للمنصات ذات السقف فقط — تقريبية عمدًا: إكس يزن بعض المحارف
-// بمثلين لكن العربية تُحسب مفردة فالعدّ البسيط صادق للنص العربي.
+// حدود بالحرف للمنصات ذات السقف فقط. عدّ إكس هنا (text.length بوحدات
+// UTF-16) مطابق فعليًا لقواعد المنصة لا تقريب: العربية وتشكيلها في نطاق
+// الوزن 1 عند إكس فتُحسب مفردة، والإيموجي وحدتان = وزن إكس 2 نفسه — لا
+// تبدّله إلى عدّ نقاط ترميز (عدّاد «العرض» في shell.js شأن آخر ويعدّها).
+// ثريدز وإنستغرام: الإيموجي يُحسب مضاعفًا فيُنذر مبكرًا — الاتجاه الآمن.
 // تحذير هادئ في سطر العدّاد نفسه — لا نافذة ولا منع
 const PLATFORM_LIMITS = { "إكس": 280, "ثريدز": 500, "إنستغرام": 2200 };
 
@@ -809,6 +976,8 @@ function restoreDraft(mother, version) {
   if ([...interventionSel.options].some((o) => o.value === version.intervention)) interventionSel.value = version.intervention;
   if (version.platform && [...platformSel.options].some((o) => o.value === version.platform)) platformSel.value = version.platform;
   syncInterventionControls();
+  // القيم كُتبت برمجيًا لا بالنقر — أزرار قوائم الهوية تلحق بها
+  refreshIdentityDropdowns();
 
   lastFormatMeta = {
     original: mother.original || "",

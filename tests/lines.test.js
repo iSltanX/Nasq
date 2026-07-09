@@ -71,6 +71,25 @@ test("فصل الجمل: حتمي — نفس المدخل يعيد نفس الم
   assert.ok(!out1.includes("\n\n"), "لا سطر فارغ مضاعف");
 });
 
+test("فصل الجمل: يكسر بعد ؟ و! كما يكسر بعد النقطة", () => {
+  const input = "نام الطفل؟ صرخ الديك! انتهى الأمر.";
+  const out = splitSentencesLocal(input);
+  assert.strictEqual(out, "نام الطفل؟\nصرخ الديك!\nانتهى الأمر.");
+  assert.strictEqual(words(out), words(input));
+  assert.strictEqual(splitSentencesLocal(out), out, "التطبيق الثاني بلا أثر");
+});
+
+test("فصل الجمل: تتابع علامات الختم (؟!) يُكسر بعد آخره لا بينه", () => {
+  const input = "حقًا؟! نعم.";
+  assert.strictEqual(splitSentencesLocal(input), "حقًا؟!\nنعم.");
+});
+
+test("فصل الجمل: علامة الحذف المفردة (…) تكسر، وتتابع النقاط (...) يبقى موصولًا", () => {
+  const input = "انتظر… ثم اكمل... السير.";
+  const out = splitSentencesLocal(input);
+  assert.strictEqual(out, "انتظر…\nثم اكمل... السير.");
+});
+
 test("فصل الجمل: لا يمسّ تتابع النقاط (...)", () => {
   const input = "انتظر... ثم اكمل السير.";
   const out = splitSentencesLocal(input);

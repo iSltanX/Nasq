@@ -69,12 +69,15 @@ function moreLinesLocal(text) {
   return result.join("\n");
 }
 
-// [فصل الجمل] محلي حتمي بلا نموذج: يكسر السطر بعد كل نقطة تنهي جملة، ويتجاهل
-// النقطة العشرية بين رقمين (كـ 3.14 — لا كسر) وتتابع النقاط (كـ "..." ellipsis
-// بثلاث نقاط لاتينية — ليست نهاية جملة، لا كسر). يستهلك الفراغ التالي للنقطة
-// فينتج كسرًا واحدًا نظيفًا، ولا يكرر الكسر إن وُجد سطر جديد أصلًا (حتمي:
+// [فصل الجمل] محلي حتمي بلا نموذج: يكسر السطر بعد كل علامة تنهي جملة —
+// النقطة والاستفهام والتعجب وعلامة الحذف المفردة (…) — ويتجاهل النقطة
+// العشرية بين رقمين (كـ 3.14 — لا كسر) وتتابع النقاط (كـ "..." ellipsis
+// بثلاث نقاط لاتينية — ليست نهاية جملة، لا كسر). تتابع علامات الختم
+// (كـ «؟!») يُكسر بعد آخره لا بينه. يستهلك الفراغ التالي للعلامة فينتج
+// كسرًا واحدًا نظيفًا، ولا يكرر الكسر إن وُجد سطر جديد أصلًا (حتمي:
 // نفس المدخل يعيد نفس المخرج دائمًا، وتطبيقه مرتين لا يغيّر الناتج)
 const DIGIT_RE = /[0-9٠-٩]/;
+const SENTENCE_END_RE = /[.؟!…]/;
 
 function splitSentencesLocal(text) {
   let out = "";
@@ -82,15 +85,19 @@ function splitSentencesLocal(text) {
   while (i < text.length) {
     const ch = text[i];
     out += ch;
-    if (ch === ".") {
+    if (SENTENCE_END_RE.test(ch)) {
       const prev = text[i - 1];
       const rawNext = text[i + 1];
       let j = i + 1;
       while (text[j] === " ") j++;
       const next = text[j];
-      const isDecimal = Boolean(prev) && DIGIT_RE.test(prev) && Boolean(next) && DIGIT_RE.test(next);
-      const isDotRun = prev === "." || rawNext === "."; // تتابع نقاط — ليست نهاية جملة
-      if (!isDecimal && !isDotRun) {
+      // استثناءا النقطة وحدها: العشرية بين رقمين، وتتابع النقاط (...)
+      const isDecimal =
+        ch === "." && Boolean(prev) && DIGIT_RE.test(prev) && Boolean(next) && DIGIT_RE.test(next);
+      const isDotRun = ch === "." && (prev === "." || rawNext === ".");
+      // علامة يليها ختمٌ آخر مباشرةً («؟!») — الكسر بعد آخر الركب لا بينه
+      const endsRun = Boolean(rawNext) && SENTENCE_END_RE.test(rawNext);
+      if (!isDecimal && !isDotRun && !endsRun) {
         if (next !== undefined && next !== "\n") out += "\n";
         i = j;
         continue;

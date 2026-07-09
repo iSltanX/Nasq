@@ -15,8 +15,12 @@ const errorBar = el("error-bar");
 const toast = el("toast");
 
 // ---------- عدّاد الأحرف ----------
+// عدّ نقاط الترميز لا وحدات UTF-16 (الإصلاح ١-د): الإيموجي الواحد محرف
+// واحد في العرض. عدّادات حدود المنصات في nasaq.js لها منطقها المستقل
+// (عدّ إكس هناك بوحدات UTF-16 عمدًا لأنه يطابق وزن المنصة) — لا يمسّها هذا
 function updateCount(node, text) {
-  node.textContent = text.length ? `${text.length} حرفًا` : "";
+  const n = [...text].length;
+  node.textContent = n ? `${n} حرف` : "";
 }
 
 // ---------- عرض الخطأ ----------
@@ -760,12 +764,26 @@ importDraftsInput.addEventListener("change", async () => {
 
   // لقطة للتراجع إن فشل الحفظ — كما في مسار «حفظ» تمامًا
   const snapshot = JSON.stringify(drafts);
+  // العدد المعلَن يُحسب بعد قصّ السقف لا قبله (الإصلاح ٢-د): الأمّهات
+  // المستوردة تُلحق في ذيل القائمة والقصّ يطالها أولًا — لا تُعلن الرسالة
+  // صيغًا أسقطها السقف بصمت
+  const beforeTotal = totalVersions();
   drafts = merged.mothers;
   if (drafts.length > DRAFTS_MAX) drafts.length = DRAFTS_MAX;
+  const actualAdded = totalVersions() - beforeTotal;
+  if (actualAdded === 0) {
+    drafts = JSON.parse(snapshot);
+    showToast(`بلغت المسودات سقفها (${DRAFTS_MAX}) — لم يُستورد جديد.`);
+    return;
+  }
   try {
     await persistDrafts();
     renderDrafts();
-    showToast(`استُوردت ${versionsCountLabel(merged.added)}.`);
+    showToast(
+      actualAdded < merged.added
+        ? `استُوردت ${versionsCountLabel(actualAdded)} — والسقف (${DRAFTS_MAX}) أسقط الباقي.`
+        : `استُوردت ${versionsCountLabel(actualAdded)}.`
+    );
   } catch (err) {
     drafts = JSON.parse(snapshot);
     updateDraftsBadge();
