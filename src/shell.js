@@ -253,6 +253,38 @@ function renderThemeGrid() {
 document.documentElement.setAttribute("data-theme", currentTheme());
 renderThemeGrid();
 
+// ---------- الوضع الليلي ----------
+// مفتاح مستقل عن عائلة الثيم (data-appearance لا data-theme): يعتّم الخلفية
+// والنص فقط عبر [data-appearance="dark"] في CSS، وعائلة المعدن المختارة
+// تبقى كما هي — زر سريع بجانب الإعدادات، لا يستبدل لوحة الثيمات
+const APPEARANCE_KEY = "nasaq-appearance";
+const themeModeBtn = el("theme-mode-btn");
+
+function currentAppearance() {
+  return document.documentElement.getAttribute("data-appearance") === "dark" ? "dark" : "light";
+}
+
+function applyAppearance(mode) {
+  if (mode === "dark") {
+    document.documentElement.setAttribute("data-appearance", "dark");
+  } else {
+    document.documentElement.removeAttribute("data-appearance");
+  }
+  try {
+    localStorage.setItem(APPEARANCE_KEY, mode);
+  } catch {
+    // تعذّر الحفظ لا يمنع التبديل في الجلسة الحالية
+  }
+  themeModeBtn.classList.toggle("active", mode === "dark");
+  themeModeBtn.setAttribute("aria-pressed", String(mode === "dark"));
+}
+
+themeModeBtn.addEventListener("click", () => {
+  applyAppearance(currentAppearance() === "dark" ? "light" : "dark");
+});
+
+applyAppearance(currentAppearance());
+
 // ---------- المسودات: تخزين محلي بالكامل، لا يغادر الجهاز ----------
 // داخل التطبيق تُحفظ في drafts.json بجوار الإعدادات، وفي معاينة المتصفح في localStorage
 const DRAFTS_KEY = "nasaq-drafts";

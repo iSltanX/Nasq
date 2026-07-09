@@ -5,10 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>نَسَق</title>
   <script>
-    // تطبيق الثيم المحفوظ قبل تحميل الأنماط حتى لا تومض الألوان الافتراضية
+    // تطبيق الثيم والوضع الليلي المحفوظين قبل تحميل الأنماط حتى لا تومض الألوان الافتراضية
     try {
       var nasaqTheme = localStorage.getItem("nasaq-theme");
       if (nasaqTheme) document.documentElement.setAttribute("data-theme", nasaqTheme);
+      if (localStorage.getItem("nasaq-appearance") === "dark") {
+        document.documentElement.setAttribute("data-appearance", "dark");
+      }
     } catch (e) {}
   </script>
   <link rel="stylesheet" href="styles.css" />
@@ -37,6 +40,13 @@
         </svg>
         المسودات
         <span id="drafts-count" class="count-badge" hidden></span>
+      </button>
+      <!-- الوضع الليلي (v6.2): مفتاح مستقل عن عائلة الثيم — يعتّم الخلفية
+           والنص فقط، وعائلة المعدن المختارة (ذهب/نحاس/برونز...) تبقى كما هي -->
+      <button id="theme-mode-btn" class="ghost-btn icon-btn" type="button" title="الوضع الليلي" aria-label="تبديل الوضع الليلي" aria-pressed="false">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M14 8.53A6 6 0 1 1 7.47 2 4.67 4.67 0 0 0 14 8.53Z" />
+        </svg>
       </button>
       <button id="settings-btn" class="ghost-btn icon-btn" type="button" title="الإعدادات" aria-label="الإعدادات">
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">

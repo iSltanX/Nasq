@@ -115,6 +115,36 @@
   --metal-rgb: 133, 122, 104;
 }
 
+/* ---------- الوضع الليلي ----------
+   طبقة مستقلة عن عائلة الثيم (v6.2): مفتاحها data-appearance لا data-theme،
+   فتُعتِّم الخلفية والنص فقط بنخبة ليلية واحدة موحّدة — لا نسخة ليلية لكل
+   عائلة معدن. تفوز على [data-theme] لتساوي الخصوصية وتأخّر الترتيب في الملف،
+   فتُعتّم فوق أي عائلة مختارة سلفًا. المشتقات (الحدود/الظلال/بطاقات
+   التنويعات) تُعاد حسابها تلقائيًا من --bg/--text/--accent/--line-rgb/
+   --shadow-rgb دون إعادة تعريفها هنا */
+[data-appearance="dark"] {
+  --bg: #1a1611;
+  --bg-raised: #241f18;
+  --bg-input: #211c15;
+  --text: #efe7d8;
+  --text-dim: #a99d87;
+  --accent: #efe7d8;
+  --brand: #d1a94f;
+  --metal-rgb: 209, 169, 79;
+  --accent-text: #1a1611;
+  --tool-text: #cdc3ae;
+  --error-bg: #3a2015;
+  --error-text: #e2a179;
+  --veil: rgba(26, 22, 17, 0.82);
+  --shadow-rgb: 0, 0, 0;
+  --line-rgb: 239, 231, 216;
+  --border: rgba(var(--line-rgb), 0.14);
+  --tool-border: rgba(var(--line-rgb), 0.2);
+  /* تفاعل الحالات (تحويم/تفعيل) أوضح قليلًا من صبغة الحدّ العامة — أقرب لنسبة
+     ١٢٪ المعتادة لتباين حالات الأزرار على خلفية داكنة */
+  --accent-tint: rgba(var(--line-rgb), 0.12);
+}
+
 * {
   box-sizing: border-box;
   /* لا ميلان إطلاقًا: خط Cairo المتغيّر يحمل محور slnt وقد يميله WebKit تلقائيًا */
@@ -302,6 +332,12 @@ select:focus { border-color: rgba(var(--line-rgb), 0.28); outline: none; }
   color: var(--text-dim);
 }
 .topbar .ghost-btn:hover { background: var(--accent-tint); border-color: transparent; }
+
+/* زر الوضع الليلي: قمر همسة، ويتلوّن بالذهب حين يكون الوضع الليلي مفعَّلًا */
+#theme-mode-btn.active {
+  color: var(--brand);
+  background: var(--accent-tint);
+}
 
 /* عدّاد المسودات: شارة صغيرة محايدة هادئة — لا بطاقة ذهبية */
 .count-badge {
