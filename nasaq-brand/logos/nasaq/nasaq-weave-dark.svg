@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120" fill="none">
+  <line x1="20" y1="36" x2="100" y2="36" stroke="#E8E3D8" stroke-width="1.2" opacity="0.82"/>
+  <line x1="20" y1="50" x2="100" y2="50" stroke="#E8E3D8" stroke-width="1.2" opacity="0.36"/>
+  <line x1="20" y1="64" x2="100" y2="64" stroke="#E8E3D8" stroke-width="1.2" opacity="0.36"/>
+  <line x1="20" y1="78" x2="100" y2="78" stroke="#E8E3D8" stroke-width="1.2" opacity="0.36"/>
+  <line x1="20" y1="92" x2="100" y2="92" stroke="#E8E3D8" stroke-width="1.2" opacity="0.12"/>
+  <line x1="24" y1="30" x2="24" y2="96" stroke="#E8E3D8" stroke-width="0.9" opacity="0.14"/>
+  <line x1="42" y1="30" x2="42" y2="96" stroke="#E8E3D8" stroke-width="0.9" opacity="0.14"/>
+  <line x1="60" y1="30" x2="60" y2="96" stroke="#E8E3D8" stroke-width="0.9" opacity="0.14"/>
+  <line x1="78" y1="30" x2="78" y2="96" stroke="#E8E3D8" stroke-width="0.9" opacity="0.14"/>
+  <line x1="96" y1="30" x2="96" y2="96" stroke="#E8E3D8" stroke-width="0.9" opacity="0.14"/>
+  <circle cx="96" cy="36" r="3.5" fill="#E23B2E"/>
+</svg>

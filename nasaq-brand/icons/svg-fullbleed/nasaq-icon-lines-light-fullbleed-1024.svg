@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" fill="none">
+  <rect width="1024" height="1024" fill="#F7F3EA"/>
+  <line x1="0" y1="238.93" x2="1024" y2="238.93" stroke="#22242A" stroke-width="4.27" opacity="0.04"/><line x1="0" y1="375.47" x2="1024" y2="375.47" stroke="#22242A" stroke-width="4.27" opacity="0.04"/><line x1="0" y1="512" x2="1024" y2="512" stroke="#22242A" stroke-width="4.27" opacity="0.04"/><line x1="0" y1="648.53" x2="1024" y2="648.53" stroke="#22242A" stroke-width="4.27" opacity="0.04"/><line x1="0" y1="785.07" x2="1024" y2="785.07" stroke="#22242A" stroke-width="4.27" opacity="0.04"/>
+  <line x1="153.6" y1="341.33" x2="819.2" y2="341.33" stroke="#22242A" stroke-width="15.36"/>
+  <line x1="153.6" y1="469.33" x2="819.2" y2="469.33" stroke="#22242A" stroke-width="11.09" opacity="0.55"/>
+  <line x1="153.6" y1="597.33" x2="819.2" y2="597.33" stroke="#22242A" stroke-width="9.39" opacity="0.32"/>
+  <line x1="153.6" y1="725.33" x2="819.2" y2="725.33" stroke="#22242A" stroke-width="8.53" opacity="0.16"/>
+  <line x1="819.2" y1="230.4" x2="819.2" y2="802.13" stroke="#E23B2E" stroke-width="12.8" opacity="0.62"/>
+  <circle cx="819.2" cy="341.33" r="42.67" fill="#E23B2E"/>
+</svg>

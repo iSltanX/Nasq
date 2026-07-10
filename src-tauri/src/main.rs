@@ -23,6 +23,7 @@ fn main() {
             shared::drafts::save_drafts,
             shared::drafts::export_drafts,
             shared::clipboard::copy_to_clipboard,
+            shared::dock_icon::set_dock_icon,
             nasaq::commands::format_text,
             nasaq::commands::generate_variation,
             nasaq::commands::adjust_lines,

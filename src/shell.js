@@ -189,15 +189,16 @@ tabAppearanceBtn.addEventListener("click", () => switchTab("appearance"));
 // ---------- الثيمات ----------
 // المعرّفات لاتينية لأنها مفاتيح تقنية في CSS والتخزين، والأسماء المعروضة عربية.
 // المعرّفات القديمة أبقيت كما هي حفاظًا على الاختيار المحفوظ (المعرّف "dark"
-// صار يعرض الورق الفاتح — مفتاح تقني لا وصف). العائلات الست على صيغة
-// المخطوطة الفاتحة (v6.0): ورق دافئ + معدن هادئ مختلف
+// صار يعرض الورق الفاتح — مفتاح تقني لا وصف). العائلات الست متمايزة الصبغة
+// منذ v6.3 (ورق نسق/نحاس/زيتون/حبر أزرق/ورد عتيق/رماد ناعم)، ولكل عائلة
+// نسختها الليلية الخاصة في CSS — الأسماء هنا عرض فقط
 const THEMES = [
   { id: "dark", name: "ورق نَسَق" },
-  { id: "paper", name: "نحاس دافئ" },
-  { id: "ink", name: "ذهب هادئ" },
-  { id: "night", name: "برونز فاتح" },
-  { id: "sand", name: "فضة دافئة" },
-  { id: "ash", name: "لؤلؤ عتيق" },
+  { id: "paper", name: "نحاس" },
+  { id: "night", name: "زيتون" },
+  { id: "ink", name: "حبر أزرق" },
+  { id: "ash", name: "ورد عتيق" },
+  { id: "sand", name: "رماد ناعم" },
 ];
 const THEME_KEY = "nasaq-theme";
 
@@ -224,9 +225,11 @@ function renderThemeGrid() {
   for (const t of THEMES) {
     const card = document.createElement("button");
     card.type = "button";
-    // البطاقة تحمل data-theme الخاص بها فتعرض ألوان ثيمها الحقيقية كمعاينة حية
+    // البطاقة تحمل data-theme الخاص بها فتعرض ألوان ثيمها الحقيقية كمعاينة حية،
+    // وفي الوضع الليلي تحمل data-appearance أيضًا فتعاين ليلَ عائلتها الخاص
     card.className = "theme-card" + (t.id === active ? " active" : "");
     card.dataset.theme = t.id;
+    if (currentAppearance() === "dark") card.dataset.appearance = "dark";
     card.setAttribute("aria-pressed", String(t.id === active));
 
     const name = document.createElement("span");
@@ -241,7 +244,7 @@ function renderThemeGrid() {
 
     const dots = document.createElement("span");
     dots.className = "theme-dots";
-    for (const cls of ["dot-accent", "dot-raised", "dot-text"]) {
+    for (const cls of ["dot-accent", "dot-brand", "dot-text"]) {
       const d = document.createElement("span");
       d.className = "dot " + cls;
       dots.appendChild(d);
@@ -257,37 +260,183 @@ function renderThemeGrid() {
 document.documentElement.setAttribute("data-theme", currentTheme());
 renderThemeGrid();
 
-// ---------- الوضع الليلي ----------
-// مفتاح مستقل عن عائلة الثيم (data-appearance لا data-theme): يعتّم الخلفية
-// والنص فقط عبر [data-appearance="dark"] في CSS، وعائلة المعدن المختارة
-// تبقى كما هي — زر سريع بجانب الإعدادات، لا يستبدل لوحة الثيمات
-const APPEARANCE_KEY = "nasaq-appearance";
-const themeModeBtn = el("theme-mode-btn");
+// ---------- أيقونة نَسَق (v6.3) ----------
+// الأيقونات الأربع من nasaq-brand حصرًا، مضمّنة SVG في الشريط العلوي —
+// data-logo على الجذر يختار الظاهرة (CSS وحده يبدّل)، والافتراضي «السطور»:
+// مرشَّح دليل الهوية. المعاينات في الشبكة استنساخ حي للرموز المضمّنة نفسها
+// فلا مصدر ثانٍ للهندسة، وحبرها currentColor يتبع الثيم الحالي تلقائيًا
+const LOGOS = [
+  { id: "lines", name: "السطور" },
+  { id: "nun", name: "النون" },
+  { id: "weave", name: "النسيج" },
+  { id: "wordmark", name: "كلمة نسق" },
+];
+const LOGO_KEY = "nasaq-logo";
+
+function currentLogo() {
+  const l = document.documentElement.getAttribute("data-logo");
+  return LOGOS.some((x) => x.id === l) ? l : "lines";
+}
+
+function applyLogo(id) {
+  document.documentElement.setAttribute("data-logo", id);
+  try {
+    localStorage.setItem(LOGO_KEY, id);
+  } catch {
+    // تعذّر الحفظ لا يمنع تطبيق الأيقونة في الجلسة الحالية
+  }
+  renderLogoGrid();
+  // أيقونة الدوك الفعلية تتبع التصميم المختار (داخل التطبيق فقط —
+  // الدالة معرّفة في قسم الوضع أدناه والرفع يجعلها متاحة هنا)
+  updateDockIcon();
+}
+
+function renderLogoGrid() {
+  const grid = el("logo-grid");
+  grid.innerHTML = "";
+  const active = currentLogo();
+
+  for (const l of LOGOS) {
+    const card = document.createElement("button");
+    card.type = "button";
+    card.className = "logo-card" + (l.id === active ? " active" : "");
+    card.setAttribute("aria-pressed", String(l.id === active));
+    card.title = l.name;
+
+    const source = document.querySelector(".app-mark .mark-" + l.id);
+    if (source) {
+      const preview = source.cloneNode(true);
+      // صنف المصدر يخضع لقواعد إظهار data-logo — يُجرَّد فلا تختفي المعاينة
+      preview.removeAttribute("class");
+      preview.setAttribute("aria-hidden", "true");
+      card.appendChild(preview);
+    }
+
+    const name = document.createElement("span");
+    name.className = "logo-name";
+    name.textContent = l.name;
+    card.appendChild(name);
+
+    card.addEventListener("click", () => applyLogo(l.id));
+    grid.appendChild(card);
+  }
+}
+
+// قيمة محفوظة مجهولة → التطبيع إلى «السطور» بهدوء
+document.documentElement.setAttribute("data-logo", currentLogo());
+renderLogoGrid();
+
+// ---------- الوضع النهاري/الليلي ----------
+// طبقة مستقلة عن عائلة الثيم (data-appearance لا data-theme): تعتّم الخلفية
+// والنص فقط، وعائلة المعدن المختارة تبقى كما هي. المفتاح المحفوظ يعني
+// اختيارًا يدويًا صريحًا: قبل أول اختيار يتبع التطبيق مظهر النظام حيًّا
+// (prefers-color-scheme)، وبعده يثبت على المحفوظ ولا يلتفت للنظام.
+// أداة التحكم اليدوية الوحيدة: مبدّل «المظهر» في الإعدادات (زر قمر
+// الشريط أُزيل في تصحيح v6.3)
+const APPEARANCE_KEY = "nasaq-appearance-choice";
+const appearanceLightBtn = el("appearance-light-btn");
+const appearanceDarkBtn = el("appearance-dark-btn");
+const appearanceModeLabel = el("appearance-mode-label");
+
+// المفتاح القديم nasaq-appearance كان يُكتب تلقائيًا عند كل إقلاع (حتى
+// v6.2) فقيمته لا تفرّق بين اختيار متعمد وأثر جانبي — لهذا فرض ليلًا
+// بائتًا على من لم يختره قط، وبقي بعد حذف التطبيق (بيانات WebKit تنجو من
+// إعادة التثبيت). هُجر إلى مفتاح جديد يُكتب عند الاختيار اليدوي حصرًا،
+// ويُمحى القديم هنا فلا يعود له أثر
+try {
+  localStorage.removeItem("nasaq-appearance");
+} catch {
+  // تعذّر المحو لا يضر — المفتاح القديم لا يُقرأ أصلًا
+}
 
 function currentAppearance() {
   return document.documentElement.getAttribute("data-appearance") === "dark" ? "dark" : "light";
 }
 
-function applyAppearance(mode) {
+// الاختيار اليدوي المحفوظ إن كان صالحًا — أي قيمة أخرى (أو تعذّر القراءة)
+// تُعامل كغيابه، فلا يفسد مفتاح قديم تالف مسارَ النظام
+function savedAppearance() {
+  try {
+    const v = localStorage.getItem(APPEARANCE_KEY);
+    return v === "dark" || v === "light" ? v : null;
+  } catch {
+    return null;
+  }
+}
+
+const systemDarkQuery = window.matchMedia
+  ? window.matchMedia("(prefers-color-scheme: dark)")
+  : null;
+
+function systemAppearance() {
+  return systemDarkQuery && systemDarkQuery.matches ? "dark" : "light";
+}
+
+// مزامنة أدوات الوضع: زرّا الإعدادات والتسمية السياقية — الحالة عبر
+// aria-pressed والموضع والحبّة الورقية، لا اللون وحده
+function syncAppearanceControls(mode) {
+  const dark = mode === "dark";
+  appearanceLightBtn.setAttribute("aria-pressed", String(!dark));
+  appearanceDarkBtn.setAttribute("aria-pressed", String(dark));
+  appearanceModeLabel.textContent = dark ? "الوضع الليلي" : "الوضع النهاري";
+}
+
+// ---------- أيقونة الدوك الفعلية (v6.3) ----------
+// داخل التطبيق فقط: أمر Rust يبدّل صورة الدوك للجلسة الجارية إلى تصميم
+// الأيقونة المختار بنسخته المناسبة للوضع الفعّال (فاتح/داكن). أيقونة
+// الحزمة في Finder/Launchpad تبقى أيقونة البناء — تغييرها يعني إعادة
+// كتابة حزمة موقّعة. يُستدعى عند البدء ومع كل تبديل أيقونة أو وضع،
+// وفي معاينة المتصفح يفشل النداء بصمت فلا أثر له
+function updateDockIcon() {
+  if (!window.__TAURI__) return;
+  invoke("set_dock_icon", {
+    design: currentLogo(),
+    dark: currentAppearance() === "dark",
+  }).catch(() => {});
+}
+
+// تطبيق بلا حفظ — مسار البدء واتباع النظام: لا يصنع تفضيلًا يدويًا
+function setAppearance(mode) {
   if (mode === "dark") {
     document.documentElement.setAttribute("data-appearance", "dark");
   } else {
     document.documentElement.removeAttribute("data-appearance");
   }
+  syncAppearanceControls(mode);
+  // بطاقات المعاينة تحمل data-appearance لتُري ليلَ كل عائلة الخاص —
+  // إعادة الرسم عند كل تبديل تُبقيها صادقة مع الوضع الحالي
+  renderThemeGrid();
+  // نسخة أيقونة الدوك (فاتحة/داكنة) تتبع الوضع الفعّال
+  updateDockIcon();
+}
+
+// الاختيار اليدوي (من أي من الزرين): يطبق ويحفظ، فيثبت التطبيق على
+// المختار ويتوقف اتباع النظام من هذه اللحظة
+function applyAppearance(mode) {
+  setAppearance(mode);
   try {
     localStorage.setItem(APPEARANCE_KEY, mode);
   } catch {
     // تعذّر الحفظ لا يمنع التبديل في الجلسة الحالية
   }
-  themeModeBtn.classList.toggle("active", mode === "dark");
-  themeModeBtn.setAttribute("aria-pressed", String(mode === "dark"));
 }
 
-themeModeBtn.addEventListener("click", () => {
-  applyAppearance(currentAppearance() === "dark" ? "light" : "dark");
-});
+appearanceLightBtn.addEventListener("click", () => applyAppearance("light"));
+appearanceDarkBtn.addEventListener("click", () => applyAppearance("dark"));
 
-applyAppearance(currentAppearance());
+// تبدّل مظهر النظام أثناء التشغيل يتبعه التطبيق ما دام لا اختيار يدوي —
+// addListener بديل الإصدارات الأقدم من WebKit عن addEventListener
+if (systemDarkQuery) {
+  const followSystem = (e) => {
+    if (!savedAppearance()) setAppearance(e.matches ? "dark" : "light");
+  };
+  if (systemDarkQuery.addEventListener) systemDarkQuery.addEventListener("change", followSystem);
+  else if (systemDarkQuery.addListener) systemDarkQuery.addListener(followSystem);
+}
+
+// البدء: المحفوظ الصالح يُحترم، وإلا فمظهر النظام — تطبيقًا بلا حفظ،
+// وبالقرار نفسه الذي رسمه السكربت المبكر في <head> فلا وميض ولا اختلاف
+setAppearance(savedAppearance() || systemAppearance());
 
 // ---------- المسودات: تخزين محلي بالكامل، لا يغادر الجهاز ----------
 // داخل التطبيق تُحفظ في drafts.json بجوار الإعدادات، وفي معاينة المتصفح في localStorage

@@ -65,66 +65,104 @@
   --card-bg: var(--bg);
   --card-text: var(--text);
   --card-metal: var(--accent);
-  /* ظلال ناعمة جدًا كـFigma — تعتيم الخلفية أخف، وظل اللوحات همسة */
-  --backdrop: rgba(var(--shadow-rgb), 0.32);
+  /* غشاء اللوحات فحمي محايد ثابت (تصحيح v6.3): لا يُشتق من ظل العائلة —
+     كان الاشتقاق يخالط سطحَ اللوحة الفاتح بصبغة العائلة فيصفرّ ويمرَض.
+     ظل اللوحات نفسه يبقى همسة مشتقة كـFigma */
+  --backdrop: rgba(21, 19, 17, 0.38);
   --shadow: rgba(var(--shadow-rgb), 0.16);
+
+  /* المحايد الثابت (تصحيح المظهر الثاني): قيم العائلة الأساسية حرفيًا لكل
+     وضع، لا تعرّفها كتل العائلات إطلاقًا فلا تتصبّغ بالمختارة أبدًا.
+     تستهلكها لوحة الإعدادات وبطاقات معاينة الأيقونة والعائلة حصرًا —
+     فيبقى سطح اللوحة والبطاقات وحبرها واحدًا مهما تبدّلت العائلة */
+  --neutral-bg: #f4efe6;
+  --neutral-raised: #ece4d4;
+  --neutral-input: #efe8d9;
+  --neutral-text: #1c1710;
+  --neutral-dim: #5f5747;
+  --neutral-tool: #4c4434;
+  --neutral-border: rgba(28, 23, 16, 0.1);
+  --neutral-tool-border: rgba(28, 23, 16, 0.14);
+  --neutral-tint: rgba(28, 23, 16, 0.06);
   --font-ui: "Cairo", "Geeza Pro", system-ui, sans-serif;
   --font-text: "Almarai", "Geeza Pro", system-ui, sans-serif;
 }
 
-/* ---------- الثيمات ----------
-   ست عائلات على صيغة المخطوطة الفاتحة نفسها (ورق دافئ + حبر داكن + معدن
-   هادئ)، تختلف بحرارة المعدن ومسحة الورق فقط — لا عائلة باردة. التبديل
-   عبر data-theme على الجذر. كل ثيم يرث الأساس الفاتح من :root ويغيّر معدنه
-   ومسحة ورقه فقط (v6.0 — تبسيط: القيمة المشتركة تبقى في :root). */
+/* ---------- الثيمات (v6.3، صُحّح نهارها) ----------
+   نهارًا: ورقُ القراءة والكتابة واحد محايد — الخلفيات والأسطح والحبرين
+   والحدود والظلال كلها من :root (المظهر الفاتح الأصلي)، فلا تُغسل الواجهة
+   بنحاس أو ورد أو زيتون يُتعب العين. شخصية العائلة تسكن اللهجات المضبوطة
+   وحدها: الفعل الرئيس (--accent/--accent-text)، عنوان الهوية (--brand)،
+   معدن حلقة التركيز والزخرفة (--metal-rgb)، وصبغة تحويم مشتقة من فعل
+   العائلة (--accent-tint) — بها تتمايز الأزرار والحالات المفعّلة والتبويب
+   النشط لا مساحات النص. ليلًا: لكل عائلة نسختها الكاملة أدناه كما هي —
+   نجاح الليالي لا يُمسّ. ألوان الحالات (الخطأ/الحُمرة/الزيتوني) ثابتة
+   عبر العائلات: حالة لا هوية. المعرّفات مفاتيح تقنية قديمة تُبقى حفاظًا
+   على الاختيار المحفوظ — «dark» يعني العائلة الأساسية لا الليل. */
 
-[data-theme="ink"] {
-  /* ذهب هادئ: ورق ناصع + ذهب أخفت */
-  --bg: #f6f2ea;
-  --bg-raised: #efe9dd;
-  --accent: #8f7030;
-  --metal-rgb: 143, 112, 48;
+[data-theme="dark"] {
+  /* ورق نَسَق — العائلة الأساسية: لهجات :root نفسها معادة نصًا حتى تصدُق
+     بطاقة المعاينة وهي داخل جذرٍ على عائلة أخرى */
+  --accent: #1c1710;
+  --brand: #7a5c14;
+  --metal-rgb: 156, 119, 36;
+  --accent-text: #f7f1e4;
+  --accent-tint: rgba(var(--line-rgb), 0.06);
 }
 
 [data-theme="paper"] {
-  /* نحاس دافئ: ورق كريمي + معدن نحاسي */
-  --bg: #f5eee1;
-  --bg-raised: #ece2d1;
-  --accent: #a5673a;
-  --metal-rgb: 165, 103, 58;
+  /* نحاس — فعل نحاسي عميق وعنوان نحاسي */
+  --accent: #7e4526;
+  --brand: #96502b;
+  --metal-rgb: 173, 102, 59;
+  --accent-text: #f9efe5;
+  --accent-tint: rgba(126, 69, 38, 0.08);
 }
 
 [data-theme="night"] {
-  /* برونز فاتح: ورق زيتوني خافت + معدن برونزي */
-  --bg: #f3f0e4;
-  --bg-raised: #eae6d5;
-  --accent: #8d7738;
-  --metal-rgb: 141, 119, 56;
+  /* زيتون — فعل زيتوني عميق وعنوان زيتوني */
+  --accent: #4a5423;
+  --brand: #5d6a26;
+  --metal-rgb: 128, 138, 73;
+  --accent-text: #f5f5e9;
+  --accent-tint: rgba(74, 84, 35, 0.08);
 }
 
-[data-theme="sand"] {
-  /* فضة دافئة: ورق رملي محايد + معدن فضي دافئ */
-  --bg: #f4f1ea;
-  --bg-raised: #eae5da;
-  --accent: #7f7562;
-  --metal-rgb: 127, 117, 98;
+[data-theme="ink"] {
+  /* حبر أزرق — فعل نيلي عميق وعنوان نيلي */
+  --accent: #2b3f59;
+  --brand: #41608a;
+  --metal-rgb: 100, 128, 163;
+  --accent-text: #f3f6f9;
+  --accent-tint: rgba(43, 63, 89, 0.08);
 }
 
 [data-theme="ash"] {
-  /* لؤلؤ عتيق: ورق بمسحة وردية + معدن لؤلئي رمادي */
-  --bg: #f6f0ea;
-  --bg-raised: #ede5dd;
-  --accent: #857a68;
-  --metal-rgb: 133, 122, 104;
+  /* ورد عتيق — فعل وردي معتّق وعنوان خمري */
+  --accent: #77323d;
+  --brand: #8e414d;
+  --metal-rgb: 166, 94, 105;
+  --accent-text: #faf1ef;
+  --accent-tint: rgba(119, 50, 61, 0.08);
+}
+
+[data-theme="sand"] {
+  /* رماد ناعم — فعل غرافيتي عميق وعنوان رمادي دافئ */
+  --accent: #34332c;
+  --brand: #6b6350;
+  --metal-rgb: 126, 119, 101;
+  --accent-text: #f4f3f0;
+  --accent-tint: rgba(52, 51, 44, 0.08);
 }
 
 /* ---------- الوضع الليلي ----------
-   طبقة مستقلة عن عائلة الثيم (أُضيفت في v6.1): مفتاحها data-appearance لا data-theme،
-   فتُعتِّم الخلفية والنص فقط بنخبة ليلية واحدة موحّدة — لا نسخة ليلية لكل
-   عائلة معدن. تفوز على [data-theme] لتساوي الخصوصية وتأخّر الترتيب في الملف،
-   فتُعتّم فوق أي عائلة مختارة سلفًا. المشتقات (الحدود/الظلال/بطاقات
-   التنويعات) تُعاد حسابها تلقائيًا من --bg/--text/--accent/--line-rgb/
-   --shadow-rgb دون إعادة تعريفها هنا */
+   مفتاحه data-appearance مستقلًا عن العائلة (منذ v6.1)، ومنذ v6.3 لكل
+   عائلة ليلُها الخاص: امتداد داكن للهوية اللونية نفسها لا سوادًا مشتركًا.
+   هذه الكتلة العامة ليل العائلة الأساسية واحتياطُ أي قيمة محفوظة بلا كتلة
+   ليلية خاصة — تفوز على كتل [data-theme] الفاتحة بتأخّر الترتيب، وكتل
+   الليل الخاصة أدناه تفوز عليها بخصوصية السمتين معًا. المشتقات (الحدود/
+   الصبغات/الظلال) تُعاد حسابها هنا بنسب أوضح تناسب الخلفيات الداكنة،
+   وتقرأ --line-rgb الخاص بكل عائلة تلقائيًا */
 [data-appearance="dark"] {
   --bg: #1a1611;
   --bg-raised: #241f18;
@@ -141,11 +179,126 @@
   --veil: rgba(26, 22, 17, 0.82);
   --shadow-rgb: 0, 0, 0;
   --line-rgb: 239, 231, 216;
+  /* غشاء الليل كما كان قبل تثبيت غشاء النهار الفحمي: مشتق من ظل الليل
+     الأسود نفسه — rgba(0,0,0,0.32) حرفيًا، لا تغيير مرئيًا */
+  --backdrop: rgba(var(--shadow-rgb), 0.32);
   --border: rgba(var(--line-rgb), 0.14);
   --tool-border: rgba(var(--line-rgb), 0.2);
   /* تفاعل الحالات (تحويم/تفعيل) أوضح قليلًا من صبغة الحدّ العامة — أقرب لنسبة
      ١٢٪ المعتادة لتباين حالات الأزرار على خلفية داكنة */
   --accent-tint: rgba(var(--line-rgb), 0.12);
+
+  /* المحايد الثابت ليلًا: فحمي لالوني حقيقي (تصحيح v6.3 الثالث) — القيم
+     السابقة كانت ليل العائلة الأساسية البني الدافئ فبقيت لوحة الإعدادات
+     «بنّية» في العائلات الست كلها. رمادي خالص (R=G=B) لا يميل لنحاس ولا
+     ورد ولا زيتون ولا أزرق، وكتل العائلات لا تعرّفه فيثبت عبرها جميعًا */
+  --neutral-bg: #191919;
+  --neutral-raised: #212121;
+  --neutral-input: #1d1d1d;
+  --neutral-text: #ebebeb;
+  --neutral-dim: #a1a1a1;
+  --neutral-tool: #c7c7c7;
+  --neutral-border: rgba(235, 235, 235, 0.14);
+  --neutral-tool-border: rgba(235, 235, 235, 0.2);
+  --neutral-tint: rgba(235, 235, 235, 0.12);
+}
+
+/* ليالي العائلات الست: الورق يُعتم بصبغة عائلته والحبر يُضاء بمسحتها،
+   والعنوان والفعل يحتفظان بشخصيتها اللونية */
+[data-theme="dark"][data-appearance="dark"] {
+  --bg: #1a1611;
+  --bg-raised: #241f18;
+  --bg-input: #211c15;
+  --text: #efe7d8;
+  --text-dim: #a99d87;
+  --accent: #efe7d8;
+  --brand: #d1a94f;
+  --metal-rgb: 209, 169, 79;
+  --accent-text: #1a1611;
+  --tool-text: #cdc3ae;
+  --veil: rgba(26, 22, 17, 0.82);
+  --shadow-rgb: 0, 0, 0;
+  --line-rgb: 239, 231, 216;
+}
+
+[data-theme="paper"][data-appearance="dark"] {
+  --bg: #211510;
+  --bg-raised: #2b1d16;
+  --bg-input: #261811;
+  --text: #f2e3d6;
+  --text-dim: #b69c88;
+  --accent: #f0dfcf;
+  --brand: #dc9a67;
+  --metal-rgb: 220, 154, 103;
+  --accent-text: #211510;
+  --tool-text: #d4bda8;
+  --veil: rgba(33, 21, 16, 0.82);
+  --shadow-rgb: 0, 0, 0;
+  --line-rgb: 242, 227, 214;
+}
+
+[data-theme="night"][data-appearance="dark"] {
+  --bg: #161810;
+  --bg-raised: #1f2216;
+  --bg-input: #1b1e13;
+  --text: #e9ebd7;
+  --text-dim: #a6aa8c;
+  --accent: #e6e8ce;
+  --brand: #b4c26f;
+  --metal-rgb: 180, 194, 111;
+  --accent-text: #161810;
+  --tool-text: #cad0b0;
+  --veil: rgba(22, 24, 16, 0.82);
+  --shadow-rgb: 0, 0, 0;
+  --line-rgb: 233, 235, 215;
+}
+
+[data-theme="ink"][data-appearance="dark"] {
+  --bg: #12161c;
+  --bg-raised: #1a2028;
+  --bg-input: #161c23;
+  --text: #e2e8ef;
+  --text-dim: #96a2b1;
+  --accent: #dfe6ee;
+  --brand: #91b4da;
+  --metal-rgb: 145, 180, 218;
+  --accent-text: #12161c;
+  --tool-text: #becbd9;
+  --veil: rgba(18, 22, 28, 0.82);
+  --shadow-rgb: 0, 0, 0;
+  --line-rgb: 226, 232, 239;
+}
+
+[data-theme="ash"][data-appearance="dark"] {
+  --bg: #1e1315;
+  --bg-raised: #291b1e;
+  --bg-input: #231719;
+  --text: #f1e2e2;
+  --text-dim: #b7989c;
+  --accent: #eedadb;
+  --brand: #de93a0;
+  --metal-rgb: 222, 147, 160;
+  --accent-text: #1e1315;
+  --tool-text: #d6bcc0;
+  --veil: rgba(30, 19, 21, 0.82);
+  --shadow-rgb: 0, 0, 0;
+  --line-rgb: 241, 226, 226;
+}
+
+[data-theme="sand"][data-appearance="dark"] {
+  --bg: #171716;
+  --bg-raised: #21201d;
+  --bg-input: #1c1b19;
+  --text: #e9e7e1;
+  --text-dim: #a3a198;
+  --accent: #e5e3dc;
+  --brand: #b9ae97;
+  --metal-rgb: 185, 174, 151;
+  --accent-text: #171716;
+  --tool-text: #c7c5bc;
+  --veil: rgba(23, 23, 22, 0.82);
+  --shadow-rgb: 0, 0, 0;
+  --line-rgb: 233, 231, 225;
 }
 
 * {
@@ -225,14 +378,19 @@ body {
   align-self: center;
   flex-shrink: 0;
   margin-inline-end: 5px; /* مسافة إضافية بين الرمز وكلمة «نَسَق» فوق فجوة الرأس */
+  /* الرموز التكيفية (v6.3 — من nasaq-brand): الحبر currentColor فيتبع حبر
+     العائلة نهارًا وليلًا تلقائيًا، ونقطة التصحيح حمراء ثابتة بالبناء */
+  color: var(--text);
 }
 
-/* توأما الرمز (أُضيفا في v6.1): نسخة الورق الفاتح ونسخة الوضع الليلي بالهندسة نفسها
-   والحجم والموضع نفسيهما — data-appearance وحده يبدّل أيّهما ظاهر، فالرمز
-   لا يبقى ملصقًا أبيض فوق الخلفية الداكنة */
-.app-mark-dark { display: none; }
-[data-appearance="dark"] .app-mark-light { display: none; }
-[data-appearance="dark"] .app-mark-dark { display: block; }
+/* الأيقونات الأربع مضمّنة والظاهر واحد بقيادة data-logo على الجذر —
+   الافتراضي «السطور»، وshell.js يطبّع أي قيمة محفوظة مجهولة إليه */
+.app-mark svg { display: none; width: 100%; height: 100%; }
+html:not([data-logo]) .mark-lines,
+[data-logo="lines"] .app-mark .mark-lines,
+[data-logo="nun"] .app-mark .mark-nun,
+[data-logo="weave"] .app-mark .mark-weave,
+[data-logo="wordmark"] .app-mark .mark-wordmark { display: block; }
 
 .app-title {
   font-size: 16px;
@@ -429,12 +587,6 @@ body {
   color: var(--text-dim);
 }
 .topbar .ghost-btn:hover { background: var(--accent-tint); border-color: transparent; }
-
-/* زر الوضع الليلي: قمر همسة، ويتلوّن بالذهب حين يكون الوضع الليلي مفعَّلًا */
-#theme-mode-btn.active {
-  color: var(--brand);
-  background: var(--accent-tint);
-}
 
 /* عدّاد المسودات: شارة صغيرة محايدة هادئة — لا بطاقة ذهبية */
 .count-badge {
@@ -832,6 +984,20 @@ textarea:focus-visible,
 }
 
 .settings-panel {
+  /* عزل اللوحة عن صبغة العائلة (تصحيح المظهر الثاني): أسطحها وحبرها
+     وحدودها وصبغة تحويمها كلها من المحايد الثابت في الوضعين — فلا يتسرب
+     نحاس أو ورد أو زيتون إلى سطحها ليلًا أو نهارًا. العائلة تحضر داخلها
+     في اللهجات المسموحة فقط: التبويب النشط، زر «حفظ»، حلقة التركيز،
+     وحدود المختار وعيّنات البطاقات. السطح معتم كليًا — لا زجاج ولا طبقة */
+  --bg: var(--neutral-bg);
+  --bg-raised: var(--neutral-raised);
+  --bg-input: var(--neutral-input);
+  --text: var(--neutral-text);
+  --text-dim: var(--neutral-dim);
+  --tool-text: var(--neutral-tool);
+  --border: var(--neutral-border);
+  --tool-border: var(--neutral-tool-border);
+  --accent-tint: var(--neutral-tint);
   background: var(--bg-raised);
   border: 1px solid var(--border);
   border-radius: 12px;
@@ -896,6 +1062,126 @@ textarea:focus-visible,
   gap: 14px;
 }
 
+/* ---------- المظهر (v6.3): قسمان بهدوء الهوية ---------- */
+/* ترويسة قسم خافتة كترويسات الحقول — لا لوحة إعدادات غريبة عن اللغة البصرية */
+.appearance-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.appearance-title {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--tool-text);
+}
+
+.appearance-desc {
+  margin: -4px 0 0;
+  font-size: 11px;
+  font-weight: 300;
+  color: var(--text-dim);
+}
+
+/* ---------- مبدّل الوضع النهاري/الليلي (داخل «المظهر») ----------
+   حبّة على قالب مبدّل «نسق|شذب» في الشريط: مسار غائر وزرّان، والمفعّل
+   حبّة ورقية مرفوعة بظل همسة — الحالة بالموضع والحبّة وaria-pressed لا
+   باللون وحده. الأسطح والحبر من المحايد الثابت حصرًا (حماية تصحيح
+   الإعدادات): لا رمز عائلي في سطح أو نص، والعائلة تحضر في حلقة التركيز
+   المعدنية العامة فقط */
+.appearance-mode-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.appearance-mode-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--neutral-tool);
+}
+
+.appearance-switch {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  background: var(--neutral-tint);
+  border-radius: 999px;
+}
+
+.appearance-mode-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  color: var(--neutral-dim);
+  border: none;
+  border-radius: 999px;
+  padding: 4px 14px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+.appearance-mode-btn:hover { color: var(--neutral-text); }
+
+.appearance-mode-btn[aria-pressed="true"] {
+  color: var(--neutral-text);
+  background: var(--neutral-bg);
+  box-shadow: 0 1px 3px rgba(var(--shadow-rgb), 0.22);
+}
+
+.appearance-mode-btn svg { display: block; }
+
+/* شبكة الأيقونات: أربع بطاقات ورقية هادئة، الرمز فيها بحبر الثيم الحالي
+   (استنساخ حي للرموز المضمّنة) والمختارة بحدّ الفعل الرئيس */
+.logo-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.logo-card {
+  background: var(--neutral-bg);
+  color: var(--neutral-text);
+  border: 2px solid var(--neutral-border);
+  border-radius: 10px;
+  padding: 12px 6px 9px;
+  font-family: inherit;
+  font-size: 11.5px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.logo-card:hover { border-color: var(--neutral-dim); }
+
+/* العائلة على حدّ المختارة الخارجي فقط — لا تدخل رسم الأيقونة أبدًا */
+.logo-card.active { border-color: var(--accent); }
+
+/* حبر المعاينة مثبَّت على محايد الوضع (تصحيح المظهر الثاني): رسم الرمز
+   currentColor في مصدره، وتثبيت color هنا يحلّه إلى حبر واحد ثابت عبر
+   العائلات الست — نهارًا حبر داكن وليلًا حبر فاتح، لا يتبع --accent ولا
+   --brand ولا أي رمز عائلي. نقطة التصحيح حمراء صلبة في المصدر لا تُمسّ */
+.logo-card svg {
+  width: 36px;
+  height: 36px;
+  display: block;
+  color: var(--neutral-text);
+}
+
+.logo-card .logo-name { color: var(--neutral-dim); }
+
+.logo-card.active .logo-name {
+  color: var(--neutral-text);
+  font-weight: 600;
+}
+
 /* ---------- شبكة الثيمات ---------- */
 .theme-grid {
   display: grid;
@@ -905,13 +1191,18 @@ textarea:focus-visible,
 
 @media (max-width: 560px) {
   .theme-grid { grid-template-columns: repeat(2, 1fr); }
+  .logo-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
-/* البطاقة تحمل data-theme الخاص بها، فتعرض ألوان ثيمها الحقيقية كمعاينة حية */
+/* البطاقة تحمل data-theme الخاص بها لتقرأ العيّنات ألوان عائلتها الحقيقية،
+   أما سطحها واسمها وحدّها فعلى المحايد الثابت مباشرة (تصحيح المظهر
+   الثاني) — كتل العائلات تطابق البطاقة نفسها بسِمتها فتعيد تعريف رموز
+   العمل عليها، والمحايد وحده لا تعرّفه عائلة فلا تتصبّغ البطاقة.
+   العائلة تظهر في العيّنات الثلاث وحدّ المختارة وعلامتها فقط */
 .theme-card {
-  background: var(--bg);
-  color: var(--text);
-  border: 2px solid var(--border);
+  background: var(--neutral-bg);
+  color: var(--neutral-text);
+  border: 2px solid var(--neutral-border);
   border-radius: 10px;
   padding: 10px 12px;
   font-family: inherit;
@@ -925,7 +1216,7 @@ textarea:focus-visible,
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.theme-card:hover { border-color: var(--text-dim); }
+.theme-card:hover { border-color: var(--neutral-dim); }
 
 .theme-card.active { border-color: var(--accent); }
 
@@ -952,11 +1243,13 @@ textarea:focus-visible,
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  border: 1px solid var(--border);
+  border: 1px solid var(--neutral-border);
 }
 
+/* عيّنات الشخصية اللونية: الفعل الرئيس، معدن العنوان، الحبر — أوضح ثلاثية
+   تُري فرق العائلة من البطاقة نفسها (v6.3: العنوان بدل السطح المرفوع) */
 .theme-card .dot-accent { background: var(--accent); }
-.theme-card .dot-raised { background: var(--bg-input); }
+.theme-card .dot-brand { background: var(--brand); }
 .theme-card .dot-text { background: var(--text); }
 
 /* ---------- لوحة المسودات ---------- */
