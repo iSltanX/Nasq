@@ -16,6 +16,13 @@ mod shared;
 
 fn main() {
     tauri::Builder::default()
+        // نظام التحديثات (المرحلة 1): plugin-process فقط مسجَّل — لا سلوك
+        // إضافي حتى يُستدعى أمره صراحةً من الواجهة (المرحلة 3). تسجيل
+        // updater مؤجَّل عمدًا إلى المرحلة 4: تحقّق فعلي أثبت أن تسجيله
+        // يفشل عند الإقلاع بلا plugins.updater.pubkey صالح في
+        // tauri.conf.json (حقل إلزامي في الإعداد، لا قيمة افتراضية) —
+        // فتسجيله الآن قبل وجود مفتاح حقيقي يُسقط التطبيق كاملًا عند فتحه.
+        .plugin(tauri_plugin_process::init())
         .invoke_handler(tauri::generate_handler![
             shared::settings::load_settings,
             shared::settings::save_settings,

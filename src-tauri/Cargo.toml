@@ -12,6 +12,9 @@ tauri = { version = "2", features = [] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 reqwest = { version = "0.12", features = ["json"] }
+# نظام التحديثات (المرحلة 1 — نائم بلا مفتاح ولا endpoint، لا أثر سلوكي بعد)
+tauri-plugin-updater = "2"
+tauri-plugin-process = "2"
 
 # أيقونة الدوك وقت التشغيل (v6.3): حزم objc2 حاضرة أصلًا في شجرة tauri
 # نفسها — الاعتماد المباشر يفعّل سمات NSApplication/NSImage/NSData فقط

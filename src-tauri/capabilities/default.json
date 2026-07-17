@@ -3,5 +3,5 @@
   "identifier": "default",
   "description": "قدرات النافذة الرئيسية",
   "windows": ["main"],
-  "permissions": ["core:default"]
+  "permissions": ["core:default", "process:default"]
 }
