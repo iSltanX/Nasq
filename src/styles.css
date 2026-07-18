@@ -8,21 +8,38 @@
    ============================================================ */
 @font-face {
   font-family: "Cairo";
-  src: url("fonts/Cairo-Variable.ttf") format("truetype-variations");
-  font-weight: 200 1000;
+  src: url("fonts/Cairo-Regular.ttf") format("truetype");
+  font-weight: 400;
   font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Cairo";
+  src: url("fonts/Cairo-Medium.ttf") format("truetype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
 }
 @font-face {
   font-family: "Almarai";
   src: url("fonts/Almarai-Regular.ttf") format("truetype");
   font-weight: 400;
   font-style: normal;
+  font-display: swap;
 }
 @font-face {
   font-family: "Almarai";
   src: url("fonts/Almarai-Bold.ttf") format("truetype");
   font-weight: 700;
   font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Almarai";
+  src: url("fonts/Almarai-ExtraBold.ttf") format("truetype");
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
 }
 
 /* ============================================================
@@ -43,41 +60,47 @@
   --bg: #f3eff5;
   --bg-raised: #ece5f0;
   --bg-input: #fbf8fc;
+  --bg-soft: #e4dce9;
+  --border: #c9bcd1;
+  --border-subtle: #ded5e3;
   --text: #241f2a;
   --text-dim: #645a6c;
+  --text-muted: #8b8092;
   --tool-text: #645a6c;
 
   /* لون توقيع البرج: هو الفعل الرئيس وهو العلامة معًا */
   --accent: #7055a8;
   --accent-hover: #604793;
   --accent-text: #fcf9ff;
-  --brand: #604793;
+  --accent-soft: #e7ddf1;
+  --selection: #d8c9e8;
+  --focus-ring: #8063b8;
+  --brand: var(--accent);
   --accent-rgb: 112, 85, 168;
-  --metal-rgb: 112, 85, 168;
 
-  --error-bg: #f5dfdc;
-  --error-text: #a23f3f;
+  --success: #4f7f6a;
+  --success-soft: rgba(79, 127, 106, 0.12);
+  --warning: #9b6c2e;
+  --warning-soft: rgba(155, 108, 46, 0.12);
+  --error-text: #b75656;
+  --error-bg: rgba(183, 86, 86, 0.12);
 
   --line-rgb: 36, 31, 42;
   --shadow-rgb: 40, 28, 58;
   --veil: rgba(243, 239, 245, 0.82);
 
   /* مشتقّات تُحسب مرة وتتبع الجذور أعلاه */
-  --border: rgba(var(--line-rgb), 0.14);
-  --tool-border: rgba(var(--line-rgb), 0.18);
-  --accent-tint: rgba(var(--accent-rgb), 0.09);
+  --tool-border: var(--border);
+  --accent-tint: var(--accent-soft);
   --shadow: rgba(var(--shadow-rgb), 0.16);
   --backdrop: rgba(var(--shadow-rgb), 0.30);
-  --card-bg: var(--bg);
-  --card-text: var(--text);
-  --card-metal: var(--accent);
 
   /* لون سلطان المعتمد لعلامة حقوق المطوّر (من توكنز هوية سلطان الرسمية):
      لا يتبع البرج أبدًا — نهاره #985333 وليله #D2916C حصرًا */
   --sultan-mark: #985333;
 
-  --font-ui: "Almarai", "Geeza Pro", system-ui, sans-serif;
-  --font-text: "Cairo", "Geeza Pro", system-ui, sans-serif;
+  --font-ui: "Almarai", sans-serif;
+  --font-text: "Cairo", sans-serif;
 }
 
 /* شَذْب — نهار (طوبيّ أحمر على ورق دافئ). غياب data-appearance فنهار.
@@ -87,19 +110,29 @@
   --bg: #f7f0ef;
   --bg-raised: #efe3e2;
   --bg-input: #fefaf8;
+  --bg-soft: #e7d8d8;
+  --border: #d0b9ba;
+  --border-subtle: #e4d4d3;
   --text: #2a2020;
   --text-dim: #6c5958;
+  --text-muted: #907c7b;
   --tool-text: #6c5958;
 
   --accent: #b64f4b;
   --accent-hover: #9f423f;
   --accent-text: #fff9f6;
-  --brand: #9f423f;
+  --accent-soft: #f2dad8;
+  --selection: #e9c6c4;
+  --focus-ring: #c7605b;
+  --brand: var(--accent);
   --accent-rgb: 182, 79, 75;
-  --metal-rgb: 182, 79, 75;
 
-  --error-bg: #f5dad6;
-  --error-text: #9e3a38;
+  --success: #537d68;
+  --success-soft: rgba(83, 125, 104, 0.12);
+  --warning: #9b6b2d;
+  --warning-soft: rgba(155, 107, 45, 0.12);
+  --error-text: #b94747;
+  --error-bg: rgba(185, 71, 71, 0.12);
 
   --line-rgb: 42, 32, 32;
   --shadow-rgb: 55, 28, 26;
@@ -112,26 +145,36 @@
   --bg: #14131a;
   --bg-raised: #272432;
   --bg-input: #1d1b25;
+  --bg-soft: #302c3d;
+  --border: #3b3649;
+  --border-subtle: #2c2936;
   --text: #f4f0e8;
   --text-dim: #beb6c8;
+  --text-muted: #8f879a;
   --tool-text: #beb6c8;
 
   --accent: #9a82d8;
   --accent-hover: #ab95e3;
   --accent-text: #17131e;
-  --brand: #b7a2ec;
+  --accent-soft: #352d4d;
+  --selection: #463a67;
+  --focus-ring: #b59deb;
+  --brand: var(--accent);
   --accent-rgb: 154, 130, 216;
-  --metal-rgb: 154, 130, 216;
 
-  --error-bg: #3a2224;
-  --error-text: #e39a9a;
+  --success: #65a88b;
+  --success-soft: rgba(101, 168, 139, 0.14);
+  --warning: #d7a35d;
+  --warning-soft: rgba(215, 163, 93, 0.14);
+  --error-text: #d97878;
+  --error-bg: rgba(217, 120, 120, 0.14);
 
   --line-rgb: 244, 240, 232;
   --shadow-rgb: 0, 0, 0;
   --veil: rgba(20, 19, 26, 0.82);
 
-  --tool-border: rgba(var(--line-rgb), 0.20);
-  --accent-tint: rgba(var(--accent-rgb), 0.16);
+  --tool-border: var(--border);
+  --accent-tint: var(--accent-soft);
   --shadow: rgba(var(--shadow-rgb), 0.5);
   --backdrop: rgba(var(--shadow-rgb), 0.55);
 
@@ -146,19 +189,29 @@
   --bg: #171313;
   --bg-raised: #2c2324;
   --bg-input: #211b1b;
+  --bg-soft: #382a2c;
+  --border: #493638;
+  --border-subtle: #322829;
   --text: #f6f0e9;
   --text-dim: #c5b5b3;
+  --text-muted: #968482;
   --tool-text: #c5b5b3;
 
   --accent: #d97872;
   --accent-hover: #e58a83;
   --accent-text: #1d1111;
-  --brand: #ec9b94;
+  --accent-soft: #4a2c2e;
+  --selection: #603638;
+  --focus-ring: #ec9b94;
+  --brand: var(--accent);
   --accent-rgb: 217, 120, 114;
-  --metal-rgb: 217, 120, 114;
 
-  --error-bg: #3a2020;
-  --error-text: #e88c8c;
+  --success: #70a58a;
+  --success-soft: rgba(112, 165, 138, 0.14);
+  --warning: #d8a45d;
+  --warning-soft: rgba(216, 164, 93, 0.14);
+  --error-text: #e06464;
+  --error-bg: rgba(224, 100, 100, 0.14);
 
   --line-rgb: 246, 240, 233;
   --shadow-rgb: 0, 0, 0;
@@ -167,10 +220,9 @@
 
 * {
   box-sizing: border-box;
-  /* لا ميلان إطلاقًا: خط Cairo المتغيّر يحمل محور slnt وقد يميله WebKit تلقائيًا */
+  /* لا ميلان اصطناعي ولا أوزان مصطنعة في النص العربي. */
   font-style: normal !important;
   font-synthesis: none;
-  font-variation-settings: "slnt" 0;
 }
 
 ::placeholder {
@@ -186,6 +238,30 @@ html, body {
   height: 100%;
   background: var(--bg);
   color: var(--text);
+  font-family: var(--font-text);
+  font-weight: 400;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+html { color-scheme: light; }
+[data-appearance="dark"] { color-scheme: dark; }
+
+::selection {
+  background: var(--selection);
+  color: var(--text);
+}
+
+h1,
+h2,
+h3,
+h4,
+button,
+.app-title,
+.directives-label,
+.appearance-mode-label,
+.provider-label,
+.field > span {
   font-family: var(--font-ui);
 }
 
@@ -230,7 +306,8 @@ body {
   gap: 12px;
   min-height: 48px;
   padding: 0 20px;
-  border-bottom: 1px solid var(--border);
+  background: var(--bg-input);
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .topbar-side {
@@ -245,21 +322,25 @@ body {
 .topbar-end { justify-content: flex-end; }
 
 .app-mark {
-  width: 22px;
-  height: 22px;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
   align-self: center;
   flex-shrink: 0;
-  margin-inline-end: 5px; /* مسافة إضافية بين الرمز وكلمة «نَسَق» فوق فجوة الرأس */
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-raised);
   /* العلامة الواحدة: أربعة سطور مضبوطة ومحور محاذاة. الحبر currentColor
      فيتبع ثيم البرج نهارًا وليلًا، ومحور التصحيح ونقطته بلون الفعل */
-  color: var(--text);
+  color: var(--accent);
 }
 
 /* علامتان مضمّنتان يقودهما البرج الفعّال: نَسَق (السطر الثالث متّصل)
    افتراضًا، وشَذْب (القصّة نفسها في الهيكل) حين data-mode="shadhb".
    القاعدة نفسها تحكم رمز الشريط ورمز «حول» فيتبدّلان كوحدة واحدة */
 .app-mark svg,
-.about-mark svg { display: none; width: 100%; height: 100%; }
+.about-mark svg { display: none; width: 18px; height: 18px; }
 .app-mark .mark-nasaq,
 .about-mark .mark-nasaq { display: block; }
 [data-mode="shadhb"] .app-mark .mark-nasaq,
@@ -275,21 +356,24 @@ body {
 .app-mark .mark-cut,
 .about-mark .mark-cut { stroke: var(--accent); }
 
+.app-mark .mark-axis,
+.about-mark .mark-axis { opacity: 0.36; }
+
 .app-title {
   font-size: 16px;
-  font-weight: 700;
+  font-weight: 800;
   margin: 0;
   flex-shrink: 0;
-  color: var(--brand); /* لمسة الذهب الوحيدة */
+  color: var(--brand);
 }
 
 .app-subtitle {
+  font-family: var(--font-text);
   font-size: 12px;
-  font-weight: 300;
+  font-weight: 400;
   color: var(--text-dim);
-  opacity: 0.75;
   /* شعار جانبي بفاصل رأسي رفيع عن الاسم (v6.2 — مرجع التصميم) */
-  border-inline-start: 1px solid var(--border);
+  border-inline-start: 1px solid var(--border-subtle);
   padding-inline-start: 10px;
   /* يتقلّص ولا يدفع — يبقى سطرًا واحدًا وينتهي بحذف لطيف في أضيق النوافذ */
   min-width: 0;
@@ -308,7 +392,7 @@ body {
   flex-wrap: wrap;
   min-height: 48px;
   padding: 8px 20px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 /* الحاوية مرساة لوحة القائمة المنبثقة — التسمية مخفية بصريًا (زر القائمة
@@ -333,8 +417,9 @@ body {
   color: var(--tool-text);
   border: 1px solid var(--tool-border);
   border-radius: 8px;
-  font-family: inherit;
+  font-family: var(--font-ui);
   font-size: 12.5px;
+  font-weight: 700;
   cursor: pointer;
   transition: border-color 0.2s ease, background-color 0.2s ease;
 }
@@ -378,7 +463,7 @@ body {
   background: transparent;
   color: var(--tool-text);
   border: none;
-  font-family: inherit;
+  font-family: var(--font-ui);
   font-size: 12.5px;
   cursor: pointer;
   transition: background-color 0.15s ease;
@@ -387,17 +472,17 @@ body {
 .dd-option:hover { background: rgba(var(--line-rgb), 0.04); }
 
 .dd-option[aria-selected="true"] {
-  background: rgba(var(--line-rgb), 0.06);
+  background: var(--bg-soft);
   color: var(--text);
-  font-weight: 600;
+  font-weight: 700;
 }
 
 /* تلميح قصير بجانب عناصر التحكم — يشرح سلوك المستوى المختار */
 .control-hint {
+  font-family: var(--font-text);
   font-size: 11.5px;
-  font-weight: 300;
+  font-weight: 400;
   color: var(--text-dim);
-  opacity: 0.75;
   flex: 1;
   min-width: 120px;
   text-align: start;
@@ -412,16 +497,16 @@ body {
   border-radius: 8px;
   min-height: 32px;
   padding: 5px 18px;
-  font-family: inherit;
+  font-family: var(--font-ui);
   font-size: 12.5px;
-  font-weight: 600;
+  font-weight: 700;
   line-height: 1.4;
   cursor: pointer;
-  transition: opacity 0.2s ease;
+  transition: background-color 0.15s ease, opacity 0.15s ease;
 }
 
-.primary-btn:hover { opacity: 0.82; }
-.primary-btn:active:not(:disabled) { opacity: 0.7; }
+.primary-btn:hover:not(:disabled) { background: var(--accent-hover); }
+.primary-btn:active:not(:disabled) { opacity: 0.82; }
 .primary-btn:disabled { opacity: 0.3; cursor: default; }
 
 .ghost-btn {
@@ -430,8 +515,9 @@ body {
   border: 1px solid var(--tool-border);
   border-radius: 8px;
   padding: 5px 12px;
-  font-family: inherit;
+  font-family: var(--font-ui);
   font-size: 12px;
+  font-weight: 700;
   cursor: pointer;
   /* في صف المحاور يقف بارتفاع القوائم والفعل الرئيس نفسه (١-ب) */
   min-height: 32px;
@@ -478,7 +564,8 @@ body {
   border-radius: 9px;
   padding: 0 6px;
   font-size: 10px;
-  font-weight: 600;
+  font-family: var(--font-text);
+  font-weight: 500;
   line-height: 15px;
   direction: ltr;
 }
@@ -491,6 +578,8 @@ body {
   margin: 10px 20px 0;
   padding: 8px 14px;
   font-size: 13px;
+  font-family: var(--font-text);
+  line-height: 1.7;
 }
 
 /* ---------- المساحتان ---------- */
@@ -505,11 +594,11 @@ body {
   min-height: 0;
 }
 
-@media (max-width: 860px) {
+@media (max-width: 720px) {
   .panes { grid-template-columns: 1fr; }
   .pane-input {
     border-inline-end: none;
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid var(--border-subtle);
   }
   #input-text { min-height: 150px; }
 }
@@ -519,11 +608,12 @@ body {
   flex-direction: column;
   gap: 0;
   min-height: 0;
+  min-width: 0;
   transition: opacity 0.2s ease;
 }
 
 /* الفاصل الرأسي بين العمودين يحمله عمود الإدخال — يعمل للوضعين معًا */
-.pane-input { border-inline-end: 1px solid var(--border); }
+.pane-input { border-inline-end: 1px solid var(--border-subtle); }
 
 /* رأس العمود: عنوان يمينًا والعدّاد/الأدوات يسارًا، وخط رفيع أسفله.
    يلتف بدل القص (v5.1) في النوافذ الضيقة */
@@ -535,12 +625,12 @@ body {
   flex-wrap: wrap;
   min-height: 40px;
   padding: 6px 20px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .pane-head h2 {
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--tool-text);
   margin: 0;
   white-space: nowrap;
@@ -555,6 +645,7 @@ body {
 }
 
 .char-count {
+  font-family: var(--font-text);
   font-size: 11px;
   color: var(--text-dim);
   opacity: 0.8;
@@ -599,7 +690,7 @@ body {
 }
 
 .result-tools .tool-btn + .tool-btn {
-  border-inline-start: 1px solid var(--border);
+  border-inline-start: 1px solid var(--border-subtle);
 }
 
 .result-tools .tool-btn.accent {
@@ -640,7 +731,7 @@ textarea.empty-bidi {
   flex-direction: column;
   gap: 6px;
   padding: 12px 20px 16px;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--border-subtle);
   font-size: 12px;
   color: var(--text-dim);
 }
@@ -654,28 +745,24 @@ textarea.empty-bidi {
   color: var(--tool-text);
 }
 
-/* ---------- مؤشر التركيز (v6.2) ----------
-   حلقة معدنية لملاحة لوحة المفاتيح على الأزرار والقوائم فقط — لا تشوّه شكلًا.
-   أما صناديق الكتابة (الخام، التوجيهات، الإعدادات، البحث) فبلا أي حلقة تركيز:
-   حدّها الأساس يكفي ويبقى ثابتًا سواء كتبت فيه أو لا، فلا يتغيّر شكله عند
-   النقر (قرار المالك) */
+/* ---------- مؤشر التركيز ----------
+   حلقة 2px واضحة لكل عنصر تفاعلي (أزرار، تبويبات، روابط، قوائم، حقول
+   الإعدادات والبحث) وفق توكن التركيز المعتمد. */
 :focus-visible {
-  outline: 2px solid rgba(var(--metal-rgb), 0.8);
-  outline-offset: 2px;
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 3px;
 }
 
-/* صناديق الكتابة: لا حلقة تركيز إطلاقًا — الحدّ الثابت وحده */
-textarea:focus,
-textarea:focus-visible,
-.field input:focus,
-.field input:focus-visible,
-.drafts-toolbar input[type="search"]:focus,
-.drafts-toolbar input[type="search"]:focus-visible {
+/* سطحا الكتابة والتوجيهات على الورق مباشرة: لا حلقة تركيز تؤطّرهما —
+   المؤشر (caret-color) هو دليل التركيز، وتباين السطح والفواصل تحدّ منطقة
+   الكتابة. يزيل هذا الإطار البنفسجي/البرتقالي حول المحرّر في البرجين
+   والمظاهر كلها، مع بقاء الوصول بلوحة المفاتيح لبقية العناصر. */
+#input-text:focus,
+#input-text:focus-visible,
+#custom-directives:focus,
+#custom-directives:focus-visible {
   outline: none;
 }
-
-/* حين يخلو الكاتب بنصه في الخام، تخفت مساحة المخرَج قليلًا */
-.panes:has(textarea:focus) .pane:not(:focus-within) { opacity: 0.93; }
 
 /* جسد النتيجة: منطقة تمرير واحدة تضم النص وملحقاته (v6.2) */
 .output-wrap {
@@ -720,10 +807,10 @@ textarea:focus-visible,
 }
 
 .placeholder-hint {
+  font-family: var(--font-text);
   font-size: 12px;
-  font-weight: 300;
+  font-weight: 400;
   color: var(--text-dim);
-  opacity: 0.6;
   max-width: 260px;
   line-height: 1.9;
 }
@@ -738,6 +825,7 @@ textarea:focus-visible,
   gap: 10px;
   background: var(--veil);
   font-size: 13px;
+  font-family: var(--font-text);
   color: var(--text);
 }
 
@@ -758,6 +846,7 @@ textarea:focus-visible,
   display: block;
   font-size: 11px;
   color: var(--text-dim);
+  font-family: var(--font-text);
   padding: 0 2px;
   margin: -2px 0 14px;
 }
@@ -781,7 +870,8 @@ textarea:focus-visible,
   gap: 8px;
   padding: 10px 14px;
   cursor: pointer;
-  font-weight: 600;
+  font-weight: 700;
+  font-family: var(--font-ui);
   color: var(--tool-text);
   list-style: none;
   transition: background-color 0.2s ease;
@@ -799,7 +889,7 @@ textarea:focus-visible,
 
 .notes[open] .notes-chevron { transform: rotate(180deg); }
 
-.notes[open] summary { border-bottom: 1px solid var(--border); }
+.notes[open] summary { border-bottom: 1px solid var(--border-subtle); }
 
 .notes ul {
   margin: 10px 14px 12px;
@@ -813,6 +903,7 @@ textarea:focus-visible,
 /* ملاحظة إرشادات سابستاك متعددة الأسطر تُعرض سطرًا بسطر — بلا أثر على
    الملاحظات القصيرة العادية أحادية السطر */
 .notes li {
+  font-family: var(--font-text);
   white-space: pre-line;
   display: flex;
   gap: 8px;
@@ -835,10 +926,11 @@ textarea:focus-visible,
   gap: 8px;
   font-size: 10px;
   color: var(--text-dim);
-  opacity: 0.75;
-  letter-spacing: 0.04em;
+  font-family: var(--font-text);
+  line-height: 1.7;
   padding: 6px 20px 8px;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--border-subtle);
+  flex-wrap: wrap;
 }
 
 .credit-sep { opacity: 0.6; }
@@ -847,6 +939,8 @@ textarea:focus-visible,
   display: inline-flex;
   align-items: center;
   gap: 5px;
+  font-family: var(--font-ui);
+  font-weight: 700;
 }
 
 .sultan-monogram-footer {
@@ -863,7 +957,7 @@ textarea:focus-visible,
   opacity: 0.75;
   margin-inline-start: 2px;
   padding-inline-start: 10px;
-  border-inline-start: 1px solid var(--border);
+  border-inline-start: 1px solid var(--border-subtle);
 }
 
 /* ---------- التنبيه ---------- */
@@ -877,7 +971,8 @@ textarea:focus-visible,
   padding: 8px 22px;
   border-radius: 20px;
   font-size: 13px;
-  font-weight: 600;
+  font-family: var(--font-text);
+  font-weight: 500;
 }
 
 /* ---------- الإعدادات ---------- */
@@ -896,7 +991,7 @@ textarea:focus-visible,
      الحقيقة الوحيد): فُتحت من نَسَق فكلها بنفسج نَسَق، ومن شَذْب فكلها
      حُمرة شَذْب — أسطحًا وحبرًا وحدودًا وتبويبًا نشطًا وزر «حفظ» وحلقات
      التركيز. لا طبقة محايدة تعزلها عن هوية البرج. السطح معتم كليًا */
-  background: var(--bg-raised);
+  background: var(--bg-input);
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 20px 24px 22px;
@@ -912,6 +1007,7 @@ textarea:focus-visible,
 .settings-panel h2 {
   margin: 0;
   font-size: 15px;
+  font-weight: 700;
 }
 
 /* رأس اللوحات: عنوان يمينًا وزر إغلاق يسارًا */
@@ -925,13 +1021,14 @@ textarea:focus-visible,
 .panel-head h2 {
   margin: 0;
   font-size: 15px;
+  font-weight: 700;
 }
 
 /* ---------- تبويبات الإعدادات ---------- */
 .tabs {
   display: flex;
   gap: 4px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .tab-btn {
@@ -939,8 +1036,9 @@ textarea:focus-visible,
   border: none;
   border-bottom: 2px solid transparent;
   color: var(--text-dim);
-  font-family: inherit;
+  font-family: var(--font-ui);
   font-size: 13px;
+  font-weight: 700;
   padding: 6px 14px 8px;
   cursor: pointer;
   margin-bottom: -1px;
@@ -971,14 +1069,15 @@ textarea:focus-visible,
 .appearance-title {
   margin: 0;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--tool-text);
 }
 
 .appearance-desc {
   margin: -4px 0 0;
   font-size: 11px;
-  font-weight: 300;
+  font-family: var(--font-text);
+  font-weight: 400;
   color: var(--text-dim);
 }
 
@@ -990,40 +1089,114 @@ textarea:focus-visible,
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  padding: 2px 0 4px;
+  gap: 7px;
+  padding: 4px 0 18px;
   text-align: center;
 }
 
 .about-mark {
-  width: 34px;
-  height: 34px;
-  color: var(--text);
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  color: var(--accent);
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 12px;
 }
 
-.about-mark svg { display: block; width: 100%; height: 100%; }
+.about-mark svg { width: 26px; height: 26px; }
 
 .about-app-name {
   margin: 0;
-  font-size: 18px;
-  font-weight: 700;
+  font-size: 20px;
+  font-weight: 800;
   color: var(--brand);
 }
 
 .about-tagline {
   margin: 0;
-  font-size: 11.5px;
-  font-weight: 300;
+  font-family: var(--font-text);
+  font-size: 12px;
+  font-weight: 400;
   color: var(--text-dim);
-  opacity: 0.8;
+  line-height: 1.7;
 }
 
-.about-version {
+#tab-about {
+  gap: 14px;
+  padding-top: 2px;
+}
+
+/* بيانات المنتج الوظيفية — بطاقة label/value: الإصدار، المنصة، المحرّك.
+   العناوين Almarai خافتة، والقيم Cairo بمحاذاة يسار (لاتينية) */
+.about-meta {
   margin: 0;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.about-meta-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 11px 14px;
+}
+
+.about-meta-row + .about-meta-row { border-top: 1px solid var(--border-subtle); }
+
+.about-meta-row dt {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text-dim);
+}
+
+.about-meta-row dd {
+  margin: 0;
+  font-family: var(--font-text);
   font-size: 13px;
-  color: var(--tool-text);
-  direction: ltr;
-  text-align: start;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.about-meta-row dd[dir="ltr"] { text-align: start; unicode-bidi: isolate; }
+
+/* التحديثات — زر ساكن وحالته أسفله، محاذاة بداية */
+.about-updates {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+/* رابط صفحة المشروع: أيقونة GitHub الرسمية + نص، يتلوّن بالفعل عند التحويم */
+.about-project-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  align-self: flex-start;
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 13px;
+  border-radius: var(--radius-sm, 8px);
+  transition: color 0.15s ease;
+}
+
+.about-project-link:hover { color: var(--accent); }
+.about-project-link:focus-visible { outline-offset: 4px; }
+.about-project-icon { display: inline-flex; color: var(--text-dim); transition: color 0.15s ease; }
+.about-project-link:hover .about-project-icon { color: var(--accent); }
+.about-project-icon svg { width: 18px; height: 18px; display: block; }
+
+/* فاصل هادئ يفصل بيانات المنتج عن حقوق المطوّر */
+.about-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 4px 0 2px;
 }
 
 /* ---------- علامة سلطان المصغرة (المونوغرام الرسمي) ----------
@@ -1045,8 +1218,8 @@ textarea:focus-visible,
   align-items: center;
   justify-content: center;
   gap: 10px;
-  margin-top: 24px;
-  padding: 6px 0 4px;
+  margin: 0;
+  padding: 6px 0 2px;
 }
 
 .about-rights .sultan-monogram {
@@ -1083,10 +1256,11 @@ textarea:focus-visible,
 .update-state {
   margin: 0;
   font-size: 12px;
+  font-family: var(--font-text);
   color: var(--text-dim);
+  line-height: 1.7;
 }
 
-.about-report-hint { text-align: center; }
 
 /* ---------- مبدّل الوضع النهاري/الليلي (داخل «المظهر») ----------
    حبّة على قالب مبدّل «نسق|شذب» في الشريط: مسار غائر وزرّان، والمفعّل
@@ -1103,7 +1277,7 @@ textarea:focus-visible,
 
 .appearance-mode-label {
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--tool-text);
 }
 
@@ -1125,8 +1299,9 @@ textarea:focus-visible,
   border: none;
   border-radius: 999px;
   padding: 5px 14px;
-  font-family: inherit;
+  font-family: var(--font-ui);
   font-size: 12.5px;
+  font-weight: 700;
   cursor: pointer;
   transition: color 0.2s ease, background-color 0.2s ease;
 }
@@ -1172,7 +1347,7 @@ textarea:focus-visible,
   border-radius: 8px;
   padding: 7px 10px;
   font-size: 13px;
-  font-family: inherit;
+  font-family: var(--font-text);
   outline: none;
   box-shadow: none;
   caret-color: var(--accent);
@@ -1219,7 +1394,7 @@ textarea:focus-visible,
   background: transparent;
   border: none;
   padding: 0;
-  font-family: inherit;
+  font-family: var(--font-text);
   color: inherit;
   text-align: start;
   cursor: pointer;
@@ -1248,12 +1423,14 @@ textarea:focus-visible,
   border-radius: 20px;
   color: var(--text-dim);
   font-size: 10px;
+  font-family: var(--font-text);
   padding: 1px 9px;
 }
 
 .draft-date {
   color: var(--text-dim);
   font-size: 10px;
+  font-family: var(--font-text);
   margin-inline-start: auto;
 }
 
@@ -1262,14 +1439,14 @@ textarea:focus-visible,
   display: flex;
   flex-direction: column;
   gap: 10px;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--border-subtle);
   padding-top: 10px;
 }
 
 .draft-texts h3 {
   margin: 0 0 4px;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text-dim);
 }
 
@@ -1306,7 +1483,7 @@ textarea:focus-visible,
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 6px 12px;
-  font-family: inherit;
+  font-family: var(--font-ui);
   font-size: 12px;
   color: var(--text);
   cursor: pointer;
@@ -1389,7 +1566,7 @@ textarea:focus-visible,
   border-radius: 8px;
   padding: 8px 10px;
   font-size: 13px;
-  font-family: inherit;
+  font-family: var(--font-text);
   outline: none;
   width: 100%;
   /* غائر بظل داخلي دافئ خفيف، والمؤشر بمعدن الثيم */
@@ -1422,6 +1599,8 @@ textarea:focus-visible,
 
 .settings-msg {
   font-size: 12px;
+  font-family: var(--font-text);
+  line-height: 1.7;
   color: var(--accent);
 }
 
@@ -1439,6 +1618,7 @@ textarea:focus-visible,
 .provider-label {
   font-size: 12px;
   color: var(--text-dim);
+  font-weight: 700;
 }
 
 .provider-btn {
@@ -1453,8 +1633,9 @@ textarea:focus-visible,
   border-radius: 6px;
   /* هدف نقر أرحب (v5.1) — كان 2px×8px بخط 11px */
   padding: 4px 10px;
-  font-family: inherit;
+  font-family: var(--font-ui);
   font-size: 12px;
+  font-weight: 700;
   cursor: pointer;
   direction: ltr; /* حتى لا يعكس اتجاهُ الصفحة رمزَي الأسهم */
   /* مسطّح كـFigma: حدّ رفيع محايد بلا ظل، وارتفاع موحّد */
@@ -1476,11 +1657,11 @@ textarea:focus-visible,
   cursor: default;
 }
 
-/* زر النسخ: تمييز هادئ بنص أوضح وحدّ خفيف — لا ذهب مملوء ولا ظل */
+/* زر النسخ: تمييز هادئ بنص أوضح وحدّ خفيف، بلا تعبئة أو ظل */
 .tool-btn.accent {
   color: var(--text);
   border-color: rgba(var(--line-rgb), 0.2);
-  font-weight: 600;
+  font-weight: 700;
   padding: 4px 14px;
 }
 
@@ -1492,19 +1673,18 @@ textarea:focus-visible,
 
 .tool-btn.accent:active:not(:disabled) { background: rgba(var(--line-rgb), 0.1); }
 
-/* ---------- لوحة تنويعات سابستاك: صيغة المخطوطة ----------
-   البطاقات ضمن نظام الثيمات: تقرأ متغيرات البطاقة (--card-bg/--card-text/
-   --card-metal) المشتقة من عائلة الثيم النشط — فتتبدل مع التطبيق وتبقى
-   على رقيّ المخطوطة في كل عائلة */
+/* ---------- لوحة تنويعات سابستاك ----------
+   البطاقات تقرأ توكنز المنتج الفعّال مباشرة فتتبدّل معه بلا عائلة لونية
+   موازية أو بقايا من نظام الهوية السابق. */
 .variations-panel {
-  background: var(--card-bg);
-  color: var(--card-text);
-  border: 1px solid rgba(var(--metal-rgb), 0.4);
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid rgba(var(--accent-rgb), 0.4);
   border-radius: 14px;
   /* ظل دافئ من مثلث الثيم وحافة علوية بلمحة معدنه */
   box-shadow:
     0 16px 48px rgba(var(--shadow-rgb), 0.55),
-    inset 0 1px 0 rgba(var(--metal-rgb), 0.1);
+    inset 0 1px 0 rgba(var(--accent-rgb), 0.1);
   width: min(1080px, 94vw);
   max-height: 88vh;
   padding: 18px 24px 20px;
@@ -1514,7 +1694,7 @@ textarea:focus-visible,
 }
 
 .variations-panel .panel-head h2 {
-  color: var(--card-metal);
+  color: var(--accent);
   font-family: var(--font-ui);
   font-weight: 700;
   font-size: 20px;
@@ -1523,18 +1703,19 @@ textarea:focus-visible,
 .variations-face {
   font-size: 12px;
   font-family: var(--font-text);
-  color: var(--card-text);
+  color: var(--text);
   opacity: 0.7;
   margin-inline-start: 8px;
 }
 
-.variations-panel .ghost-btn { color: var(--card-text); border-color: rgba(var(--metal-rgb), 0.35); }
-.variations-panel .ghost-btn:hover { color: var(--card-metal); border-color: var(--card-metal); }
+.variations-panel .ghost-btn { color: var(--text); border-color: rgba(var(--accent-rgb), 0.35); }
+.variations-panel .ghost-btn:hover { color: var(--accent); border-color: var(--accent); }
 
 .variations-note {
   margin: 0;
   font-size: 12px;
-  color: var(--card-text);
+  font-family: var(--font-text);
+  color: var(--text);
   opacity: 0.6;
 }
 
@@ -1555,10 +1736,10 @@ textarea:focus-visible,
   min-width: 0;
 }
 
-/* ترقيم المذهِّب: الرقم العربي بمعدن البرج وبخط الواجهة Almarai */
+/* الرقم العربي بلون المنتج الفعّال وبخط الواجهة Almarai */
 .variation-num {
   font-family: var(--font-ui);
-  color: var(--card-metal);
+  color: var(--accent);
   font-size: 32px;
   line-height: 1.2;
   text-align: center;
@@ -1567,7 +1748,7 @@ textarea:focus-visible,
 /* النص بخط المحتوى Cairo — نظيف حديث، وزن متوسط يوازن الوضوح والأناقة */
 .variation-text {
   font-family: var(--font-text);
-  font-weight: 450;
+  font-weight: 500;
   font-size: 16px;
   line-height: 2.05;
   white-space: pre-wrap;
@@ -1582,10 +1763,9 @@ textarea:focus-visible,
   text-align: left;
 }
 
-/* الفاصل بين الأعمدة: زخرفة عربية عمودية رفيعة بمعدن الثيم — لا خط بارد.
-   الشكل قناع (mask) والتلوين من --card-metal، فالزخرفة تتبع عائلة الثيم */
+/* الفاصل بين الأعمدة: زخرفة عربية عمودية رفيعة بلون المنتج الفعّال. */
 .variation-sep {
-  background-color: var(--card-metal);
+  background-color: var(--accent);
   -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='64' viewBox='0 0 14 64'%3E%3Cg fill='none' stroke='%23000' stroke-width='0.7' opacity='0.75'%3E%3Cpath d='M7 0 V20'/%3E%3Cpath d='M7 20 C 2.5 25, 2.5 31, 7 32 C 11.5 33, 11.5 39, 7 44'/%3E%3Cpath d='M7 20 C 11.5 25, 11.5 31, 7 32 C 2.5 33, 2.5 39, 7 44'/%3E%3Cpath d='M7 44 V64'/%3E%3C/g%3E%3Cpath d='M7 27.5 l2.2 4.5 L7 36.5 l-2.2 -4.5 z' fill='%23000' opacity='0.9'/%3E%3Ccircle cx='7' cy='12' r='1' fill='%23000' opacity='0.7'/%3E%3Ccircle cx='7' cy='52' r='1' fill='%23000' opacity='0.7'/%3E%3C/svg%3E");
   mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='64' viewBox='0 0 14 64'%3E%3Cg fill='none' stroke='%23000' stroke-width='0.7' opacity='0.75'%3E%3Cpath d='M7 0 V20'/%3E%3Cpath d='M7 20 C 2.5 25, 2.5 31, 7 32 C 11.5 33, 11.5 39, 7 44'/%3E%3Cpath d='M7 20 C 11.5 25, 11.5 31, 7 32 C 2.5 33, 2.5 39, 7 44'/%3E%3Cpath d='M7 44 V64'/%3E%3C/g%3E%3Cpath d='M7 27.5 l2.2 4.5 L7 36.5 l-2.2 -4.5 z' fill='%23000' opacity='0.9'/%3E%3Ccircle cx='7' cy='12' r='1' fill='%23000' opacity='0.7'/%3E%3Ccircle cx='7' cy='52' r='1' fill='%23000' opacity='0.7'/%3E%3C/svg%3E");
   -webkit-mask-repeat: repeat-y;
@@ -1602,6 +1782,7 @@ textarea:focus-visible,
   align-items: center;
   justify-content: center;
   font-size: 13px;
+  font-family: var(--font-text);
   opacity: 0.6;
   text-align: center;
   padding: 20px 6px;
@@ -1609,12 +1790,12 @@ textarea:focus-visible,
 
 .variation-status.error { color: var(--error-text); opacity: 0.9; font-size: 12px; }
 
-/* «اعتمد هذه»: حد معدني خفيف لا يصرخ */
+/* «اعتمد هذه»: حد خفيف بلون المنتج لا ينافس النص. */
 .adopt-btn {
   align-self: center;
   background: transparent;
-  color: var(--card-metal);
-  border: 1px solid rgba(var(--metal-rgb), 0.5);
+  color: var(--accent);
+  border: 1px solid rgba(var(--accent-rgb), 0.5);
   border-radius: 8px;
   padding: 5px 20px;
   font-family: var(--font-ui);
@@ -1627,21 +1808,21 @@ textarea:focus-visible,
   transition: color 0.2s ease, border-color 0.2s ease, background-color 0.2s ease, opacity 0.2s ease;
 }
 
-.adopt-btn:hover { background: rgba(var(--metal-rgb), 0.12); border-color: var(--card-metal); }
-.adopt-btn:active { background: rgba(var(--metal-rgb), 0.18); }
+.adopt-btn:hover { background: rgba(var(--accent-rgb), 0.12); border-color: var(--accent); }
+.adopt-btn:active { background: rgba(var(--accent-rgb), 0.18); }
 
 .variations-actions {
   display: flex;
   justify-content: center;
-  border-top: 1px solid rgba(var(--metal-rgb), 0.18);
+  border-top: 1px solid rgba(var(--accent-rgb), 0.18);
 }
 
 .regen-btn {
   margin-top: 10px;
   background: transparent;
-  color: var(--card-text);
+  color: var(--text);
   opacity: 0.85;
-  border: 1px solid rgba(var(--metal-rgb), 0.25);
+  border: 1px solid rgba(var(--accent-rgb), 0.25);
   border-radius: 8px;
   padding: 6px 22px;
   font-family: var(--font-ui);
@@ -1649,7 +1830,7 @@ textarea:focus-visible,
   cursor: pointer;
 }
 
-.regen-btn:hover { color: var(--card-metal); border-color: rgba(var(--metal-rgb), 0.5); opacity: 1; }
+.regen-btn:hover { color: var(--accent); border-color: rgba(var(--accent-rgb), 0.5); opacity: 1; }
 .regen-btn:disabled { opacity: 0.4; cursor: default; }
 
 /* ---------- بطاقة الشذرة: المنعطف مكسورًا أم موصولًا ---------- */
@@ -1674,11 +1855,13 @@ textarea:focus-visible,
 .fragment-card-head h3 {
   margin: 0;
   font-size: 13px;
+  font-weight: 700;
   color: var(--accent);
 }
 
 .fragment-card-hint {
   font-size: 11px;
+  font-family: var(--font-text);
   color: var(--text-dim);
 }
 
@@ -1734,6 +1917,7 @@ textarea:focus-visible,
 .reading-lens-note {
   margin: 0;
   font-size: 12px;
+  font-family: var(--font-text);
   color: var(--text-dim);
 }
 
@@ -1776,34 +1960,22 @@ textarea:focus-visible,
    الخلفيات والنصوص والثيمات الست كما هي، ولوحة شَذْب تظهر عبر data-mode
    على الجذر — بغيابه لا أثر لشيء من هذا إطلاقًا */
 :root {
-  /* حُمرة المصحِّح — مُعمّقة لتُقرأ على الورق الفاتح (v6.0)، تبقى إشارة وضع لا ثيمًا */
-  --prune-accent: #b3583a;
-  --prune-rgb: 179, 88, 58;
-  /* صبغة تفعيل الحُمرة — مقابل --accent-tint الذهبية في الأساس المشترك */
-  --prune-tint: rgba(var(--prune-rgb), 0.13);
+  /* شَذْب يستهلك لون المنتج المعتمد نفسه في العلامة والفعل والقصّات؛
+     لا عائلة حمراء موازية أو بقايا من لوحة أقدم. */
+  --prune-accent: var(--accent);
+  --prune-rgb: var(--accent-rgb);
+  --prune-tint: var(--accent-soft);
   /* لونا حالة ثابتان عبر الثيمات (حالة لا هوية): شهادة الضمانة زيتونية
      هادئة، وتنبيه الإسقاط كهرمان هادئ — رسالة تقنية لا إنذار. الزيتوني
      عُمّق في v6.2 (ش-٣): كان #5f7a45 بتباين 3.3:1 على خلفيته الصبغية */
-  --verify-green: #47602e;
-  --verify-bg: rgba(71, 96, 46, 0.13);
-  --verify-border: rgba(71, 96, 46, 0.32);
-  --warn-bg: rgba(168, 120, 45, 0.12);
-  --warn-border: rgba(168, 120, 45, 0.32);
+  --verify-green: var(--success);
+  --verify-bg: var(--success-soft);
+  --verify-border: color-mix(in srgb, var(--success) 36%, transparent);
+  --warn-bg: var(--warning-soft);
+  --warn-border: color-mix(in srgb, var(--warning) 36%, transparent);
   /* حبر تلميح العهد — كان مقسوًّا #9c5238 في قاعدة التلميح نفسها؛ صار
      متغيرًا (v6.2 — ش-٣) ليحمل نسخة ليلية مقروءة */
-  --covenant-ink: #9c5238;
-}
-
-/* ألوان شذب في الوضع الليلي (v6.2 — الإصلاح ش-٣، قيم لونية فقط):
-   الحُمرة والزيتوني وتلميح العهد تُضاء لتبلغ ≥4.5:1 على الورق الليلي —
-   لا مساس بأي منطق أو تخطيط أو نص في الوضع المجمَّد */
-[data-appearance="dark"] {
-  --prune-accent: #e59a76;
-  --prune-rgb: 229, 154, 118;
-  --verify-green: #a9c47f;
-  --verify-bg: rgba(169, 196, 127, 0.12);
-  --verify-border: rgba(169, 196, 127, 0.3);
-  --covenant-ink: #e0a284;
+  --covenant-ink: var(--accent);
 }
 
 /* المبدّل (أعيد بناؤه في v5.1): حاوية غائرة بحشوة داخلية وكل زر بزواياه
@@ -1829,8 +2001,8 @@ textarea:focus-visible,
   border-radius: 999px;
   padding: 5px 18px;
   font-size: 12.5px;
-  font-weight: 600;
-  font-family: inherit;
+  font-weight: 700;
+  font-family: var(--font-ui);
   cursor: pointer;
   line-height: 1.4;
   white-space: nowrap;
@@ -1857,8 +2029,9 @@ textarea:focus-visible,
 [data-mode="shadhb"] .directives-field { display: none; }
 
 .shadhb-covenant-hint {
+  font-family: var(--font-text);
   font-size: 11px;
-  font-weight: 300;
+  font-weight: 400;
   color: var(--covenant-ink);
   border-inline-start: 2px solid var(--prune-accent);
   padding: 2px 10px;
@@ -1876,7 +2049,7 @@ textarea:focus-visible,
   align-items: flex-start;
   gap: 8px;
   padding: 12px 20px 16px;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--border-subtle);
 }
 
 /* زر «افحص الشذرة»: قرين «رتّب» بساطةً — بحُمرة المصحِّح، مسطّح بلا ظل */
@@ -1886,16 +2059,16 @@ textarea:focus-visible,
   border: none;
   border-radius: 8px;
   padding: 7px 20px;
-  font-family: inherit;
+  font-family: var(--font-ui);
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  transition: opacity 0.2s ease;
+  transition: background-color 0.15s ease, opacity 0.15s ease;
 }
 
-.prune-primary-btn:hover { opacity: 0.82; }
+.prune-primary-btn:hover:not(:disabled) { background: var(--accent-hover); }
 
-.prune-primary-btn:active:not(:disabled) { opacity: 0.7; }
+.prune-primary-btn:active:not(:disabled) { opacity: 0.82; }
 
 .prune-primary-btn:disabled { opacity: 0.4; cursor: default; }
 
@@ -1914,7 +2087,8 @@ textarea:focus-visible,
 .shadhb-placeholder {
   color: var(--text-dim);
   font-size: 13px;
-  font-weight: 300;
+  font-family: var(--font-text);
+  font-weight: 400;
   margin: 24px 8px;
   text-align: center;
 }
@@ -1925,6 +2099,7 @@ textarea:focus-visible,
   gap: 8px;
   color: var(--text-dim);
   font-size: 13px;
+  font-family: var(--font-text);
   padding: 12px;
 }
 
@@ -1938,6 +2113,7 @@ textarea:focus-visible,
   grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
   gap: 4px 16px;
   font-size: 12.5px;
+  font-family: var(--font-text);
 }
 
 .reading-card .card-label {
@@ -1974,12 +2150,14 @@ textarea:focus-visible,
   margin: 0;
   font-family: var(--font-text);
   font-size: 13.5px;
+  font-weight: 500;
   color: var(--tool-text);
 }
 
 .cuts-empty-detail {
   margin: 4px 0 0;
   font-size: 11.5px;
+  font-family: var(--font-text);
   color: var(--text-dim);
 }
 
@@ -1993,6 +2171,7 @@ textarea:focus-visible,
   flex-direction: column;
   gap: 5px;
   font-size: 13px;
+  font-family: var(--font-text);
   transition: border-color 0.2s ease, opacity 0.2s ease, background-color 0.2s ease;
 }
 
@@ -2065,7 +2244,7 @@ textarea:focus-visible,
   border-radius: 8px;
   padding: 7px 0;
   font-size: 13px;
-  font-family: inherit;
+  font-family: var(--font-ui);
   cursor: pointer;
   text-align: center;
   transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
@@ -2075,7 +2254,7 @@ textarea:focus-visible,
   background: transparent;
   color: var(--tool-text);
   border: 1px solid var(--tool-border);
-  font-weight: 500;
+  font-weight: 700;
 }
 
 .cut-keep:hover {
@@ -2087,7 +2266,7 @@ textarea:focus-visible,
   background: rgba(var(--prune-rgb), 0.09);
   color: var(--prune-accent);
   border: 1px solid rgba(var(--prune-rgb), 0.4);
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .cut-do:hover { background: rgba(var(--prune-rgb), 0.18); }
@@ -2116,6 +2295,7 @@ textarea:focus-visible,
 
 .dropped-note {
   font-size: 11px;
+  font-family: var(--font-text);
   color: var(--text-dim);
   margin: 0;
 }
@@ -2167,6 +2347,7 @@ textarea:focus-visible,
    السلامة وألوان الخطأ عند الخرق (لا يحدث بالبناء، لكنه يُعرض لا يُفترض) */
 .covenant-bar {
   font-size: 11.5px;
+  font-family: var(--font-text);
   border-radius: 8px;
   padding: 8px 12px;
   background: var(--verify-bg);
@@ -2189,9 +2370,9 @@ textarea:focus-visible,
   border: 1px solid var(--tool-border);
   border-radius: 8px;
   padding: 8px 0;
-  font-family: inherit;
+  font-family: var(--font-ui);
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   transition: background-color 0.2s ease, border-color 0.2s ease;
 }
@@ -2199,4 +2380,50 @@ textarea:focus-visible,
 .send-to-nasaq-btn:hover {
   background: rgba(var(--line-rgb), 0.1);
   border-color: rgba(var(--line-rgb), 0.2);
+}
+
+@media (max-width: 720px) {
+  html,
+  body {
+    height: auto;
+    min-height: 100%;
+  }
+
+  .topbar,
+  .controls,
+  .pane-head {
+    padding-inline: 12px;
+  }
+
+  .topbar { gap: 8px; }
+  .topbar-side { gap: 6px; }
+  .app-subtitle { display: none; }
+  .mode-btn { padding-inline: 12px; }
+
+  .panes {
+    flex: none;
+    min-height: 720px;
+  }
+
+  textarea,
+  .output-wrap,
+  .directives-field,
+  [data-mode="shadhb"] .shadhb-inspect-bar,
+  .shadhb-body {
+    padding-inline: 12px;
+  }
+
+  .result-tools { max-width: 100%; }
+  .head-tools { flex-wrap: wrap; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
 }

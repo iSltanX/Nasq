@@ -3,5 +3,12 @@
   "identifier": "default",
   "description": "قدرات النافذة الرئيسية",
   "windows": ["main"],
-  "permissions": ["core:default", "process:default"]
+  "permissions": [
+    "core:default",
+    "process:default",
+    {
+      "identifier": "opener:allow-open-url",
+      "allow": [{ "url": "https://github.com/*" }]
+    }
+  ]
 }

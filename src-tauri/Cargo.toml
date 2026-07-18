@@ -1,6 +1,6 @@
 [package]
 name = "nasaq"
-version = "8.0.1"
+version = "8.1.0"
 description = "أداة شخصية لتنسيق النصوص العربية إيقاعيًا للنشر"
 edition = "2021"
 
@@ -15,6 +15,9 @@ reqwest = { version = "0.12", features = ["json"] }
 # نظام التحديثات (المرحلة 1 — نائم بلا مفتاح ولا endpoint، لا أثر سلوكي بعد)
 tauri-plugin-updater = "2"
 tauri-plugin-process = "2"
+# فتح روابط خارجية في المتصفح الافتراضي (رابط «صفحة المشروع» في «حول») —
+# دون مغادرة نافذة التطبيق. الصلاحية مقيّدة بنطاق github.com في القدرات.
+tauri-plugin-opener = "2"
 
 # أيقونة الدوك وقت التشغيل (v6.3): حزم objc2 حاضرة أصلًا في شجرة tauri
 # نفسها — الاعتماد المباشر يفعّل سمات NSApplication/NSImage/NSData فقط

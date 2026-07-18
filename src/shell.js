@@ -198,6 +198,20 @@ el("check-update-btn").addEventListener("click", () => {
   el("update-check-note").hidden = false;
 });
 
+// رابط صفحة المشروع (تبويب «حول»): في وضع الويب المؤطّر يعمل الرابط طبيعيًا
+// (target="_blank"). وداخل التطبيق نمنع مغادرة نافذة نَسَق ونفتح الرابط في
+// المتصفح الافتراضي عبر مُشغّل Tauri الرسمي (plugin:opener|open_url) —
+// الصلاحية مقيّدة بنطاق github.com في القدرات
+const aboutProjectLink = el("about-project-link");
+if (aboutProjectLink) {
+  aboutProjectLink.addEventListener("click", (e) => {
+    if (window.__TAURI__) {
+      e.preventDefault();
+      invoke("plugin:opener|open_url", { url: aboutProjectLink.href }).catch(() => {});
+    }
+  });
+}
+
 // ---------- المظهر: فاتح / داكن / تلقائي ----------
 // خيار واحد محفوظ بثلاث قيم فقط. «تلقائي» (وهو الافتراضي عند غياب أي
 // اختيار) يتبع مظهر النظام حيًّا؛ «فاتح»/«داكن» يثبّتان يدويًا ويوقفان
@@ -309,11 +323,13 @@ const PRODUCT_IDENTITY = {
     name: "نَسَق",
     statement: "البوابة الأخيرة قبل النشر",
     documentTitle: "نَسَق",
+    actionLabel: "نسق",
   },
   shadhb: {
     name: "شَذْب",
     statement: "وظيفة تنقية الشذرات داخل نَسَق",
     documentTitle: "شَذْب — نَسَق",
+    actionLabel: "افحص الشذرة",
   },
 };
 
@@ -321,6 +337,7 @@ const productNameEl = document.querySelector(".app-title");
 const productStatementEl = document.querySelector(".app-subtitle");
 const aboutNameEl = document.querySelector(".about-app-name");
 const aboutStatementEl = document.querySelector(".about-tagline");
+const settingsPrivacyHintEl = el("settings-privacy-hint");
 
 function activeProduct() {
   return document.documentElement.getAttribute("data-mode") === "shadhb" ? "shadhb" : "nasaq";
@@ -333,6 +350,9 @@ function renderProductIdentity() {
   // هوية «حول» تتبع البرج نفسه كوحدة: الاسم والعبارة (والعلامة عبر CSS)
   aboutNameEl.textContent = identity.name;
   aboutStatementEl.textContent = identity.statement;
+  settingsPrivacyHintEl.textContent =
+    `أزرار المزوّدات تملأ الرابط واسم النموذج فقط ولا تغيّر المفتاح. ` +
+    `يُحفظ كل شيء محليًا على جهازك فقط، ولا يُرسل أي نص إلا عند ضغط «${identity.actionLabel}».`;
   document.title = identity.documentTitle;
 }
 
@@ -935,4 +955,3 @@ window.NasaqShell = {
     count: totalVersions,
   },
 };
-

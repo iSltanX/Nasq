@@ -23,6 +23,9 @@ fn main() {
         // tauri.conf.json (حقل إلزامي في الإعداد، لا قيمة افتراضية) —
         // فتسجيله الآن قبل وجود مفتاح حقيقي يُسقط التطبيق كاملًا عند فتحه.
         .plugin(tauri_plugin_process::init())
+        // فتح الروابط الخارجية في المتصفح الافتراضي (رابط «صفحة المشروع»)
+        // عبر أمر plugin:opener|open_url — الصلاحية مقيّدة بنطاق github.com
+        .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
             shared::settings::load_settings,
             shared::settings::save_settings,
