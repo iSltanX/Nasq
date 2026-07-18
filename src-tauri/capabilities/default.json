@@ -6,6 +6,9 @@
   "permissions": [
     "core:default",
     "process:default",
+    "updater:allow-check",
+    "updater:allow-download",
+    "updater:allow-install",
     {
       "identifier": "opener:allow-open-url",
       "allow": [{ "url": "https://github.com/*" }]

@@ -1169,6 +1169,14 @@ textarea.empty-bidi {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  gap: 9px;
+  width: 100%;
+}
+
+/* صفّ أزرار المحدّث: يظهر منها واحدٌ يناسب الحالة */
+.update-actions {
+  display: flex;
+  flex-wrap: wrap;
   gap: 8px;
 }
 
@@ -1251,14 +1259,31 @@ textarea.empty-bidi {
   text-align: start;
 }
 
-.update-status { margin-top: 2px; }
-
-.update-state {
+/* نص حالة المحدّث بخط المحتوى Cairo — هادئ، لا يزاحم هوية المنتج */
+.update-status-text {
   margin: 0;
+  min-height: 1em;
   font-size: 12px;
   font-family: var(--font-text);
   color: var(--text-dim);
   line-height: 1.7;
+}
+
+/* شريط تقدّم التنزيل: مسار غائر رفيع، والتعبئة بلون فعل البرج الفعّال */
+.update-progress {
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--accent-tint);
+  overflow: hidden;
+}
+
+.update-progress-bar {
+  height: 100%;
+  width: 0%;
+  border-radius: 999px;
+  background: var(--accent);
+  transition: width 0.2s var(--ease-standard, ease);
 }
 
 

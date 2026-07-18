@@ -250,7 +250,7 @@
       </span>
       <span>من أعمال سلطان</span>
     </span>
-    <span class="credit-version">v8.1.0</span>
+    <span class="credit-version">v8.2.0</span>
   </footer>
 
   <div id="toast" class="toast" role="status" aria-live="polite" hidden>نُسخت النتيجة</div>
@@ -368,7 +368,7 @@
         <dl class="about-meta">
           <div class="about-meta-row">
             <dt>الإصدار</dt>
-            <dd class="about-version" dir="ltr">8.1.0</dd>
+            <dd class="about-version" dir="ltr">8.2.0</dd>
           </div>
           <div class="about-meta-row">
             <dt>المنصة</dt>
@@ -380,17 +380,20 @@
           </div>
         </dl>
 
-        <!-- التحديثات: زر ساكن + حالات جاهزة — لا نداء updater هنا -->
+        <!-- التحديثات: آلة حالات حقيقية عبر أوامر plugin:updater الرسمية
+             (فحص → تنزيل بتقدّم → تثبيت وإعادة تشغيل). المنطق في shell.js،
+             والأزرار والحالات ترث توكنز البرج الفعّال. زر التثبيت أساسيّ
+             (Almarai)، والحالة والتقدّم بخط المحتوى (Cairo) -->
         <div class="about-updates">
-          <button id="check-update-btn" class="ghost-btn" type="button">التحقق من وجود تحديث</button>
-          <p id="update-check-note" class="hint" hidden>سيُفعّل التحقق من التحديثات في المرحلة التالية.</p>
-          <div id="update-status" class="update-status" role="status" aria-live="polite">
-            <p class="update-state" data-state="idle">جاهز للتحقق من وجود تحديث.</p>
-            <p class="update-state" data-state="checking" hidden>جارٍ التحقق…</p>
-            <p class="update-state" data-state="uptodate" hidden>لا توجد تحديثات — لديك أحدث إصدار.</p>
-            <p class="update-state" data-state="available" hidden>يتوفّر تحديث جديد.</p>
-            <p class="update-state" data-state="error" hidden>تعذّر التحقق من التحديث.</p>
+          <div class="update-actions">
+            <button id="update-check-btn" class="ghost-btn" type="button">البحث عن تحديثات</button>
+            <button id="update-download-btn" class="ghost-btn" type="button" hidden>تنزيل التحديث</button>
+            <button id="update-install-btn" class="primary-btn" type="button" hidden>تثبيت وإعادة التشغيل</button>
           </div>
+          <div id="update-progress" class="update-progress" hidden aria-hidden="true">
+            <div id="update-progress-bar" class="update-progress-bar"></div>
+          </div>
+          <p id="update-status-text" class="update-status-text" role="status" aria-live="polite"></p>
         </div>
 
         <!-- رابط صفحة المشروع بأيقونة GitHub الرسمية من حزمة هوية سلطان:

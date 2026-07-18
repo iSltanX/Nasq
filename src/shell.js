@@ -190,13 +190,140 @@ for (const [name, { btn }] of Object.entries(TABS)) {
   btn.addEventListener("click", () => switchTab(name));
 }
 
-// ---------- تبويب «حول»: زر التحديث الساكن (المرحلة 2) ----------
-// لا نداء updater ولا process ولا invoke من أي نوع هنا — الضغط يكشف
-// ملاحظة ثابتة فقط. هيكل الحالات الخمس في #update-status جاهز للمرحلة 3
-// ولا تلمسه هذه الوحدة إطلاقًا
-el("check-update-btn").addEventListener("click", () => {
-  el("update-check-note").hidden = false;
-});
+// ---------- نظام التحديث التلقائي (v8.2.0) ----------
+// آلة حالات حقيقية فوق أوامر plugin:updater الرسمية حصرًا: فحص → تنزيل
+// (بقناة تقدّم) → تثبيت → إعادة تشغيل آمنة عبر plugin:process|restart. لا
+// مُنزِّل مخصّص ولا تنفيذ يدويّ للملفات ولا إضعاف للتحقّق — الإضافة تتحقّق
+// من توقيع minisign داخليًّا قبل التثبيت. الأخطاء تُعرَض برسائل عربية
+// موجزة، وتفاصيلها التقنية في console (التطوير) دون تسريب أي سرّ أو مسار.
+const updCheckBtn = el("update-check-btn");
+const updDownloadBtn = el("update-download-btn");
+const updInstallBtn = el("update-install-btn");
+const updStatusText = el("update-status-text");
+const updProgress = el("update-progress");
+const updProgressBar = el("update-progress-bar");
+
+let updBusy = false; // يمنع الازدواج: فحص/تنزيل/تثبيت متزامن
+let updRid = null; // معرّف مورد التحديث المتاح (من الفحص)
+let updBytesRid = null; // معرّف مورد البايتات (من التنزيل)
+let updVersion = null;
+let updDownloaded = 0;
+let updTotal = 0;
+
+function updToggle(node, show) {
+  node.hidden = !show;
+}
+
+// الحالات: idle / checking / no-update / available / downloading /
+// downloaded / installing / restart / error-{check,download,install} / web
+function setUpdateState(state, opt = {}) {
+  updToggle(updCheckBtn, state === "idle" || state === "no-update" || state === "error-check" || state === "web");
+  updToggle(updDownloadBtn, state === "available" || state === "error-download");
+  updToggle(updInstallBtn, state === "downloaded" || state === "error-install");
+  updToggle(updProgress, state === "downloading");
+  updCheckBtn.disabled = updBusy;
+  updDownloadBtn.disabled = updBusy;
+  updInstallBtn.disabled = updBusy;
+  const v = opt.version || updVersion || "";
+  const messages = {
+    idle: "",
+    checking: "جارٍ البحث…",
+    "no-update": "لا توجد تحديثات — لديك أحدث إصدار.",
+    available: "يتوفر الإصدار " + v,
+    downloading: opt.pct != null ? "جارٍ التنزيل… " + opt.pct + "٪" : "جارٍ التنزيل…",
+    downloaded: "تم تنزيل التحديث.",
+    installing: "جارٍ التثبيت…",
+    restart: "سيُعاد تشغيل نَسَق لإكمال التحديث…",
+    "error-check": "تعذّر البحث عن تحديث.",
+    "error-download": "تعذّر تنزيل التحديث.",
+    "error-install": "تعذّر تثبيت التحديث.",
+    web: "التحديث التلقائي متاح داخل التطبيق فقط.",
+  };
+  updStatusText.textContent = messages[state] != null ? messages[state] : "";
+}
+
+// فحص يدويّ: check يعيد بيانات التحديث إن توفّر إصدار أحدث، وإلا null
+async function updaterCheck() {
+  if (updBusy) return;
+  if (!window.__TAURI__) {
+    setUpdateState("web");
+    return;
+  }
+  updBusy = true;
+  setUpdateState("checking");
+  try {
+    const meta = await invoke("plugin:updater|check", {});
+    updBusy = false;
+    if (meta && meta.rid != null) {
+      updRid = meta.rid;
+      updVersion = meta.version;
+      updBytesRid = null;
+      setUpdateState("available", { version: meta.version });
+    } else {
+      setUpdateState("no-update");
+    }
+  } catch (e) {
+    updBusy = false;
+    console.error("[updater] check failed", e);
+    setUpdateState("error-check");
+  }
+}
+
+// تنزيل مع تقدّم حقيقيّ عبر قناة الأحداث (Started/Progress/Finished)
+async function updaterDownload() {
+  if (updBusy || updRid == null) return;
+  updBusy = true;
+  updDownloaded = 0;
+  updTotal = 0;
+  updProgressBar.style.width = "0%";
+  setUpdateState("downloading", { pct: 0 });
+  try {
+    const channel = new window.__TAURI__.core.Channel();
+    channel.onmessage = (msg) => {
+      if (!msg) return;
+      if (msg.event === "Started") {
+        updTotal = (msg.data && msg.data.contentLength) || 0;
+      } else if (msg.event === "Progress") {
+        updDownloaded += (msg.data && msg.data.chunkLength) || 0;
+        if (updTotal) {
+          const pct = Math.min(100, Math.round((updDownloaded / updTotal) * 100));
+          updProgressBar.style.width = pct + "%";
+          setUpdateState("downloading", { pct });
+        }
+      }
+    };
+    updBytesRid = await invoke("plugin:updater|download", { rid: updRid, onEvent: channel });
+    updBusy = false;
+    updProgressBar.style.width = "100%";
+    setUpdateState("downloaded");
+  } catch (e) {
+    updBusy = false;
+    console.error("[updater] download failed", e);
+    setUpdateState("error-download");
+  }
+}
+
+// تثبيت ثم إعادة تشغيل آمنة — لا حالة «مثبَّت» كاذبة قبل إعادة التشغيل
+async function updaterInstall() {
+  if (updBusy || updRid == null || updBytesRid == null) return;
+  updBusy = true;
+  setUpdateState("installing");
+  try {
+    await invoke("plugin:updater|install", { updateRid: updRid, bytesRid: updBytesRid });
+    setUpdateState("restart");
+    await invoke("plugin:process|restart", {});
+    // لا يُتوقَّع الوصول هنا — التطبيق يُعاد تشغيله بأمر restart أعلاه
+  } catch (e) {
+    updBusy = false;
+    console.error("[updater] install failed", e);
+    setUpdateState("error-install");
+  }
+}
+
+updCheckBtn.addEventListener("click", updaterCheck);
+updDownloadBtn.addEventListener("click", updaterDownload);
+updInstallBtn.addEventListener("click", updaterInstall);
+setUpdateState("idle");
 
 // رابط صفحة المشروع (تبويب «حول»): في وضع الويب المؤطّر يعمل الرابط طبيعيًا
 // (target="_blank"). وداخل التطبيق نمنع مغادرة نافذة نَسَق ونفتح الرابط في
