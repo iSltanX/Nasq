@@ -167,24 +167,36 @@ el("save-settings").addEventListener("click", async () => {
 });
 
 // ---------- تبويبات لوحة الإعدادات ----------
-const tabGeneralBtn = el("tab-general-btn");
-const tabAppearanceBtn = el("tab-appearance-btn");
-const tabGeneral = el("tab-general");
-const tabAppearance = el("tab-appearance");
+// ثلاثة تبويبات على نمط واحد: زر/جسم لكل اسم، وswitchTab تُظهر واحدًا
+// وتُخفي الباقي — «حول» (المرحلة 2 من خطة التحديثات) يتبع النمط نفسه
+// حرفيًا، بلا أي منطق إضافي أو تفريع خاص
+const TABS = {
+  general: { btn: el("tab-general-btn"), body: el("tab-general") },
+  appearance: { btn: el("tab-appearance-btn"), body: el("tab-appearance") },
+  about: { btn: el("tab-about-btn"), body: el("tab-about") },
+};
 
 function switchTab(name) {
-  const general = name === "general";
-  tabGeneral.hidden = !general;
-  tabAppearance.hidden = general;
-  tabGeneralBtn.classList.toggle("active", general);
-  tabAppearanceBtn.classList.toggle("active", !general);
-  tabGeneralBtn.setAttribute("aria-selected", String(general));
-  tabAppearanceBtn.setAttribute("aria-selected", String(!general));
+  for (const [key, { btn, body }] of Object.entries(TABS)) {
+    const active = key === name;
+    body.hidden = !active;
+    btn.classList.toggle("active", active);
+    btn.setAttribute("aria-selected", String(active));
+  }
   settingsMsg.hidden = true;
 }
 
-tabGeneralBtn.addEventListener("click", () => switchTab("general"));
-tabAppearanceBtn.addEventListener("click", () => switchTab("appearance"));
+for (const [name, { btn }] of Object.entries(TABS)) {
+  btn.addEventListener("click", () => switchTab(name));
+}
+
+// ---------- تبويب «حول»: زر التحديث الساكن (المرحلة 2) ----------
+// لا نداء updater ولا process ولا invoke من أي نوع هنا — الضغط يكشف
+// ملاحظة ثابتة فقط. هيكل الحالات الخمس في #update-status جاهز للمرحلة 3
+// ولا تلمسه هذه الوحدة إطلاقًا
+el("check-update-btn").addEventListener("click", () => {
+  el("update-check-note").hidden = false;
+});
 
 // ---------- الثيمات ----------
 // المعرّفات لاتينية لأنها مفاتيح تقنية في CSS والتخزين، والأسماء المعروضة عربية.

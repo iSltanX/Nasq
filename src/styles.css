@@ -1084,6 +1084,88 @@ textarea:focus-visible,
   color: var(--text-dim);
 }
 
+/* ---------- تبويب «حول» (المرحلة 2 — خطة نظام التحديثات) ----------
+   واجهة ساكنة بالكامل: هوية نَسَق (نفس رمز الشريط وحبره currentColor)،
+   إصدار ثابت نصًّا، وتوقيع المطوّر هادئ لا ينافس العلامة. قسم التحديثات
+   وحالاته الخمس بنية جاهزة للمرحلة 3 فقط — بلا أي منطق أو نداء هنا */
+.about-identity {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 0 4px;
+  text-align: center;
+}
+
+.about-mark {
+  width: 34px;
+  height: 34px;
+  color: var(--text);
+}
+
+.about-mark svg { display: block; width: 100%; height: 100%; }
+
+.about-app-name {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--brand);
+}
+
+.about-tagline {
+  margin: 0;
+  font-size: 11.5px;
+  font-weight: 300;
+  color: var(--text-dim);
+  opacity: 0.8;
+}
+
+.about-version {
+  margin: 0;
+  font-size: 13px;
+  color: var(--tool-text);
+  direction: ltr;
+  text-align: start;
+}
+
+/* خاتمة التبويب: المخطوطة توقيعٌ في نهاية العمل لا أيقونة بجانب سطر —
+   وسطًا بهامش علوي مريح، وسطر الاعتماد تحتها مباشرة، ولا عنصر بعدهما */
+.about-signature-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-top: 22px;
+  padding-bottom: 4px;
+  text-align: center;
+}
+
+/* هادئ عمدًا: --text-dim لا --text أو --brand — توقيع لا يزاحم علامة نَسَق */
+.about-signature {
+  width: 52px;
+  flex-shrink: 0;
+  color: var(--text-dim);
+  opacity: 0.85;
+}
+
+.about-signature svg { display: block; width: 100%; height: auto; }
+
+.about-developer-credit {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--tool-text);
+}
+
+.update-status { margin-top: 2px; }
+
+.update-state {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.about-report-hint { text-align: center; }
+
 /* ---------- مبدّل الوضع النهاري/الليلي (داخل «المظهر») ----------
    حبّة على قالب مبدّل «نسق|شذب» في الشريط: مسار غائر وزرّان، والمفعّل
    حبّة ورقية مرفوعة بظل همسة — الحالة بالموضع والحبّة وaria-pressed لا
