@@ -122,7 +122,7 @@ test("اكتمال القشرة: البنية المشتركة والوصلات 
     "showToast",
     "showError",
     "copyText",
-    "applyTheme",
+    "applyAppearanceChoice",
     "openSettings",
     "renderDrafts",
     "persistDrafts",

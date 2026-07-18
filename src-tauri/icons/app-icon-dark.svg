@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc">
+  <title id="title">أيقونة نَسَق الليلية لنظام macOS</title>
+  <desc id="desc">أربعة سطور عربية مضبوطة على محور بنفسجي حبري داخل مربع مستدير بانحناء مستمر.</desc>
+  <defs>
+    <path id="squircle" d="M512 64C734 64 833 64 900 124C960 191 960 290 960 512C960 734 960 833 900 900C833 960 734 960 512 960C290 960 191 960 124 900C64 833 64 734 64 512C64 290 64 191 124 124C191 64 290 64 512 64Z"/>
+    <clipPath id="clip"><use href="#squircle"/></clipPath>
+    <filter id="shadow" x="-15%" y="-15%" width="130%" height="145%"><feDropShadow dx="0" dy="20" stdDeviation="24" flood-color="#09070E" flood-opacity=".34"/></filter>
+  </defs>
+  <use href="#squircle" fill="#14131A" filter="url(#shadow)"/>
+  <g clip-path="url(#clip)">
+    <g stroke="#2C2936" stroke-width="5" opacity=".62"><path d="M64 272H960"/><path d="M64 410H960"/><path d="M64 548H960"/><path d="M64 686H960"/><path d="M64 824H960"/></g>
+    <path d="M200 360H790" stroke="#F4F0E8" stroke-width="16"/>
+    <path d="M200 488H790" stroke="#BEB6C8" stroke-width="12" opacity=".74"/>
+    <path d="M200 616H790" stroke="#8F879A" stroke-width="10" opacity=".64"/>
+    <path d="M200 744H790" stroke="#8F879A" stroke-width="8" opacity=".42"/>
+    <path d="M790 248V810" stroke="#9A82D8" stroke-width="14" opacity=".8"/>
+    <circle cx="790" cy="360" r="46" fill="#9A82D8"/>
+  </g>
+  <use href="#squircle" fill="none" stroke="#3B3649" stroke-width="12"/>
+  <path d="M512 82C724 82 820 82 885 138" fill="none" stroke="#F4F0E8" stroke-width="4" stroke-linecap="round" opacity=".045"/>
+</svg>

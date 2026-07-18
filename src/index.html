@@ -5,25 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>نَسَق</title>
   <script>
-    // تطبيق الثيم والوضع والأيقونة المحفوظة قبل تحميل الأنماط حتى لا تومض
-    // الافتراضيات. الوضع: مفتاح الاختيار اليدوي الصريح وحده يُحترم
-    // (nasaq-appearance-choice — المفتاح القديم nasaq-appearance كان يُكتب
-    // تلقائيًا عند كل إقلاع فقيمته لا تدل على اختيار متعمد ويُتجاهل)،
-    // وبغيابه يُقرأ مظهر النظام — القرار نفسه حرفيًا في shell.js فلا
-    // يختلف البدء عن الحالة النهائية ولا يُرسم الوضع المعاكس لحظة
+    // تطبيق وضع المظهر المحفوظ قبل تحميل الأنماط حتى لا تومض الحالة
+    // الافتراضية. ثلاثة خيارات فقط: فاتح/داكن/تلقائي — و«تلقائي» (وكذلك
+    // غياب المفتاح أو أي قيمة قديمة) يتبع مظهر النظام حيًّا. القرار نفسه
+    // حرفيًا في shell.js فلا يختلف البدء عن الحالة النهائية ولا يُرسم
+    // الوضع المعاكس لحظة
     try {
-      var nasaqTheme = localStorage.getItem("nasaq-theme");
-      if (nasaqTheme) document.documentElement.setAttribute("data-theme", nasaqTheme);
-      var nasaqAppearance = localStorage.getItem("nasaq-appearance-choice");
-      if (nasaqAppearance !== "dark" && nasaqAppearance !== "light") {
-        nasaqAppearance = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches
-          ? "dark" : "light";
-      }
-      if (nasaqAppearance === "dark") {
-        document.documentElement.setAttribute("data-appearance", "dark");
-      }
-      var nasaqLogo = localStorage.getItem("nasaq-logo");
-      if (nasaqLogo) document.documentElement.setAttribute("data-logo", nasaqLogo);
+      var choice = localStorage.getItem("nasaq-appearance-choice");
+      var dark = choice === "dark" ? true
+        : choice === "light" ? false
+        : (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
+      if (dark) document.documentElement.setAttribute("data-appearance", "dark");
     } catch (e) {}
   </script>
   <link rel="stylesheet" href="styles.css" />
@@ -34,41 +26,27 @@
          بينهما مهما اختلف عرضهما — تقسيمة بصرية فقط، لا منطق ولا تغيّر بالوصول
          عبر المعرّفات -->
     <div class="topbar-side topbar-start">
-      <!-- رمز الهوية (v6.3): الأيقونات الأربع من nasaq-brand مضمّنة SVG
-           تكيفية — الحبر currentColor يتبع حبر الثيم تلقائيًا ونقطة التصحيح
-           #E23B2E ثابتة بالبناء. الظاهر منها واحد بقيادة data-logo على الجذر
-           (يختاره المستخدم من «المظهر»)، والافتراضي «السطور» — مرشَّح دليل
-           الهوية «مخطوطة رقمية» -->
+      <!-- علامة الهوية الواحدة: أربعة سطور مضبوطة على محور محاذاة ونقطة
+           تصحيح — الحبر currentColor يتبع ثيم البرج، والمحور والنقطة بلون
+           الفعل. تتبدّل بالبرج الفعّال (CSS عبر data-mode): نَسَق سطرٌ ثالث
+           متّصل، وشَذْب القصّة نفسها في الهيكل مع مِبضع مائل -->
       <span class="app-mark" aria-hidden="true">
-        <svg class="mark-lines" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <line x1="18" y1="40" x2="96" y2="40" stroke="currentColor" stroke-width="1.8"/>
-          <line x1="18" y1="56" x2="96" y2="56" stroke="currentColor" stroke-width="1.3" opacity="0.55"/>
-          <line x1="18" y1="72" x2="96" y2="72" stroke="currentColor" stroke-width="1.1" opacity="0.32"/>
-          <line x1="18" y1="88" x2="96" y2="88" stroke="currentColor" stroke-width="1" opacity="0.16"/>
-          <line x1="96" y1="27" x2="96" y2="97" stroke="#E23B2E" stroke-width="1.4" opacity="0.62"/>
-          <circle cx="96" cy="40" r="4.5" fill="#E23B2E"/>
+        <svg class="mark-nasaq" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M4 5.25H18.5" stroke="currentColor" stroke-width="1.65" stroke-linecap="round"/>
+          <path d="M6.5 9.25H18.5" stroke="currentColor" stroke-width="1.45" stroke-linecap="round" opacity=".8"/>
+          <path d="M8.5 13.25H18.5" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" opacity=".58"/>
+          <path d="M11 17.25H18.5" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" opacity=".42"/>
+          <path class="mark-axis" d="M18.5 3.5V20.25" stroke-width="1" stroke-linecap="round" opacity=".55"/>
+          <circle class="mark-dot" cx="18.5" cy="5.25" r="1.6"/>
         </svg>
-        <svg class="mark-nun" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M 33 64 A 27 27 0 0 1 87 64" stroke="currentColor" stroke-width="7.5" fill="none" stroke-linecap="round"/>
-          <line x1="33" y1="64" x2="87" y2="64" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
-          <circle cx="60" cy="83" r="5.5" fill="#E23B2E"/>
-        </svg>
-        <svg class="mark-weave" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <line x1="20" y1="36" x2="100" y2="36" stroke="currentColor" stroke-width="1.2" opacity="0.82"/>
-          <line x1="20" y1="50" x2="100" y2="50" stroke="currentColor" stroke-width="1.2" opacity="0.36"/>
-          <line x1="20" y1="64" x2="100" y2="64" stroke="currentColor" stroke-width="1.2" opacity="0.36"/>
-          <line x1="20" y1="78" x2="100" y2="78" stroke="currentColor" stroke-width="1.2" opacity="0.36"/>
-          <line x1="20" y1="92" x2="100" y2="92" stroke="currentColor" stroke-width="1.2" opacity="0.12"/>
-          <line x1="24" y1="30" x2="24" y2="96" stroke="currentColor" stroke-width="0.9" opacity="0.14"/>
-          <line x1="42" y1="30" x2="42" y2="96" stroke="currentColor" stroke-width="0.9" opacity="0.14"/>
-          <line x1="60" y1="30" x2="60" y2="96" stroke="currentColor" stroke-width="0.9" opacity="0.14"/>
-          <line x1="78" y1="30" x2="78" y2="96" stroke="currentColor" stroke-width="0.9" opacity="0.14"/>
-          <line x1="96" y1="30" x2="96" y2="96" stroke="currentColor" stroke-width="0.9" opacity="0.14"/>
-          <circle cx="96" cy="36" r="3.5" fill="#E23B2E"/>
-        </svg>
-        <svg class="mark-wordmark" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M47.99 74V68.24H52.61V74ZM25.02 85.7Q21.28 85.7 18.29 84.32Q15.3 82.93 13.58 80.49Q11.86 78.05 11.86 74.97Q11.86 74.09 12 72.61Q12.13 71.14 12.37 69.36Q12.61 67.58 12.9 65.68Q13.18 63.79 13.45 62.03L20.09 62.91Q19.65 65.86 19.3 68.24Q18.95 70.61 18.77 72.28Q18.6 73.96 18.6 74.84Q18.6 76.51 19.34 77.63Q20.09 78.75 21.54 79.35Q23 79.94 25.02 79.94H35.4Q37.43 79.94 38.73 79.41Q40.02 78.88 40.64 77.83Q41.26 76.77 41.26 75.23V56.49L42.66 57.63H37.78Q36.02 57.63 35.03 58.09Q34.04 58.56 33.62 59.7Q33.2 60.84 33.2 62.96Q33.2 65.29 33.62 66.41Q34.04 67.53 35.03 67.88Q36.02 68.24 37.78 68.24H41.26V74H37.78Q34.04 74 31.53 72.81Q29.02 71.62 27.75 69.18Q26.47 66.74 26.47 62.96Q26.47 59.39 27.75 56.93Q29.02 54.46 31.53 53.17Q34.04 51.87 37.78 51.87H47.99V75.23Q47.99 78.4 46.38 80.75Q44.78 83.11 41.92 84.41Q39.06 85.7 35.4 85.7ZM52.61 74V68.24Q52.83 68.24 53 68.43Q53.18 68.63 53.27 69.01Q53.36 69.38 53.42 69.91Q53.49 70.44 53.49 71.1Q53.49 71.76 53.42 72.31Q53.36 72.86 53.27 73.23Q53.18 73.6 53 73.8Q52.83 74 52.61 74ZM30.87 47.78V42.41H37.3V47.78ZM39.54 47.78V42.41H45.96V47.78Z M90.89 74V68.24H95.46V74ZM52.61 74Q52.39 74 52.21 73.8Q52.04 73.6 51.95 73.23Q51.86 72.86 51.79 72.31Q51.73 71.76 51.73 71.1Q51.73 70.22 51.82 69.58Q51.9 68.94 52.1 68.59Q52.3 68.24 52.61 68.24ZM79.4 74Q77.47 74 75.6 73.27Q73.73 72.55 72.14 71.14L76.24 66.92Q77.03 67.58 77.82 67.91Q78.61 68.24 79.4 68.24H87.81L84.16 71.49V61.94Q84.16 61.28 84 59.85Q83.85 58.42 83.56 56.6Q83.28 54.77 82.92 52.88L89.52 51.87Q89.83 53.45 90.14 55.43Q90.45 57.41 90.67 59.17Q90.89 60.93 90.89 61.94V74ZM52.61 74V68.24H58.99L57.58 69.73V56.4H64.31V74ZM64.31 74V68.24H67.44Q68.8 68.24 69.53 67.82Q70.25 67.4 70.54 66.1Q70.82 64.8 70.82 62.16V54.2H77.56V62.16Q77.56 66.3 76.46 68.92Q75.36 71.54 73.13 72.77Q70.91 74 67.44 74ZM95.46 74V68.24Q95.68 68.24 95.86 68.43Q96.04 68.63 96.12 69.01Q96.21 69.38 96.28 69.91Q96.34 70.44 96.34 71.1Q96.34 71.76 96.28 72.31Q96.21 72.86 96.12 73.23Q96.04 73.6 95.86 73.8Q95.68 74 95.46 74Z M95.46 74V68.24H104.13L100.04 71.62V51.87H106.77V74ZM95.46 74Q95.24 74 95.07 73.8Q94.89 73.6 94.8 73.23Q94.72 72.86 94.65 72.31Q94.58 71.76 94.58 71.1Q94.58 70.22 94.67 69.58Q94.76 68.94 94.96 68.59Q95.16 68.24 95.46 68.24ZM100.04 47.78V42.41H106.82V47.78Z" fill="currentColor"/>
-          <circle cx="95" cy="47" r="5" fill="#E23B2E"/>
+        <svg class="mark-shadhb" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M4 5.25H18.5" stroke="currentColor" stroke-width="1.65" stroke-linecap="round"/>
+          <path d="M6.5 9.25H18.5" stroke="currentColor" stroke-width="1.45" stroke-linecap="round" opacity=".8"/>
+          <path d="M8.5 13.25H11.5M14.75 13.25H18.5" stroke="currentColor" stroke-width="1.45" stroke-linecap="round" opacity=".66"/>
+          <path class="mark-cut" d="m12.15 11.35 2 3.8" stroke-width="1.8" stroke-linecap="round"/>
+          <path d="M11 17.25H18.5" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" opacity=".42"/>
+          <path class="mark-axis" d="M18.5 3.5V20.25" stroke-width="1" stroke-linecap="round" opacity=".55"/>
+          <circle class="mark-dot" cx="18.5" cy="5.25" r="1.6"/>
         </svg>
       </span>
       <h1 class="app-title">نَسَق</h1>
@@ -258,7 +236,7 @@
     </section>
   </main>
 
-  <footer class="credit">لا نكتب عنك أبدًا · برمجة وتصميم : سلطان <span class="version">· V7.0</span></footer>
+  <footer class="credit">لا نكتب عنك أبدًا · برمجة وتصميم : سلطان <span class="version">· V8.0</span></footer>
 
   <div id="toast" class="toast" hidden>نُسخت النتيجة</div>
 
@@ -305,18 +283,14 @@
         </div>
       </div>
       <div id="tab-appearance" class="tab-body" hidden>
-        <!-- المظهر (v6.3): قسمان بهدوء الهوية نفسها — الأيقونة أولًا (الأربع
-             من nasaq-brand حصرًا، معايناتها استنساخ الرموز المضمّنة في الشريط
-             فلا ازدواج مصدر)، ثم العائلات اللونية الست وكل بطاقة تعاين
-             ألوانها الحقيقية نهارًا أو ليلًا حسب الوضع الحالي -->
-        <!-- مبدّل الوضع النهاري/الليلي (v6.3): زرّان بحالة aria-pressed على
-             قالب حبّة «نسق|شذب» — متزامنان مع قمر الشريط العلوي عبر دالة
-             الحالة الواحدة في shell.js، وقبل أول اختيار يدوي يتبع التطبيق
-             مظهر النظام حيًّا. التسمية سياقية تسمّي الوضع الفعّال -->
+        <!-- المظهر: ثلاثة خيارات فقط — فاتح، داكن، تلقائي (يتبع مظهر النظام).
+             الحالة عبر aria-pressed والموضع، والاختيار يُطبَّق فورًا ويُحفَظ.
+             منطق الحالة الواحد في shell.js يزامن الأزرار الثلاثة ويتبع
+             النظام حيًّا ما دام «تلقائي» -->
         <div class="appearance-mode-row">
-          <span id="appearance-mode-label" class="appearance-mode-label">الوضع النهاري</span>
-          <div class="appearance-switch" role="group" aria-label="مظهر الواجهة: نهاري أو ليلي">
-            <button id="appearance-light-btn" class="appearance-mode-btn" type="button" aria-pressed="true" title="الوضع النهاري">
+          <span class="appearance-mode-label">المظهر</span>
+          <div class="appearance-switch" role="group" aria-label="مظهر الواجهة: فاتح أو داكن أو تلقائي">
+            <button id="appearance-light-btn" class="appearance-mode-btn" type="button" aria-pressed="false" title="فاتح">
               <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <circle cx="8" cy="8" r="3" />
                 <line x1="8" y1="1.5" x2="8" y2="3" /><line x1="8" y1="13" x2="8" y2="14.5" />
@@ -324,42 +298,39 @@
                 <line x1="3.4" y1="3.4" x2="4.5" y2="4.5" /><line x1="11.5" y1="11.5" x2="12.6" y2="12.6" />
                 <line x1="3.4" y1="12.6" x2="4.5" y2="11.5" /><line x1="11.5" y1="4.5" x2="12.6" y2="3.4" />
               </svg>
-              <span class="visually-hidden">الوضع النهاري</span>
+              <span class="appearance-mode-name">فاتح</span>
             </button>
-            <button id="appearance-dark-btn" class="appearance-mode-btn" type="button" aria-pressed="false" title="الوضع الليلي">
+            <button id="appearance-dark-btn" class="appearance-mode-btn" type="button" aria-pressed="false" title="داكن">
               <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="M14 8.53A6 6 0 1 1 7.47 2 4.67 4.67 0 0 0 14 8.53Z" />
               </svg>
-              <span class="visually-hidden">الوضع الليلي</span>
+              <span class="appearance-mode-name">داكن</span>
+            </button>
+            <button id="appearance-auto-btn" class="appearance-mode-btn" type="button" aria-pressed="false" title="تلقائي — يتبع مظهر النظام">
+              <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="8" cy="8" r="6" />
+                <path d="M8 2.4A5.6 5.6 0 0 0 8 13.6Z" fill="currentColor" stroke="none" />
+              </svg>
+              <span class="appearance-mode-name">تلقائي</span>
             </button>
           </div>
         </div>
-        <section class="appearance-section">
-          <h3 class="appearance-title">أيقونة نَسَق</h3>
-          <p class="appearance-desc">من هوية «المخطوطة الرقمية» — نقطة التصحيح الحمراء ثابتة، والحبر يتبع ثيمك.</p>
-          <div id="logo-grid" class="logo-grid"></div>
-        </section>
-        <section class="appearance-section">
-          <h3 class="appearance-title">العائلة اللونية</h3>
-          <p class="appearance-desc">نهارًا الورق واحد محايد وشخصية العائلة في الأزرار والحالات، ولليل نسخة كاملة لكل عائلة — والمبدّل أعلى القسم يتحكم بالوضع.</p>
-          <div id="theme-grid" class="theme-grid"></div>
-        </section>
-        <p class="hint">يُطبَّق الاختيار فورًا ويُحفَظ تلقائيًا، فيعود معك عند فتح التطبيق من جديد.</p>
+        <p class="hint">«تلقائي» يتبع مظهر نظام التشغيل. يُطبَّق الاختيار فورًا ويُحفَظ تلقائيًا، فيعود معك عند فتح التطبيق من جديد.</p>
       </div>
-      <!-- تبويب «حول» (المرحلة 2 من خطة التحديثات): واجهة ساكنة بالكامل —
-           لا نداء updater ولا process ولا أي API خارجي هنا. علامة نَسَق
-           مستنسخة حرفيًا من رمز الشريط (mark-lines) لا أصل جديد، وحبرها
-           currentColor فيتبع ثيم التطبيق تلقائيًا كبقية الرموز المضمّنة -->
+      <!-- تبويب «حول»: هوية التطبيق أولًا (العلامة والإصدار والتحديثات)،
+           وخاتمةً توقيع المطوّر. واجهة ساكنة — لا نداء updater ولا API خارجي
+           هنا. علامة نَسَق نفس هندسة رمز الشريط، حبرها currentColor يتبع
+           الثيم، ومحورها ونقطتها بلون الفعل -->
       <div id="tab-about" class="tab-body" hidden>
         <section class="about-identity">
           <span class="about-mark" aria-hidden="true">
-            <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <line x1="18" y1="40" x2="96" y2="40" stroke="currentColor" stroke-width="1.8"/>
-              <line x1="18" y1="56" x2="96" y2="56" stroke="currentColor" stroke-width="1.3" opacity="0.55"/>
-              <line x1="18" y1="72" x2="96" y2="72" stroke="currentColor" stroke-width="1.1" opacity="0.32"/>
-              <line x1="18" y1="88" x2="96" y2="88" stroke="currentColor" stroke-width="1" opacity="0.16"/>
-              <line x1="96" y1="27" x2="96" y2="97" stroke="#E23B2E" stroke-width="1.4" opacity="0.62"/>
-              <circle cx="96" cy="40" r="4.5" fill="#E23B2E"/>
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M4 5.25H18.5" stroke="currentColor" stroke-width="1.65" stroke-linecap="round"/>
+              <path d="M6.5 9.25H18.5" stroke="currentColor" stroke-width="1.45" stroke-linecap="round" opacity=".8"/>
+              <path d="M8.5 13.25H18.5" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" opacity=".58"/>
+              <path d="M11 17.25H18.5" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" opacity=".42"/>
+              <path class="mark-axis" d="M18.5 3.5V20.25" stroke-width="1" stroke-linecap="round" opacity=".55"/>
+              <circle class="mark-dot" cx="18.5" cy="5.25" r="1.6"/>
             </svg>
           </span>
           <h3 class="about-app-name">نَسَق</h3>
@@ -368,10 +339,7 @@
 
         <section class="appearance-section">
           <h3 class="appearance-title">الإصدار</h3>
-          <!-- نص ثابت مؤقتًا (المرحلة 2) — ربطه بمصدر الإصدار الفعلي
-               (tauri.conf.json/package.json) مؤجَّل، وليس جزءًا من هذه
-               المرحلة. لا مساس برقم الإصدار في أي ملف -->
-          <p class="about-version">7.0.0</p>
+          <p class="about-version">8.0.0</p>
         </section>
 
         <section class="appearance-section">

@@ -1,7 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" fill="none">
-  <defs><clipPath id="bgclip"><rect x="100" y="100" width="824" height="824" rx="185.4"/></clipPath></defs>
-  <rect x="100" y="100" width="824" height="824" rx="185.4" fill="#15161A"/>
-  <path d="M 292.27 539.47 A 219.73 219.73 0 0 1 731.73 539.47" stroke="#E8E3D8" stroke-width="54.93" fill="none" stroke-linecap="round"/>
-  <line x1="292.27" y1="539.47" x2="731.73" y2="539.47" stroke="#E8E3D8" stroke-width="20.6" stroke-linecap="round"/>
-  <circle cx="512" cy="676.8" r="48.07" fill="#E23B2E"/>
-</svg>
