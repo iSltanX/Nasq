@@ -1913,7 +1913,7 @@ dependencies = [
 
 [[package]]
 name = "nasaq"
-version = "8.0.0"
+version = "8.0.1"
 dependencies = [
  "objc2",
  "objc2-app-kit",

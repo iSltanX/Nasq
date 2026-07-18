@@ -298,6 +298,51 @@ if (systemDarkQuery) {
 // رسمه سكربت الرأس المبكر فلا وميض ولا اختلاف بين البدء والحالة النهائية
 renderAppearance(savedAppearanceChoice());
 
+// ---------- هوية البرج الفعّال (خريطة واحدة مُلزمة) ----------
+// data-mode على الجذر (يضبطه برج شَذْب وحده عند التبديل) هو مصدر الحقيقة
+// الوحيد، والقشرة تراقبه فتبدّل الاسم والعبارة وعنوان المستند معًا — مع
+// العلامة والألوان اللتين يبدّلهما CSS من السمة نفسها — فلا شروط متفرقة
+// يمكن أن تتفكك ولا رأس مختلط الهوية. عبارة شَذْب من ملفات الهوية المرجعية
+// (زوج الأدوار في IdentitySection)، لا اختراع هنا
+const PRODUCT_IDENTITY = {
+  nasaq: {
+    name: "نَسَق",
+    statement: "البوابة الأخيرة قبل النشر",
+    documentTitle: "نَسَق",
+  },
+  shadhb: {
+    name: "شَذْب",
+    statement: "وظيفة تنقية الشذرات داخل نَسَق",
+    documentTitle: "شَذْب — نَسَق",
+  },
+};
+
+const productNameEl = document.querySelector(".app-title");
+const productStatementEl = document.querySelector(".app-subtitle");
+const aboutNameEl = document.querySelector(".about-app-name");
+const aboutStatementEl = document.querySelector(".about-tagline");
+
+function activeProduct() {
+  return document.documentElement.getAttribute("data-mode") === "shadhb" ? "shadhb" : "nasaq";
+}
+
+function renderProductIdentity() {
+  const identity = PRODUCT_IDENTITY[activeProduct()];
+  productNameEl.textContent = identity.name;
+  productStatementEl.textContent = identity.statement;
+  // هوية «حول» تتبع البرج نفسه كوحدة: الاسم والعبارة (والعلامة عبر CSS)
+  aboutNameEl.textContent = identity.name;
+  aboutStatementEl.textContent = identity.statement;
+  document.title = identity.documentTitle;
+}
+
+// المراقبة على السمة نفسها لا على من يضبطها — فلا استيراد متبادل بين البرجين
+new MutationObserver(renderProductIdentity).observe(document.documentElement, {
+  attributes: true,
+  attributeFilter: ["data-mode"],
+});
+renderProductIdentity();
+
 // ---------- المسودات: تخزين محلي بالكامل، لا يغادر الجهاز ----------
 // داخل التطبيق تُحفظ في drafts.json بجوار الإعدادات، وفي معاينة المتصفح في localStorage
 const DRAFTS_KEY = "nasaq-drafts";

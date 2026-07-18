@@ -72,17 +72,9 @@
   --card-text: var(--text);
   --card-metal: var(--accent);
 
-  /* المحايد: سطح لوحة الإعدادات — هادئ ومستقلّ عن البرج (لا يتصبّغ
-     ببنفسج نَسَق ولا حُمرة شَذْب) لكنه منسجم مع هوية النهار الجديدة */
-  --neutral-bg: #efedf1;
-  --neutral-raised: #f6f4f8;
-  --neutral-input: #fbfafc;
-  --neutral-text: #26232a;
-  --neutral-dim: #635f6b;
-  --neutral-tool: #4f4b57;
-  --neutral-border: rgba(38, 35, 42, 0.12);
-  --neutral-tool-border: rgba(38, 35, 42, 0.16);
-  --neutral-tint: rgba(38, 35, 42, 0.06);
+  /* لون سلطان المعتمد لعلامة حقوق المطوّر (من توكنز هوية سلطان الرسمية):
+     لا يتبع البرج أبدًا — نهاره #985333 وليله #D2916C حصرًا */
+  --sultan-mark: #985333;
 
   --font-ui: "Almarai", "Geeza Pro", system-ui, sans-serif;
   --font-text: "Cairo", "Geeza Pro", system-ui, sans-serif;
@@ -143,16 +135,8 @@
   --shadow: rgba(var(--shadow-rgb), 0.5);
   --backdrop: rgba(var(--shadow-rgb), 0.55);
 
-  /* محايد الليل: فحميّ هادئ بمسحة بنفسجيّة خفيفة، مستقلّ عن البرج */
-  --neutral-bg: #16151a;
-  --neutral-raised: #211f27;
-  --neutral-input: #1c1b22;
-  --neutral-text: #eceaf2;
-  --neutral-dim: #9c97a6;
-  --neutral-tool: #c4bfcd;
-  --neutral-border: rgba(236, 234, 242, 0.12);
-  --neutral-tool-border: rgba(236, 234, 242, 0.18);
-  --neutral-tint: rgba(236, 234, 242, 0.10);
+  /* لون سلطان المعتمد — نسخة الليل من توكنز هويته الرسمية */
+  --sultan-mark: #d2916c;
 }
 
 /* شَذْب — ليل (طوبيّ دافئ على خلفية حبريّة حمراء). يجتمع المحوران على
@@ -272,18 +256,24 @@ body {
 }
 
 /* علامتان مضمّنتان يقودهما البرج الفعّال: نَسَق (السطر الثالث متّصل)
-   افتراضًا، وشَذْب (القصّة نفسها في الهيكل) حين data-mode="shadhb" */
-.app-mark svg { display: none; width: 100%; height: 100%; }
-.app-mark .mark-nasaq { display: block; }
-[data-mode="shadhb"] .app-mark .mark-nasaq { display: none; }
-[data-mode="shadhb"] .app-mark .mark-shadhb { display: block; }
+   افتراضًا، وشَذْب (القصّة نفسها في الهيكل) حين data-mode="shadhb".
+   القاعدة نفسها تحكم رمز الشريط ورمز «حول» فيتبدّلان كوحدة واحدة */
+.app-mark svg,
+.about-mark svg { display: none; width: 100%; height: 100%; }
+.app-mark .mark-nasaq,
+.about-mark .mark-nasaq { display: block; }
+[data-mode="shadhb"] .app-mark .mark-nasaq,
+[data-mode="shadhb"] .about-mark .mark-nasaq { display: none; }
+[data-mode="shadhb"] .app-mark .mark-shadhb,
+[data-mode="shadhb"] .about-mark .mark-shadhb { display: block; }
 
 /* محور المحاذاة ونقطة التصحيح والمِبضع بلون فعل البرج الفعّال */
 .app-mark .mark-axis,
 .about-mark .mark-axis { stroke: var(--accent); }
 .app-mark .mark-dot,
 .about-mark .mark-dot { fill: var(--accent); }
-.app-mark .mark-cut { stroke: var(--accent); }
+.app-mark .mark-cut,
+.about-mark .mark-cut { stroke: var(--accent); }
 
 .app-title {
   font-size: 16px;
@@ -835,20 +825,45 @@ textarea:focus-visible,
   flex-shrink: 0;
 }
 
-/* ---------- سطر التوقيع ---------- */
+/* ---------- التذييل المهيكل ----------
+   عبارة المنتج · حقوق سلطان المختصرة بعلامته المصغرة · الإصدار عنصر
+   بيانات مستقل — هادئ وثانوي أمام محتوى التطبيق، لا لافتة علامة */
 .credit {
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   font-size: 10px;
   color: var(--text-dim);
-  opacity: 0.7;
-  letter-spacing: 0.05em;
-  padding: 7px 20px 9px;
+  opacity: 0.75;
+  letter-spacing: 0.04em;
+  padding: 6px 20px 8px;
   border-top: 1px solid var(--border);
 }
 
-.credit .version {
+.credit-sep { opacity: 0.6; }
+
+.credit-rights {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.sultan-monogram-footer {
+  width: 13px;
+  height: 13px;
+  opacity: 0.9;
+}
+
+/* الإصدار بيانات وصفية منفصلة: فاصل شعري وحبر أخفت، لا جزء من جملة الحقوق */
+.credit-version {
   direction: ltr;
   unicode-bidi: isolate;
+  font-family: var(--font-text);
+  opacity: 0.75;
+  margin-inline-start: 2px;
+  padding-inline-start: 10px;
+  border-inline-start: 1px solid var(--border);
 }
 
 /* ---------- التنبيه ---------- */
@@ -877,20 +892,10 @@ textarea:focus-visible,
 }
 
 .settings-panel {
-  /* عزل اللوحة عن صبغة العائلة (تصحيح المظهر الثاني): أسطحها وحبرها
-     وحدودها وصبغة تحويمها كلها من المحايد الثابت في الوضعين — فلا يتسرب
-     نحاس أو ورد أو زيتون إلى سطحها ليلًا أو نهارًا. العائلة تحضر داخلها
-     في اللهجات المسموحة فقط: التبويب النشط، زر «حفظ»، حلقة التركيز،
-     وحدود المختار وعيّنات البطاقات. السطح معتم كليًا — لا زجاج ولا طبقة */
-  --bg: var(--neutral-bg);
-  --bg-raised: var(--neutral-raised);
-  --bg-input: var(--neutral-input);
-  --text: var(--neutral-text);
-  --text-dim: var(--neutral-dim);
-  --tool-text: var(--neutral-tool);
-  --border: var(--neutral-border);
-  --tool-border: var(--neutral-tool-border);
-  --accent-tint: var(--neutral-tint);
+  /* اللوحة ترث توكنز البرج الفعّال كاملةً (data-mode على الجذر هو مصدر
+     الحقيقة الوحيد): فُتحت من نَسَق فكلها بنفسج نَسَق، ومن شَذْب فكلها
+     حُمرة شَذْب — أسطحًا وحبرًا وحدودًا وتبويبًا نشطًا وزر «حفظ» وحلقات
+     التركيز. لا طبقة محايدة تعزلها عن هوية البرج. السطح معتم كليًا */
   background: var(--bg-raised);
   border: 1px solid var(--border);
   border-radius: 12px;
@@ -1021,32 +1026,56 @@ textarea:focus-visible,
   text-align: start;
 }
 
-/* خاتمة التبويب: المخطوطة توقيعٌ في نهاية العمل لا أيقونة بجانب سطر —
-   وسطًا بهامش علوي مريح، وسطر الاعتماد تحتها مباشرة، ولا عنصر بعدهما */
-.about-signature-block {
+/* ---------- علامة سلطان المصغرة (المونوغرام الرسمي) ----------
+   هندسة الملف كما هي؛ التلوين فقط بلون سلطان المعتمد --sultan-mark —
+   لا يتبع فعل البرج أبدًا، ولا ظل ولا توهج ولا تدرج ولا تشويه */
+.sultan-monogram {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--sultan-mark);
+}
+
+.sultan-monogram svg { display: block; width: 100%; height: 100%; }
+
+/* خاتمة «حول» — نظام حقوق سلطان: العلامة المصغرة بجوار الصيغة الكاملة،
+   صفًّا أفقيًا متمركزًا هادئًا. أصغر بدرجتين من اسم المنتج وأخفت تباينًا
+   بدرجة، مع مساحة آمنة حول العلامة ولا عنصر بعد الكتلة */
+.about-rights {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 24px;
+  padding: 6px 0 4px;
+}
+
+.about-rights .sultan-monogram {
+  width: 30px;
+  height: 30px;
+}
+
+.about-rights-lines {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  margin-top: 22px;
-  padding-bottom: 4px;
-  text-align: center;
+  gap: 1px;
+  text-align: start;
 }
 
-/* هادئ عمدًا: --text-dim لا --text أو --brand — توقيع لا يزاحم علامة نَسَق */
-.about-signature {
-  width: 52px;
-  flex-shrink: 0;
-  color: var(--text-dim);
-  opacity: 0.85;
-}
-
-.about-signature svg { display: block; width: 100%; height: auto; }
-
-.about-developer-credit {
+.about-rights-ar {
   margin: 0;
   font-size: 12.5px;
+  font-weight: 700;
   color: var(--tool-text);
+}
+
+.about-rights-en {
+  margin: 0;
+  font-size: 10.5px;
+  font-family: var(--font-text);
+  color: var(--text-dim);
+  direction: ltr;
+  unicode-bidi: isolate;
+  text-align: start;
 }
 
 .update-status { margin-top: 2px; }
@@ -1075,14 +1104,14 @@ textarea:focus-visible,
 .appearance-mode-label {
   font-size: 12px;
   font-weight: 600;
-  color: var(--neutral-tool);
+  color: var(--tool-text);
 }
 
 .appearance-switch {
   display: flex;
   gap: 2px;
   padding: 3px;
-  background: var(--neutral-tint);
+  background: var(--accent-tint);
   border-radius: 999px;
 }
 
@@ -1092,7 +1121,7 @@ textarea:focus-visible,
   justify-content: center;
   gap: 6px;
   background: transparent;
-  color: var(--neutral-dim);
+  color: var(--text-dim);
   border: none;
   border-radius: 999px;
   padding: 5px 14px;
@@ -1104,11 +1133,11 @@ textarea:focus-visible,
 
 .appearance-mode-name { line-height: 1; }
 
-.appearance-mode-btn:hover { color: var(--neutral-text); }
+.appearance-mode-btn:hover { color: var(--text); }
 
 .appearance-mode-btn[aria-pressed="true"] {
-  color: var(--neutral-text);
-  background: var(--neutral-bg);
+  color: var(--text);
+  background: var(--bg-input);
   box-shadow: 0 1px 3px rgba(var(--shadow-rgb), 0.22);
 }
 
