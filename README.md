@@ -15,7 +15,7 @@
 <p>
   <img alt="platform: macOS" src="https://img.shields.io/badge/platform-macOS-14131A?style=flat-square">
   <img alt="built with Tauri" src="https://img.shields.io/badge/built_with-Tauri_2-7055A8?style=flat-square">
-  <img alt="version 8.2.0" src="https://img.shields.io/badge/version-8.2.0-7055A8?style=flat-square">
+  <img alt="version 8.2.1" src="https://img.shields.io/badge/version-8.2.1-7055A8?style=flat-square">
   <img alt="status: private beta" src="https://img.shields.io/badge/status-private_beta-B64F4B?style=flat-square">
 </p>
 
@@ -122,7 +122,7 @@ npm run tauri build
 
 ## حالة المشروع
 
-خاصّ، وفي مرحلة تجربةٍ محدودة. الإصدار الحالي **v8.2.0** (macOS · Apple Silicon).
+خاصّ، وفي مرحلة تجربةٍ محدودة. الإصدار الحالي **v8.2.1** (macOS · Apple Silicon).
 
 سجلّ الإصدارات الكامل في **[CHANGELOG.md](CHANGELOG.md)**.
 

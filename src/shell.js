@@ -226,7 +226,7 @@ function setUpdateState(state, opt = {}) {
   updInstallBtn.disabled = updBusy;
   const v = opt.version || updVersion || "";
   const messages = {
-    idle: "",
+    idle: "التحديث التلقائي مُفعّل.",
     checking: "جارٍ البحث…",
     "no-update": "لا توجد تحديثات — لديك أحدث إصدار.",
     available: "يتوفر الإصدار " + v,
