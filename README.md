@@ -15,8 +15,8 @@
 <p>
   <img alt="platform: macOS" src="https://img.shields.io/badge/platform-macOS-14131A?style=flat-square">
   <img alt="built with Tauri" src="https://img.shields.io/badge/built_with-Tauri_2-7055A8?style=flat-square">
-  <img alt="version 8.2.1" src="https://img.shields.io/badge/version-8.2.1-7055A8?style=flat-square">
-  <img alt="status: private beta" src="https://img.shields.io/badge/status-private_beta-B64F4B?style=flat-square">
+  <img alt="version 8.2.2" src="https://img.shields.io/badge/version-8.2.2-7055A8?style=flat-square">
+  <img alt="status: beta" src="https://img.shields.io/badge/status-beta-B64F4B?style=flat-square">
 </p>
 
 </div>
@@ -85,7 +85,9 @@
 
 ## التثبيت
 
-نزّل أحدث نسخة من **[صفحة الإصدارات](https://github.com/iSltanX/Nasq-Releases/releases/latest)** (‏`.dmg` لنظام macOS · Apple Silicon)، ثم اسحب `Nasaq.app` إلى مجلد التطبيقات.
+نزّل أحدث نسخة من **[صفحة الإصدارات](https://github.com/iSltanX/Nasq/releases/latest)** (‏`.dmg` لنظام macOS · Apple Silicon)، ثم اسحب `Nasaq.app` إلى مجلد التطبيقات.
+
+> غير موقَّع رسميًّا من Apple بعد؛ عند أوّل فتح افتحه من قائمة النقر بزرّين ← «فتح».
 
 ## التطوير
 
@@ -109,7 +111,7 @@ npm run tauri build
 
 ## التحديثات
 
-منذ الإصدار **v8.2.0**، يحمل نَسَق **تحديثًا تلقائيًّا داخل التطبيق** عبر مُحدِّث Tauri الرسمي: من «الإعدادات ← حول» اضغط «البحث عن تحديثات»، فإن توفّر إصدارٌ أحدث يمكنك تنزيله ومتابعة تقدّمه، ثم «تثبيت وإعادة التشغيل». تُوقَّع التحديثات بمفتاح نَسَق ويتحقّق التطبيق من التوقيع قبل التثبيت. تُوزَّع الإصدارات وبياناتها (`latest.json`) من [قناة الإصدارات العامة](https://github.com/iSltanX/Nasq-Releases/releases)، ويمكن دائمًا التنزيل اليدويّ منها.
+منذ الإصدار **v8.2.0**، يحمل نَسَق **تحديثًا تلقائيًّا داخل التطبيق** عبر مُحدِّث Tauri الرسمي: من «الإعدادات ← حول» اضغط «البحث عن تحديثات»، فإن توفّر إصدارٌ أحدث يمكنك تنزيله ومتابعة تقدّمه، ثم «تثبيت وإعادة التشغيل». تُوقَّع التحديثات بمفتاح نَسَق ويتحقّق التطبيق من التوقيع قبل التثبيت. تُوزَّع الإصدارات وبياناتها (`latest.json`) من [صفحة الإصدارات](https://github.com/iSltanX/Nasq/releases) في هذا المستودع، ويمكن دائمًا التنزيل اليدويّ منها.
 
 ## التقنيات
 
@@ -122,9 +124,13 @@ npm run tauri build
 
 ## حالة المشروع
 
-خاصّ، وفي مرحلة تجربةٍ محدودة. الإصدار الحالي **v8.2.1** (macOS · Apple Silicon).
+في مرحلة تجربةٍ محدودة (beta). الإصدار الحالي **v8.2.2** (macOS · Apple Silicon).
 
 سجلّ الإصدارات الكامل في **[CHANGELOG.md](CHANGELOG.md)**.
+
+## الترخيص والحقوق
+
+جميع الحقوق محفوظة لسلطان. لا رخصة مفتوحة المصدر معلنة حاليًا لهذا المستودع؛ الكود منشور للاطّلاع والمتابعة لا لإعادة التوزيع أو الاستخدام دون إذن.
 
 ---
 
