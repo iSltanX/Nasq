@@ -123,23 +123,28 @@
      (٢) لا نصّ قشرة يُشحن بـ line-height: normal — كل قاعدة تعلن
          تباعدها، وإلا عاد الاشتقاق من الخط من الباب الخلفي.
 
-     ثلاث درجات لا رابع لها، والخطوة ٨px: */
-  --ctl-lg: 44px;   /* L — الفعل الملتزم (نسّق، افحص، احفظ) */
-  --ctl-md: 36px;   /* M — الحقول والمشغّلات ومسارات الأشرطة */
-  --ctl-sm: 28px;   /* S — المدمج والأيقونات (أرضية هدف النقر) */
+     ثلاث درجات لا رابع لها، والخطوة ٨px (مقياس Desktop Compact —
+     مؤشر الفأرة يصيب ٢٤px بيسر، فأرضية اللمس لا تحكم تطبيقًا مكتبيًا): */
+  --ctl-lg: 40px;   /* L — الفعل الملتزم (نسّق، افحص، احفظ) */
+  --ctl-md: 32px;   /* M — الحقول والمشغّلات ومسارات الأشرطة */
+  --ctl-sm: 24px;   /* S — المدمج والأيقونات (أرضية هدف مؤشر الفأرة) */
 
   /* خارج السلّم عمدًا — عناصر غير تفاعلية يجب ألا تُقرأ كأزرار.
-     ٢٢px تقع ٦px تحت أصغر زر، وهذه الفجوة هي ما يجعل الدرجات تعني
+     ٢٠px تقع ٤px تحت أصغر زر، وهذه الفجوة هي ما يجعل الدرجات تعني
      «هذا قابل للنقر» */
-  --chip-h: 22px;
-  --mark-h: 32px;   /* بلاطة الهوية وحدها */
+  --chip-h: 20px;
+  --mark-h: 28px;   /* بلاطة الهوية وحدها */
 
-  /* سلّم خط الواجهة — خمس درجات، كلها دون المتن. الفروق بين الدرجات
-     ٧٫٧٪–١٤٫٣٪ أي فوق عتبة الإدراك، فكل درجة تُقرأ درجةً فعلًا */
-  --fs-display: 16px;  /* سقف القشرة — لا يُتجاوز */
-  --fs-lg: 14px;
-  --fs-base: 13px;     /* مرساة نصّ المتحكّمات كلها */
-  --fs-sm: 12px;
+  /* سلّم خط الواجهة — أربع درجات فعلية فوق أرضية العربية (١١px)،
+     والفروق ٨٪–١٣٪ أي فوق عتبة الإدراك. حجم النص يتبع درجة الارتفاع:
+     L→13 وM→12 وS→11، فالعلاقة بين الزر وخطه واحدة في كل العائلة.
+     sm وxs تلتقيان عند ١١ عمدًا (لا مجال أدنى منها للعربية) —
+     يفصل بينهما الخط والوزن: عناوين الحقول Almarai غامق، والتلميحات
+     Cairo عادي */
+  --fs-display: 15px;  /* سقف القشرة — لا يُتجاوز */
+  --fs-lg: 13px;
+  --fs-base: 12px;     /* مرساة نصّ المتحكّمات */
+  --fs-sm: 11px;
   --fs-xs: 11px;       /* أرضية العربية — لا شيء تحتها */
   --fs-numeral: 10px;  /* أرقام لاتينية حصرًا، خارج السلّم النصّي */
 
@@ -148,9 +153,9 @@
   --fs-content-lg: 16px;
 
   /* هندسة القشرة (24 — Nasaq Workspace) */
-  --topbar-h: 48px;
-  --pane-head-h: 40px;
-  --gutter: var(--sp-24);
+  --topbar-h: 40px;
+  --pane-head-h: 34px;
+  --gutter: var(--sp-20);
   --input-pane-w: 520px;
 
   --font-ui: "Almarai", sans-serif;
@@ -268,7 +273,7 @@ input, select, textarea { font-family: var(--font-text); }
 .topbar-actions { display: flex; align-items: center; gap: var(--sp-4); }
 
 /* تجمّع العلامة كتلة واحدة متلاصقة أقصى اليمين */
-.topbar-brand { display: flex; align-items: center; gap: var(--sp-10); }
+.topbar-brand { display: flex; align-items: center; gap: var(--sp-8); }
 
 .app-mark {
   width: var(--mark-h);
@@ -284,7 +289,9 @@ input, select, textarea { font-family: var(--font-text); }
    محفوظة (٢٠/٣٢ = ٠٫٦٣ مقابل ٢٢/٣٤ = ٠٫٦٥) فالوزن البصري للهوية كما هو،
    والهندسة نفسها لم تُمس */
 .app-mark svg, .about-mark svg { display: none; width: 22px; height: 22px; }
-.app-mark svg { width: 20px; height: 20px; }
+.app-mark svg { width: 18px; height: 18px; }
+/* أيقونتا الإعدادات/المسودات مرسومتان ١٨ في HTML — تُضبطان لمقاس الصف */
+.topbar-actions .icon-btn svg { width: 15px; height: 15px; }
 .app-mark .mark-nasaq, .about-mark .mark-nasaq { display: block; }
 [data-mode="shadhb"] .app-mark .mark-nasaq,
 [data-mode="shadhb"] .about-mark .mark-nasaq { display: none; }
@@ -339,7 +346,7 @@ input, select, textarea { font-family: var(--font-text); }
   color: var(--text-muted);
   border: none;
   border-radius: var(--r-full);
-  padding: 0 var(--sp-16);
+  padding: 0 var(--sp-14);
   font-size: var(--fs-base);
   font-weight: 700;
   cursor: pointer;
@@ -407,10 +414,10 @@ input, select, textarea { font-family: var(--font-text); }
   gap: var(--sp-8);
   border: 1px solid transparent;
   border-radius: var(--r-8);
-  padding: 0 var(--sp-24);
+  padding: 0 var(--sp-20);
   height: var(--ctl-lg);
   font-family: var(--font-ui);
-  font-size: var(--fs-base);
+  font-size: var(--fs-lg);
   font-weight: 700;
   line-height: 1.4;
   white-space: nowrap;
@@ -512,7 +519,7 @@ input, select, textarea { font-family: var(--font-text); }
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: var(--sp-16) var(--gutter);
+  padding: var(--sp-12) var(--gutter);
 }
 
 /* التذييل الثابت لفعل لوحة الإدخال الرئيس — خارج منطقة التمرير، على
@@ -521,7 +528,7 @@ input, select, textarea { font-family: var(--font-text); }
 .pane-input-footer {
   flex-shrink: 0;
   border-top: 1px solid var(--border-subtle);
-  padding: var(--sp-12) var(--gutter);
+  padding: var(--sp-10) var(--gutter);
   background: var(--bg-raised);
 }
 
@@ -558,7 +565,7 @@ input, select, textarea { font-family: var(--font-text); }
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: var(--sp-20) var(--gutter);
+  padding: var(--sp-16) var(--gutter);
 }
 
 .pane-divider { height: 1px; background: var(--border-subtle); flex-shrink: 0; }
@@ -567,13 +574,13 @@ input, select, textarea { font-family: var(--font-text); }
 .field-block {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-6);
+  gap: var(--sp-4);
   position: relative;
 }
 
 /* نسخة مدمجة: فجوة أضيق بين العنوان وحقله — الأولوية الرأسية في لوحة
    الإدخال لمربع النص، والحقول الثانوية تتنازل عن كل بكسل زائد */
-.field-block-tight { gap: var(--sp-4); }
+.field-block-tight { gap: var(--sp-2); }
 
 .field-label {
   font-family: var(--font-ui);
@@ -638,7 +645,7 @@ textarea.empty-bidi { unicode-bidi: isolate; }
 .textarea-foot {
   display: flex;
   justify-content: flex-start;
-  padding: var(--sp-8) var(--sp-16);
+  padding: var(--sp-6) var(--sp-12);
   border-top: 1px solid var(--border-subtle);
 }
 
@@ -655,7 +662,7 @@ textarea.empty-bidi { unicode-bidi: isolate; }
   flex-shrink: 0;
   height: var(--ctl-md);
   color: var(--text);
-  padding: 6px var(--sp-14);
+  padding: 5px var(--sp-12);
   font-size: var(--fs-base);
   line-height: 1.6;
   caret-color: var(--accent);
@@ -823,7 +830,7 @@ textarea.empty-bidi { unicode-bidi: isolate; }
 
 .toolbar-divider {
   width: 1px;
-  height: 16px;
+  height: 14px;
   background: var(--border-subtle);
   flex-shrink: 0;
   margin: 0 var(--sp-2);
@@ -840,7 +847,7 @@ textarea.empty-bidi { unicode-bidi: isolate; }
 
 /* الرمز ١٥px داخل زر ٢٨px (٥٤٪): الأدوات خدمة للنتيجة لا منافِسة لها،
    وهدف النقر يبقى ٢٨ كاملًا فلا تُدفع الدقة ثمنًا للهدوء البصري */
-.nsq-toolbar .tool-btn svg { width: 15px; height: 15px; }
+.nsq-toolbar .tool-btn svg { width: 14px; height: 14px; }
 .nsq-toolbar .tool-btn:hover { color: var(--text); background: var(--accent-soft); }
 .nsq-toolbar .tool-btn:disabled { background: none; }
 
@@ -853,7 +860,7 @@ textarea.empty-bidi { unicode-bidi: isolate; }
 }
 
 /* الأدوات الثانوية على مقاس رموز الشريط نفسها — صفّ الرأس عائلة واحدة */
-.secondary-tools .icon-btn svg { width: 15px; height: 15px; }
+.secondary-tools .icon-btn svg { width: 14px; height: 14px; }
 
 .secondary-tools {
   display: flex;
@@ -1017,8 +1024,8 @@ textarea.empty-bidi { unicode-bidi: isolate; }
 .empty-icon {
   display: grid;
   place-items: center;
-  width: var(--sp-48);
-  height: var(--sp-48);
+  width: var(--sp-40);
+  height: var(--sp-40);
   border-radius: 50%;
   background: var(--accent-soft);
   color: var(--accent);
@@ -1057,8 +1064,8 @@ textarea.empty-bidi { unicode-bidi: isolate; }
 }
 
 .spinner {
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
   border: 3px solid var(--border-subtle);
   border-top-color: var(--accent);
   border-radius: 50%;
@@ -1138,7 +1145,7 @@ textarea.empty-bidi { unicode-bidi: isolate; }
   align-items: flex-start;
   gap: var(--sp-8);
   margin: 0;
-  padding: var(--sp-8) var(--sp-12);
+  padding: var(--sp-6) var(--sp-10);
   background: var(--bg-soft);
   border: 1px solid var(--border-subtle);
   border-radius: var(--r-8);
@@ -1191,8 +1198,8 @@ textarea.empty-bidi { unicode-bidi: isolate; }
 .reading-card {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-10);
-  padding: var(--sp-16);
+  gap: var(--sp-8);
+  padding: var(--sp-14);
   background: var(--bg-input);
   border: 1px solid var(--border-subtle);
   border-radius: var(--r-12);
@@ -1234,7 +1241,7 @@ textarea.empty-bidi { unicode-bidi: isolate; }
   display: flex;
   flex-direction: column;
   gap: var(--sp-6);
-  padding: var(--sp-14);
+  padding: var(--sp-12);
   background: var(--bg-input);
   border: 1px solid var(--border);
   border-radius: var(--r-10);
@@ -1286,7 +1293,7 @@ textarea.empty-bidi { unicode-bidi: isolate; }
    النقر (٩٦×٢٨) دون أن يبتلع الاقتباس بصريًا */
 .cut-keep, .cut-do {
   flex: 0 1 auto;
-  min-width: 96px;
+  min-width: 88px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1382,7 +1389,7 @@ textarea.empty-bidi { unicode-bidi: isolate; }
   display: inline-flex;
   align-items: center;
   gap: var(--sp-8);
-  padding: var(--sp-8) var(--sp-14);
+  padding: var(--sp-6) var(--sp-12);
   border-radius: var(--r-10);
   background: var(--success-soft);
   border: 1px solid color-mix(in srgb, var(--success) 36%, transparent);
@@ -1473,7 +1480,7 @@ textarea.empty-bidi { unicode-bidi: isolate; }
   justify-content: space-between;
   gap: var(--sp-16);
   flex-shrink: 0;
-  padding: var(--sp-20) var(--gutter) var(--sp-16);
+  padding: var(--sp-16) var(--gutter) var(--sp-12);
   border-bottom: 1px solid var(--border-subtle);
 }
 
@@ -1519,7 +1526,7 @@ textarea.empty-bidi { unicode-bidi: isolate; }
   display: flex;
   gap: var(--sp-2);
   flex-shrink: 0;
-  margin: var(--sp-12) var(--gutter) 0;
+  margin: var(--sp-10) var(--gutter) 0;
   padding: var(--sp-4);
   background: var(--bg-soft);
   border-radius: var(--r-10);
@@ -1550,8 +1557,8 @@ textarea.empty-bidi { unicode-bidi: isolate; }
 .tab-body {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-16);
-  padding: var(--sp-20) var(--gutter);
+  gap: var(--sp-12);
+  padding: var(--sp-16) var(--gutter);
   overflow-y: auto;
   min-height: 0;
 }
@@ -1898,8 +1905,8 @@ textarea.empty-bidi { unicode-bidi: isolate; }
 .variations-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: var(--sp-16);
-  padding: var(--sp-20) var(--gutter);
+  gap: var(--sp-12);
+  padding: var(--sp-16) var(--gutter);
   overflow-y: auto;
   min-height: 240px;
 }
