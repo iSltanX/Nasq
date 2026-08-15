@@ -95,6 +95,9 @@ function showSettingsMsg(text, isError) {
 }
 
 function closeSettings() {
+  // إعادة التركيز لزر الفتح — الإخفاء بلا نقل تركيز يُسقطه إلى <body>
+  // (٢٫٤٫٣ ترتيب التركيز)؛ نفس الحارس المطبَّق على شريط البحث في nasaq.js
+  if (overlay.contains(document.activeElement)) el("settings-btn").focus();
   overlay.hidden = true;
   settingsMsg.hidden = true;
 }
@@ -903,6 +906,7 @@ function openDrafts() {
 }
 
 function closeDrafts() {
+  if (draftsOverlay.contains(document.activeElement)) el("drafts-btn").focus();
   draftsOverlay.hidden = true;
 }
 

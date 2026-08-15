@@ -1,10 +1,15 @@
 /* ============================================================
-   نظام الهوية البصرية — نَسَق / شَذْب (إعادة البناء v8)
+   نَسَق / شَذْب — Product UI (تنفيذ Figma 23–27)
    ------------------------------------------------------------
+   بُنيت هذه الطبقة من صفحات المنتج المعتمدة في Figma لا من الواجهة
+   السابقة: شريط علوي واحد، مساحة عمل من عمودين (إدخال ٥٢٠px ثابت
+   يمينًا + نتيجة تملأ الباقي)، بطاقات محتوى بحدّ ونصف قطر، وحالات
+   فراغ/تحميل موسّطة. لا صفّ تحكّم مستقل ولا تقسيمة ٤٤/٥٦ ولا أدوات
+   في صندوق واحد مقسَّم — تلك بنية البناء السابق وقد زالت بالكامل.
+
    خطّان محليّان فقط: Almarai لواجهة التحكّم (العناوين، الأزرار،
-   التبويبات، أسماء الأقسام، عناصر التبديل)، وCairo للنص والمحتوى
-   (الحقول، الرسائل، الإرشادات، النصوص الطويلة، عدسة القراءة).
-   لا اتصال خارجي — كلاهما مضموم من src/fonts محليًا.
+   التبويبات، أسماء الأقسام)، وCairo للنص والمحتوى (الحقول، الرسائل،
+   النصوص الطويلة). لا اتصال خارجي — كلاهما مضموم من src/fonts محليًا.
    ============================================================ */
 @font-face {
   font-family: "Cairo";
@@ -43,194 +48,134 @@
 }
 
 /* ============================================================
-   نظام المتغيّرات الدلالية
+   التوكنز — محوران مستقلان (Figma 06/19)
    ------------------------------------------------------------
-   محوران فقط يحكمان اللوحة كاملةً:
-     • data-mode   = البرج الفعّال: غيابه = نَسَق (بنفسجي)،
-                     و"shadhb" = شَذْب (طوبيّ أحمر).
-     • data-appearance = "dark" لليل، وغيابه للنهار.
-   القيم مأخوذة من مرجع الهوية الجديد حرفيًا. المكوّنات تستهلك
-   الأسماء الدلالية وحدها؛ تبديل المحورين يغيّر اللون والمزاج دون
-   مسّ التخطيط أو المسافات أو البنية. المشتقّات (الحدود/الصبغات/
-   الظلال) تُحسب من الجذور (--line-rgb / --accent-rgb / --shadow-rgb)
-   فتتبع اللوحة الفعّالة تلقائيًا.
-   ------------------------------------------------------------
-   الافتراضي: نَسَق — نهار (بنفسجي هادئ على ورق بنفسجيّ فاتح). */
+     • data-mode       = البرج: غيابه نَسَق (Terracotta)، و"shadhb"
+                         شَذْب (Oxblood). يغيّر لون الفعل فقط.
+     • data-appearance = "dark" لليل. يضبط الأسطح والنصوص والحدود فقط.
+   المسافات ونصف القطر مُرمَّزة هنا (كانت قيمًا مباشرة في البناء
+   السابق) فتتبع سلّم Figma 09 — Grid & Spacing حرفيًا.
+   ============================================================ */
 :root {
-  --bg: #f3eff5;
-  --bg-raised: #ece5f0;
-  --bg-input: #fbf8fc;
-  --bg-soft: #e4dce9;
-  --border: #c9bcd1;
-  --border-subtle: #ded5e3;
-  --text: #241f2a;
-  --text-dim: #645a6c;
-  --text-muted: #8b8092;
-  --tool-text: #645a6c;
+  /* أسطح ونصوص — نهار */
+  --bg: #faf7f3;
+  --bg-raised: #fdf9f5;
+  --bg-input: #ffffff;
+  --bg-soft: #f5f1ed;
+  --border: #d4cbc1;
+  --border-subtle: #e8e2db;
+  --text: #1a1816;
+  --text-dim: #3d3835;
+  --text-muted: #7a6e62;
+  --tool-text: #3d3835;
 
-  /* لون توقيع البرج: هو الفعل الرئيس وهو العلامة معًا */
-  --accent: #7055a8;
-  --accent-hover: #604793;
-  --accent-text: #fcf9ff;
-  --accent-soft: #e7ddf1;
-  --selection: #d8c9e8;
-  --focus-ring: #8063b8;
-  --brand: var(--accent);
-  --accent-rgb: 112, 85, 168;
-
-  --success: #4f7f6a;
-  --success-soft: rgba(79, 127, 106, 0.12);
-  --warning: #9b6c2e;
-  --warning-soft: rgba(155, 108, 46, 0.12);
-  --error-text: #b75656;
-  --error-bg: rgba(183, 86, 86, 0.12);
-
-  --line-rgb: 36, 31, 42;
-  --shadow-rgb: 40, 28, 58;
-  --veil: rgba(243, 239, 245, 0.82);
-
-  /* مشتقّات تُحسب مرة وتتبع الجذور أعلاه */
-  --tool-border: var(--border);
+  /* لون توقيع البرج — نَسَق (06: color/product/strong) */
+  --accent: #c4654a;
+  --accent-hover: color-mix(in srgb, var(--accent) 82%, black);
+  --accent-text: #141210;
+  --accent-soft: color-mix(in srgb, var(--accent) 14%, var(--bg));
   --accent-tint: var(--accent-soft);
+  --selection: color-mix(in srgb, var(--accent) 26%, var(--bg));
+  /* حلقة التركيز نهارًا = اللكنة الخام: مزجها نحو الأبيض كان يهبط بها
+     دون 3:1 (WCAG 1.4.11) على أسطح النهار في نَسَق تحديدًا */
+  --focus-ring: var(--accent);
+  --brand: var(--accent);
+  --accent-rgb: 196, 101, 74;
+
+  /* الحالات والدلالات (06 — Semantic Codes) */
+  --success: #8b9a7e;
+  --success-soft: rgba(139, 154, 126, 0.14);
+  --warning: #b89b5e;
+  --warning-soft: rgba(184, 155, 94, 0.14);
+  --error-text: #a84e35;
+  --error-bg: rgba(168, 78, 53, 0.08);
+
+  --line-rgb: 26, 24, 22;
+  --shadow-rgb: 26, 24, 22;
+  --veil: rgba(250, 247, 243, 0.82);
+  --tool-border: var(--border);
   --shadow: rgba(var(--shadow-rgb), 0.16);
   --backdrop: rgba(var(--shadow-rgb), 0.30);
 
-  /* لون سلطان المعتمد لعلامة حقوق المطوّر (من توكنز هوية سلطان الرسمية):
-     لا يتبع البرج أبدًا — نهاره #985333 وليله #D2916C حصرًا */
+  /* لون سلطان المعتمد — لا يتبع البرج أبدًا */
   --sultan-mark: #985333;
+
+  /* سلّم المسافات (09 — Grid & Spacing) */
+  --sp-2: 2px;  --sp-4: 4px;  --sp-6: 6px;  --sp-8: 8px;
+  --sp-10: 10px; --sp-12: 12px; --sp-14: 14px; --sp-16: 16px;
+  --sp-20: 20px; --sp-24: 24px; --sp-32: 32px; --sp-40: 40px;
+  --sp-48: 48px; --sp-64: 64px;
+
+  /* سلّم نصف القطر (11 — Foundations) */
+  --r-4: 4px; --r-8: 8px; --r-10: 10px; --r-12: 12px; --r-16: 16px;
+  --r-full: 999px;
+
+  /* هندسة القشرة (24 — Nasaq Workspace) */
+  --topbar-h: 72px;
+  --input-pane-w: 520px;
 
   --font-ui: "Almarai", sans-serif;
   --font-text: "Cairo", sans-serif;
 }
 
-/* شَذْب — نهار (طوبيّ أحمر على ورق دافئ). غياب data-appearance فنهار.
-   :root و[data-mode="shadhb"] متساويان في الخصوصية، والترتيب هنا يرجّح
-   شَذْب حين يكون فعّالًا */
+/* شَذْب — يبدّل لون الفعل فقط (Oxblood). لا يمسّ سطحًا ولا نصًا ولا حدًّا */
 [data-mode="shadhb"] {
-  --bg: #f7f0ef;
-  --bg-raised: #efe3e2;
-  --bg-input: #fefaf8;
-  --bg-soft: #e7d8d8;
-  --border: #d0b9ba;
-  --border-subtle: #e4d4d3;
-  --text: #2a2020;
-  --text-dim: #6c5958;
-  --text-muted: #907c7b;
-  --tool-text: #6c5958;
-
-  --accent: #b64f4b;
-  --accent-hover: #9f423f;
-  --accent-text: #fff9f6;
-  --accent-soft: #f2dad8;
-  --selection: #e9c6c4;
-  --focus-ring: #c7605b;
-  --brand: var(--accent);
-  --accent-rgb: 182, 79, 75;
-
-  --success: #537d68;
-  --success-soft: rgba(83, 125, 104, 0.12);
-  --warning: #9b6b2d;
-  --warning-soft: rgba(155, 107, 45, 0.12);
-  --error-text: #b94747;
-  --error-bg: rgba(185, 71, 71, 0.12);
-
-  --line-rgb: 42, 32, 32;
-  --shadow-rgb: 55, 28, 26;
-  --veil: rgba(247, 240, 239, 0.82);
+  --accent: #6b2d3e;
+  --accent-rgb: 107, 45, 62;
+  --accent-text: #faf7f3;
 }
 
-/* نَسَق — ليل (بنفسجيّ حبريّ على خلفية حبريّة داكنة).
-   يفوز على :root بالخصوصية، ويعيد ضبط نِسَب المشتقّات لتناسب الداكن */
+/* الليل — أسطح ونصوص وحدود فقط (06: dark-theme Canvas/Surface/Elevated) */
 [data-appearance="dark"] {
-  --bg: #14131a;
-  --bg-raised: #272432;
-  --bg-input: #1d1b25;
-  --bg-soft: #302c3d;
-  --border: #3b3649;
-  --border-subtle: #2c2936;
-  --text: #f4f0e8;
-  --text-dim: #beb6c8;
-  --text-muted: #8f879a;
-  --tool-text: #beb6c8;
+  --bg: #1a1816;
+  --bg-raised: #2d2926;
+  --bg-input: #242019;
+  --bg-soft: #242019;
+  --border: #3d3632;
+  --border-subtle: #2d2926;
+  --text: #faf7f3;
+  --text-dim: #b8aca0;
+  --text-muted: #9c8e80;
+  --tool-text: #b8aca0;
 
-  --accent: #9a82d8;
-  --accent-hover: #ab95e3;
-  --accent-text: #17131e;
-  --accent-soft: #352d4d;
-  --selection: #463a67;
-  --focus-ring: #b59deb;
-  --brand: var(--accent);
-  --accent-rgb: 154, 130, 216;
+  --accent: #c4654a;
+  --accent-hover: color-mix(in srgb, var(--accent) 82%, white);
+  --accent-soft: color-mix(in srgb, var(--accent) 18%, var(--bg));
+  --selection: color-mix(in srgb, var(--accent) 30%, var(--bg));
+  /* ليلًا تُفتَّح الحلقة: اللكنة الداكنة على سطح داكن تحتاج رفعًا */
+  --focus-ring: color-mix(in srgb, var(--accent) 70%, white);
+  --accent-rgb: 196, 101, 74;
 
-  --success: #65a88b;
-  --success-soft: rgba(101, 168, 139, 0.14);
-  --warning: #d7a35d;
-  --warning-soft: rgba(215, 163, 93, 0.14);
-  --error-text: #d97878;
-  --error-bg: rgba(217, 120, 120, 0.14);
+  --success-soft: rgba(139, 154, 126, 0.16);
+  --warning-soft: rgba(184, 155, 94, 0.16);
+  --error-text: color-mix(in srgb, #a84e35 72%, white);
+  --error-bg: rgba(168, 78, 53, 0.18);
 
-  --line-rgb: 244, 240, 232;
+  --line-rgb: 250, 247, 243;
   --shadow-rgb: 0, 0, 0;
-  --veil: rgba(20, 19, 26, 0.82);
-
-  --tool-border: var(--border);
-  --accent-tint: var(--accent-soft);
+  --veil: rgba(26, 24, 22, 0.82);
   --shadow: rgba(var(--shadow-rgb), 0.5);
   --backdrop: rgba(var(--shadow-rgb), 0.55);
-
-  /* لون سلطان المعتمد — نسخة الليل من توكنز هويته الرسمية */
   --sultan-mark: #d2916c;
 }
 
-/* شَذْب — ليل (طوبيّ دافئ على خلفية حبريّة حمراء). يجتمع المحوران على
-   الجذر فيفوز بخصوصية السمتين على ليل نَسَق، ويكفيه ضبط الجذور —
-   نِسَب المشتقّات ومحايد الليل يرثها من كتلة الليل أعلاه */
 [data-appearance="dark"][data-mode="shadhb"] {
-  --bg: #171313;
-  --bg-raised: #2c2324;
-  --bg-input: #211b1b;
-  --bg-soft: #382a2c;
-  --border: #493638;
-  --border-subtle: #322829;
-  --text: #f6f0e9;
-  --text-dim: #c5b5b3;
-  --text-muted: #968482;
-  --tool-text: #c5b5b3;
-
-  --accent: #d97872;
-  --accent-hover: #e58a83;
-  --accent-text: #1d1111;
-  --accent-soft: #4a2c2e;
-  --selection: #603638;
-  --focus-ring: #ec9b94;
-  --brand: var(--accent);
-  --accent-rgb: 217, 120, 114;
-
-  --success: #70a58a;
-  --success-soft: rgba(112, 165, 138, 0.14);
-  --warning: #d8a45d;
-  --warning-soft: rgba(216, 164, 93, 0.14);
-  --error-text: #e06464;
-  --error-bg: rgba(224, 100, 100, 0.14);
-
-  --line-rgb: 246, 240, 233;
-  --shadow-rgb: 0, 0, 0;
-  --veil: rgba(23, 19, 19, 0.82);
+  --accent: #6b2d3e;
+  --accent-rgb: 107, 45, 62;
 }
 
+/* ---------- الأساس ---------- */
 * {
   box-sizing: border-box;
-  /* لا ميلان اصطناعي ولا أوزان مصطنعة في النص العربي. */
   font-style: normal !important;
   font-synthesis: none;
 }
 
-::placeholder {
-  font-style: normal;
-  font-family: inherit;
-}
-
+::placeholder { font-style: normal; font-family: inherit; color: var(--text-muted); }
 [hidden] { display: none !important; }
+
+html { color-scheme: light; }
+[data-appearance="dark"] { color-scheme: dark; }
 
 html, body {
   margin: 0;
@@ -244,213 +189,456 @@ html, body {
   -webkit-font-smoothing: antialiased;
 }
 
-html { color-scheme: light; }
-[data-appearance="dark"] { color-scheme: dark; }
-
-::selection {
-  background: var(--selection);
-  color: var(--text);
-}
-
-h1,
-h2,
-h3,
-h4,
-button,
-.app-title,
-.directives-label,
-.appearance-mode-label,
-.provider-label,
-.field > span {
-  font-family: var(--font-ui);
-}
-
-/* الحقول ومناطق الإدخال بخط المحتوى Cairo (المرجع: الحقول والنصوص = Cairo)،
-   وتبقى واجهة التحكّم (الأزرار/التبويبات/العناوين) على Almarai بالوراثة من body */
-input,
-select,
-textarea {
-  font-family: var(--font-text);
-}
-
 body {
   display: flex;
   flex-direction: column;
-  /* بنية v6.2 (مرجع التصميم): صفوف بعرض النافذة تفصلها خطوط رفيعة —
-     الحشوة داخل كل صف لا على الجسد، فالفواصل تمتد من حافة لحافة */
-  padding: 0;
-  gap: 0;
-}
-
-/* أداة إخفاء بصري تُبقي النص لقارئات الشاشة — تسميات القوائم الثلاث */
-.visually-hidden {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  margin: -1px;
-  padding: 0;
   overflow: hidden;
-  clip: rect(0 0 0 0);
-  white-space: nowrap;
-  border: 0;
 }
 
-/* ---------- الرأس ---------- */
-/* شريط بثلاث مجموعات (v6.1 — روح Figma): طرفان مرنان متساويان يوسّطان
-   المبدّل بينهما مهما اختلف عرض الطرفين، وبغياب المبدّل ينقسم الطرفان
-   بتوازن — العنوان يمينًا والأدوات يسارًا. v6.2: فاصل رفيع أسفله بعرض
-   النافذة، والحشوة داخل الشريط نفسه */
+::selection { background: var(--selection); color: var(--text); }
+
+h1, h2, h3, h4, button, .field-label, .section-title { font-family: var(--font-ui); }
+input, select, textarea { font-family: var(--font-text); }
+
+/* حلقة تركيز واحدة لكل عنصر تفاعلي (22 — QA & Accessibility) */
+:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 3px;
+  border-radius: var(--r-4);
+}
+
+/* عكس أفقي للأيقونات ذات الدلالة الاتجاهية المبنية أصلًا لسياق LTR
+   (تراجع، كسر بعد النقطة) — التطبيق RTL أصيل فالعكس ثابت دومًا */
+.rtl-mirror { transform: scaleX(-1); }
+
+/* ============================================================
+   ١ — الشريط العلوي (Figma 24: topbar)
+   ============================================================ */
 .topbar {
   display: flex;
   align-items: center;
-  gap: 12px;
-  min-height: 48px;
-  padding: 0 20px;
-  background: var(--bg-input);
+  justify-content: space-between;
+  gap: var(--sp-16);
+  height: var(--topbar-h);
+  flex-shrink: 0;
+  padding: 0 var(--sp-24);
+  background: var(--bg-raised);
   border-bottom: 1px solid var(--border-subtle);
 }
 
-.topbar-side {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex: 1 1 0;
-  min-width: 0;
-}
+.topbar-actions { display: flex; align-items: center; gap: var(--sp-4); }
 
-.topbar-start { justify-content: flex-start; }
-.topbar-end { justify-content: flex-end; }
+/* تجمّع العلامة كتلة واحدة متلاصقة أقصى اليمين */
+.topbar-brand { display: flex; align-items: center; gap: var(--sp-14); }
 
 .app-mark {
-  width: 28px;
-  height: 28px;
+  width: 34px;
+  height: 34px;
   display: grid;
   place-items: center;
-  align-self: center;
   flex-shrink: 0;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--bg-raised);
-  /* العلامة الواحدة: أربعة سطور مضبوطة ومحور محاذاة. الحبر currentColor
-     فيتبع ثيم البرج نهارًا وليلًا، ومحور التصحيح ونقطته بلون الفعل */
-  color: var(--accent);
+  border-radius: var(--r-8);
+  background: var(--accent-soft);
 }
 
-/* علامتان مضمّنتان يقودهما البرج الفعّال: نَسَق (السطر الثالث متّصل)
-   افتراضًا، وشَذْب (القصّة نفسها في الهيكل) حين data-mode="shadhb".
-   القاعدة نفسها تحكم رمز الشريط ورمز «حول» فيتبدّلان كوحدة واحدة */
-.app-mark svg,
-.about-mark svg { display: none; width: 18px; height: 18px; }
-.app-mark .mark-nasaq,
-.about-mark .mark-nasaq { display: block; }
+.app-mark svg, .about-mark svg { display: none; width: 22px; height: 22px; }
+.app-mark .mark-nasaq, .about-mark .mark-nasaq { display: block; }
 [data-mode="shadhb"] .app-mark .mark-nasaq,
 [data-mode="shadhb"] .about-mark .mark-nasaq { display: none; }
 [data-mode="shadhb"] .app-mark .mark-shadhb,
 [data-mode="shadhb"] .about-mark .mark-shadhb { display: block; }
 
-/* محور المحاذاة ونقطة التصحيح والمِبضع بلون فعل البرج الفعّال */
-.app-mark .mark-axis,
-.about-mark .mark-axis { stroke: var(--accent); }
-.app-mark .mark-dot,
-.about-mark .mark-dot { fill: var(--accent); }
-.app-mark .mark-cut,
-.about-mark .mark-cut { stroke: var(--accent); }
-
-.app-mark .mark-axis,
-.about-mark .mark-axis { opacity: 0.36; }
+.app-mark .mark-accent, .about-mark .mark-accent { fill: var(--accent); }
+.app-mark .mark-ink, .about-mark .mark-ink { fill: var(--text-muted); }
 
 .app-title {
-  font-size: 16px;
+  font-size: 20px;
   font-weight: 800;
   margin: 0;
   flex-shrink: 0;
-  color: var(--brand);
+  color: var(--text);
 }
 
 .app-subtitle {
   font-family: var(--font-text);
   font-size: 12px;
-  font-weight: 400;
-  color: var(--text-dim);
-  /* شعار جانبي بفاصل رأسي رفيع عن الاسم (v6.2 — مرجع التصميم) */
+  color: var(--text-muted);
   border-inline-start: 1px solid var(--border-subtle);
-  padding-inline-start: 10px;
-  /* يتقلّص ولا يدفع — يبقى سطرًا واحدًا وينتهي بحذف لطيف في أضيق النوافذ */
+  padding-inline-start: var(--sp-12);
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-/* ---------- عناصر التحكم ---------- */
-/* صف المحاور (v6.2 — مرجع التصميم): القوائم يمينًا، التلميح يتمدد بينها
-   وبين الفعل الرئيس أقصى اليسار، وفاصل رفيع أسفل الصف بعرض النافذة */
-.controls {
+/* مبدّل الوضعين: مسار غائر وحبّة مصمتة بلون الفعل للنشط (Figma 24) */
+.mode-switch {
+  display: flex;
+  gap: var(--sp-2);
+  padding: 3px;
+  background: var(--bg-soft);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-full);
+  flex-shrink: 0;
+}
+
+.mode-btn {
+  background: transparent;
+  color: var(--text-muted);
+  border: none;
+  border-radius: var(--r-full);
+  padding: 7px 18px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  line-height: 1.4;
+  white-space: nowrap;
+  transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+.mode-btn:hover:not(.active) { color: var(--text); }
+.mode-btn.active { color: var(--accent-text); background: var(--accent); }
+
+/* ---------- زر الأيقونة ---------- */
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  background: transparent;
+  color: var(--text-muted);
+  border: none;
+  border-radius: var(--r-8);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.icon-btn:hover { color: var(--text); background: var(--accent-soft); }
+.icon-btn:active { background: rgba(var(--line-rgb), 0.1); }
+.icon-btn svg { display: block; }
+.icon-btn-sm { width: 28px; height: 28px; }
+
+/* شارة عدد المسودات على الأيقونة نفسها (Figma 24) */
+.count-badge {
+  position: absolute;
+  top: 3px;
+  inset-inline-end: 3px;
+  background: var(--accent);
+  color: var(--accent-text);
+  border-radius: var(--r-full);
+  min-width: 15px;
+  height: 15px;
+  padding: 0 4px;
+  font-family: var(--font-ui);
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 15px;
+  text-align: center;
+  direction: ltr;
+}
+
+/* ============================================================
+   ٢ — الأزرار (14 — Components / Actions)
+   ============================================================ */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-8);
+  border: 1px solid transparent;
+  border-radius: var(--r-8);
+  padding: 0 var(--sp-24);
+  min-height: 44px;
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.4;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease,
+    color 0.15s ease, opacity 0.15s ease;
+}
+
+.btn-block { width: 100%; }
+.btn-sm { min-height: 34px; padding: 0 var(--sp-14); font-size: 12.5px; }
+
+.btn-primary { background: var(--accent); color: var(--accent-text); }
+.btn-primary:hover:not(:disabled) { background: var(--accent-hover); }
+.btn-primary:active:not(:disabled) { opacity: 0.85; }
+
+.btn-secondary {
+  background: var(--bg-soft);
+  color: var(--text-dim);
+  border-color: var(--border-subtle);
+}
+.btn-secondary:hover:not(:disabled) { color: var(--text); background: var(--accent-soft); }
+
+.btn-outline {
+  background: transparent;
+  color: var(--text-dim);
+  border-color: var(--border);
+}
+.btn-outline:hover:not(:disabled) { color: var(--text); background: var(--accent-soft); }
+
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* .tool-btn المستقلة: يبنيها JS للمسودات — زر خطّي صغير */
+.tool-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-6);
+  background: transparent;
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+  border-radius: var(--r-8);
+  min-height: 32px;
+  padding: 0 var(--sp-12);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+}
+.tool-btn:hover { color: var(--text); background: var(--accent-soft); }
+.tool-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.tool-btn.danger { color: var(--error-text); border-color: var(--error-text); }
+.tool-btn.danger.confirming { background: var(--error-bg); }
+
+/* ============================================================
+   ٣ — مساحة العمل: عمودان (Figma 24/25)
+   ============================================================ */
+.workspace {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.pane {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+}
+
+/* ترتيب RTL بنيويًا: .workspace صفّ مرن داخل html[dir=rtl]، فأول عنصر في
+   DOM يقع أقصى اليمين تلقائيًا. لوحة الإدخال أولًا (يمينًا) ولوحتا النتيجة/
+   الشذب بعدها (يسارًا) — مطابقة Frames صفحتي 24 و25. لا خصائص order هنا:
+   أي order يعاكس هذا الترتيب الطبيعي فيقلب الواجهة كلها */
+.pane-input {
+  width: var(--input-pane-w);
+  flex-shrink: 0;
+  background: var(--bg-raised);
+  border-inline-start: 1px solid var(--border-subtle);
+}
+
+/* لوحة النتيجة/الشذب: تملأ الباقي */
+.pane-output {
+  flex: 1;
+  background: var(--bg);
+}
+
+.pane-scroll {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-20);
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--sp-24);
+}
+
+.pane-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.pane-head {
   display: flex;
   align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  min-height: 48px;
-  padding: 8px 20px;
+  justify-content: space-between;
+  gap: var(--sp-12);
+  min-height: 60px;
+  flex-shrink: 0;
+  padding: var(--sp-12) var(--sp-40);
   border-bottom: 1px solid var(--border-subtle);
 }
 
-/* الحاوية مرساة لوحة القائمة المنبثقة — التسمية مخفية بصريًا (زر القائمة
-   يحملها aria-label)، والـselect نفسه مخفي والقيمة تُقرأ منه برمجيًا.
-   الإخفاء في CSS أيضًا فلا يومض العنصر الأصلي قبل تحميل nasaq.js */
-.control {
+/* جسد اللوحة: منطقة التمرير الوحيدة. .shadhb-body تشترك في السلوك نفسه
+   (اسمها مفرد لا مركّب لأن حارس العزل يفحصه نصًّا في tests/isolation) */
+.pane-body,
+.shadhb-body {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-20);
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--sp-32) var(--sp-40);
+}
+
+.pane-divider { height: 1px; background: var(--border-subtle); flex-shrink: 0; }
+.pane-spacer { flex: 1; min-height: var(--sp-8); }
+
+/* ---------- الحقول ---------- */
+.field-block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
   position: relative;
 }
 
+.field-label {
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text-dim);
+}
+
+.field-hint {
+  font-family: var(--font-text);
+  font-size: 11.5px;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.section-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+/* خانة الكتابة داخل صندوق بحدّ (Figma 24) والعدّاد أسفلها داخله */
+.textarea-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 240px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--r-12);
+  overflow: hidden;
+  transition: border-color 0.15s ease;
+}
+
+.textarea-shell:focus-within { border-color: var(--accent); }
+
+#input-text {
+  flex: 1;
+  min-height: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  resize: none;
+  color: var(--text);
+  padding: var(--sp-16);
+  font-size: 15px;
+  line-height: 1.9;
+  caret-color: var(--accent);
+  direction: rtl;
+  text-align: right;
+  unicode-bidi: plaintext;
+}
+
+textarea.empty-bidi { unicode-bidi: isolate; }
+
+.textarea-foot {
+  display: flex;
+  justify-content: flex-start;
+  padding: var(--sp-8) var(--sp-16);
+  border-top: 1px solid var(--border-subtle);
+}
+
+#custom-directives {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--r-8);
+  outline: none;
+  resize: none;
+  color: var(--text);
+  padding: var(--sp-10) var(--sp-14);
+  font-size: 13px;
+  line-height: 1.7;
+  caret-color: var(--accent);
+  direction: rtl;
+  unicode-bidi: plaintext;
+  transition: border-color 0.15s ease;
+}
+#custom-directives:focus { border-color: var(--accent); }
+
+.char-count {
+  font-family: var(--font-text);
+  font-size: 11px;
+  color: var(--text-muted);
+  direction: ltr;
+  flex-shrink: 0;
+}
+
+.char-count.over-limit { color: var(--error-text); direction: rtl; }
+
+.format-settings {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-16);
+}
+
+.input-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-10);
+  flex-shrink: 0;
+}
+
+.kbd-hint {
+  margin: 0;
+  font-family: var(--font-text);
+  font-size: 11.5px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* ---------- قائمة الهوية المنسدلة (يبنيها nasaq.js فوق الـselect) ---------- */
 .control select { display: none; }
 
-/* ---------- قائمة الهوية المنسدلة (v6.2 — جزء من هوية المخطوطة) ---------- */
 .dd-btn {
   display: inline-flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  min-width: 96px;
-  min-height: 32px;
-  padding: 5px 12px;
-  background: transparent;
-  color: var(--tool-text);
-  border: 1px solid var(--tool-border);
-  border-radius: 8px;
+  gap: var(--sp-8);
+  width: 100%;
+  min-height: 42px;
+  padding: 0 var(--sp-14);
+  background: var(--bg-input);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--r-8);
   font-family: var(--font-ui);
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 700;
   cursor: pointer;
-  transition: border-color 0.2s ease, background-color 0.2s ease;
+  transition: border-color 0.15s ease;
 }
 
-.dd-btn:hover,
-.dd-btn[aria-expanded="true"] {
-  border-color: rgba(var(--line-rgb), 0.24);
-  background: rgba(var(--line-rgb), 0.05);
-}
+.dd-btn:hover, .dd-btn[aria-expanded="true"] { border-color: var(--accent); }
+.dd-chevron { color: var(--text-muted); flex-shrink: 0; }
 
-.dd-chevron {
-  color: var(--text-dim);
-  opacity: 0.7;
-  flex-shrink: 0;
-}
-
-/* اللوحة المنبثقة: ورقية بظل ناعم، بنودها بعرضها كاملًا والمختار أدكن
-   وأثقل — شكل مرجع التصميم حرفيًا */
 .dd-popup {
   position: absolute;
   top: 100%;
   inset-inline-start: 0;
-  margin-top: 4px;
+  margin-top: var(--sp-4);
   min-width: 100%;
   width: max-content;
-  background: var(--bg);
-  border: 1px solid rgba(var(--line-rgb), 0.12);
-  border-radius: 10px;
-  box-shadow:
-    0 8px 24px rgba(var(--shadow-rgb), 0.18),
-    0 0 0 0.5px rgba(var(--shadow-rgb), 0.05);
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--r-10);
+  box-shadow: 0 10px 28px var(--shadow);
   overflow: hidden;
   z-index: 40;
 }
@@ -459,380 +647,278 @@ body {
   display: block;
   width: 100%;
   text-align: start;
-  padding: 8px 14px;
+  padding: var(--sp-10) var(--sp-14);
   background: transparent;
-  color: var(--tool-text);
+  color: var(--text-dim);
   border: none;
   font-family: var(--font-ui);
-  font-size: 12.5px;
+  font-size: 13px;
   cursor: pointer;
-  transition: background-color 0.15s ease;
+  transition: background-color 0.12s ease;
 }
 
-.dd-option:hover { background: rgba(var(--line-rgb), 0.04); }
-
+.dd-option:hover { background: var(--accent-soft); color: var(--text); }
 .dd-option[aria-selected="true"] {
-  background: var(--bg-soft);
-  color: var(--text);
-  font-weight: 700;
-}
-
-/* تلميح قصير بجانب عناصر التحكم — يشرح سلوك المستوى المختار */
-.control-hint {
-  font-family: var(--font-text);
-  font-size: 11.5px;
-  font-weight: 400;
-  color: var(--text-dim);
-  flex: 1;
-  min-width: 120px;
-  text-align: start;
-}
-
-/* الفعل الرئيس بسيط حاسم: حبر داكن بارتفاع القوائم نفسه (v6.2 — الإصلاح
-   ١-ب: min-height مشترك 32px فلا فرق ارتفاع في الصف) */
-.primary-btn {
   background: var(--accent);
   color: var(--accent-text);
-  border: none;
-  border-radius: 8px;
-  min-height: 32px;
-  padding: 5px 18px;
-  font-family: var(--font-ui);
-  font-size: 12.5px;
   font-weight: 700;
-  line-height: 1.4;
-  cursor: pointer;
-  transition: background-color 0.15s ease, opacity 0.15s ease;
 }
 
-.primary-btn:hover:not(:disabled) { background: var(--accent-hover); }
-.primary-btn:active:not(:disabled) { opacity: 0.82; }
-.primary-btn:disabled { opacity: 0.3; cursor: default; }
-
-.ghost-btn {
-  background: transparent;
-  color: var(--text-dim);
-  border: 1px solid var(--tool-border);
-  border-radius: 8px;
-  padding: 5px 12px;
-  font-family: var(--font-ui);
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-  /* في صف المحاور يقف بارتفاع القوائم والفعل الرئيس نفسه (١-ب) */
-  min-height: 32px;
-  /* مسطّح كـFigma: حدّ رفيع محايد بلا ظل ولا حافة معدنية */
-  transition: color 0.2s ease, border-color 0.2s ease, background-color 0.2s ease,
-    opacity 0.2s ease;
-}
-
-/* التحويم: تعتيم خفيف محايد للخلفية — لا قفزة لونية */
-.ghost-btn:hover { color: var(--text); background: var(--accent-tint); }
-
-.ghost-btn:active { background: rgba(var(--line-rgb), 0.1); }
-
-/* زر أيقونة فقط (الإعدادات، الإغلاق): مربع صغير هادئ */
-.icon-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 6px;
-}
-
-.icon-btn svg { display: block; }
-
-/* زر أيقونة مع نص (المسودات) */
-.icon-text-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.icon-text-btn svg { flex-shrink: 0; }
-
-/* أزرار الشريط العلوي (مسودات/إعدادات) بلا صندوق — أيقونات خفيفة كـFigma */
-.topbar .ghost-btn {
-  border-color: transparent;
-  color: var(--text-dim);
-}
-.topbar .ghost-btn:hover { background: var(--accent-tint); border-color: transparent; }
-
-/* عدّاد المسودات: شارة صغيرة محايدة هادئة — لا بطاقة ذهبية */
-.count-badge {
-  background: rgba(var(--line-rgb), 0.09);
-  color: var(--text-dim);
-  border-radius: 9px;
-  padding: 0 6px;
-  font-size: 10px;
-  font-family: var(--font-text);
-  font-weight: 500;
-  line-height: 15px;
-  direction: ltr;
-}
-
-/* ---------- شريط الخطأ ---------- */
-.error-bar {
-  background: var(--error-bg);
-  color: var(--error-text);
-  border-radius: 8px;
-  margin: 10px 20px 0;
-  padding: 8px 14px;
-  font-size: 13px;
-  font-family: var(--font-text);
-  line-height: 1.7;
-}
-
-/* ---------- المساحتان ---------- */
-/* عمودان على سطح ورقي واحد (v6.2 — مرجع التصميم): الإدخال يمينًا بعرض 44%
-   وفاصل رأسي رفيع بينه وبين النتيجة — لا صناديق ولا حدود حول الخانات،
-   النص يجلس على الورق مباشرة */
-.panes {
-  display: grid;
-  grid-template-columns: 44fr 56fr;
-  gap: 0;
-  flex: 1;
-  min-height: 0;
-}
-
-@media (max-width: 720px) {
-  .panes { grid-template-columns: 1fr; }
-  .pane-input {
-    border-inline-end: none;
-    border-bottom: 1px solid var(--border-subtle);
-  }
-  #input-text { min-height: 150px; }
-}
-
-.pane {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  min-height: 0;
-  min-width: 0;
-  transition: opacity 0.2s ease;
-}
-
-/* الفاصل الرأسي بين العمودين يحمله عمود الإدخال — يعمل للوضعين معًا */
-.pane-input { border-inline-end: 1px solid var(--border-subtle); }
-
-/* رأس العمود: عنوان يمينًا والعدّاد/الأدوات يسارًا، وخط رفيع أسفله.
-   يلتف بدل القص (v5.1) في النوافذ الضيقة */
-.pane-head {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  row-gap: 6px;
-  flex-wrap: wrap;
-  min-height: 40px;
-  padding: 6px 20px;
-  border-bottom: 1px solid var(--border-subtle);
-}
-
-.pane-head h2 {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--tool-text);
-  margin: 0;
-  white-space: nowrap;
-}
-
-/* العدّاد المباشر في رأس عمود الإدخال يلتصق بالطرف المقابل (أقصى اليسار).
-   هامش فيزيائي عمدًا: العدّاد نفسه direction:ltr فخاصيته المنطقية تنعكس،
-   والصف حاويه RTL دائمًا */
-.pane-head > .char-count {
-  margin-right: auto;
-  margin-left: 0;
-}
-
-.char-count {
-  font-family: var(--font-text);
-  font-size: 11px;
-  color: var(--text-dim);
-  opacity: 0.8;
-  direction: ltr;
-}
-
-/* تجاوز حدّ المنصة (v4.1): تحذير هادئ بلون الخطأ الدافئ — لا إنذار ولا منع */
-.char-count.over-limit {
-  color: var(--error-text);
-  opacity: 1;
-  direction: rtl;
-}
-
-/* كتلة أدوات النتيجة (v6.2 — مرجع التصميم): مجموعة مقسّمة واحدة بحدّ
-   خفيف وفواصل داخلية، والعدّاد جوارها — الفجوة 10px كفجوة الرأس نفسها
-   (توحيد ١-ز: صفوف الأدوات غير المقسّمة كلها على 8px) */
+/* ============================================================
+   ٤ — شريط أدوات نَسَق (14 — NSQ / Toolbar / Action + Group)
+   خمس مجموعات بفواصل شعرية: تحرير ← سطور ← حفظ ← بحث ← نسخ
+   ============================================================ */
 .head-tools {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-inline-start: auto;
+  gap: var(--sp-10);
   min-width: 0;
 }
 
-.result-tools {
+.nsq-toolbar {
   display: flex;
   align-items: center;
-  border: 1px solid var(--tool-border);
-  border-radius: 8px;
-  overflow: hidden;
+  gap: var(--sp-4);
+  overflow-x: auto;
+  /* visible لا hidden: hidden كان يقصّ حلقة التركيز أعلى/أسفل الأزرار */
+  overflow-y: visible;
+  scrollbar-width: none;
+  max-width: 100%;
+}
+.nsq-toolbar::-webkit-scrollbar { display: none; }
+
+.toolbar-group { display: flex; align-items: center; gap: var(--sp-2); flex-shrink: 0; }
+
+.toolbar-divider {
+  width: 1px;
+  height: 20px;
+  background: var(--border-subtle);
+  flex-shrink: 0;
+  margin: 0 var(--sp-2);
 }
 
-.result-tools .tool-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  border: none;
-  border-radius: 0;
-  padding: 6px 9px;
-  color: var(--text-dim);
-  direction: rtl;
-}
-
-.result-tools .tool-btn + .tool-btn {
-  border-inline-start: 1px solid var(--border-subtle);
-}
-
-.result-tools .tool-btn.accent {
-  padding: 6px 12px;
+.nsq-toolbar .tool-btn {
+  width: 34px;
+  height: 34px;
+  min-height: 34px;
+  padding: 0;
+  border-color: transparent;
   color: var(--tool-text);
+  flex-shrink: 0;
+}
+.nsq-toolbar .tool-btn:hover { color: var(--text); background: var(--accent-soft); }
+.nsq-toolbar .tool-btn:disabled { background: none; }
+
+/* «نسخ» وحده Icon+Label — الفعل الختامي الأكثر استخدامًا */
+.nsq-toolbar .tool-btn-label {
+  width: auto;
+  padding: 0 var(--sp-14) 0 var(--sp-10);
+  font-size: 12.5px;
+  border-color: var(--border);
 }
 
-/* الخانات على الورق مباشرة (v6.2): لا صندوق ولا حدّ — الفواصل تحدّ المناطق */
-textarea {
+.secondary-tools {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding-inline-end: var(--sp-6);
+  border-inline-end: 1px solid var(--border-subtle);
+}
+
+/* ---------- شريط البحث في النتيجة ---------- */
+.output-search-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-8);
+  flex-shrink: 0;
+  padding: var(--sp-8) var(--sp-40);
+  background: var(--bg-raised);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.output-search-icon { color: var(--text-muted); flex-shrink: 0; }
+
+.output-search-bar input[type="search"] {
   flex: 1;
-  min-height: 0;
+  min-width: 0;
   background: transparent;
   border: none;
+  outline: none;
   color: var(--text);
-  padding: 16px 20px;
-  font-family: var(--font-text);
-  font-size: 16px;
-  line-height: 2; /* نَفَس المرجع — ويحمل التشكيل دون قصّ */
-  resize: none;
-  outline: none;
+  font-size: 13px;
   caret-color: var(--accent);
-  direction: rtl;
-  text-align: right;
-  /* علّة WebKit: بلا plaintext يلتصق المؤشر يسارًا أثناء الكتابة العربية،
-     ومع plaintext ينعكس في الحقل الفارغ — لذلك تُضبط ديناميكيًا من nasaq.js */
-  unicode-bidi: plaintext;
+}
+.output-search-bar input[type="search"]::-webkit-search-cancel-button { display: none; }
+
+.output-search-count {
+  font-family: var(--font-text);
+  font-size: 11px;
+  color: var(--text-muted);
+  direction: ltr;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
-textarea.empty-bidi {
-  unicode-bidi: isolate;
-}
+/* التمييز عبر CSS Custom Highlight API — بلا عقد <mark> في شجرة النص،
+   فلا تتعارض مع تراجع/تنظيف/فصل الجمل التي تقرأ نصّها مباشرة */
+::highlight(nsq-search) { background: var(--accent-soft); color: var(--text); }
+::highlight(nsq-search-current) { background: var(--accent); color: var(--accent-text); }
 
-/* ---------- التوجيهات الخاصة (v4.0) ----------
-   قسم صغير هادئ أسفل عمود الإدخال يفصله خط رفيع (v6.2 — مرجع التصميم):
-   تسمية خافتة وخانة حرة على الورق مباشرة بلا صندوق */
-.directives-field {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 12px 20px 16px;
-  border-top: 1px solid var(--border-subtle);
-  font-size: 12px;
-  color: var(--text-dim);
-}
-
-#custom-directives {
-  flex: 0 0 auto;
-  min-height: 44px;
-  padding: 0;
-  font-size: 12.5px;
-  line-height: 1.7;
-  color: var(--tool-text);
-}
-
-/* ---------- مؤشر التركيز ----------
-   حلقة 2px واضحة لكل عنصر تفاعلي (أزرار، تبويبات، روابط، قوائم، حقول
-   الإعدادات والبحث) وفق توكن التركيز المعتمد. */
-:focus-visible {
-  outline: 2px solid var(--focus-ring);
-  outline-offset: 3px;
-}
-
-/* سطحا الكتابة والتوجيهات على الورق مباشرة: لا حلقة تركيز تؤطّرهما —
-   المؤشر (caret-color) هو دليل التركيز، وتباين السطح والفواصل تحدّ منطقة
-   الكتابة. يزيل هذا الإطار البنفسجي/البرتقالي حول المحرّر في البرجين
-   والمظاهر كلها، مع بقاء الوصول بلوحة المفاتيح لبقية العناصر. */
-#input-text:focus,
-#input-text:focus-visible,
-#custom-directives:focus,
-#custom-directives:focus-visible {
-  outline: none;
-}
-
-/* جسد النتيجة: منطقة تمرير واحدة تضم النص وملحقاته (v6.2) */
-.output-wrap {
-  flex: 1;
-  min-height: 0;
-  position: relative;
-  overflow-y: auto;
-  padding: 16px 20px;
-}
-
-.output-text {
+/* ============================================================
+   ٥ — محتوى النتيجة (Figma 24)
+   ============================================================ */
+/* النتيجة بطاقة بحدّ ونصف قطر — فارغةً بلا صندوق */
+.result-card {
   font-family: var(--font-text);
   font-size: 16px;
-  line-height: 2.05;
+  line-height: 2;
   white-space: pre-wrap;
   word-wrap: break-word;
   direction: rtl;
   text-align: right;
   unicode-bidi: plaintext;
-  padding-bottom: 8px;
+  color: var(--text);
+  background: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-12);
+  padding: var(--sp-24);
 }
 
-/* حالة الفراغ (v6.2 — مرجع التصميم): علامة «نَسَق» مائية باهتة وتلميح */
-.output-placeholder {
+.result-card:empty { display: none; }
+
+/* بصمة الإيقاع: شريحة هادئة بلون المنتج */
+.rhythm-chip {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-8);
+  padding: var(--sp-10) var(--sp-14);
+  border-radius: var(--r-8);
+  background: var(--accent-soft);
+  font-family: var(--font-text);
+  font-size: 12.5px;
+  color: var(--text-dim);
+  flex-shrink: 0;
+}
+
+.rhythm-chip::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
+}
+
+/* صندوق «ما تغيّر» */
+.notes-box {
+  background: var(--bg-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-12);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.notes-box summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-8);
+  padding: var(--sp-14) var(--sp-20);
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  list-style: none;
+}
+.notes-box summary::-webkit-details-marker { display: none; }
+.notes-box summary:hover { background: rgba(var(--line-rgb), 0.03); }
+.notes-chevron { color: var(--text-muted); flex-shrink: 0; transition: transform 0.2s ease; }
+.notes-box[open] .notes-chevron { transform: rotate(180deg); }
+.notes-box[open] summary { border-bottom: 1px solid var(--border-subtle); }
+
+.notes-box ul {
+  margin: 0;
+  padding: var(--sp-14) var(--sp-20);
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-10);
+}
+
+.notes-box li {
+  display: flex;
+  gap: var(--sp-8);
+  font-family: var(--font-text);
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text-dim);
+  white-space: pre-line;
+}
+
+.notes-box li::before {
+  content: "·";
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+/* ---------- حالة الفراغ الموسّطة (Figma 24/25) ---------- */
+.empty-state {
   position: absolute;
   inset: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  padding: 20px;
+  gap: var(--sp-16);
+  padding: var(--sp-32);
   text-align: center;
   pointer-events: none;
 }
 
-.placeholder-mark {
-  font-size: 40px;
+.empty-icon {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.empty-title {
+  margin: 0;
+  font-size: 20px;
   font-weight: 700;
-  line-height: 1;
-  color: rgba(var(--line-rgb), 0.08);
-}
-
-.placeholder-hint {
-  font-family: var(--font-text);
-  font-size: 12px;
-  font-weight: 400;
-  color: var(--text-dim);
-  max-width: 260px;
-  line-height: 1.9;
-}
-
-/* ---------- التحميل ---------- */
-.loading {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  background: var(--veil);
-  font-size: 13px;
-  font-family: var(--font-text);
   color: var(--text);
 }
 
+.empty-body {
+  margin: 0;
+  max-width: 360px;
+  font-family: var(--font-text);
+  font-size: 14px;
+  line-height: 1.75;
+  color: var(--text-muted);
+}
+
+/* ---------- حالة المعالجة الموسّطة (Figma 24/25) ---------- */
+.loading-state {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-16);
+  background: var(--veil);
+  z-index: 2;
+}
+
 .spinner {
-  width: 18px;
-  height: 18px;
-  border: 2px solid var(--border);
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--border-subtle);
   border-top-color: var(--accent);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
@@ -840,142 +926,353 @@ textarea.empty-bidi {
 
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ---------- بصمة الإيقاع ---------- */
-/* سطر هادئ واحد داخل منطقة التمرير بعد النص مباشرة */
-.rhythm-fingerprint {
-  display: block;
-  font-size: 11px;
+.loading-label {
+  font-family: var(--font-ui);
+  font-size: 16px;
+  font-weight: 700;
   color: var(--text-dim);
+}
+
+/* ---------- بطاقة الشذرة ---------- */
+.fragment-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-14);
+  padding: var(--sp-20);
+  background: var(--bg-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-12);
+  flex-shrink: 0;
+}
+
+.fragment-card-head { display: flex; flex-direction: column; gap: var(--sp-4); }
+.fragment-card-head h3 { margin: 0; font-size: 14px; font-weight: 700; color: var(--text); }
+.fragment-card-hint { font-family: var(--font-text); font-size: 12px; color: var(--text-muted); }
+
+.fragment-options { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-12); }
+.fragment-option { display: flex; flex-direction: column; gap: var(--sp-10); min-width: 0; }
+.fragment-option h4 { margin: 0; font-size: 12px; font-weight: 700; color: var(--text-dim); }
+
+.fragment-preview {
+  flex: 1;
+  padding: var(--sp-12) var(--sp-14);
+  background: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-8);
   font-family: var(--font-text);
-  padding: 0 2px;
-  margin: -2px 0 14px;
+  font-size: 13px;
+  line-height: 1.9;
+  white-space: pre-wrap;
+  word-wrap: break-word;
 }
 
-/* ---------- صندوق «ما تغيّر» (v6.2 — مرجع التصميم) ----------
-   صندوق قابل للطي بحدّ خفيف وزوايا مستديرة: رأس بعنوان يمينًا وشيفرون
-   يسارًا يدور عند الفتح، وبنوده بنقطة وسطية خافتة */
-.notes {
+.fragment-option .btn { align-self: flex-start; }
+
+/* وجه النوت يُعرض يسارًا تقليدًا لسلوك المنصة */
+.note-face { direction: ltr; text-align: left; }
+
+/* ============================================================
+   ٦ — لوحة شَذْب (Figma 25)
+   ============================================================ */
+/* الإظهار كله بقيادة data-mode: لوحة شَذْب محل لوحة النتيجة، وأدوات
+   نسق تغيب — حالة نسق نفسها لا تُمسّ بالتبديل */
+#shadhb-pane { display: none; }
+[data-mode="shadhb"] #shadhb-pane { display: flex; }
+[data-mode="shadhb"] #nasaq-output-pane { display: none; }
+[data-mode="shadhb"] .format-settings { display: none; }
+[data-mode="shadhb"] .input-actions { display: none; }
+
+.shadhb-inspect-bar { display: none; }
+
+[data-mode="shadhb"] .shadhb-inspect-bar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-12);
+  flex-shrink: 0;
+}
+
+.covenant-note {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-8);
+  margin: 0;
+  padding: var(--sp-12) var(--sp-14);
+  background: var(--bg-soft);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-8);
+  font-family: var(--font-text);
   font-size: 12px;
-  color: var(--tool-text);
-  border: 1px solid var(--tool-border);
-  border-radius: 10px;
-  overflow: hidden;
-  margin: 4px 0 14px;
+  line-height: 1.6;
+  color: var(--text-dim);
 }
 
-.notes summary {
+.covenant-note svg { color: var(--accent); flex-shrink: 0; margin-top: 1px; }
+
+/* مؤشّر حالة الفحص في رأس اللوحة */
+.shadhb-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--text-muted);
+}
+.shadhb-status-dot[data-status="pending"] { background: var(--accent); }
+.shadhb-status-dot[data-status="clear"] { background: var(--success); }
+
+.shadhb-status-badge {
+  font-family: var(--font-ui);
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--text-muted);
+  background: var(--bg-soft);
+  border-radius: var(--r-full);
+  padding: 5px var(--sp-12);
+  white-space: nowrap;
+}
+
+.shadhb-status-badge[data-status="pending"] {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.shadhb-status-badge[data-status="clear"] {
+  color: var(--success);
+  background: var(--success-soft);
+}
+
+/* بطاقة القراءة: وصف يسبق المقص */
+.reading-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-12);
+  padding: var(--sp-20);
+  background: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-12);
+  flex-shrink: 0;
+}
+
+.reading-card-title {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.reading-card .card-row { display: flex; flex-direction: column; gap: 3px; }
+
+.reading-card .card-label {
+  font-family: var(--font-text);
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+
+.reading-card .card-value {
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.6;
+  color: var(--text);
+}
+
+/* قائمة القصّات */
+.cuts-list { display: flex; flex-direction: column; gap: var(--sp-10); flex-shrink: 0; }
+
+.cut-entry {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-8);
+  padding: var(--sp-16);
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--r-10);
+  font-family: var(--font-text);
+  transition: border-color 0.2s ease, opacity 0.2s ease, background-color 0.2s ease;
+}
+
+.cut-index-row { display: flex; justify-content: flex-start; }
+
+.cut-index {
+  display: grid;
+  place-items: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 var(--sp-6);
+  border-radius: var(--r-full);
+  background: var(--accent-soft);
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.cut-quote {
+  margin: 0;
+  font-family: var(--font-text);
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--text);
+}
+
+.cut-meta { font-size: 11.5px; color: var(--text-muted); }
+.cut-effect { font-size: 12px; color: var(--text-dim); }
+
+.cut-entry.cut { background: var(--bg-raised); border-color: var(--border-subtle); }
+.cut-entry.cut .cut-quote { color: var(--text-muted); text-decoration: line-through; }
+.cut-entry.kept { background: var(--bg-raised); border-color: var(--border-subtle); }
+.cut-entry.stale { background: var(--bg-raised); border-color: var(--border-subtle); opacity: 0.65; }
+
+.cut-actions { display: flex; gap: var(--sp-8); margin-top: var(--sp-2); }
+
+.cut-keep, .cut-do {
+  flex: 1;
+  border-radius: var(--r-8);
+  padding: var(--sp-8) 0;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: center;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.cut-do { background: var(--accent); color: var(--accent-text); border: 1px solid var(--accent); }
+.cut-do:hover { background: var(--accent-hover); }
+
+.cut-keep { background: transparent; color: var(--text-dim); border: 1px solid var(--border); }
+.cut-keep:hover { color: var(--text); background: var(--accent-soft); }
+
+.cut-chip {
+  align-self: flex-start;
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: var(--r-full);
+  padding: 4px var(--sp-10);
+}
+.cut-chip.cut { background: var(--success-soft); color: var(--success); }
+.cut-chip.kept { background: var(--bg-soft); color: var(--text-dim); }
+.cut-chip.stale { background: var(--warning-soft); color: var(--warning); }
+
+/* حالتا فراغ القصّات */
+.cuts-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--sp-6);
+  padding: var(--sp-24) var(--sp-16);
+  background: var(--bg-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-12);
+}
+
+.cuts-empty.dropped-all { background: var(--warning-soft); border-color: var(--warning); }
+.cuts-empty-icon { color: var(--text-muted); }
+.cuts-empty.dropped-all .cuts-empty-icon { color: var(--warning); }
+.cuts-empty-icon svg { display: block; }
+.cuts-empty-main { margin: 0; font-family: var(--font-text); font-size: 14px; font-weight: 500; color: var(--text-dim); }
+.cuts-empty-detail { margin: 0; font-family: var(--font-text); font-size: 12px; color: var(--text-muted); }
+
+.dropped-note { margin: 0; font-family: var(--font-text); font-size: 11.5px; color: var(--text-muted); }
+
+/* معاينة بعد التشذيب */
+.prune-preview-wrap { display: flex; flex-direction: column; gap: var(--sp-10); flex-shrink: 0; }
+
+.prune-preview-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  padding: 10px 14px;
-  cursor: pointer;
-  font-weight: 700;
-  font-family: var(--font-ui);
-  color: var(--tool-text);
-  list-style: none;
-  transition: background-color 0.2s ease;
+  gap: var(--sp-8);
 }
 
-.notes summary::-webkit-details-marker { display: none; }
+.prune-preview-wrap h3 { margin: 0; font-size: 14px; font-weight: 700; color: var(--text); }
 
-.notes summary:hover { background: rgba(var(--line-rgb), 0.03); }
-
-.notes .notes-chevron {
+.prune-preview {
+  padding: var(--sp-16);
+  background: var(--bg-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-10);
+  font-family: var(--font-text);
+  font-size: 14px;
+  line-height: 1.85;
   color: var(--text-dim);
-  flex-shrink: 0;
-  transition: transform 0.2s ease;
+  white-space: pre-wrap;
 }
 
-.notes[open] .notes-chevron { transform: rotate(180deg); }
+/* التذييل الثابت: الضمانة والجسر خارج منطقة التمرير */
+.shadhb-footer { display: none; }
 
-.notes[open] summary { border-bottom: 1px solid var(--border-subtle); }
-
-.notes ul {
-  margin: 10px 14px 12px;
-  padding: 0;
-  list-style: none;
+.shadhb-footer:has(> :not([hidden])) {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-}
-
-/* ملاحظة إرشادات سابستاك متعددة الأسطر تُعرض سطرًا بسطر — بلا أثر على
-   الملاحظات القصيرة العادية أحادية السطر */
-.notes li {
-  font-family: var(--font-text);
-  white-space: pre-line;
-  display: flex;
-  gap: 8px;
-}
-
-.notes li::before {
-  content: "·";
-  color: var(--text-dim);
-  opacity: 0.7;
+  gap: var(--sp-10);
   flex-shrink: 0;
-}
-
-/* ---------- التذييل المهيكل ----------
-   عبارة المنتج · حقوق سلطان المختصرة بعلامته المصغرة · الإصدار عنصر
-   بيانات مستقل — هادئ وثانوي أمام محتوى التطبيق، لا لافتة علامة */
-.credit {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  font-size: 10px;
-  color: var(--text-dim);
-  font-family: var(--font-text);
-  line-height: 1.7;
-  padding: 6px 20px 8px;
+  padding: var(--sp-16) var(--sp-40);
   border-top: 1px solid var(--border-subtle);
-  flex-wrap: wrap;
 }
 
-.credit-sep { opacity: 0.6; }
-
-.credit-rights {
+.covenant-bar {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  font-family: var(--font-ui);
-  font-weight: 700;
-}
-
-.sultan-monogram-footer {
-  width: 13px;
-  height: 13px;
-  opacity: 0.9;
-}
-
-/* الإصدار بيانات وصفية منفصلة: فاصل شعري وحبر أخفت، لا جزء من جملة الحقوق */
-.credit-version {
-  direction: ltr;
-  unicode-bidi: isolate;
+  gap: var(--sp-8);
+  padding: var(--sp-12) var(--sp-16);
+  border-radius: var(--r-10);
+  background: var(--success-soft);
+  border: 1px solid color-mix(in srgb, var(--success) 36%, transparent);
+  color: var(--success);
   font-family: var(--font-text);
-  opacity: 0.75;
-  margin-inline-start: 2px;
-  padding-inline-start: 10px;
-  border-inline-start: 1px solid var(--border-subtle);
+  font-size: 13px;
 }
 
-/* ---------- التنبيه ---------- */
+.covenant-bar-icon { display: inline-flex; flex-shrink: 0; }
+.covenant-bar.fail { background: var(--error-bg); border-color: var(--error-text); color: var(--error-text); }
+
+/* ============================================================
+   ٧ — التغذية الراجعة (Figma 27)
+   ============================================================ */
+.alert-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-10);
+  flex-shrink: 0;
+  padding: var(--sp-14) var(--sp-24);
+  background: var(--error-bg);
+  color: var(--error-text);
+  border-bottom: 1px solid color-mix(in srgb, var(--error-text) 30%, transparent);
+  font-family: var(--font-text);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.feedback-icon { flex-shrink: 0; margin-top: 1px; }
+.toast .feedback-icon { margin-top: 0; }
+.feedback-message { flex: 1; min-width: 0; }
+
 .toast {
   position: fixed;
-  bottom: 26px;
+  bottom: var(--sp-32);
+  /* توسيط تام: النتيجة متطابقة أيًّا كان الاتجاه لأن نقطتي المرجع
+     (٪٥٠ من كل حافة) تتطابقان رياضيًا — لا كسر RTL هنا */
   right: 50%;
   transform: translateX(50%);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-8);
   background: var(--accent);
   color: var(--accent-text);
-  padding: 8px 22px;
-  border-radius: 20px;
-  font-size: 13px;
+  padding: var(--sp-12) var(--sp-20);
+  border-radius: var(--r-10);
   font-family: var(--font-text);
+  font-size: 13px;
   font-weight: 500;
+  box-shadow: 0 8px 24px var(--shadow);
+  z-index: 60;
 }
 
-/* ---------- الإعدادات ---------- */
+/* ============================================================
+   ٨ — الطبقات الحوارية (Figma 26)
+   ============================================================ */
 .overlay {
   position: fixed;
   inset: 0;
@@ -983,158 +1280,223 @@ textarea.empty-bidi {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 10;
+  padding: var(--sp-24);
+  z-index: 50;
 }
 
-.settings-panel {
-  /* اللوحة ترث توكنز البرج الفعّال كاملةً (data-mode على الجذر هو مصدر
-     الحقيقة الوحيد): فُتحت من نَسَق فكلها بنفسج نَسَق، ومن شَذْب فكلها
-     حُمرة شَذْب — أسطحًا وحبرًا وحدودًا وتبويبًا نشطًا وزر «حفظ» وحلقات
-     التركيز. لا طبقة محايدة تعزلها عن هوية البرج. السطح معتم كليًا */
-  background: var(--bg-input);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 20px 24px 22px;
-  width: min(520px, 92vw);
-  max-height: 86vh;
-  overflow-y: auto;
+.modal {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  box-shadow: 0 12px 40px var(--shadow);
+  background: var(--bg);
+  border-radius: var(--r-16);
+  box-shadow: 0 16px 48px var(--shadow);
+  max-height: 88vh;
+  overflow: hidden;
 }
 
-.settings-panel h2 {
-  margin: 0;
-  font-size: 15px;
-  font-weight: 700;
-}
+.modal-md { width: min(760px, 100%); }
+.modal-lg { width: min(1240px, 100%); }
 
-/* رأس اللوحات: عنوان يمينًا وزر إغلاق يسارًا */
-.panel-head {
+.modal-head {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  gap: 10px;
-}
-
-.panel-head h2 {
-  margin: 0;
-  font-size: 15px;
-  font-weight: 700;
-}
-
-/* ---------- تبويبات الإعدادات ---------- */
-.tabs {
-  display: flex;
-  gap: 4px;
+  gap: var(--sp-16);
+  flex-shrink: 0;
+  padding: var(--sp-24) 28px var(--sp-20);
   border-bottom: 1px solid var(--border-subtle);
 }
 
+.modal-head h2 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.modal-head-text { display: flex; flex-direction: column; gap: var(--sp-4); }
+.modal-sub { margin: 0; font-family: var(--font-text); font-size: 13px; color: var(--text-muted); }
+
+.modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-16);
+  padding: var(--sp-20) 28px var(--sp-24);
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.modal-foot {
+  display: flex;
+  gap: var(--sp-8);
+  flex-shrink: 0;
+  padding-top: var(--sp-12);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.modal-foot-center { justify-content: center; padding: var(--sp-16) 28px var(--sp-24); border-top: 1px solid var(--border-subtle); }
+
+/* تبويبات بنمط Contained/Pill (Figma 26) */
+.tabs {
+  display: flex;
+  gap: var(--sp-2);
+  flex-shrink: 0;
+  margin: var(--sp-16) 28px 0;
+  padding: 3px;
+  background: var(--bg-soft);
+  border-radius: var(--r-10);
+}
+
 .tab-btn {
+  flex: 1;
   background: transparent;
   border: none;
-  border-bottom: 2px solid transparent;
-  color: var(--text-dim);
+  border-radius: var(--r-8);
+  color: var(--text-muted);
   font-family: var(--font-ui);
   font-size: 13px;
   font-weight: 700;
-  padding: 6px 14px 8px;
+  padding: var(--sp-10) var(--sp-16);
   cursor: pointer;
-  margin-bottom: -1px;
+  transition: color 0.2s ease, background-color 0.2s ease;
 }
 
-.tab-btn:hover { color: var(--text); }
-
-.tab-btn.active {
-  color: var(--text);
-  font-weight: 700;
-  border-bottom-color: var(--accent);
-}
+.tab-btn:hover:not(.active) { color: var(--text); }
+.tab-btn.active { color: var(--accent-text); background: var(--accent); }
 
 .tab-body {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: var(--sp-20);
+  padding: var(--sp-24) 28px var(--sp-24);
+  overflow-y: auto;
+  min-height: 0;
 }
 
-/* ---------- المظهر (v6.3): قسمان بهدوء الهوية ---------- */
-/* ترويسة قسم خافتة كترويسات الحقول — لا لوحة إعدادات غريبة عن اللغة البصرية */
-.appearance-section {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.appearance-title {
-  margin: 0;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--tool-text);
-}
-
-.appearance-desc {
-  margin: -4px 0 0;
-  font-size: 11px;
+/* حقول الإعدادات */
+.field-block input[type="text"],
+.field-block input[type="password"],
+.modal-body input[type="search"] {
+  width: 100%;
+  background: var(--bg-input);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--r-8);
+  padding: var(--sp-12) var(--sp-14);
   font-family: var(--font-text);
-  font-weight: 400;
-  color: var(--text-dim);
+  font-size: 14px;
+  outline: none;
+  caret-color: var(--accent);
+  transition: border-color 0.15s ease;
 }
 
-/* ---------- تبويب «حول» (المرحلة 2 — خطة نظام التحديثات) ----------
-   واجهة ساكنة بالكامل: هوية نَسَق (نفس رمز الشريط وحبره currentColor)،
-   إصدار ثابت نصًّا، وتوقيع المطوّر هادئ لا ينافس العلامة. قسم التحديثات
-   وحالاته الخمس بنية جاهزة للمرحلة 3 فقط — بلا أي منطق أو نداء هنا */
-.about-identity {
+.field-block input:focus, .modal-body input[type="search"]:focus { border-color: var(--accent); }
+
+.key-row { display: flex; gap: var(--sp-8); }
+.key-row input { flex: 1; }
+
+.provider-row { display: flex; gap: var(--sp-8); flex-wrap: wrap; }
+
+.provider-btn {
+  flex: 1;
+  min-width: 110px;
+  background: transparent;
+  color: var(--text-dim);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-8);
+  padding: var(--sp-10) var(--sp-12);
+  font-family: var(--font-text);
+  font-size: 13px;
+  cursor: pointer;
+  direction: ltr;
+  transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.provider-btn:hover { color: var(--text); border-color: var(--border); }
+
+.test-row { display: flex; align-items: center; gap: var(--sp-10); flex-wrap: wrap; }
+
+.note-card {
+  margin: 0;
+  padding: var(--sp-12) var(--sp-14);
+  background: var(--bg-raised);
+  border-radius: var(--r-8);
+  font-family: var(--font-text);
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--text-muted);
+}
+
+.settings-msg {
+  flex-shrink: 0;
+  padding: 0 28px var(--sp-20);
+  font-family: var(--font-text);
+  font-size: 12.5px;
+  color: var(--accent);
+}
+.settings-msg.error { color: var(--error-text); }
+
+/* المظهر: ثلاث بطاقات معاينة (Figma 26) */
+.appearance-options { display: flex; gap: var(--sp-12); }
+
+.appearance-card {
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 7px;
-  padding: 4px 0 18px;
-  text-align: center;
+  gap: var(--sp-10);
+  padding: var(--sp-14);
+  background: var(--bg-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-10);
+  cursor: pointer;
+  font-family: var(--font-ui);
+  transition: border-color 0.15s ease, background-color 0.15s ease;
 }
+
+.appearance-card:hover { border-color: var(--border); }
+.appearance-card[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.appearance-swatch {
+  width: 100%;
+  height: 56px;
+  border-radius: var(--r-8);
+  border: 1px solid var(--border-subtle);
+}
+
+.swatch-light { background: #faf7f3; }
+.swatch-dark { background: #1a1816; }
+.swatch-auto { background: linear-gradient(to left, #faf7f3 50%, #1a1816 50%); }
+
+.appearance-name { font-size: 12.5px; font-weight: 700; color: var(--text-dim); }
+.appearance-card[aria-pressed="true"] .appearance-name { color: var(--accent); }
+
+/* تبويب «حول» */
+.about-identity { display: flex; align-items: center; gap: var(--sp-14); }
 
 .about-mark {
-  width: 44px;
-  height: 44px;
+  width: 48px;
+  height: 48px;
   display: grid;
   place-items: center;
-  color: var(--accent);
-  background: var(--bg-raised);
-  border: 1px solid var(--border);
-  border-radius: 12px;
+  background: var(--accent-soft);
+  border-radius: var(--r-12);
+  flex-shrink: 0;
 }
+.about-mark svg { width: 28px; height: 28px; }
 
-.about-mark svg { width: 26px; height: 26px; }
+.about-identity-text { display: flex; flex-direction: column; gap: var(--sp-2); }
+.about-app-name { margin: 0; font-size: 20px; font-weight: 800; color: var(--text); }
+.about-tagline { margin: 0; font-family: var(--font-text); font-size: 12.5px; color: var(--text-muted); }
 
-.about-app-name {
-  margin: 0;
-  font-size: 20px;
-  font-weight: 800;
-  color: var(--brand);
-}
-
-.about-tagline {
-  margin: 0;
-  font-family: var(--font-text);
-  font-size: 12px;
-  font-weight: 400;
-  color: var(--text-dim);
-  line-height: 1.7;
-}
-
-#tab-about {
-  gap: 14px;
-  padding-top: 2px;
-}
-
-/* بيانات المنتج الوظيفية — بطاقة label/value: الإصدار، المنصة، المحرّك.
-   العناوين Almarai خافتة، والقيم Cairo بمحاذاة يسار (لاتينية) */
 .about-meta {
   margin: 0;
-  background: var(--bg-input);
-  border: 1px solid var(--border);
-  border-radius: 12px;
+  background: var(--bg-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-12);
   overflow: hidden;
 }
 
@@ -1142,280 +1504,117 @@ textarea.empty-bidi {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: 14px;
-  padding: 11px 14px;
+  gap: var(--sp-14);
+  padding: var(--sp-12) var(--sp-16);
 }
-
 .about-meta-row + .about-meta-row { border-top: 1px solid var(--border-subtle); }
-
-.about-meta-row dt {
-  font-size: 12.5px;
-  font-weight: 700;
-  color: var(--text-dim);
-}
-
-.about-meta-row dd {
-  margin: 0;
-  font-family: var(--font-text);
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--text);
-}
-
+.about-meta-row dt { font-family: var(--font-ui); font-size: 12.5px; font-weight: 700; color: var(--text-muted); }
+.about-meta-row dd { margin: 0; font-family: var(--font-text); font-size: 13px; color: var(--text); }
 .about-meta-row dd[dir="ltr"] { text-align: start; unicode-bidi: isolate; }
 
-/* التحديثات — زر ساكن وحالته أسفله، محاذاة بداية */
-.about-updates {
+.update-card {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 9px;
-  width: 100%;
+  gap: var(--sp-12);
+  padding: var(--sp-16);
+  background: var(--accent-soft);
+  border-radius: var(--r-12);
 }
 
-/* صفّ أزرار المحدّث: يظهر منها واحدٌ يناسب الحالة */
-.update-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
+.update-actions { display: flex; flex-wrap: wrap; gap: var(--sp-8); }
 
-/* رابط صفحة المشروع: أيقونة GitHub الرسمية + نص، يتلوّن بالفعل عند التحويم */
-.about-project-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 9px;
-  align-self: flex-start;
-  color: var(--text);
-  text-decoration: none;
-  font-weight: 700;
-  font-size: 13px;
-  border-radius: var(--radius-sm, 8px);
-  transition: color 0.15s ease;
-}
-
-.about-project-link:hover { color: var(--accent); }
-.about-project-link:focus-visible { outline-offset: 4px; }
-.about-project-icon { display: inline-flex; color: var(--text-dim); transition: color 0.15s ease; }
-.about-project-link:hover .about-project-icon { color: var(--accent); }
-.about-project-icon svg { width: 18px; height: 18px; display: block; }
-
-/* فاصل هادئ يفصل بيانات المنتج عن حقوق المطوّر */
-.about-divider {
-  height: 1px;
-  background: var(--border);
-  margin: 4px 0 2px;
-}
-
-/* ---------- علامة سلطان المصغرة (المونوغرام الرسمي) ----------
-   هندسة الملف كما هي؛ التلوين فقط بلون سلطان المعتمد --sultan-mark —
-   لا يتبع فعل البرج أبدًا، ولا ظل ولا توهج ولا تدرج ولا تشويه */
-.sultan-monogram {
-  display: inline-flex;
-  flex-shrink: 0;
-  color: var(--sultan-mark);
-}
-
-.sultan-monogram svg { display: block; width: 100%; height: 100%; }
-
-/* خاتمة «حول» — نظام حقوق سلطان: العلامة المصغرة بجوار الصيغة الكاملة،
-   صفًّا أفقيًا متمركزًا هادئًا. أصغر بدرجتين من اسم المنتج وأخفت تباينًا
-   بدرجة، مع مساحة آمنة حول العلامة ولا عنصر بعد الكتلة */
-.about-rights {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  margin: 0;
-  padding: 6px 0 2px;
-}
-
-.about-rights .sultan-monogram {
-  width: 30px;
-  height: 30px;
-}
-
-.about-rights-lines {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  text-align: start;
-}
-
-.about-rights-ar {
-  margin: 0;
-  font-size: 12.5px;
-  font-weight: 700;
-  color: var(--tool-text);
-}
-
-.about-rights-en {
-  margin: 0;
-  font-size: 10.5px;
-  font-family: var(--font-text);
-  color: var(--text-dim);
-  direction: ltr;
-  unicode-bidi: isolate;
-  text-align: start;
-}
-
-/* نص حالة المحدّث بخط المحتوى Cairo — هادئ، لا يزاحم هوية المنتج */
-.update-status-text {
-  margin: 0;
-  min-height: 1em;
-  font-size: 12px;
-  font-family: var(--font-text);
-  color: var(--text-dim);
-  line-height: 1.7;
-}
-
-/* شريط تقدّم التنزيل: مسار غائر رفيع، والتعبئة بلون فعل البرج الفعّال */
 .update-progress {
   width: 100%;
-  height: 6px;
-  border-radius: 999px;
-  background: var(--accent-tint);
+  height: 8px;
+  border-radius: var(--r-full);
+  background: var(--bg-input);
   overflow: hidden;
 }
 
 .update-progress-bar {
   height: 100%;
   width: 0%;
-  border-radius: 999px;
+  border-radius: var(--r-full);
   background: var(--accent);
-  transition: width 0.2s var(--ease-standard, ease);
+  transition: width 0.2s ease;
 }
 
-
-/* ---------- مبدّل الوضع النهاري/الليلي (داخل «المظهر») ----------
-   حبّة على قالب مبدّل «نسق|شذب» في الشريط: مسار غائر وزرّان، والمفعّل
-   حبّة ورقية مرفوعة بظل همسة — الحالة بالموضع والحبّة وaria-pressed لا
-   باللون وحده. الأسطح والحبر من المحايد الثابت حصرًا (حماية تصحيح
-   الإعدادات): لا رمز عائلي في سطح أو نص، والعائلة تحضر في حلقة التركيز
-   المعدنية العامة فقط */
-.appearance-mode-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
+.update-status-text {
+  margin: 0;
+  min-height: 1em;
+  font-family: var(--font-text);
+  font-size: 12.5px;
+  color: var(--text-dim);
+  line-height: 1.6;
 }
 
-.appearance-mode-label {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--tool-text);
-}
-
-.appearance-switch {
-  display: flex;
-  gap: 2px;
-  padding: 3px;
-  background: var(--accent-tint);
-  border-radius: 999px;
-}
-
-.appearance-mode-btn {
+.about-project-link {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: 6px;
-  background: transparent;
+  gap: var(--sp-8);
+  align-self: flex-start;
   color: var(--text-dim);
-  border: none;
-  border-radius: 999px;
-  padding: 5px 14px;
+  text-decoration: none;
   font-family: var(--font-ui);
-  font-size: 12.5px;
   font-weight: 700;
-  cursor: pointer;
-  transition: color 0.2s ease, background-color 0.2s ease;
-}
-
-.appearance-mode-name { line-height: 1; }
-
-.appearance-mode-btn:hover { color: var(--text); }
-
-.appearance-mode-btn[aria-pressed="true"] {
-  color: var(--text);
-  background: var(--bg-input);
-  box-shadow: 0 1px 3px rgba(var(--shadow-rgb), 0.22);
-}
-
-.appearance-mode-btn svg { display: block; flex-shrink: 0; }
-
-/* ---------- لوحة المسودات ---------- */
-.drafts-panel {
-  background: var(--bg-raised);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 20px 24px 22px;
-  width: min(640px, 94vw);
-  max-height: 84vh;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  box-shadow: 0 12px 40px var(--shadow);
-}
-
-/* شريط المسودات (v4.1): بحث + نسخة احتياطية — على صف واحد فوق القائمة */
-.drafts-toolbar {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.drafts-toolbar input[type="search"] {
-  flex: 1;
-  background: var(--bg-input);
-  color: var(--text);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 7px 10px;
   font-size: 13px;
-  font-family: var(--font-text);
-  outline: none;
-  box-shadow: none;
-  caret-color: var(--accent);
-  transition: border-color 0.2s ease, background-color 0.2s ease;
+  transition: color 0.15s ease;
 }
+.about-project-link:hover { color: var(--accent); }
+.about-project-icon { display: inline-flex; }
+.about-project-icon svg { width: 18px; height: 18px; display: block; }
 
-/* الحدّ ثابت عند التركيز — لا تغيّر لونه، خلفية مرفوعة خفيفة فقط بلا إطار قافز */
-.drafts-toolbar input[type="search"]:focus {
-  background: var(--bg-raised);
-}
+.about-divider { height: 1px; background: var(--border-subtle); }
 
-.drafts-toolbar input[type="search"]::placeholder {
-  color: var(--text-dim);
-}
+.sultan-monogram { display: inline-flex; flex-shrink: 0; color: var(--sultan-mark); }
+.sultan-monogram svg { display: block; width: 100%; height: 100%; }
 
-.drafts-empty {
-  color: var(--text-dim);
-  font-size: 13px;
-  text-align: center;
-  padding: 36px 10px;
+.about-rights { display: flex; align-items: center; gap: var(--sp-10); }
+.about-rights .sultan-monogram { width: 30px; height: 30px; }
+.about-rights-lines { display: flex; flex-direction: column; gap: 1px; }
+.about-rights-ar { margin: 0; font-family: var(--font-ui); font-size: 12.5px; font-weight: 700; color: var(--text-dim); }
+.about-rights-en {
   margin: 0;
+  font-family: var(--font-text);
+  font-size: 10.5px;
+  color: var(--text-muted);
+  direction: ltr;
+  unicode-bidi: isolate;
+  text-align: start;
+}
+
+/* ---------- المسودات ---------- */
+.drafts-empty {
+  margin: 0;
+  padding: var(--sp-40) var(--sp-16);
+  text-align: center;
+  font-family: var(--font-text);
+  font-size: 13px;
+  color: var(--text-muted);
 }
 
 .drafts-list {
-  overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--sp-10);
+  overflow-y: auto;
   min-height: 0;
 }
 
 .draft-card {
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 12px 14px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--sp-10);
+  padding: var(--sp-14) var(--sp-16);
+  background: var(--bg-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-10);
 }
 
-/* رأس البطاقة قابل للنقر لعرض النصين كاملين */
 .draft-summary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
   background: transparent;
   border: none;
   padding: 0;
@@ -1423,63 +1622,36 @@ textarea.empty-bidi {
   color: inherit;
   text-align: start;
   cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
 }
 
-.draft-excerpt {
-  font-family: var(--font-text);
-  font-size: 13px;
-  line-height: 1.6;
-  color: var(--text);
-}
-
-.draft-meta {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-}
+.draft-excerpt { font-family: var(--font-text); font-size: 13.5px; line-height: 1.6; color: var(--text); }
+.draft-meta { display: flex; align-items: center; gap: var(--sp-6); flex-wrap: wrap; }
 
 .chip {
-  background: var(--bg-raised);
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  color: var(--text-dim);
-  font-size: 10px;
+  background: var(--bg-soft);
+  border-radius: var(--r-4);
+  color: var(--text-muted);
   font-family: var(--font-text);
-  padding: 1px 9px;
+  font-size: 10.5px;
+  padding: 2px var(--sp-8);
 }
 
-.draft-date {
-  color: var(--text-dim);
-  font-size: 10px;
-  font-family: var(--font-text);
-  margin-inline-start: auto;
-}
+.draft-date { color: var(--text-muted); font-family: var(--font-text); font-size: 10.5px; margin-inline-start: auto; }
 
-/* النصان الكاملان عند فتح المسودة */
 .draft-texts {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--sp-10);
   border-top: 1px solid var(--border-subtle);
-  padding-top: 10px;
+  padding-top: var(--sp-10);
 }
-
-.draft-texts h3 {
-  margin: 0 0 4px;
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--text-dim);
-}
+.draft-texts h3 { margin: 0 0 var(--sp-4); font-family: var(--font-ui); font-size: 11.5px; font-weight: 700; color: var(--text-muted); }
 
 .draft-text {
+  padding: var(--sp-10) var(--sp-12);
   background: var(--bg-input);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 10px 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-8);
   font-family: var(--font-text);
   font-size: 13px;
   line-height: 1.7;
@@ -1489,963 +1661,263 @@ textarea.empty-bidi {
   overflow-y: auto;
 }
 
-.draft-actions {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
+.draft-actions { display: flex; gap: var(--sp-8); flex-wrap: wrap; }
 
-/* ---------- العرض الهرمي: الأنواع داخل الأمّ ثم الصيغ ثم التفصيل ---------- */
-.type-list {
+.type-list, .version-list, .version-detail {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--sp-6);
 }
+.version-list, .version-detail { margin-block-start: var(--sp-6); margin-inline-start: var(--sp-16); }
 
-.type-btn,
-.version-btn {
-  background: var(--bg-raised);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 6px 12px;
+.type-btn, .version-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-8);
+  background: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-8);
+  padding: var(--sp-8) var(--sp-12);
   font-family: var(--font-ui);
   font-size: 12px;
   color: var(--text);
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
   text-align: start;
 }
+.type-btn:hover, .version-btn:hover { border-color: var(--border); }
+.type-btn.open, .version-btn.open { border-color: var(--accent); }
+.version-btn { font-size: 11.5px; }
+.version-btn .draft-date { margin-inline-start: auto; }
 
-.type-btn:hover,
-.version-btn:hover {
-  border-color: var(--text-dim);
-}
-
-.type-btn.open,
-.version-btn.open {
-  border-color: var(--accent);
-}
-
-/* قائمة «تنسيق ١/٢/٣» تنزاح قليلًا عن نوعها الأمّ (بداية السطر في RTL) */
-.version-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-block-start: 6px;
-  margin-inline-start: 18px;
-}
-
-.version-btn {
-  font-size: 11px;
-}
-
-.version-btn .draft-date {
-  margin-inline-start: auto;
-}
-
-/* شارة «± أسطر» — وسم خفيف على الصيغة الناتجة عن تعديل أسطر */
 .lines-badge {
   background: transparent;
   border: 1px dashed var(--border);
-  border-radius: 20px;
-  color: var(--text-dim);
-  font-size: 9px;
-  padding: 0 7px;
+  border-radius: var(--r-full);
+  color: var(--text-muted);
+  font-size: 9.5px;
+  padding: 0 var(--sp-6);
   direction: ltr;
 }
 
-/* تفصيل الصيغة المفتوحة */
-.version-detail {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-block-start: 6px;
-  margin-inline-start: 18px;
-}
+.confirm-msg { font-family: var(--font-text); font-size: 12px; color: var(--error-text); }
+.row-label { font-family: var(--font-ui); font-size: 12px; font-weight: 700; color: var(--text-dim); }
 
-/* زر الحذف وتأكيده */
-.tool-btn.danger {
-  color: var(--error-text);
-  border-color: var(--error-text);
-}
-
-.tool-btn.danger.confirming {
-  background: var(--error-bg);
-  font-weight: 700;
-}
-
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  font-size: 12px;
-  color: var(--text-dim);
-}
-
-.field input {
-  background: var(--bg-input);
-  color: var(--text);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 8px 10px;
-  font-size: 13px;
-  font-family: var(--font-text);
-  outline: none;
-  width: 100%;
-  /* غائر بظل داخلي دافئ خفيف، والمؤشر بمعدن الثيم */
-  box-shadow: none;
-  caret-color: var(--accent);
-  transition: border-color 0.2s ease, background-color 0.2s ease;
-}
-
-/* الحدّ ثابت عند التركيز — لا تغيّر لونه، خلفية مرفوعة خفيفة فقط بلا إطار قافز */
-.field input:focus { background: var(--bg-raised); }
-
-.key-row {
-  display: flex;
-  gap: 8px;
-}
-
-.key-row input { flex: 1; }
-
-.hint {
-  font-size: 11px;
-  color: var(--text-dim);
-  margin: 0;
-  font-family: var(--font-text);
-}
-
-.settings-actions {
-  display: flex;
-  gap: 10px;
-}
-
-.settings-msg {
-  font-size: 12px;
-  font-family: var(--font-text);
-  line-height: 1.7;
-  color: var(--accent);
-}
-
-.settings-msg.error {
-  color: var(--error-text);
-}
-
-.provider-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.provider-label {
-  font-size: 12px;
-  color: var(--text-dim);
-  font-weight: 700;
-}
-
-.provider-btn {
-  direction: ltr;
-}
-
-/* أزرار الأدوات المحلية في سطر عنوان النص المنسّق */
-.tool-btn {
-  background: transparent;
-  color: var(--tool-text); /* أوضح من --text-dim وأخفت من --text، حتى تُقرأ رموز الأسهم دون منافسة زر «نسخ» */
-  border: 1px solid var(--tool-border);
-  border-radius: 6px;
-  /* هدف نقر أرحب (v5.1) — كان 2px×8px بخط 11px */
-  padding: 4px 10px;
-  font-family: var(--font-ui);
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-  direction: ltr; /* حتى لا يعكس اتجاهُ الصفحة رمزَي الأسهم */
-  /* مسطّح كـFigma: حدّ رفيع محايد بلا ظل، وارتفاع موحّد */
-  transition: color 0.2s ease, border-color 0.2s ease, background-color 0.2s ease,
-    opacity 0.2s ease;
-}
-
-/* التحويم: تعتيم خفيف محايد للخلفية */
-.tool-btn:hover {
-  color: var(--text);
-  background: var(--accent-tint);
-}
-
-.tool-btn:not(.accent):active { background: rgba(var(--line-rgb), 0.1); }
-
-/* أثناء نداء «سطور أقل/أكثر» عبر النموذج */
-.tool-btn:disabled {
-  opacity: 0.4;
-  cursor: default;
-}
-
-/* زر النسخ: تمييز هادئ بنص أوضح وحدّ خفيف، بلا تعبئة أو ظل */
-.tool-btn.accent {
-  color: var(--text);
-  border-color: rgba(var(--line-rgb), 0.2);
-  font-weight: 700;
-  padding: 4px 14px;
-}
-
-.tool-btn.accent:hover {
-  color: var(--text);
-  background: var(--accent-tint);
-  border-color: rgba(var(--line-rgb), 0.28);
-}
-
-.tool-btn.accent:active:not(:disabled) { background: rgba(var(--line-rgb), 0.1); }
-
-/* ---------- لوحة تنويعات سابستاك ----------
-   البطاقات تقرأ توكنز المنتج الفعّال مباشرة فتتبدّل معه بلا عائلة لونية
-   موازية أو بقايا من نظام الهوية السابق. */
-.variations-panel {
-  background: var(--bg);
-  color: var(--text);
-  border: 1px solid rgba(var(--accent-rgb), 0.4);
-  border-radius: 14px;
-  /* ظل دافئ من مثلث الثيم وحافة علوية بلمحة معدنه */
-  box-shadow:
-    0 16px 48px rgba(var(--shadow-rgb), 0.55),
-    inset 0 1px 0 rgba(var(--accent-rgb), 0.1);
-  width: min(1080px, 94vw);
-  max-height: 88vh;
-  padding: 18px 24px 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.variations-panel .panel-head h2 {
-  color: var(--accent);
-  font-family: var(--font-ui);
-  font-weight: 700;
-  font-size: 20px;
-}
-
-.variations-face {
-  font-size: 12px;
-  font-family: var(--font-text);
-  color: var(--text);
-  opacity: 0.7;
-  margin-inline-start: 8px;
-}
-
-.variations-panel .ghost-btn { color: var(--text); border-color: rgba(var(--accent-rgb), 0.35); }
-.variations-panel .ghost-btn:hover { color: var(--accent); border-color: var(--accent); }
-
-.variations-note {
-  margin: 0;
-  font-size: 12px;
-  font-family: var(--font-text);
-  color: var(--text);
-  opacity: 0.6;
-}
-
+/* ---------- لوحة التنويعات ---------- */
 .variations-grid {
   display: grid;
-  grid-template-columns: 1fr 14px 1fr 14px 1fr;
-  column-gap: 12px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--sp-20);
+  padding: var(--sp-24) 28px;
   overflow-y: auto;
-  flex: 1;
   min-height: 240px;
 }
 
 .variation-col {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 8px 2px 14px;
+  gap: var(--sp-16);
+  padding: var(--sp-20);
+  background: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-12);
   min-width: 0;
 }
 
-/* الرقم العربي بلون المنتج الفعّال وبخط الواجهة Almarai */
 .variation-num {
   font-family: var(--font-ui);
-  color: var(--accent);
-  font-size: 32px;
-  line-height: 1.2;
-  text-align: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-muted);
 }
 
-/* النص بخط المحتوى Cairo — نظيف حديث، وزن متوسط يوازن الوضوح والأناقة */
 .variation-text {
+  flex: 1;
   font-family: var(--font-text);
-  font-weight: 500;
-  font-size: 16px;
-  line-height: 2.05;
+  font-size: 14px;
+  line-height: 1.9;
   white-space: pre-wrap;
   word-wrap: break-word;
-  flex: 1;
+  color: var(--text);
 }
 
-/* وجه النوت: النص ينتظم يسارًا تقليدًا لسلوك المنصة — عناصر الواجهة تبقى RTL */
-.variation-text.note-face,
-.fragment-preview.note-face {
-  direction: ltr;
-  text-align: left;
-}
-
-/* الفاصل بين الأعمدة: زخرفة عربية عمودية رفيعة بلون المنتج الفعّال. */
-.variation-sep {
-  background-color: var(--accent);
-  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='64' viewBox='0 0 14 64'%3E%3Cg fill='none' stroke='%23000' stroke-width='0.7' opacity='0.75'%3E%3Cpath d='M7 0 V20'/%3E%3Cpath d='M7 20 C 2.5 25, 2.5 31, 7 32 C 11.5 33, 11.5 39, 7 44'/%3E%3Cpath d='M7 20 C 11.5 25, 11.5 31, 7 32 C 2.5 33, 2.5 39, 7 44'/%3E%3Cpath d='M7 44 V64'/%3E%3C/g%3E%3Cpath d='M7 27.5 l2.2 4.5 L7 36.5 l-2.2 -4.5 z' fill='%23000' opacity='0.9'/%3E%3Ccircle cx='7' cy='12' r='1' fill='%23000' opacity='0.7'/%3E%3Ccircle cx='7' cy='52' r='1' fill='%23000' opacity='0.7'/%3E%3C/svg%3E");
-  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='64' viewBox='0 0 14 64'%3E%3Cg fill='none' stroke='%23000' stroke-width='0.7' opacity='0.75'%3E%3Cpath d='M7 0 V20'/%3E%3Cpath d='M7 20 C 2.5 25, 2.5 31, 7 32 C 11.5 33, 11.5 39, 7 44'/%3E%3Cpath d='M7 20 C 11.5 25, 11.5 31, 7 32 C 2.5 33, 2.5 39, 7 44'/%3E%3Cpath d='M7 44 V64'/%3E%3C/g%3E%3Cpath d='M7 27.5 l2.2 4.5 L7 36.5 l-2.2 -4.5 z' fill='%23000' opacity='0.9'/%3E%3Ccircle cx='7' cy='12' r='1' fill='%23000' opacity='0.7'/%3E%3Ccircle cx='7' cy='52' r='1' fill='%23000' opacity='0.7'/%3E%3C/svg%3E");
-  -webkit-mask-repeat: repeat-y;
-  mask-repeat: repeat-y;
-  -webkit-mask-position: center top;
-  mask-position: center top;
-  -webkit-mask-size: 14px 64px;
-  mask-size: 14px 64px;
-}
+/* الفاصل الزخرفي بين الأعمدة زال — البطاقات نفسها تفصل بصريًا (Figma 24) */
+.variation-sep { display: none; }
 
 .variation-status {
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 13px;
+  padding: var(--sp-20) var(--sp-6);
   font-family: var(--font-text);
-  opacity: 0.6;
+  font-size: 12.5px;
+  color: var(--text-muted);
   text-align: center;
-  padding: 20px 6px;
 }
+.variation-status.error { color: var(--error-text); }
 
-.variation-status.error { color: var(--error-text); opacity: 0.9; font-size: 12px; }
-
-/* «اعتمد هذه»: حد خفيف بلون المنتج لا ينافس النص. */
 .adopt-btn {
-  align-self: center;
-  background: transparent;
-  color: var(--accent);
-  border: 1px solid rgba(var(--accent-rgb), 0.5);
-  border-radius: 8px;
-  padding: 5px 20px;
+  background: var(--bg-soft);
+  color: var(--text-dim);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-8);
+  min-height: 38px;
+  padding: 0 var(--sp-16);
   font-family: var(--font-ui);
-  font-size: 12px;
-  cursor: pointer;
-}
-
-.adopt-btn,
-.regen-btn {
-  transition: color 0.2s ease, border-color 0.2s ease, background-color 0.2s ease, opacity 0.2s ease;
-}
-
-.adopt-btn:hover { background: rgba(var(--accent-rgb), 0.12); border-color: var(--accent); }
-.adopt-btn:active { background: rgba(var(--accent-rgb), 0.18); }
-
-.variations-actions {
-  display: flex;
-  justify-content: center;
-  border-top: 1px solid rgba(var(--accent-rgb), 0.18);
-}
-
-.regen-btn {
-  margin-top: 10px;
-  background: transparent;
-  color: var(--text);
-  opacity: 0.85;
-  border: 1px solid rgba(var(--accent-rgb), 0.25);
-  border-radius: 8px;
-  padding: 6px 22px;
-  font-family: var(--font-ui);
-  font-size: 12px;
-  cursor: pointer;
-}
-
-.regen-btn:hover { color: var(--accent); border-color: rgba(var(--accent-rgb), 0.5); opacity: 1; }
-.regen-btn:disabled { opacity: 0.4; cursor: default; }
-
-/* ---------- بطاقة الشذرة: المنعطف مكسورًا أم موصولًا ---------- */
-.fragment-card {
-  margin: 0 0 14px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 12px 14px;
-  background: var(--bg-raised);
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.fragment-card-head {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.fragment-card-head h3 {
-  margin: 0;
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 700;
-  color: var(--accent);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
+.adopt-btn:hover { background: var(--accent); color: var(--accent-text); }
 
-.fragment-card-hint {
-  font-size: 11px;
-  font-family: var(--font-text);
-  color: var(--text-dim);
-}
+/* ---------- عدسة القراءة ---------- */
+.lens-shell { display: flex; flex-direction: column; align-items: center; gap: var(--sp-12); }
 
-.fragment-options {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-
-.fragment-option {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  min-width: 0;
-}
-
-.fragment-option h4 {
-  margin: 0;
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--text-dim);
-}
-
-.fragment-preview {
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--bg-input);
-  padding: 10px 12px;
-  font-family: var(--font-text);
-  font-size: 13px;
-  line-height: 1.9;
-  white-space: pre-wrap;
-  word-wrap: break-word;
-  flex: 1;
-}
-
-.fragment-option .tool-btn { align-self: flex-start; }
-
-/* ---------- عدسة القراءة: معاينة عرض هاتف، للعرض فقط ---------- */
-.reading-lens-panel {
-  background: var(--bg-raised);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 20px 24px 24px;
-  max-height: 86vh;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  box-shadow: 0 12px 40px var(--shadow);
-}
-
-.reading-lens-note {
-  margin: 0;
-  font-size: 12px;
-  font-family: var(--font-text);
-  color: var(--text-dim);
-}
-
-/* الإطار يحاكي عرض هاتف نموذجي — عام لا يتبع منصة بعينها */
-.reading-lens-frame {
-  align-self: center;
-  width: 380px;
+.lens-phone {
+  width: 375px;
   max-width: 100%;
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  background: var(--bg-input);
-  padding: 18px 16px;
-  box-shadow: none;
-  max-height: 70vh;
-  overflow-y: auto;
+  max-height: 76vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  border: 6px solid var(--border);
+  border-radius: 28px;
+  overflow: hidden;
 }
 
-.reading-lens-text {
+.lens-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-8);
+  flex-shrink: 0;
+  padding: var(--sp-16) var(--sp-20) var(--sp-12);
+}
+
+.lens-head h2 { margin: 0; font-size: 14px; font-weight: 700; color: var(--text); }
+
+.lens-text {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--sp-8) var(--sp-24) var(--sp-40);
   font-family: var(--font-text);
-  font-size: 15px;
-  line-height: 1.7;
+  font-size: 16px;
+  line-height: 1.85;
   white-space: pre-wrap;
   word-wrap: break-word;
   direction: rtl;
-  text-align: right;
   unicode-bidi: plaintext;
   color: var(--text);
 }
 
-/* وجه النوت يُعرض يسارًا تقليدًا لسلوك المنصة — كبقية معاينات النص في نسق */
-.reading-lens-text.note-face {
-  direction: ltr;
-  text-align: left;
-}
-
-
-/* ---------- وضع شَذْب (v4.4): حُمرة المصحِّح على هوية المخطوطة نفسها ----------
-   في تقاليد المخطوطات: الناسخ يكتب ويُذهِّب، والمصحِّح يعلّم بالحُمرة —
-   وضعان بحبرين تحت هوية واحدة. الحُمرة إشارة الوضع لا ثيمًا جديدًا:
-   الخلفيات والنصوص والثيمات الست كما هي، ولوحة شَذْب تظهر عبر data-mode
-   على الجذر — بغيابه لا أثر لشيء من هذا إطلاقًا */
-:root {
-  /* شَذْب يستهلك لون المنتج المعتمد نفسه في العلامة والفعل والقصّات؛
-     لا عائلة حمراء موازية أو بقايا من لوحة أقدم. */
-  --prune-accent: var(--accent);
-  --prune-rgb: var(--accent-rgb);
-  --prune-tint: var(--accent-soft);
-  /* لونا حالة ثابتان عبر الثيمات (حالة لا هوية): شهادة الضمانة زيتونية
-     هادئة، وتنبيه الإسقاط كهرمان هادئ — رسالة تقنية لا إنذار. الزيتوني
-     عُمّق في v6.2 (ش-٣): كان #5f7a45 بتباين 3.3:1 على خلفيته الصبغية */
-  --verify-green: var(--success);
-  --verify-bg: var(--success-soft);
-  --verify-border: color-mix(in srgb, var(--success) 36%, transparent);
-  --warn-bg: var(--warning-soft);
-  --warn-border: color-mix(in srgb, var(--warning) 36%, transparent);
-  /* حبر تلميح العهد — كان مقسوًّا #9c5238 في قاعدة التلميح نفسها؛ صار
-     متغيرًا (v6.2 — ش-٣) ليحمل نسخة ليلية مقروءة */
-  --covenant-ink: var(--accent);
-}
-
-/* المبدّل (أعيد بناؤه في v5.1): حاوية غائرة بحشوة داخلية وكل زر بزواياه
-   الخاصة — التفعيل صبغة وحد رقيق لا تعبئة صلبة تُقص عند حواف الحاوية،
-   فزال الكسر البصري. الذهب لنسق والحُمرة لشَذْب، والوزن ثابت فلا يقفز
-   عرض الزر بين الحالتين */
-/* المبدّل (روح Figma): مسار دائري ناعم، والزر النشط حبّة ورقية بظل رفيع */
-.mode-switch {
-  display: flex;
-  gap: 2px;
-  padding: 3px;
-  background: rgba(var(--line-rgb), 0.06);
-  border: none;
-  border-radius: 999px;
-  flex-shrink: 0;
-  /* التوسيط يأتي من الطرفين المرنين حوله (v6.1) — لا هامش خاص */
-}
-
-.mode-btn {
-  background: transparent;
-  color: var(--text-dim);
-  border: none;
-  border-radius: 999px;
-  padding: 5px 18px;
-  font-size: 12.5px;
-  font-weight: 700;
-  font-family: var(--font-ui);
-  cursor: pointer;
-  line-height: 1.4;
-  white-space: nowrap;
-  transition: color 0.2s ease, background-color 0.2s ease;
-}
-
-.mode-btn.active {
-  color: var(--text);
-  background: var(--bg);
-  box-shadow: 0 1px 3px rgba(var(--shadow-rgb), 0.22);
-}
-
-/* هوية شَذْب همسة: نص حُمرة على الحبّة الورقية نفسها — لا صبغة صاخبة */
-#mode-shadhb-btn.active {
-  color: var(--prune-accent);
-}
-
-/* الإظهار كله بقيادة data-mode: لوحة شَذْب محل لوحة النتيجة، وأدوات نسق
-   (المحاور والتوجيهات) تغيب — حالة نسق نفسها لا تُمس بالتبديل */
-#shadhb-pane { display: none; }
-[data-mode="shadhb"] #shadhb-pane { display: flex; }
-[data-mode="shadhb"] #nasaq-output-pane { display: none; }
-[data-mode="shadhb"] .controls { display: none; }
-[data-mode="shadhb"] .directives-field { display: none; }
-
-.shadhb-covenant-hint {
+.lens-caption {
+  margin: 0;
+  max-width: 375px;
+  text-align: center;
   font-family: var(--font-text);
-  font-size: 11px;
-  font-weight: 400;
-  color: var(--covenant-ink);
-  border-inline-start: 2px solid var(--prune-accent);
-  padding: 2px 10px;
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: var(--text-muted);
 }
 
-/* شريط الفحص (v5.1): سطر العهد فوق الفعل الرئيس، تحت خانة الكتابة مباشرة —
-   يظهر في وضع شَذْب حصرًا بقيادة data-mode، فبإطفاء المفتاح لا أثر له */
-.shadhb-inspect-bar { display: none; }
-
-/* حشوة الشريط شيم دمجٍ في قشرة v6.2 (زالت حشوة الجسد فيلزم حدّ وحشوة
-   حاويان) — لا مساس ببنية الوضع أو سلوكه */
-[data-mode="shadhb"] .shadhb-inspect-bar {
+/* ============================================================
+   ٩ — التذييل
+   ============================================================ */
+.credit {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 8px;
-  padding: 12px 20px 16px;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-8);
+  flex-shrink: 0;
+  padding: var(--sp-8) var(--sp-20);
   border-top: 1px solid var(--border-subtle);
+  font-family: var(--font-text);
+  font-size: 10.5px;
+  color: var(--text-muted);
+  flex-wrap: wrap;
 }
 
-/* زر «افحص الشذرة»: قرين «رتّب» بساطةً — بحُمرة المصحِّح، مسطّح بلا ظل */
-.prune-primary-btn {
-  background: var(--prune-accent);
-  color: var(--accent-text);
-  border: none;
-  border-radius: 8px;
-  padding: 7px 20px;
+.credit-sep { opacity: 0.6; }
+
+.credit-rights {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-4);
   font-family: var(--font-ui);
-  font-size: 13px;
   font-weight: 700;
-  cursor: pointer;
-  transition: background-color 0.15s ease, opacity 0.15s ease;
 }
 
-.prune-primary-btn:hover:not(:disabled) { background: var(--accent-hover); }
+.sultan-monogram-footer { width: 13px; height: 13px; }
 
-.prune-primary-btn:active:not(:disabled) { opacity: 0.82; }
+.credit-version {
+  direction: ltr;
+  unicode-bidi: isolate;
+  padding-inline-start: var(--sp-10);
+  border-inline-start: 1px solid var(--border-subtle);
+}
 
-.prune-primary-btn:disabled { opacity: 0.4; cursor: default; }
-
-.shadhb-body {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
+/* ============================================================
+   ١٠ — سجلّ تجربة شَذْب (أداة مؤقتة خلف مفتاح)
+   ============================================================ */
+.shathb-trial-panel {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  /* الحشوة الأفقية والعليا شيم دمجٍ في قشرة v6.2 (زالت حشوة الجسد) —
-     والسفلية مسافة تنفّس قبل التذييل الثابت كما كانت */
-  padding: 12px 20px 8px;
-}
-
-.shadhb-placeholder {
-  color: var(--text-dim);
-  font-size: 13px;
+  gap: var(--sp-8);
+  padding: var(--sp-12);
+  border: 1px dashed var(--border);
+  border-radius: var(--r-8);
   font-family: var(--font-text);
-  font-weight: 400;
-  margin: 24px 8px;
-  text-align: center;
-}
-
-.shadhb-loading {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--text-dim);
-  font-size: 13px;
-  font-family: var(--font-text);
-  padding: 12px;
-}
-
-/* بطاقة القراءة: وصف يسبق المقص — إجابات أسئلة المشذِّب عن هذا النص */
-.reading-card {
-  background: var(--bg-raised);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 10px 14px;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-  gap: 4px 16px;
-  font-size: 12.5px;
-  font-family: var(--font-text);
-}
-
-.reading-card .card-label {
-  color: var(--text-dim);
-}
-
-/* قيم البطاقة من عالم نصّ الكاتب (الجملة المركزية اقتباس حرفي) — خط المتن */
-.reading-card .card-value {
-  font-family: var(--font-text);
-}
-
-/* القصّات: الاقتباس بالحُمرة، وقرار الكاتب يغيّر هيئة المدخل */
-.cuts-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-/* حالتا الفراغ (v5.1): «لا اقتراحات» هادئة محايدة، و«أُسقط الكل» كهرمانية
-   تقنية تسمّي السبب — لا حكم أدبي على نصٍّ لم يُفحص إحكامه */
-.cuts-empty {
-  background: var(--bg-raised);
-  border: 1px solid var(--tool-border);
-  border-radius: 10px;
-  padding: 12px 14px;
-}
-
-.cuts-empty.dropped-all {
-  background: var(--warn-bg);
-  border-color: var(--warn-border);
-}
-
-.cuts-empty-main {
-  margin: 0;
-  font-family: var(--font-text);
-  font-size: 13.5px;
-  font-weight: 500;
-  color: var(--tool-text);
-}
-
-.cuts-empty-detail {
-  margin: 4px 0 0;
-  font-size: 11.5px;
-  font-family: var(--font-text);
-  color: var(--text-dim);
-}
-
-.cut-entry {
-  /* المعلّقة بصبغة الحُمرة — قرار ينتظر؛ والمحسومة تخفت وتتحيّد أدناه */
-  background: var(--prune-tint);
-  border: 1px solid rgba(var(--prune-rgb), 0.35);
-  border-radius: 10px;
-  padding: 12px 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  font-size: 13px;
-  font-family: var(--font-text);
-  transition: border-color 0.2s ease, opacity 0.2s ease, background-color 0.2s ease;
-}
-
-.cut-entry.cut {
-  background: transparent;
-  border-color: var(--tool-border);
-  opacity: 0.7;
-}
-
-.cut-entry.cut .cut-quote {
-  color: var(--text-dim);
-  text-decoration-color: var(--text-dim);
-}
-
-.cut-entry.kept {
-  background: transparent;
-  border-color: var(--tool-border);
-  opacity: 0.85;
-}
-
-/* «أبقِ» احترام: الاقتباس يعود نصًا سليمًا بلا شطب */
-.cut-entry.kept .cut-quote {
-  color: var(--text);
-  text-decoration: none;
-}
-
-.cut-entry.stale {
-  background: transparent;
-  border-color: var(--tool-border);
-  opacity: 0.55;
-}
-
-.cut-entry.stale .cut-quote { text-decoration: none; }
-
-/* الاقتباس نصُّ الكاتب فخطُّه خط المتن — والمقترح حذفُه يُعرض مشطوبًا
-   بحُمرة خافتة قبل القرار: البطاقة معاينة حذفٍ لا نصًا يُقرأ */
-.cut-quote {
-  font-family: var(--font-text);
-  font-size: 14px;
-  line-height: 1.85;
-  color: var(--prune-accent);
-  text-decoration: line-through;
-  text-decoration-color: rgba(var(--prune-rgb), 0.65);
-  text-decoration-thickness: 1.5px;
-}
-
-.cut-meta {
-  font-size: 11px;
-  color: var(--text-dim);
-}
-
-.cut-effect {
-  font-size: 11.5px;
-  color: var(--tool-text);
-}
-
-.cut-actions {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  margin-top: 6px;
-}
-
-/* زوجا القرار بعرض متساوٍ (v5.1): «أبقِ» أولًا (يمين RTL) محترمًا بحدّ
-   محايد لا خيارًا ثانويًا هزيلًا، و«احذف» واضح غير عدواني — صبغة وحد
-   بالحُمرة لا تعبئة صلبة */
-.cut-keep,
-.cut-do {
-  flex: 1;
-  border-radius: 8px;
-  padding: 7px 0;
-  font-size: 13px;
-  font-family: var(--font-ui);
-  cursor: pointer;
-  text-align: center;
-  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
-}
-
-.cut-keep {
-  background: transparent;
-  color: var(--tool-text);
-  border: 1px solid var(--tool-border);
-  font-weight: 700;
-}
-
-.cut-keep:hover {
-  color: var(--text);
-  background: var(--accent-tint);
-}
-
-.cut-do {
-  background: rgba(var(--prune-rgb), 0.09);
-  color: var(--prune-accent);
-  border: 1px solid rgba(var(--prune-rgb), 0.4);
-  font-weight: 700;
-}
-
-.cut-do:hover { background: rgba(var(--prune-rgb), 0.18); }
-
-.cut-chip {
-  font-size: 11px;
-  border-radius: 6px;
-  padding: 2px 10px;
-}
-
-.cut-chip.cut {
-  background: var(--prune-accent);
-  color: var(--accent-text);
-  font-weight: 700;
-}
-
-.cut-chip.kept {
-  border: 1px solid var(--tool-border);
-  color: var(--text-dim);
-}
-
-.cut-chip.stale {
-  border: 1px solid var(--tool-border);
-  color: var(--text-dim);
-}
-
-.dropped-note {
-  font-size: 11px;
-  font-family: var(--font-text);
-  color: var(--text-dim);
-  margin: 0;
-}
-
-/* رأس صندوق «بعد التشذيب»: العنوان وزر «نسخ» جنبًا إلى جنب — الزر تابع
-   لهذا الصندوق حصرًا، بنمط .tool-btn القائم (لا نمط جديد) */
-.prune-preview-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin: 0 0 4px;
-}
-
-.prune-preview-wrap h3 {
   font-size: 12px;
-  color: var(--text-dim);
-  margin: 0;
-  font-weight: 400;
 }
-
-.prune-preview {
-  background: var(--bg-input);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 10px 14px;
-  font-family: var(--font-text);
-  font-size: 14.5px;
-  line-height: 2;
-  white-space: pre-wrap;
-}
-
-/* التذييل الثابت (v5.1): الضمانة والجسر خارج منطقة التمرير فلا يُقصّان —
-   ولا يظهر التذييل إلا حين يحمل ابنًا مرئيًا (قبل الفحص كلاهما مخفي) */
-.shadhb-footer { display: none; }
-
-.shadhb-footer:has(> :not([hidden])) {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  flex-shrink: 0;
-  padding-top: 8px;
-  border-top: 1px solid rgba(var(--prune-rgb), 0.18);
-  /* هامش الدمج في قشرة v6.2 — التذييل داخل حشوة العمود الجانبية والسفلية */
-  margin: 0 20px 14px;
-}
-
-/* شريط الضمانة: العهد مفحوصًا لا موعودًا — زيتوني بخلفية صبغية عند
-   السلامة وألوان الخطأ عند الخرق (لا يحدث بالبناء، لكنه يُعرض لا يُفترض) */
-.covenant-bar {
-  font-size: 11.5px;
-  font-family: var(--font-text);
-  border-radius: 8px;
-  padding: 8px 12px;
-  background: var(--verify-bg);
-  border: 1px solid var(--verify-border);
-  color: var(--verify-green);
-}
-
-.covenant-bar.fail {
-  border-color: var(--error-text);
-  color: var(--error-text);
-  background: var(--error-bg);
-}
-
-/* الجسر إلى نَسَق بهوية الذهب: الوجهة غرفة الناسخ — شَذْب مرحلة قبل
-   النشر لا تطبيقًا مستقلًا */
-.send-to-nasaq-btn {
-  width: 100%;
-  background: var(--accent-tint);
-  color: var(--text);
-  border: 1px solid var(--tool-border);
-  border-radius: 8px;
-  padding: 8px 0;
-  font-family: var(--font-ui);
-  font-size: 13px;
-  font-weight: 700;
+.shathb-trial-row { display: flex; align-items: center; gap: var(--sp-8); flex-wrap: wrap; }
+.shathb-trial-label { font-family: var(--font-ui); font-weight: 700; color: var(--text-dim); }
+.shathb-trial-chips { display: flex; gap: var(--sp-4); flex-wrap: wrap; }
+.shathb-trial-chip {
+  background: var(--bg-soft);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-4);
+  padding: 2px var(--sp-8);
+  font-size: 11px;
   cursor: pointer;
-  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+.shathb-trial-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--r-8);
+  padding: var(--sp-6) var(--sp-12);
+  font-family: var(--font-ui);
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--text-dim);
+  cursor: pointer;
 }
 
-.send-to-nasaq-btn:hover {
-  background: rgba(var(--line-rgb), 0.1);
-  border-color: rgba(var(--line-rgb), 0.2);
-}
-
-@media (max-width: 720px) {
-  html,
-  body {
-    height: auto;
-    min-height: 100%;
+/* ============================================================
+   ١١ — الاستجابة: الحد الأدنى ١٠٢٤×٧٦٨ (27 — Responsive)
+   تحت ٩٠٠px تُكدَّس اللوحتان عموديًا بدل التقسيم الأفقي
+   ============================================================ */
+@media (max-width: 900px) {
+  body { overflow: auto; }
+  .workspace { flex-direction: column; }
+  /* التكديس العمودي يتبع ترتيب DOM نفسه: الإدخال أعلى ثم النتيجة */
+  .pane-input {
+    width: auto;
+    border-inline-start: none;
+    border-bottom: 1px solid var(--border-subtle);
   }
-
-  .topbar,
-  .controls,
-  .pane-head {
-    padding-inline: 12px;
-  }
-
-  .topbar { gap: 8px; }
-  .topbar-side { gap: 6px; }
+  .pane-output { min-height: 420px; }
+  .pane-scroll, .pane-body { padding: var(--sp-20); }
+  .pane-head, .output-search-bar { padding-inline: var(--sp-20); }
+  .shadhb-footer:has(> :not([hidden])) { padding-inline: var(--sp-20); }
+  .textarea-shell { min-height: 180px; }
   .app-subtitle { display: none; }
-  .mode-btn { padding-inline: 12px; }
-
-  .panes {
-    flex: none;
-    min-height: 720px;
-  }
-
-  textarea,
-  .output-wrap,
-  .directives-field,
-  [data-mode="shadhb"] .shadhb-inspect-bar,
-  .shadhb-body {
-    padding-inline: 12px;
-  }
-
-  .result-tools { max-width: 100%; }
-  .head-tools { flex-wrap: wrap; }
+  .fragment-options, .variations-grid { grid-template-columns: 1fr; }
+  .appearance-options { flex-direction: column; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
+  *, *::before, *::after {
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;

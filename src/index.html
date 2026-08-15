@@ -21,155 +21,238 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+  <!-- ============================================================
+       بنية Product UI المعتمدة — Figma 24/25 (518:3 / 518:4)
+       ------------------------------------------------------------
+       شريط علوي واحد، ثم مساحة عمل من عمودين: لوحة الإدخال (٥٢٠px
+       ثابتة، أقصى اليمين في RTL فتأتي أولًا في DOM) ولوحة النتيجة/
+       الشذب (تملأ الباقي). لا صفّ «عناصر تحكم» مستقل كما في البناء
+       السابق — محاور التنسيق الثلاثة صارت حقولًا داخل لوحة الإدخال،
+       والفعل الرئيس أسفلها بعرضها كاملًا كما في التصميم.
+       ============================================================ -->
   <header class="topbar">
-    <!-- ثلاث مجموعات في الشريط (v6.1): طرفان مرنان متساويان يوسّطان المبدّل
-         بينهما مهما اختلف عرضهما — تقسيمة بصرية فقط، لا منطق ولا تغيّر بالوصول
-         عبر المعرّفات -->
-    <div class="topbar-side topbar-start">
-      <!-- علامة الهوية الواحدة: أربعة سطور مضبوطة على محور محاذاة ونقطة
-           تصحيح — الحبر currentColor يتبع ثيم البرج، والمحور والنقطة بلون
-           الفعل. تتبدّل بالبرج الفعّال (CSS عبر data-mode): نَسَق سطرٌ ثالث
-           متّصل، وشَذْب القصّة نفسها في الهيكل مع مِبضع مائل -->
+    <!-- ترتيب RTL بنيويًا لا محاذاةً فقط: أول عنصر في DOM يقع أقصى اليمين.
+         تجمّع العلامة أولًا (يمينًا كما في Figma 24/25)، والإجراءات ثانيًا
+         (يسارًا) — لا خصائص order تعاكس هذا الترتيب الطبيعي -->
+    <div class="topbar-brand">
       <span class="app-mark" aria-hidden="true">
+        <!-- الرمز المعتمد (03/04 — Figma Logo System): شبكة موديولية —
+             نَسَق متّصلة كاملة، وشَذْب مقتطعة بطريقة الدرج نفسها في
+             الهندسة الأصلية (مقاسات المُصمِّم عند ٢٤px حرفيًا). هندسة
+             الشعار لا تُعكس ولا تُقلب مهما كان اتجاه الواجهة -->
         <svg class="mark-nasaq" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M4 5.25H18.5" stroke="currentColor" stroke-width="1.65" stroke-linecap="round"/>
-          <path d="M6.5 9.25H18.5" stroke="currentColor" stroke-width="1.45" stroke-linecap="round" opacity=".8"/>
-          <path d="M8.5 13.25H18.5" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" opacity=".58"/>
-          <path d="M11 17.25H18.5" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" opacity=".42"/>
-          <path class="mark-axis" d="M18.5 3.5V20.25" stroke-width="1" stroke-linecap="round" opacity=".55"/>
-          <circle class="mark-dot" cx="18.5" cy="5.25" r="1.6"/>
+          <rect class="mark-accent" x="18" y="3" width="6" height="6" rx="2"/>
+          <rect class="mark-accent" x="0" y="9" width="6" height="12" rx="2"/>
+          <rect class="mark-ink" x="6" y="15" width="12" height="6" rx="2"/>
+          <rect class="mark-accent" x="12" y="9" width="6" height="12" rx="2"/>
         </svg>
         <svg class="mark-shadhb" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M4 5.25H18.5" stroke="currentColor" stroke-width="1.65" stroke-linecap="round"/>
-          <path d="M6.5 9.25H18.5" stroke="currentColor" stroke-width="1.45" stroke-linecap="round" opacity=".8"/>
-          <path d="M8.5 13.25H11.5M14.75 13.25H18.5" stroke="currentColor" stroke-width="1.45" stroke-linecap="round" opacity=".66"/>
-          <path class="mark-cut" d="m12.15 11.35 2 3.8" stroke-width="1.8" stroke-linecap="round"/>
-          <path d="M11 17.25H18.5" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" opacity=".42"/>
-          <path class="mark-axis" d="M18.5 3.5V20.25" stroke-width="1" stroke-linecap="round" opacity=".55"/>
-          <circle class="mark-dot" cx="18.5" cy="5.25" r="1.6"/>
+          <rect class="mark-accent" x="2.5" y="3" width="5" height="5" rx="1"/>
+          <rect class="mark-ink" x="2.5" y="10" width="5" height="13" rx="1"/>
+          <rect class="mark-ink" x="9.5" y="5" width="5" height="11" rx="1"/>
+          <rect class="mark-accent" x="9.5" y="18" width="5" height="5" rx="1"/>
+          <rect class="mark-ink" x="16.5" y="1" width="5" height="4" rx="1"/>
+          <rect class="mark-ink" x="16.5" y="7" width="5" height="16" rx="1"/>
         </svg>
       </span>
       <h1 class="app-title">نَسَق</h1>
+
+      <!-- مبدّل الوضعين (v4.4): مخفي افتراضيًا — هيكل شَذْب وحده يُظهره حين
+           يكون المفتاح مفعَّلًا، وبغيابه الواجهة مطابقة لما قبله حرفيًا.
+           موضعه بعد الشعار الكامل مباشرة، وترتيب زرّيه بالـDOM وحده:
+           «نَسَق» أولًا فيقع يمينًا و«شَذْب» ثانيًا فيقع يساره — بلا
+           order ولا transform. الحالة النشطة تبقى بقيادة .active من
+           shadhb.js عبر المعرّفين، لا بالموضع -->
+      <div id="mode-switch" class="mode-switch" hidden>
+        <button id="mode-nasaq-btn" class="mode-btn active" type="button" title="وضع التنسيق — لا تتغير كلمة">نَسَق</button>
+        <button id="mode-shadhb-btn" class="mode-btn" type="button" title="وضع التشذيب — يقترح الحذف ولا يضيف، وأنت من يقرر">شَذْب</button>
+      </div>
+
       <span class="app-subtitle">البوابة الأخيرة قبل النشر</span>
     </div>
-    <!-- مبدّل الوضعين (v4.4): مخفي افتراضيًا — هيكل شَذْب وحده يُظهره حين
-         يكون المفتاح مفعَّلًا، وبغيابه الواجهة مطابقة لما قبله حرفيًا -->
-    <div id="mode-switch" class="mode-switch" hidden>
-      <button id="mode-nasaq-btn" class="mode-btn active" type="button" title="وضع التنسيق — لا تتغير كلمة">نَسَق</button>
-      <button id="mode-shadhb-btn" class="mode-btn" type="button" title="وضع التشذيب — يقترح الحذف ولا يضيف، وأنت من يقرر">شَذْب</button>
-    </div>
-    <div class="topbar-side topbar-end">
-      <button id="drafts-btn" class="ghost-btn icon-text-btn" type="button" title="المسودات المحفوظة">
-        <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M2.5 8.7 L4.2 3.8 a1 1 0 0 1 .95-.68 h5.7 a1 1 0 0 1 .95.68 L13.5 8.7 v3.3 a1.2 1.2 0 0 1-1.2 1.2 h-8.6 a1.2 1.2 0 0 1-1.2-1.2 z" />
-          <path d="M2.5 8.7 h3.3 a2.2 2.2 0 0 0 4.4 0 h3.3" />
+
+    <!-- الإجراءات (يسار في RTL): أيقونتان بلا نص، الشارة على المسودات -->
+    <div class="topbar-actions">
+      <button id="settings-btn" class="icon-btn" type="button" title="الإعدادات" aria-label="الإعدادات">
+        <!-- أيقونة الإعدادات المعتمدة حرفيًا (10 — Iconography: NSQ / Icon / settings) -->
+        <svg width="18" height="18" viewBox="0 0 19.9127 21.9641" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M7.62736 3.11857C7.68246 2.53891 7.95169 2.00062 8.38246 1.60885C8.81323 1.21709 9.37459 1 9.95686 1C10.5391 1 11.1005 1.21709 11.5313 1.60885C11.962 2.00062 12.2313 2.53891 12.2864 3.11857C12.3195 3.49303 12.4423 3.85399 12.6445 4.17091C12.8467 4.48783 13.1222 4.75138 13.4478 4.93925C13.7734 5.12712 14.1395 5.23378 14.5151 5.25019C14.8906 5.26661 15.2646 5.19231 15.6054 5.03357C16.1345 4.79335 16.734 4.75859 17.2874 4.93606C17.8407 5.11353 18.3082 5.49052 18.5989 5.99368C18.8896 6.49683 18.9826 7.09015 18.86 7.65814C18.7374 8.22614 18.4078 8.72819 17.9354 9.06657C17.6277 9.28242 17.3766 9.56918 17.2033 9.9026C17.0299 10.236 16.9394 10.6063 16.9394 10.9821C16.9394 11.3579 17.0299 11.7281 17.2033 12.0615C17.3766 12.395 17.6277 12.6817 17.9354 12.8976C18.4078 13.236 18.7374 13.738 18.86 14.306C18.9826 14.874 18.8896 15.4673 18.5989 15.9705C18.3082 16.4736 17.8407 16.8506 17.2874 17.0281C16.734 17.2056 16.1345 17.1708 15.6054 16.9306C15.2646 16.7718 14.8906 16.6975 14.5151 16.714C14.1395 16.7304 13.7734 16.837 13.4478 17.0249C13.1222 17.2128 12.8467 17.4763 12.6445 17.7932C12.4423 18.1102 12.3195 18.4711 12.2864 18.8456C12.2313 19.4252 11.962 19.9635 11.5313 20.3553C11.1005 20.7471 10.5391 20.9641 9.95686 20.9641C9.37459 20.9641 8.81323 20.7471 8.38246 20.3553C7.95169 19.9635 7.68246 19.4252 7.62736 18.8456C7.59431 18.471 7.47146 18.1099 7.26923 17.7928C7.06699 17.4758 6.79133 17.2122 6.46559 17.0243C6.13985 16.8364 5.77363 16.7298 5.39794 16.7135C5.02225 16.6972 4.64816 16.7716 4.30736 16.9306C3.77825 17.1708 3.17869 17.2056 2.62536 17.0281C2.07204 16.8506 1.60453 16.4736 1.31384 15.9705C1.02316 15.4673 0.930076 14.874 1.05272 14.306C1.17537 13.738 1.50496 13.236 1.97736 12.8976C2.28498 12.6817 2.53609 12.395 2.70945 12.0615C2.88281 11.7281 2.97332 11.3579 2.97332 10.9821C2.97332 10.6063 2.88281 10.236 2.70945 9.9026C2.53609 9.56918 2.28498 9.28242 1.97736 9.06657C1.50563 8.72802 1.17661 8.22617 1.05426 7.65856C0.931914 7.09094 1.02497 6.49811 1.31535 5.99529C1.60572 5.49246 2.07267 5.11555 2.62545 4.93781C3.17823 4.76008 3.77735 4.79421 4.30636 5.03357C4.64712 5.19231 5.0211 5.26661 5.39666 5.25019C5.77222 5.23378 6.13829 5.12712 6.4639 4.93925C6.7895 4.75138 7.06505 4.48783 7.26723 4.17091C7.4694 3.85399 7.59224 3.49303 7.62536 3.11857M12.9561 10.9824C12.9561 12.6393 11.6129 13.9824 9.95606 13.9824C8.2992 13.9824 6.95606 12.6393 6.95606 10.9824C6.95606 9.32557 8.2992 7.98242 9.95606 7.98242C11.6129 7.98242 12.9561 9.32557 12.9561 10.9824Z"/>
         </svg>
-        مسوداتي
-        <span id="drafts-count" class="count-badge" hidden></span>
       </button>
-      <!-- زر القمر أُزيل من الشريط (تصحيح v6.3): مبدّل الوضع في
-           الإعدادات ← «المظهر» صار أداة التحكم اليدوية الوحيدة -->
-      <button id="settings-btn" class="ghost-btn icon-btn" type="button" title="الإعدادات" aria-label="الإعدادات">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <line x1="2" y1="4.2" x2="7.6" y2="4.2" /><line x1="12.4" y1="4.2" x2="14" y2="4.2" /><circle cx="10" cy="4.2" r="1.9" />
-          <line x1="2" y1="11.8" x2="3.6" y2="11.8" /><line x1="8.4" y1="11.8" x2="14" y2="11.8" /><circle cx="6" cy="11.8" r="1.9" />
+      <button id="drafts-btn" class="icon-btn" type="button" title="المسودات المحفوظة" aria-label="المسودات المحفوظة">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/>
         </svg>
+        <span id="drafts-count" class="count-badge" hidden></span>
       </button>
     </div>
   </header>
 
-  <section class="controls">
-    <!-- خيارات المحاور الثلاثة تُملأ من ثوابت nasaq.js — مصدر الحقيقة الوحيد.
-         تقسيمة v6.2 (مرجع التصميم): القوائم يمينًا، التلميح يتمدد بينها وبين
-         الفعل الرئيس أقصى اليسار. الـselect يبقى مصدر القيمة (المعرّفات
-         والقراءة البرمجية كما هي) وتُبنى فوقه قائمة الهوية المنسدلة في nasaq.js -->
-    <div class="control">
-      <span class="visually-hidden">نمط التنسيق</span>
-      <select id="format-style"></select>
-    </div>
-    <div class="control">
-      <span class="visually-hidden">مستوى التدخل</span>
-      <select id="intervention"></select>
-    </div>
-    <div class="control" id="platform-control" hidden>
-      <span class="visually-hidden">المنصة</span>
-      <select id="platform"></select>
-    </div>
-    <!-- التلميح يملأ ما بين القوائم والفعل الرئيس -->
-    <span id="intervention-hint" class="control-hint"></span>
-    <!-- لوحة التنويعات — تظهر عند وجهة سابستاك فقط -->
-    <button id="variations-btn" class="ghost-btn" type="button" title="ثلاث تنويعات تختلف في مواضع كسر السطر" hidden>أرِني تنويعات</button>
-    <button id="format-btn" class="primary-btn">نسق</button>
-  </section>
+  <!-- تشريح Alert Banner المعتمد (15 — Content & Feedback): أيقونة + رسالة -->
+  <div id="error-bar" class="alert-banner" role="alert" aria-live="assertive" hidden>
+    <svg class="feedback-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+    </svg>
+    <span id="error-bar-message" class="feedback-message"></span>
+  </div>
 
-  <div id="error-bar" class="error-bar" role="alert" aria-live="assertive" hidden></div>
+  <main class="workspace">
+    <!-- ========== لوحة الإدخال — أول في DOM = أقصى اليمين في RTL ========== -->
+    <aside class="pane pane-input">
+      <div class="pane-scroll">
+        <h2 class="pane-title">النص</h2>
 
-  <main class="panes">
-    <section class="pane pane-input">
-      <div class="pane-head">
-        <h2>النص الخام</h2>
-        <span id="input-count" class="char-count"></span>
-      </div>
-      <textarea id="input-text" dir="rtl" placeholder="الصق نصّك هنا… ثم اضغط «نسق» أو ⌘+Enter" spellcheck="false"></textarea>
-      <!-- التوجيهات الخاصة (v4.0): قرارات موضعية لا يغطيها زر — تنسيق فقط، لا إعادة صياغة -->
-      <label class="directives-field">
-        <span class="directives-label">توجيهات إضافية (اختياري)</span>
-        <textarea id="custom-directives" dir="rtl" rows="2" placeholder="أي تفاصيل أو قيود خاصة… مثال: اجعل الجملة الأخيرة في سطر مستقل." spellcheck="false"></textarea>
-      </label>
-      <!-- شريط فحص شَذْب (v5.1): الفعل الرئيس ملاصق لمنطقة الكتابة — يظهر
-           في وضع شَذْب حصرًا بقيادة data-mode في CSS، فبإطفاء المفتاح
-           لا أثر له إطلاقًا -->
-      <div id="shadhb-inspect-bar" class="shadhb-inspect-bar">
-        <span class="shadhb-covenant-hint">شَذْب يقترح الحذف ولا يضيف كلمة — أنت من يقرر كل قصّة.</span>
-        <button id="prune-btn" class="prune-primary-btn" type="button" title="فحص واحد يعيد بطاقة قراءة وقصّات حذف مقترحة — لا يغيّر نصك شيئًا حتى تقرر">افحص الشذرة</button>
-      </div>
-    </section>
-
-    <section class="pane" id="nasaq-output-pane">
-      <!-- رأس النتيجة (v6.2 — مرجع التصميم): العنوان يمينًا، ومجموعة الأدوات
-           المقسّمة والعدّاد يسارًا. الأزرار نفسها بمعرّفاتها ومنطقها — تحوّلت
-           أيقونات صغيرة بتلميحاتها القديمة، و«نسخ» وحده يحتفظ بنصّه -->
-      <div class="pane-head">
-        <h2>النتيجة</h2>
-        <div class="head-tools">
-          <div class="result-tools">
-            <button id="undo-btn" class="tool-btn" type="button" title="التراجع عن آخر تعديل على النتيجة — محلي، حتى ٢٠ خطوة" aria-label="تراجع">
-              <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 6.5h6a3.5 3.5 0 0 1 0 7H6" /><polyline points="6 3.5 3.5 6.5 6 9.5" /></svg>
-            </button>
-            <button id="more-lines-btn" class="tool-btn" type="button" title="سطور أكثر" aria-label="سطور أكثر">
-              <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="3.5" y1="8" x2="12.5" y2="8" /><polyline points="5.8 4.4 8 2.2 10.2 4.4" /><polyline points="5.8 11.6 8 13.8 10.2 11.6" /></svg>
-            </button>
-            <button id="fewer-lines-btn" class="tool-btn" type="button" title="سطور أقل" aria-label="سطور أقل">
-              <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="3.5" y1="8" x2="12.5" y2="8" /><polyline points="5.8 2.2 8 4.4 10.2 2.2" /><polyline points="5.8 13.8 8 11.6 10.2 13.8" /></svg>
-            </button>
-            <button id="split-sentences-btn" class="tool-btn" type="button" title="كسر سطر بعد كل جملة (. ؟ ! …) — محلي، يتجاهل النقطة العشرية (3.14)" aria-label="فصل الجمل">
-              <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.5 3.5v3.2a2 2 0 0 1-2 2H4.5" /><polyline points="7 6.2 4.5 8.7 7 11.2" /></svg>
-            </button>
-            <button id="clean-btn" class="tool-btn" type="button" title="حذف السطور الفارغة من النتيجة" aria-label="حذف الفراغات">
-              <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="3.5" y1="4" x2="12.5" y2="4" /><line x1="3.5" y1="12" x2="12.5" y2="12" /><line x1="5" y1="8" x2="11" y2="8" stroke-dasharray="1.6 2.2" /></svg>
-            </button>
-            <button id="save-draft-btn" class="tool-btn" type="button" title="حفظ النص الأصلي والنتيجة كمسودة محلية" aria-label="حفظ كمسودة">
-              <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.8 10h2.9a2.3 2.3 0 0 0 4.6 0h2.9" /><path d="M2.8 10v1.9a1.2 1.2 0 0 0 1.2 1.2h8a1.2 1.2 0 0 0 1.2-1.2V10" /><line x1="8" y1="2.8" x2="8" y2="7" /><polyline points="6.2 5.4 8 7.2 9.8 5.4" /></svg>
-            </button>
-            <button id="reading-lens-btn" class="tool-btn" type="button" title="معاينة النص بعرض هاتف ضيّق — للعرض فقط" aria-label="عدسة القراءة">
-              <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="7.2" cy="7.2" r="3.7" /><line x1="9.9" y1="9.9" x2="13" y2="13" /></svg>
-            </button>
-            <button id="export-btn" class="tool-btn" type="button" title="نسخ بكسور السطر محفوظة وبلا أسطر فارغة — كما سيظهر عند النشر" hidden>تصدير لسابستاك</button>
-            <button id="copy-btn" class="tool-btn accent" type="button" title="نسخ النتيجة">
-              <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5.8" y="5.8" width="6.7" height="6.7" rx="1.3" /><path d="M3.5 10.2V4.8a1.3 1.3 0 0 1 1.3-1.3h5.4" /></svg>
-              نسخ
-            </button>
+        <!-- خانة الكتابة داخل صندوق بحدّ ونصف قطر (Figma 24) — لا نصّ عارٍ
+             على الورق كما في البناء السابق. العدّاد داخل الصندوق أسفله -->
+        <div class="textarea-shell">
+          <textarea id="input-text" dir="rtl" placeholder="الصق نصّك هنا أو ابدأ الكتابة مباشرة…" spellcheck="false"></textarea>
+          <div class="textarea-foot">
+            <span id="input-count" class="char-count"></span>
           </div>
+        </div>
+
+        <!-- التوجيهات الخاصة (v4.0): قرارات موضعية لا يغطيها زر -->
+        <div class="field-block">
+          <span class="field-label">توجيهات إضافية (اختياري)</span>
+          <textarea id="custom-directives" dir="rtl" rows="2" placeholder="مثال: اجعل الجملة الأخيرة في سطر مستقل" spellcheck="false"></textarea>
+        </div>
+
+        <!-- محاور التنسيق الثلاثة: حقول معنونة داخل لوحة الإدخال (Figma 24)
+             بدل صفّ التحكّم المستقل القديم. الـselect يبقى مصدر القيمة
+             (المعرّفات والقراءة البرمجية كما هي) وتُبنى فوقه قائمة الهوية
+             المنسدلة في nasaq.js عبر .control -->
+        <div class="format-settings">
+          <div class="pane-divider" role="presentation"></div>
+          <h3 class="section-title">إعدادات التنسيق</h3>
+          <div class="control field-block">
+            <span class="field-label">نمط التنسيق</span>
+            <select id="format-style"></select>
+          </div>
+          <div class="control field-block">
+            <span class="field-label">مستوى التدخل</span>
+            <select id="intervention"></select>
+            <span id="intervention-hint" class="field-hint"></span>
+          </div>
+          <div class="control field-block" id="platform-control" hidden>
+            <span class="field-label">المنصة</span>
+            <select id="platform"></select>
+          </div>
+        </div>
+
+        <div class="pane-spacer" role="presentation"></div>
+
+        <!-- الفعل الرئيس أسفل اللوحة بعرضها كاملًا (Figma 24) -->
+        <div class="input-actions">
+          <button id="format-btn" class="btn btn-primary btn-block">نسّق</button>
+          <button id="variations-btn" class="btn btn-secondary btn-block" type="button" title="ثلاث تنويعات تختلف في مواضع كسر السطر" hidden>أرِني تنويعات</button>
+          <p class="kbd-hint">اختصار سريع: ⌘/Ctrl + Enter للتنسيق</p>
+        </div>
+
+        <!-- شريط فحص شَذْب (v5.1): الفعل الرئيس داخل لوحة الإدخال — يظهر
+             في وضع شَذْب حصرًا بقيادة data-mode في CSS، فبإطفاء المفتاح
+             لا أثر له إطلاقًا -->
+        <div id="shadhb-inspect-bar" class="shadhb-inspect-bar">
+          <p class="covenant-note">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="6" cy="6" r="3"/><path d="M8.12 8.12 12 12"/><path d="M20 4 8.12 15.88"/><circle cx="6" cy="18" r="3"/><path d="M14.8 14.8 20 20"/>
+            </svg>
+            <span>شَذْب يقترح الحذف ولا يضيف كلمة — أنت من يقرر كل قصّة.</span>
+          </p>
+          <button id="prune-btn" class="btn btn-primary btn-block" type="button" title="فحص واحد يعيد بطاقة قراءة وقصّات حذف مقترحة — لا يغيّر نصك شيئًا حتى تقرر">افحص الشذرة</button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ========== لوحة نتيجة نَسَق ========== -->
+    <section class="pane pane-output" id="nasaq-output-pane">
+      <div class="pane-head">
+        <h2 class="pane-title">النتيجة</h2>
+        <div class="head-tools">
+          <!-- شريط أدوات نَسَق (NSQ / Toolbar / Action + Group — Figma 14،
+               node 245:16): خمس مجموعات بترتيب منطقي RTL: تحرير النص ←
+               معالجة السطور ← الحفظ ← البحث ← النسخ. المعرّفات والدوال
+               نفسها حرفيًا؛ «نسخ» وحده Icon+Label وبقيتها Icon Only -->
+          <div class="nsq-toolbar" role="toolbar" aria-label="أدوات تحرير النتيجة">
+            <div class="toolbar-group">
+              <button id="undo-btn" class="tool-btn" type="button" title="تراجع — حتى ٢٠ خطوة محليًا" aria-label="تراجع">
+                <!-- معكوسة أفقيًا (rtl-mirror): corner-up-left مبنية لسياق LTR،
+                     والتراجع دلالة زمنية تتبع اتجاه القراءة فتُعكس في RTL -->
+                <svg class="rtl-mirror" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5v0a5.5 5.5 0 0 1-5.5 5.5H11"/></svg>
+              </button>
+            </div>
+            <div class="toolbar-divider" aria-hidden="true"></div>
+            <div class="toolbar-group">
+              <button id="clean-btn" class="tool-btn" type="button" title="حذف السطور الفارغة من النتيجة" aria-label="حذف السطور الفارغة">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16"/><path d="M4 12h16" stroke-dasharray="2.2 3.2"/><path d="M4 18h9"/><path d="m18 15.5 4.5 4.5"/><path d="m22.5 15.5-4.5 4.5"/></svg>
+              </button>
+              <button id="split-sentences-btn" class="tool-btn" type="button" title="كسر بعد النقطة — سطر مستقل بعد كل جملة (. ؟ ! …)، يتجاهل النقطة العشرية (3.14)" aria-label="كسر بعد النقطة">
+                <!-- معكوسة أفقيًا: النقطة تصير طرف السطر الأيسر (كما ينتهي سطر
+                     RTL) والسهم يشير يمينًا نحو هامش السطر الجديد -->
+                <svg class="rtl-mirror" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="17" cy="7" r="1.8" fill="currentColor" stroke="none"/><path d="M4 7h9.5"/><path d="M20 7v5a2 2 0 0 1-2 2H6"/><path d="m9 11-3 3 3 3"/></svg>
+              </button>
+              <button id="fewer-lines-btn" class="tool-btn" type="button" title="سطور أقل" aria-label="سطور أقل">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5.5h14"/><path d="M3 11h9"/><path d="M3 16.5h9"/><circle cx="18.5" cy="17.5" r="5"/><path d="M16.3 17.5h4.4"/></svg>
+              </button>
+              <button id="more-lines-btn" class="tool-btn" type="button" title="سطور أكثر" aria-label="سطور أكثر">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5.5h14"/><path d="M3 11h9"/><path d="M3 16.5h9"/><circle cx="18.5" cy="17.5" r="5"/><path d="M18.5 15.3v4.4"/><path d="M16.3 17.5h4.4"/></svg>
+              </button>
+            </div>
+            <div class="toolbar-divider" aria-hidden="true"></div>
+            <div class="toolbar-group">
+              <button id="save-draft-btn" class="tool-btn" type="button" title="حفظ النص الأصلي والنتيجة كمسودة محلية" aria-label="حفظ بالمسودة">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"/><path d="M7 3v4a1 1 0 0 0 1 1h7"/></svg>
+              </button>
+            </div>
+            <div class="toolbar-divider" aria-hidden="true"></div>
+            <div class="toolbar-group">
+              <button id="output-search-btn" class="tool-btn" type="button" title="بحث في النتيجة" aria-label="بحث في النتيجة" aria-expanded="false" aria-controls="output-search-bar">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+              </button>
+            </div>
+            <div class="toolbar-divider" aria-hidden="true"></div>
+            <div class="toolbar-group">
+              <button id="copy-btn" class="tool-btn tool-btn-label" type="button" title="نسخ النتيجة">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                <span>نسخ</span>
+              </button>
+            </div>
+          </div>
+          <!-- أدوات عرض ثانوية خارج شريط الأفعال الثمانية المعتمد -->
+          <span class="secondary-tools">
+            <button id="reading-lens-btn" class="icon-btn" type="button" title="معاينة النص بعرض هاتف ضيّق — للعرض فقط" aria-label="عدسة القراءة">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M12 18h.01"/></svg>
+            </button>
+            <button id="export-btn" class="icon-btn" type="button" title="تصدير لسابستاك — نسخ بكسور السطر محفوظة وبلا أسطر فارغة، كما سيظهر عند النشر" aria-label="تصدير لسابستاك" hidden>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m8 7 4-4 4 4"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/></svg>
+            </button>
+          </span>
           <span id="output-count" class="char-count"></span>
         </div>
       </div>
-      <!-- جسد النتيجة (v6.2): النص وملحقاته — البصمة وبطاقة الشذرة و«ما تغيّر»
-           — كلها داخل منطقة التمرير الواحدة كمرجع التصميم، لا أسفل الصندوق -->
-      <div id="output-wrap" class="output-wrap">
-        <div id="output-text" class="output-text" dir="rtl"></div>
-        <!-- بصمة الإيقاع: وصف محايد لتنفّس النص، للمستويين الإيقاعيين فقط — للعرض لا يُنسخ ولا يُحفظ -->
-        <span id="rhythm-fingerprint" class="rhythm-fingerprint" hidden></span>
-        <!-- بطاقة الشذرة: كسر المنعطف مرئيًا وقابلًا للاختيار — الكسر وحده، لا علامة تُضاف -->
+
+      <!-- شريط البحث في النتيجة (دالة «بحث» في الشريط): محلي بالكامل،
+           يبرز التطابقات عبر CSS Custom Highlight API فلا يمسّ شجرة النص -->
+      <div id="output-search-bar" class="output-search-bar" hidden>
+        <svg class="output-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        <input id="output-search-input" type="search" dir="rtl" placeholder="ابحث في النتيجة…" spellcheck="false" autocomplete="off" />
+        <span id="output-search-count" class="output-search-count" role="status" aria-live="polite"></span>
+        <button id="output-search-prev" class="icon-btn icon-btn-sm" type="button" title="السابق" aria-label="التطابق السابق">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m18 15-6-6-6 6"/></svg>
+        </button>
+        <button id="output-search-next" class="icon-btn icon-btn-sm" type="button" title="التالي" aria-label="التطابق التالي">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+        </button>
+        <button id="output-search-close" class="icon-btn icon-btn-sm" type="button" title="إغلاق البحث" aria-label="إغلاق البحث">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+      </div>
+
+      <div id="output-wrap" class="pane-body">
+        <!-- النتيجة داخل بطاقة بحدّ ونصف قطر (Figma 24) — فارغةً بلا صندوق -->
+        <div id="output-text" class="result-card" dir="rtl"></div>
+        <!-- بصمة الإيقاع: شريحة هادئة بلون المنتج تحت النتيجة مباشرة -->
+        <span id="rhythm-fingerprint" class="rhythm-chip" hidden></span>
+        <!-- بطاقة الشذرة: كسر المنعطف مرئيًا وقابلًا للاختيار -->
         <div id="fragment-card" class="fragment-card" hidden>
           <div class="fragment-card-head">
             <h3>بطاقة الشذرة — المنعطف</h3>
@@ -179,66 +262,82 @@
             <div class="fragment-option">
               <h4>مكسورة عند المنعطف</h4>
               <div id="fragment-broken" class="fragment-preview"></div>
-              <button id="adopt-broken" class="tool-btn" type="button">اعتمد المكسورة</button>
+              <button id="adopt-broken" class="btn btn-outline btn-sm" type="button">اعتمد المكسورة</button>
             </div>
             <div class="fragment-option">
               <h4>موصولة</h4>
               <div id="fragment-joined" class="fragment-preview"></div>
-              <button id="adopt-joined" class="tool-btn" type="button">اعتمد الموصولة</button>
+              <button id="adopt-joined" class="btn btn-outline btn-sm" type="button">اعتمد الموصولة</button>
             </div>
           </div>
         </div>
-        <details id="notes-box" class="notes" hidden>
+        <details id="notes-box" class="notes-box" hidden>
           <summary>
             <span>ما تغيّر</span>
-            <svg class="notes-chevron" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="4 6.5 8 10.5 12 6.5" /></svg>
+            <svg class="notes-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
           </summary>
           <ul id="notes-list"></ul>
         </details>
-        <div id="output-placeholder" class="output-placeholder">
-          <span class="placeholder-mark">نَسَق</span>
-          <span class="placeholder-hint">اضبط الإعدادات واضغط «نسق» — نصّك الأصلي يبقى كما هو في خانة الإدخال.</span>
+
+        <!-- حالة الفراغ المعتمدة (Figma 24): دائرة بلون المنتج + عنوان + شرح -->
+        <div id="output-placeholder" class="empty-state">
+          <span class="empty-icon" aria-hidden="true">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+          </span>
+          <h3 class="empty-title">لم يبدأ التنسيق بعد</h3>
+          <p class="empty-body">اكتب نصك في اللوحة اليمنى واختر نمط التنسيق المناسب، ثم اضغط «نسّق» لرؤية النتيجة هنا.</p>
         </div>
-        <div id="loading" class="loading" role="status" aria-live="polite" hidden>
-          <span class="spinner"></span>
-          <span>جارٍ التنسيق…</span>
+
+        <!-- حالة المعالجة المعتمدة (Figma 24): حلقة + نص أسفلها -->
+        <div id="loading" class="loading-state" role="status" aria-live="polite" hidden>
+          <span class="spinner" aria-hidden="true"></span>
+          <span class="loading-label">جارٍ التنسيق…</span>
         </div>
       </div>
     </section>
 
-    <!-- لوحة شَذْب (v4.4): تحل محل لوحة النتيجة في وضع شَذْب فقط —
-         الإظهار كله عبر data-mode في CSS، فبغياب الوضع لا أثر لها إطلاقًا.
-         عهد الوضع: يقترح الحذف ولا يضيف كلمة، والكاتب يقرر كل قصّة -->
-    <section class="pane" id="shadhb-pane">
+    <!-- ========== لوحة شَذْب (Figma 25) ========== -->
+    <section class="pane pane-output" id="shadhb-pane">
       <div class="pane-head">
-        <h2>فحص الشذرة</h2>
+        <h2 class="pane-title">فحص الشذرة</h2>
+        <div class="head-tools">
+          <span id="shadhb-status-dot" class="shadhb-status-dot" data-status="idle" aria-hidden="true"></span>
+          <span id="shadhb-status-badge" class="shadhb-status-badge" data-status="idle">مقصّ لا قلم</span>
+        </div>
       </div>
       <div class="shadhb-body">
-        <p id="shadhb-placeholder" class="shadhb-placeholder">الصق شذرتك في خانة النص الخام ثم اضغط «افحص الشذرة». الفحص يقترح ولا يغيّر.</p>
-        <div id="shadhb-loading" class="shadhb-loading" role="status" aria-live="polite" hidden><span class="spinner"></span><span>جارٍ الفحص…</span></div>
+        <!-- حالة ما قبل الفحص المعتمدة (Figma 25): مقصّ في دائرة + شرح -->
+        <div id="shadhb-placeholder" class="empty-state">
+          <span class="empty-icon" aria-hidden="true">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><path d="M8.12 8.12 12 12"/><path d="M20 4 8.12 15.88"/><circle cx="6" cy="18" r="3"/><path d="M14.8 14.8 20 20"/></svg>
+          </span>
+          <h3 class="empty-title">لم يُفحص النص بعد</h3>
+          <p class="empty-body">اضغط «افحص الشذرة» في اللوحة اليمنى ليقترح شَذْب قصّات دقيقة تراجعها وتقرر كل واحدة منها بنفسك.</p>
+        </div>
+        <div id="shadhb-loading" class="loading-state" role="status" aria-live="polite" hidden>
+          <span class="spinner" aria-hidden="true"></span>
+          <span class="loading-label">جارٍ فحص الشذرة…</span>
+        </div>
         <div id="reading-card" class="reading-card" hidden></div>
         <div id="cuts-list" class="cuts-list"></div>
         <p id="dropped-note" class="dropped-note" hidden></p>
         <div id="prune-preview-wrap" class="prune-preview-wrap" hidden>
           <div class="prune-preview-head">
             <h3>بعد التشذيب — من نصّك فقط</h3>
-            <button id="copy-pruned-btn" class="tool-btn" type="button" title="نسخ النص المشذَّب فقط">نسخ</button>
+            <button id="copy-pruned-btn" class="btn btn-outline btn-sm" type="button" title="نسخ النص المشذَّب فقط">نسخ</button>
           </div>
           <div id="prune-preview" class="prune-preview" dir="rtl"></div>
         </div>
       </div>
-      <!-- التذييل الثابت (v5.1): الضمانة والجسر خارج منطقة التمرير —
-           لا يُقصّان مع النص الطويل، ولا يظهر التذييل إلا حين يحمل شيئًا -->
+      <!-- التذييل الثابت (v5.1): الضمانة والجسر خارج منطقة التمرير -->
       <div class="shadhb-footer">
         <div id="covenant-bar" class="covenant-bar" hidden></div>
-        <button id="send-to-nasaq-btn" class="send-to-nasaq-btn" type="button" title="النص المشذَّب يصير خامًا لنسق — جلسة جديدة" hidden>أرسل إلى نَسَق</button>
+        <button id="send-to-nasaq-btn" class="btn btn-secondary btn-block" type="button" title="النص المشذَّب يصير خامًا لنسق — جلسة جديدة" hidden>أرسل إلى نَسَق</button>
       </div>
     </section>
   </main>
 
-  <!-- التذييل المهيكل: عبارة المنتج، ففاصل، فحقوق سلطان المختصرة بعلامته
-       المصغرة (بلون سلطان المعتمد لا بألوان البرجين)، فالإصدار عنصر بيانات
-       مستقل نحويًا وبصريًا — هادئ وثانوي، لا لافتة علامة -->
+  <!-- التذييل المهيكل: عبارة المنتج · حقوق سلطان · الإصدار -->
   <footer class="credit">
     <span class="credit-statement">لا نكتب عنك أبدًا</span>
     <span class="credit-sep" aria-hidden="true">·</span>
@@ -253,118 +352,110 @@
     <span class="credit-version">v8.2.2</span>
   </footer>
 
-  <div id="toast" class="toast" role="status" aria-live="polite" hidden>نُسخت النتيجة</div>
+  <!-- تشريح مكوّن Toast المعتمد (15 — Content & Feedback) -->
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden>
+    <svg class="feedback-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>
+    </svg>
+    <span id="toast-message" class="feedback-message">نُسخت النتيجة</span>
+  </div>
 
+  <!-- ========== الإعدادات (Figma 26) ========== -->
   <div id="settings-overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="settings-title" hidden>
-    <div class="settings-panel">
-      <div class="panel-head">
+    <div class="modal modal-md">
+      <div class="modal-head">
         <h2 id="settings-title">الإعدادات</h2>
-        <button id="close-settings" class="ghost-btn icon-btn" type="button" title="إغلاق" aria-label="إغلاق">
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
-            <line x1="2" y1="2" x2="10" y2="10" /><line x1="10" y1="2" x2="2" y2="10" />
-          </svg>
+        <button id="close-settings" class="icon-btn" type="button" title="إغلاق" aria-label="إغلاق">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
         </button>
       </div>
+      <!-- تبويبات بنمط Contained/Pill (Figma 26) بدل الخط السفلي القديم -->
       <div class="tabs" role="tablist">
         <button id="tab-general-btn" class="tab-btn active" type="button" role="tab" aria-controls="tab-general" aria-selected="true">عام</button>
         <button id="tab-appearance-btn" class="tab-btn" type="button" role="tab" aria-controls="tab-appearance" aria-selected="false">المظهر</button>
         <button id="tab-about-btn" class="tab-btn" type="button" role="tab" aria-controls="tab-about" aria-selected="false">حول</button>
       </div>
+
       <div id="tab-general" class="tab-body" role="tabpanel" aria-labelledby="tab-general-btn">
-        <div class="provider-row">
-          <span class="provider-label">مزوّدات جاهزة:</span>
-          <button type="button" class="ghost-btn provider-btn" data-provider="gemini">Gemini</button>
-          <button type="button" class="ghost-btn provider-btn" data-provider="groq">Groq</button>
-          <button type="button" class="ghost-btn provider-btn" data-provider="openrouter">OpenRouter</button>
+        <div class="field-block">
+          <span class="field-label">مزوّد النموذج</span>
+          <div class="provider-row">
+            <button type="button" class="provider-btn" data-provider="gemini">Gemini</button>
+            <button type="button" class="provider-btn" data-provider="groq">Groq</button>
+            <button type="button" class="provider-btn" data-provider="openrouter">OpenRouter</button>
+            <button type="button" class="provider-btn" data-provider="ollama">Ollama المحلي</button>
+          </div>
         </div>
-        <label class="field">
-          <span>API Key</span>
+        <label id="api-key-field" class="field-block">
+          <span class="field-label">API Key</span>
           <div class="key-row">
             <input id="api-key" type="password" dir="ltr" autocomplete="off" placeholder="أدخل المفتاح هنا" />
-            <button id="toggle-key" class="ghost-btn" type="button">إظهار</button>
+            <button id="toggle-key" class="btn btn-outline btn-sm" type="button">إظهار</button>
           </div>
         </label>
-        <label class="field">
-          <span>Base URL</span>
+        <label class="field-block">
+          <span class="field-label">عنوان الخادم (Base URL)</span>
           <input id="base-url" type="text" dir="ltr" autocomplete="off" />
         </label>
-        <label class="field">
-          <span>Model Name</span>
+        <label class="field-block">
+          <span class="field-label">اسم النموذج (Model Name)</span>
           <input id="model-name" type="text" dir="ltr" autocomplete="off" />
         </label>
-        <p id="settings-privacy-hint" class="hint">أزرار المزوّدات تملأ الرابط واسم النموذج فقط ولا تغيّر المفتاح. يُحفظ كل شيء محليًا على جهازك فقط، ولا يُرسل أي نص إلا عند ضغط «نسق».</p>
-        <div class="settings-actions">
-          <button id="save-settings" class="primary-btn">حفظ</button>
+        <div id="ollama-test-row" class="test-row" hidden>
+          <button id="ollama-test-btn" class="btn btn-outline btn-sm" type="button">اختبار الاتصال</button>
+          <span class="field-hint">يفحص الاتصال بـ Ollama محليًا فقط — بلا اتصال سحابي</span>
         </div>
+        <p id="settings-privacy-hint" class="note-card">أزرار المزوّدات تملأ الرابط واسم النموذج فقط ولا تغيّر المفتاح. يُحفظ كل شيء محليًا على جهازك فقط، ولا يُرسل أي نص إلا عند ضغط «نسّق» أو «افحص الشذرة».</p>
+        <button id="save-settings" class="btn btn-primary btn-block">حفظ الإعدادات</button>
       </div>
+
       <div id="tab-appearance" class="tab-body" role="tabpanel" aria-labelledby="tab-appearance-btn" hidden>
-        <!-- المظهر: ثلاثة خيارات فقط — فاتح، داكن، تلقائي (يتبع مظهر النظام).
-             الحالة عبر aria-pressed والموضع، والاختيار يُطبَّق فورًا ويُحفَظ.
-             منطق الحالة الواحد في shell.js يزامن الأزرار الثلاثة ويتبع
-             النظام حيًّا ما دام «تلقائي» -->
-        <div class="appearance-mode-row">
-          <span class="appearance-mode-label">المظهر</span>
-          <div class="appearance-switch" role="group" aria-label="مظهر الواجهة: فاتح أو داكن أو تلقائي">
-            <button id="appearance-light-btn" class="appearance-mode-btn" type="button" aria-pressed="false" title="فاتح">
-              <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <circle cx="8" cy="8" r="3" />
-                <line x1="8" y1="1.5" x2="8" y2="3" /><line x1="8" y1="13" x2="8" y2="14.5" />
-                <line x1="1.5" y1="8" x2="3" y2="8" /><line x1="13" y1="8" x2="14.5" y2="8" />
-                <line x1="3.4" y1="3.4" x2="4.5" y2="4.5" /><line x1="11.5" y1="11.5" x2="12.6" y2="12.6" />
-                <line x1="3.4" y1="12.6" x2="4.5" y2="11.5" /><line x1="11.5" y1="4.5" x2="12.6" y2="3.4" />
-              </svg>
-              <span class="appearance-mode-name">فاتح</span>
+        <div class="field-block">
+          <span class="field-label">المظهر</span>
+          <!-- ثلاثة خيارات كبطاقات معاينة (Figma 26) — الحالة بـaria-pressed -->
+          <div class="appearance-options" role="group" aria-label="مظهر الواجهة: فاتح أو داكن أو تلقائي">
+            <button id="appearance-light-btn" class="appearance-card" type="button" aria-pressed="false" title="فاتح">
+              <span class="appearance-swatch swatch-light" aria-hidden="true"></span>
+              <span class="appearance-name">فاتح</span>
             </button>
-            <button id="appearance-dark-btn" class="appearance-mode-btn" type="button" aria-pressed="false" title="داكن">
-              <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M14 8.53A6 6 0 1 1 7.47 2 4.67 4.67 0 0 0 14 8.53Z" />
-              </svg>
-              <span class="appearance-mode-name">داكن</span>
+            <button id="appearance-dark-btn" class="appearance-card" type="button" aria-pressed="false" title="داكن">
+              <span class="appearance-swatch swatch-dark" aria-hidden="true"></span>
+              <span class="appearance-name">داكن</span>
             </button>
-            <button id="appearance-auto-btn" class="appearance-mode-btn" type="button" aria-pressed="false" title="تلقائي — يتبع مظهر النظام">
-              <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <circle cx="8" cy="8" r="6" />
-                <path d="M8 2.4A5.6 5.6 0 0 0 8 13.6Z" fill="currentColor" stroke="none" />
-              </svg>
-              <span class="appearance-mode-name">تلقائي</span>
+            <button id="appearance-auto-btn" class="appearance-card" type="button" aria-pressed="false" title="تلقائي — يتبع مظهر النظام">
+              <span class="appearance-swatch swatch-auto" aria-hidden="true"></span>
+              <span class="appearance-name">تلقائي</span>
             </button>
           </div>
         </div>
-        <p class="hint">«تلقائي» يتبع مظهر نظام التشغيل. يُطبَّق الاختيار فورًا ويُحفَظ تلقائيًا، فيعود معك عند فتح التطبيق من جديد.</p>
+        <p class="note-card">الوضع التلقائي يتبع مظهر نظام التشغيل حيًّا دون الحاجة لإعادة تشغيل التطبيق. يُطبَّق الاختيار فورًا ويُحفَظ تلقائيًا.</p>
       </div>
-      <!-- تبويب «حول»: هوية التطبيق أولًا (العلامة والإصدار والتحديثات)،
-           وخاتمةً توقيع المطوّر. واجهة ساكنة — لا نداء updater ولا API خارجي
-           هنا. علامة نَسَق نفس هندسة رمز الشريط، حبرها currentColor يتبع
-           الثيم، ومحورها ونقطتها بلون الفعل -->
+
       <div id="tab-about" class="tab-body" role="tabpanel" aria-labelledby="tab-about-btn" hidden>
-        <!-- هوية البرج في «حول» تتبدّل كوحدة مع data-mode (نفس آلية الشريط):
-             العلامة والاسم والعبارة معًا من خريطة الهوية الواحدة في shell.js -->
+        <!-- هوية البرج تتبدّل كوحدة مع data-mode (نفس آلية الشريط) -->
         <section class="about-identity">
           <span class="about-mark" aria-hidden="true">
             <svg class="mark-nasaq" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M4 5.25H18.5" stroke="currentColor" stroke-width="1.65" stroke-linecap="round"/>
-              <path d="M6.5 9.25H18.5" stroke="currentColor" stroke-width="1.45" stroke-linecap="round" opacity=".8"/>
-              <path d="M8.5 13.25H18.5" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" opacity=".58"/>
-              <path d="M11 17.25H18.5" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" opacity=".42"/>
-              <path class="mark-axis" d="M18.5 3.5V20.25" stroke-width="1" stroke-linecap="round" opacity=".55"/>
-              <circle class="mark-dot" cx="18.5" cy="5.25" r="1.6"/>
+              <rect class="mark-accent" x="18" y="3" width="6" height="6" rx="2"/>
+              <rect class="mark-accent" x="0" y="9" width="6" height="12" rx="2"/>
+              <rect class="mark-ink" x="6" y="15" width="12" height="6" rx="2"/>
+              <rect class="mark-accent" x="12" y="9" width="6" height="12" rx="2"/>
             </svg>
             <svg class="mark-shadhb" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M4 5.25H18.5" stroke="currentColor" stroke-width="1.65" stroke-linecap="round"/>
-              <path d="M6.5 9.25H18.5" stroke="currentColor" stroke-width="1.45" stroke-linecap="round" opacity=".8"/>
-              <path d="M8.5 13.25H11.5M14.75 13.25H18.5" stroke="currentColor" stroke-width="1.45" stroke-linecap="round" opacity=".66"/>
-              <path class="mark-cut" d="m12.15 11.35 2 3.8" stroke-width="1.8" stroke-linecap="round"/>
-              <path d="M11 17.25H18.5" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" opacity=".42"/>
-              <path class="mark-axis" d="M18.5 3.5V20.25" stroke-width="1" stroke-linecap="round" opacity=".55"/>
-              <circle class="mark-dot" cx="18.5" cy="5.25" r="1.6"/>
+              <rect class="mark-accent" x="2.5" y="3" width="5" height="5" rx="1"/>
+              <rect class="mark-ink" x="2.5" y="10" width="5" height="13" rx="1"/>
+              <rect class="mark-ink" x="9.5" y="5" width="5" height="11" rx="1"/>
+              <rect class="mark-accent" x="9.5" y="18" width="5" height="5" rx="1"/>
+              <rect class="mark-ink" x="16.5" y="1" width="5" height="4" rx="1"/>
+              <rect class="mark-ink" x="16.5" y="7" width="5" height="16" rx="1"/>
             </svg>
           </span>
-          <h3 class="about-app-name">نَسَق</h3>
-          <p class="about-tagline">البوابة الأخيرة قبل النشر</p>
+          <div class="about-identity-text">
+            <h3 class="about-app-name">نَسَق</h3>
+            <p class="about-tagline">البوابة الأخيرة قبل النشر</p>
+          </div>
         </section>
 
-        <!-- بيانات وظيفية: الإصدار والمنصة والمحرّك — قائمة تعريف label/value
-             محاذاة، خط المحتوى Cairo، هادئة تحت هوية المنتج -->
         <dl class="about-meta">
           <div class="about-meta-row">
             <dt>الإصدار</dt>
@@ -380,15 +471,13 @@
           </div>
         </dl>
 
-        <!-- التحديثات: آلة حالات حقيقية عبر أوامر plugin:updater الرسمية
-             (فحص → تنزيل بتقدّم → تثبيت وإعادة تشغيل). المنطق في shell.js،
-             والأزرار والحالات ترث توكنز البرج الفعّال. زر التثبيت أساسيّ
-             (Almarai)، والحالة والتقدّم بخط المحتوى (Cairo) -->
-        <div class="about-updates">
+        <!-- التحديثات: آلة حالات حقيقية عبر أوامر plugin:updater الرسمية -->
+        <div class="update-card">
+          <span class="field-label">التحديثات</span>
           <div class="update-actions">
-            <button id="update-check-btn" class="ghost-btn" type="button">البحث عن تحديثات</button>
-            <button id="update-download-btn" class="ghost-btn" type="button" hidden>تنزيل التحديث</button>
-            <button id="update-install-btn" class="primary-btn" type="button" hidden>تثبيت وإعادة التشغيل</button>
+            <button id="update-check-btn" class="btn btn-outline btn-sm" type="button">البحث عن تحديثات</button>
+            <button id="update-download-btn" class="btn btn-outline btn-sm" type="button" hidden>تنزيل التحديث</button>
+            <button id="update-install-btn" class="btn btn-primary btn-sm" type="button" hidden>تثبيت وإعادة التشغيل</button>
           </div>
           <div id="update-progress" class="update-progress" hidden aria-hidden="true">
             <div id="update-progress-bar" class="update-progress-bar"></div>
@@ -396,10 +485,6 @@
           <p id="update-status-text" class="update-status-text" role="status" aria-live="polite"></p>
         </div>
 
-        <!-- رابط صفحة المشروع بأيقونة GitHub الرسمية من حزمة هوية سلطان:
-             رابط دلاليّ حقيقي (يعمل في وضع الويب المؤطّر عبر target=_blank)،
-             وداخل التطبيق يفتحه shell.js في المتصفح الافتراضي عبر مُشغّل
-             Tauri الرسمي دون مغادرة نافذة نَسَق -->
         <a id="about-project-link" class="about-project-link" href="https://github.com/iSltanX/Nasq" target="_blank" rel="noopener noreferrer">
           <span class="about-project-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
@@ -409,12 +494,9 @@
           <span>صفحة المشروع</span>
         </a>
 
-        <!-- فاصل هادئ يفصل بيانات المنتج عن حقوق المطوّر -->
         <div class="about-divider" role="presentation"></div>
 
-        <!-- خاتمة — حقوق سلطان الرسمية: المونوغرام المصغّر (كما في ملف الهوية،
-             تلوينًا فقط بلون سلطان المعتمد --sultan-mark لا بألوان البرجين)
-             بجوار الصيغة الكاملة، أصغر وأهدأ من هوية المنتج -->
+        <!-- حقوق سلطان الرسمية — بلون سلطان المعتمد لا بألوان البرجين -->
         <div class="about-rights">
           <span class="sultan-monogram" aria-hidden="true">
             <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="8.5" stroke-linecap="round" stroke-linejoin="round">
@@ -431,62 +513,60 @@
     </div>
   </div>
 
+  <!-- ========== المسودات (Figma 26) ========== -->
   <div id="drafts-overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="drafts-title" hidden>
-    <div class="drafts-panel">
-      <div class="panel-head">
+    <div class="modal modal-md">
+      <div class="modal-head">
         <h2 id="drafts-title">مسوداتي</h2>
-        <button id="close-drafts" class="ghost-btn icon-btn" type="button" title="إغلاق" aria-label="إغلاق">
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
-            <line x1="2" y1="2" x2="10" y2="10" /><line x1="10" y1="2" x2="2" y2="10" />
-          </svg>
+        <button id="close-drafts" class="icon-btn" type="button" title="إغلاق" aria-label="إغلاق">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
         </button>
       </div>
-      <!-- شريط المسودات (v4.1): بحث مرشِّح للعرض فقط + نسخة احتياطية تصديرًا واستيرادًا -->
-      <div class="drafts-toolbar">
-        <input id="drafts-search" type="search" dir="rtl" placeholder="ابحث في نصوص المسودات…" spellcheck="false" />
-        <button id="export-drafts-btn" class="tool-btn" type="button" title="حفظ نسخة احتياطية من كل المسودات في مجلد التنزيلات">تصدير نسخة</button>
-        <button id="import-drafts-btn" class="tool-btn" type="button" title="استيراد نسخة احتياطية — دمج لا استبدال، المحفوظ لا يُمسّ">استيراد</button>
-        <input id="import-drafts-input" type="file" accept=".json,application/json" hidden />
+      <div class="modal-body">
+        <input id="drafts-search" type="search" dir="rtl" placeholder="ابحث في مسوداتك…" spellcheck="false" />
+        <p id="drafts-empty" class="drafts-empty" hidden>لا توجد مسودات محفوظة بعد.</p>
+        <div id="drafts-list" class="drafts-list"></div>
+        <div class="modal-foot">
+          <button id="export-drafts-btn" class="btn btn-outline btn-sm" type="button" title="حفظ نسخة احتياطية من كل المسودات في مجلد التنزيلات">تصدير نسخة احتياطية</button>
+          <button id="import-drafts-btn" class="btn btn-outline btn-sm" type="button" title="استيراد نسخة احتياطية — دمج لا استبدال، المحفوظ لا يُمسّ">استيراد ودمج</button>
+          <input id="import-drafts-input" type="file" accept=".json,application/json" hidden />
+        </div>
       </div>
-      <p id="drafts-empty" class="drafts-empty" hidden>لا توجد مسودات محفوظة بعد.</p>
-      <div id="drafts-list" class="drafts-list"></div>
     </div>
   </div>
 
-  <!-- لوحة تنويعات سابستاك — حبر وذهب المخطوطة، ثلاث تنويعات تختلف في مواضع الكسر -->
+  <!-- ========== لوحة التنويعات (Figma 24) ========== -->
   <div id="variations-overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="variations-title" hidden>
-    <div class="variations-panel" dir="rtl">
-      <div class="panel-head">
-        <h2 id="variations-title">تنويعات سابستاك <span id="variations-face" class="variations-face"></span></h2>
-        <button id="close-variations" class="ghost-btn icon-btn" type="button" title="إغلاق" aria-label="إغلاق">
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
-            <line x1="2" y1="2" x2="10" y2="10" /><line x1="10" y1="2" x2="2" y2="10" />
-          </svg>
+    <div class="modal modal-lg" dir="rtl">
+      <div class="modal-head">
+        <div class="modal-head-text">
+          <h2 id="variations-title">تنويعات — سابستاك <span id="variations-face" class="variations-face"></span></h2>
+          <p class="modal-sub">ثلاث معالجات شكلية مختلفة لنفس النص — الكلمات والمعنى كما هي. اختر أنقاها.</p>
+        </div>
+        <button id="close-variations" class="icon-btn" type="button" title="إغلاق" aria-label="إغلاق">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
         </button>
       </div>
-      <p class="variations-note">ثلاث تنويعات تختلف في مواضع كسر السطر وتوزيع الوقفات — الكلمات والمعنى كما هي. اختر أنقاها.</p>
       <div id="variations-grid" class="variations-grid"></div>
-      <div class="variations-actions">
-        <button id="regen-variations" class="regen-btn" type="button">ولّد ثلاثًا جديدة</button>
+      <div class="modal-foot modal-foot-center">
+        <button id="regen-variations" class="btn btn-outline btn-sm" type="button">ولّد ثلاثًا جديدة</button>
       </div>
     </div>
   </div>
 
-  <!-- عدسة القراءة: معاينة النص بعرض هاتف ضيّق، للعرض فقط — لا تحرير -->
+  <!-- ========== عدسة القراءة (Figma 24) ========== -->
   <div id="reading-lens-overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="reading-lens-title" hidden>
-    <div class="reading-lens-panel" dir="rtl">
-      <div class="panel-head">
-        <h2 id="reading-lens-title">عدسة القراءة</h2>
-        <button id="close-reading-lens" class="ghost-btn icon-btn" type="button" title="إغلاق" aria-label="إغلاق">
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
-            <line x1="2" y1="2" x2="10" y2="10" /><line x1="10" y1="2" x2="2" y2="10" />
-          </svg>
-        </button>
+    <div class="lens-shell" dir="rtl">
+      <div class="lens-phone">
+        <div class="lens-head">
+          <h2 id="reading-lens-title">عدسة القراءة</h2>
+          <button id="close-reading-lens" class="icon-btn icon-btn-sm" type="button" title="إغلاق" aria-label="إغلاق">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+          </button>
+        </div>
+        <div id="reading-lens-text" class="lens-text" dir="rtl"></div>
       </div>
-      <p class="reading-lens-note">معاينة كيف تتكسّر الأسطر على شاشة هاتف — النص للعرض فقط، لا تحرير هنا.</p>
-      <div class="reading-lens-frame">
-        <div id="reading-lens-text" class="reading-lens-text" dir="rtl"></div>
-      </div>
+      <p class="lens-caption">معاينة للعرض فقط — بعرض هاتف نموذجي (٣٧٥ بكسل) لتقييم الإيقاع البصري قبل النشر</p>
     </div>
   </div>
 
