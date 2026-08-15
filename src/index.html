@@ -231,6 +231,19 @@
                 <span>نسخ</span>
               </button>
             </div>
+
+            <!-- طيّ الأولوية (Priority+) — يظهر عند ضيق العرض وحده، ويستقبل
+                 الأدوات الأدنى أولوية بترتيب معلن في nasaq.js. «تراجع»
+                 و«بحث» و«نسخ» ليست في قائمة الطيّ إطلاقًا فلا تغيب أبدًا.
+                 الأزرار تُنقل بعقدها نفسها فتنتقل مستمعاتها معها، ولا
+                 يتغيّر معرّف ولا سلوك — الاسم يظهر في القائمة من
+                 aria-label عبر ::after بلا مساس بأبناء الزر -->
+            <div id="toolbar-more-group" class="toolbar-group toolbar-more-group" hidden>
+              <button id="toolbar-more-btn" class="tool-btn" type="button" title="أدوات أخرى" aria-label="أدوات أخرى" aria-haspopup="menu" aria-expanded="false" aria-controls="toolbar-overflow">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="5" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.4" fill="currentColor" stroke="none"/></svg>
+              </button>
+              <div id="toolbar-overflow" class="toolbar-overflow" role="menu" hidden></div>
+            </div>
           </div>
           <!-- أدوات عرض ثانوية خارج شريط الأفعال الثمانية المعتمد -->
           <span class="secondary-tools">

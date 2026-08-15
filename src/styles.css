@@ -845,11 +845,55 @@ textarea.empty-bidi { unicode-bidi: isolate; }
   flex-shrink: 0;
 }
 
-/* الرمز ١٥px داخل زر ٢٨px (٥٤٪): الأدوات خدمة للنتيجة لا منافِسة لها،
-   وهدف النقر يبقى ٢٨ كاملًا فلا تُدفع الدقة ثمنًا للهدوء البصري */
+/* الرمز ١٤px داخل زر ٢٤px (٥٨٪): الأدوات خدمة للنتيجة لا منافِسة لها،
+   وهدف النقر يبقى ٢٤ كاملًا فلا تُدفع الدقة ثمنًا للهدوء البصري */
 .nsq-toolbar .tool-btn svg { width: 14px; height: 14px; }
 .nsq-toolbar .tool-btn:hover { color: var(--text); background: var(--accent-soft); }
 .nsq-toolbar .tool-btn:disabled { background: none; }
+
+/* ---------- طيّ الأولوية: قائمة الأدوات المطويّة ---------- */
+.toolbar-more-group { position: relative; }
+
+/* ثابتة (fixed) لا مطلقة: .nsq-toolbar يقصّ أفقيًا (overflow-x) فأي
+   عنصر مطلق داخله يُبتر — والموضع يُحسب في nasaq.js من موقع الزر */
+.toolbar-overflow {
+  position: fixed;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  min-width: 190px;
+  padding: var(--sp-4);
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--r-10);
+  box-shadow: 0 10px 28px var(--shadow);
+  overflow-y: auto;
+  z-index: 45;
+}
+
+/* داخل القائمة تصير الأزرار صفوفًا كاملة العرض باسمها ظاهرًا: أيقونة
+   وحدها في قائمة رأسية لغز، فالاسم يأتي من aria-label نفسه عبر ::after
+   — لا نصّ مكرر في DOM ولا تعديل لأبناء الزر */
+.toolbar-overflow .tool-btn {
+  width: 100%;
+  height: var(--ctl-md);
+  justify-content: flex-start;
+  gap: var(--sp-10);
+  padding: 0 var(--sp-10);
+  border-color: transparent;
+  border-radius: var(--r-8);
+  color: var(--text-dim);
+  font-size: var(--fs-base);
+  font-weight: 400;
+}
+
+.toolbar-overflow .tool-btn::after {
+  content: attr(aria-label);
+  white-space: nowrap;
+}
+
+.toolbar-overflow .tool-btn:hover { color: var(--text); background: var(--accent-soft); }
+.toolbar-overflow .tool-btn:disabled { opacity: 0.4; background: none; }
 
 /* «نسخ» وحده Icon+Label — الفعل الختامي الأكثر استخدامًا */
 .nsq-toolbar .tool-btn-label {

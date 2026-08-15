@@ -1219,3 +1219,184 @@ registerEscapeCloser(() => !readingLensOverlay.hidden, closeReadingLens);
   registerEscapeCloser(() => !bar.hidden, closeSearch);
 })();
 
+
+// ---------- شريط الأدوات: طيّ الأولوية عند ضيق العرض (Priority+) ----------
+// المشكلة التي يغلقها: عند أصغر عرض مسموح للنافذة (٨٠٠px) يحتاج الشريط
+// ٣١٣px في صندوق ٢٦١px، فكان الفائض يختفي في شريط تمرير أفقي بلا مقبض
+// مرئي (scrollbar-width: none) — أي أن أدوات تصير غير مرئية ولا شيء
+// يدلّ على وجودها. الحل سلوكيّ لا مقياسيّ: الأدوات الأدنى أولوية تنتقل
+// إلى قائمة «أدوات أخرى» بأسمائها، ولا يُصغَّر شيء.
+(function initToolbarOverflow() {
+  const toolbar = document.querySelector(".nsq-toolbar");
+  const moreGroup = el("toolbar-more-group");
+  const moreBtn = el("toolbar-more-btn");
+  const menu = el("toolbar-overflow");
+  if (!toolbar || !moreGroup || !moreBtn || !menu) return;
+
+  // ترتيب الطيّ — الأدنى أولوية أولًا. «تراجع» و«بحث» و«نسخ» غائبة عن
+  // هذه القائمة عمدًا فلا تُطوى مهما ضاق العرض
+  const COLLAPSE_ORDER = [
+    "more-lines-btn",
+    "fewer-lines-btn",
+    "split-sentences-btn",
+    "clean-btn",
+    "save-draft-btn",
+  ];
+  const items = COLLAPSE_ORDER.map((id) => el(id)).filter(Boolean);
+  if (!items.length) return;
+
+  // لقطة الترتيب الأصلي مرة واحدة: الإرجاع يعيد الإلحاق بهذا الترتيب
+  // نفسه فيستحيل أن ينزاح زر عن مجموعته أو عن موضعه فيها
+  const layout = [...toolbar.querySelectorAll(".toolbar-group")].map((g) => ({
+    group: g,
+    kids: [...g.children],
+  }));
+
+  function restoreAll() {
+    for (const { group, kids } of layout) for (const k of kids) group.appendChild(k);
+  }
+
+  // مجموعة فرغت تُخفى، وفاصل لم يعد بين مجموعتين ظاهرتين يُخفى معها —
+  // وإلا بقيت خطوط عائمة بلا ما تفصله
+  function syncSeparators() {
+    const kids = [...toolbar.children];
+    for (const k of kids) {
+      if (k.classList.contains("toolbar-group") && k !== moreGroup) {
+        k.hidden = k.children.length === 0;
+      }
+    }
+    const visibleGroup = (x) =>
+      x.classList.contains("toolbar-group") && !x.hidden && x.children.length > 0;
+    kids.forEach((k, i) => {
+      if (!k.classList.contains("toolbar-divider")) return;
+      k.hidden = !(
+        kids.slice(0, i).some(visibleGroup) && kids.slice(i + 1).some(visibleGroup)
+      );
+    });
+  }
+
+  const overflows = () => toolbar.scrollWidth > toolbar.clientWidth;
+
+  function recompute() {
+    closeMenu();
+    restoreAll();
+    moreGroup.hidden = true;
+    syncSeparators();
+    // اللوحة مخفيّة (وضع شَذْب) أو لم تُرسم بعد: لا قياس له معنى
+    if (!toolbar.clientWidth || !overflows()) return;
+    // إظهار زر «أخرى» يوسّع الشريط بنفسه، فالقياس يلي الإظهار لا يسبقه
+    moreGroup.hidden = false;
+    for (const btn of items) {
+      if (!overflows()) break;
+      menu.appendChild(btn);
+      syncSeparators();
+    }
+    if (!menu.children.length) moreGroup.hidden = true;
+  }
+
+  // ---------- القائمة ----------
+  function positionMenu() {
+    const margin = 8;
+    const r = moreBtn.getBoundingClientRect();
+    menu.style.top = r.bottom + 4 + "px";
+    menu.style.bottom = "";
+    menu.style.maxHeight = "";
+    // محاذاة الحافة اليمنى للزر — القائمة تنمو يسارًا كما يقتضي RTL، ثم
+    // تُلجَم داخل النافذة: الزر يقع قرب الحافة اليسرى في أضيق نافذة،
+    // فالمحاذاة وحدها تدفع القائمة خارج الشاشة وتقصّ أسماء الأدوات
+    menu.style.right = "";
+    menu.style.left = "0px";
+    const w = menu.offsetWidth;
+    let left = r.right - w;
+    if (left < margin) left = margin;
+    if (left + w > window.innerWidth - margin) left = window.innerWidth - margin - w;
+    menu.style.left = Math.max(margin, left) + "px";
+    const below = window.innerHeight - r.bottom - margin;
+    const above = r.top - margin;
+    if (menu.scrollHeight > below && above > below) {
+      menu.style.top = "";
+      menu.style.bottom = window.innerHeight - r.top + 4 + "px";
+      menu.style.maxHeight = Math.max(96, Math.floor(above)) + "px";
+    } else {
+      menu.style.maxHeight = Math.max(96, Math.floor(below)) + "px";
+    }
+  }
+
+  function closeMenu() {
+    if (menu.hidden) return;
+    if (menu.contains(document.activeElement)) moreBtn.focus();
+    menu.hidden = true;
+    moreBtn.setAttribute("aria-expanded", "false");
+  }
+
+  function openMenu() {
+    if (!menu.children.length) return;
+    menu.hidden = false;
+    positionMenu();
+    moreBtn.setAttribute("aria-expanded", "true");
+    menu.querySelector(".tool-btn:not(:disabled)")?.focus();
+  }
+
+  moreBtn.addEventListener("click", () => (menu.hidden ? openMenu() : closeMenu()));
+
+  // الفعل يُنفَّذ بمستمع الزر نفسه (انتقل معه)، وهذا يغلق القائمة بعده
+  menu.addEventListener("click", (e) => {
+    if (e.target.closest(".tool-btn")) closeMenu();
+  });
+
+  menu.addEventListener("keydown", (e) => {
+    const list = [...menu.querySelectorAll(".tool-btn:not(:disabled)")];
+    const i = list.indexOf(document.activeElement);
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      list[Math.min(i + 1, list.length - 1)]?.focus();
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      list[Math.max(i - 1, 0)]?.focus();
+    } else if (e.key === "Tab") {
+      closeMenu();
+    }
+  });
+
+  document.addEventListener("mousedown", (e) => {
+    if (!menu.hidden && !e.target.closest(".toolbar-more-group")) closeMenu();
+  });
+  registerEscapeCloser(() => !menu.hidden, closeMenu);
+
+  // الرصد على رأس اللوحة وعلى عدّاد الأحرف — لا على الشريط نفسه: عرض
+  // الاثنين لا تغيّره عمليات النقل، فلا حلقة رصد↔تعديل. العدّاد مرصود
+  // لأن ظهور نصّه («٢٨١ حرف» بعد أول نتيجة) يقتطع من عرض الشريط دون
+  // أي حدث resize، فبغيره يفيض الشريط بعد التنسيق الأول وحده
+  // جدولة واحدة مكبوحة للراصدَين: rAF يجمع القياس مع دورة التخطيط، لكنه
+  // لا يُستدعى أصلًا والنافذة محجوبة — فيُستبدل بتنفيذ مباشر حينها حتى
+  // لا تبقى الحالة معلّقة إن تغيّر المقاس والنافذة خلف غيرها
+  let queued = false;
+  function scheduleRecompute() {
+    if (queued) return;
+    queued = true;
+    const run = () => {
+      queued = false;
+      recompute();
+    };
+    if (document.hidden) run();
+    else requestAnimationFrame(run);
+  }
+
+  const head = toolbar.closest(".pane-head");
+  if (head && window.ResizeObserver) {
+    new ResizeObserver(scheduleRecompute).observe(head);
+  }
+
+  // عدّاد الأحرف يتغيّر نصًّا لا حجمَ حاوية، فلا يبلغه ResizeObserver —
+  // ورصد تغيّر نصّه لا يمكن أن يُحدث حلقة لأن recompute لا يكتب فيه أبدًا
+  const count = el("output-count");
+  if (count && window.MutationObserver) {
+    new MutationObserver(scheduleRecompute).observe(count, {
+      childList: true,
+      characterData: true,
+      subtree: true,
+    });
+  }
+  window.addEventListener("resize", recompute);
+  recompute();
+})();
