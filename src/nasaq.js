@@ -205,6 +205,30 @@ function enhanceSelectAsDropdown(sel) {
     }
   }
 
+  // موضعها ثابت (fixed) بمعزل عن قصّ .pane-scroll: نقيس المساحة الفعلية
+  // أعلى الزر وأسفله داخل نافذة التطبيق نفسها، فتفتح للأسفل حين تتّسع
+  // وللأعلى حين تضيق (قرب أسفل النافذة)، مع max-height وتمرير داخلي
+  // يبقيها ضمن حدود النافذة دومًا مهما طال عدد الخيارات
+  function positionPopup() {
+    const margin = 8;
+    const r = btn.getBoundingClientRect();
+    popup.style.left = r.left + "px";
+    popup.style.width = r.width + "px";
+    popup.style.top = r.bottom + 4 + "px";
+    popup.style.bottom = "";
+    popup.style.maxHeight = "";
+    const spaceBelow = window.innerHeight - r.bottom - margin;
+    const spaceAbove = r.top - margin;
+    const needed = popup.scrollHeight;
+    if (needed > spaceBelow && spaceAbove > spaceBelow) {
+      popup.style.top = "";
+      popup.style.bottom = window.innerHeight - r.top + 4 + "px";
+      popup.style.maxHeight = Math.max(100, Math.floor(spaceAbove)) + "px";
+    } else {
+      popup.style.maxHeight = Math.max(100, Math.floor(spaceBelow)) + "px";
+    }
+  }
+
   function close() {
     popup.hidden = true;
     btn.setAttribute("aria-expanded", "false");
@@ -216,6 +240,7 @@ function enhanceSelectAsDropdown(sel) {
     rebuildOptions();
     refresh();
     popup.hidden = false;
+    positionPopup();
     btn.setAttribute("aria-expanded", "true");
     openIdentityDropdownCloser = close;
     (popup.querySelector('[aria-selected="true"]') || popup.firstChild)?.focus();
@@ -268,6 +293,13 @@ document.addEventListener("mousedown", (e) => {
     closeIdentityDropdowns();
   }
 });
+
+// اللوحة ثابتة (fixed) بمعزل عن .pane-scroll فلا تتبع الزر تلقائيًا أثناء
+// التمرير — إغلاقها عند أي تمرير (capture: يلتقط تمرير .pane-scroll نفسه
+// رغم أن حدث scroll لا يصعد) أو عند تغيّر حجم النافذة أبسط وأسلم من إعادة
+// حساب موضعها حيًّا مع كل بكسل
+document.addEventListener("scroll", () => closeIdentityDropdowns(), true);
+window.addEventListener("resize", () => closeIdentityDropdowns());
 
 enhanceSelectAsDropdown(el("format-style"));
 enhanceSelectAsDropdown(interventionSel);

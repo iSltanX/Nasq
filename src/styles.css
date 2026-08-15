@@ -444,11 +444,21 @@ input, select, textarea { font-family: var(--font-text); }
 .pane-scroll {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-20);
+  gap: var(--sp-14);
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: var(--sp-24);
+  padding: var(--sp-16) var(--sp-24);
+}
+
+/* التذييل الثابت لفعل لوحة الإدخال الرئيس — خارج منطقة التمرير، على
+   نمط .shadhb-footer: «نسّق» (أو «افحص الشذرة» في وضع شَذْب) يبقى ظاهرًا
+   وقابلًا للنقر دائمًا مهما طال محتوى الحقول أعلاه أو قصُر ارتفاع النافذة */
+.pane-input-footer {
+  flex-shrink: 0;
+  border-top: 1px solid var(--border-subtle);
+  padding: var(--sp-12) var(--sp-24);
+  background: var(--bg-raised);
 }
 
 .pane-title {
@@ -484,7 +494,6 @@ input, select, textarea { font-family: var(--font-text); }
 }
 
 .pane-divider { height: 1px; background: var(--border-subtle); flex-shrink: 0; }
-.pane-spacer { flex: 1; min-height: var(--sp-8); }
 
 /* ---------- الحقول ---------- */
 .field-block {
@@ -515,11 +524,14 @@ input, select, textarea { font-family: var(--font-text); }
   color: var(--text);
 }
 
-/* خانة الكتابة داخل صندوق بحدّ (Figma 24) والعدّاد أسفلها داخله */
+/* خانة الكتابة داخل صندوق بحدّ (Figma 24) والعدّاد أسفلها داخله — ارتفاع
+   ديناميكي (flex) يستفيد من مساحة اللوحة الفعلية بدل رقم ثابت كبير:
+   يكبر حين تسمح النافذة، ويتقلّص لحدّه الأدنى فيتولى .pane-scroll التمرير */
 .textarea-shell {
   display: flex;
   flex-direction: column;
-  min-height: 240px;
+  flex: 1 1 130px;
+  min-height: 130px;
   background: var(--bg-input);
   border: 1px solid var(--border);
   border-radius: var(--r-12);
@@ -585,13 +597,14 @@ textarea.empty-bidi { unicode-bidi: isolate; }
 .format-settings {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-16);
+  gap: var(--sp-10);
+  flex-shrink: 0;
 }
 
 .input-actions {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-10);
+  gap: var(--sp-8);
   flex-shrink: 0;
 }
 
@@ -612,7 +625,7 @@ textarea.empty-bidi { unicode-bidi: isolate; }
   justify-content: space-between;
   gap: var(--sp-8);
   width: 100%;
-  min-height: 42px;
+  min-height: 38px;
   padding: 0 var(--sp-14);
   background: var(--bg-input);
   color: var(--text);
@@ -628,18 +641,19 @@ textarea.empty-bidi { unicode-bidi: isolate; }
 .dd-btn:hover, .dd-btn[aria-expanded="true"] { border-color: var(--accent); }
 .dd-chevron { color: var(--text-muted); flex-shrink: 0; }
 
+/* موضعها ثابت (fixed) بمعزل عن أي سلف قابل للتمرير — .pane-scroll يقصّ أي
+   عنصر absolute يتجاوز حدوده، بينما fixed يُحسب حسب النافذة نفسها فيبقى
+   ظاهرًا كاملًا فوق المحتوى دون أن يدفعه. left/top أو bottom وmax-height
+   تُضبط برمجيًا في enhanceSelectAsDropdown (nasaq.js) بعد قياس المساحة
+   الفعلية أعلى الزر وأسفله — فتحة للأسفل حين تتّسع، وللأعلى حين تضيق */
 .dd-popup {
-  position: absolute;
-  top: 100%;
-  inset-inline-start: 0;
-  margin-top: var(--sp-4);
-  min-width: 100%;
-  width: max-content;
+  position: fixed;
   background: var(--bg-input);
   border: 1px solid var(--border);
   border-radius: var(--r-10);
   box-shadow: 0 10px 28px var(--shadow);
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
   z-index: 40;
 }
 
@@ -1894,10 +1908,21 @@ textarea.empty-bidi { unicode-bidi: isolate; }
 }
 
 /* ============================================================
-   ١١ — الاستجابة: الحد الأدنى ١٠٢٤×٧٦٨ (27 — Responsive)
-   تحت ٩٠٠px تُكدَّس اللوحتان عموديًا بدل التقسيم الأفقي
+   ١١ — الاستجابة: التطبيق سطح مكتب فقط ولا ينزل عن ٨٠٠×٥٦٠ فعليًا
+   (src-tauri/tauri.conf.json minWidth/minHeight) — فالتقسيم الأفقي
+   (عمودان جنبًا إلى جنب) يبقى قائمًا عبر المدى الحقيقي كله، مطابقًا
+   للغة Figma؛ لا تكديس عمودي إلى نمط الهاتف عند الحد الأدنى الفعلي
+   (إصلاح ٢٠٢٦-٠٨-١٥: الكسر القديم عند ٩٠٠px كان يفعّل التكديس دومًا
+   عند ٨٠٠px فيُلغي كل ضبط اللوحة الثابت أسفلها). تحت ١٠٠٠px تضيق لوحة
+   الإدخال (٤٠٠px بدل ٥٢٠) دون تكديس، لتبقى لوحة النتيجة بعرض معقول قرب
+   الحد الأدنى. تحت ٦٤٠px (مدى لا يبلغه التطبيق الفعلي أبدًا) تكديسٌ
+   احتياطي كامل — يبقى للتحصين النظري فقط، لا لأي حالة استخدام حقيقية
    ============================================================ */
-@media (max-width: 900px) {
+@media (max-width: 1000px) {
+  :root { --input-pane-w: 400px; }
+}
+
+@media (max-width: 640px) {
   body { overflow: auto; }
   .workspace { flex-direction: column; }
   /* التكديس العمودي يتبع ترتيب DOM نفسه: الإدخال أعلى ثم النتيجة */
@@ -1910,6 +1935,7 @@ textarea.empty-bidi { unicode-bidi: isolate; }
   .pane-scroll, .pane-body { padding: var(--sp-20); }
   .pane-head, .output-search-bar { padding-inline: var(--sp-20); }
   .shadhb-footer:has(> :not([hidden])) { padding-inline: var(--sp-20); }
+  .pane-input-footer { padding-inline: var(--sp-20); }
   .textarea-shell { min-height: 180px; }
   .app-subtitle { display: none; }
   .fragment-options, .variations-grid { grid-template-columns: 1fr; }
