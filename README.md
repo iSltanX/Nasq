@@ -13,10 +13,10 @@
 يعالج الشكل والإيقاع، ولا يكتب عنك أبدًا.
 
 <p>
-  <img alt="platform: macOS" src="https://img.shields.io/badge/platform-macOS-14131A?style=flat-square">
-  <img alt="built with Tauri" src="https://img.shields.io/badge/built_with-Tauri_2-7055A8?style=flat-square">
-  <img alt="version 8.2.2" src="https://img.shields.io/badge/version-8.2.2-7055A8?style=flat-square">
-  <img alt="status: beta" src="https://img.shields.io/badge/status-beta-B64F4B?style=flat-square">
+  <img alt="platform: macOS" src="https://img.shields.io/badge/platform-macOS-1A1816?style=flat-square">
+  <img alt="built with Tauri" src="https://img.shields.io/badge/built_with-Tauri_2-C4654A?style=flat-square">
+  <img alt="version 8.2.2" src="https://img.shields.io/badge/version-8.2.2-C4654A?style=flat-square">
+  <img alt="status: beta" src="https://img.shields.io/badge/status-beta-6B2D3E?style=flat-square">
 </p>
 
 </div>
@@ -65,7 +65,7 @@
 
 </div>
 
-شَذْب ليس محرّرًا أدبيًّا، ولا يضيف من عنده شيئًا. **نَسَق هو المنتج الأساسي، وشَذْب وظيفةٌ مساعدة داخله** — لكلٍّ لوحته وهويته (نَسَق بنفسجيّ، شَذْب طوبيّ)، دون خلطٍ بينهما.
+شَذْب ليس محرّرًا أدبيًّا، ولا يضيف من عنده شيئًا. **نَسَق هو المنتج الأساسي، وشَذْب وظيفةٌ مساعدة داخله** — لكلٍّ لوحته وهويته (نَسَق طوبيّ، شَذْب عنّابي)، دون خلطٍ بينهما.
 
 ## المبادئ
 

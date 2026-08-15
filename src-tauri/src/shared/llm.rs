@@ -4,7 +4,7 @@
 // (انظر build_request_body). (نُقل من main.rs حرفيًا في تحصين v4.1)
 use serde_json::{json, Value};
 
-use super::settings::Settings;
+use super::settings::{Settings, PROVIDER_OLLAMA};
 
 /// يستخرج JSON من ناتج النموذج بحذر: يزيل أسوار الكود ثم يبحث عن أول كائن JSON.
 pub(crate) fn extract_json(content: &str) -> Option<Value> {
@@ -109,6 +109,13 @@ pub(crate) async fn request_completion(
     temperature: f64,
     thinking_budget: u64,
 ) -> Result<String, String> {
+    // Ollama المحلي: بروتوكول مختلف تمامًا (لا مفتاح) — فرع مبكر ومنفصل، ولا
+    // يمسّ المسار السحابي أدناه بشيء. ميزانية التفكير نفسها (لا قيمة جديدة)
+    // تُترجم لحقل Ollama الخاص بها، فيتوقف نسق شَذْب على تصميمهما نفسه
+    if settings.provider.trim() == PROVIDER_OLLAMA {
+        return request_completion_ollama(settings, messages, thinking_budget).await;
+    }
+
     let api_key = settings.api_key.trim();
     if api_key.is_empty() {
         return Err("لا يوجد مفتاح API — أضفه من لوحة الإعدادات أولًا.".to_string());
@@ -194,6 +201,155 @@ pub(crate) async fn request_completion(
     Ok(content)
 }
 
+/// جسم طلب /api/chat لـ Ollama — دالة صرفة قابلة للاختبار بمعزل عن الشبكة،
+/// على غرار build_request_body للمسار السحابي. "format":"json" يُلزم Ollama
+/// بمخرج JSON فعليًا (لا الاتكال على نص العقد وحده) — نفس ضمان response_format
+/// الذي يحصل عليه المسار السحابي، إذ عقد نسق/شَذْب يطلب JSON من أي مزوّد.
+/// "think" ترجمة ميزانية التفكير نفسها لصيغة Ollama: صفر يعني تعطيلًا صريحًا
+/// كما في الحقول المقابلة للمزوّدات الأخرى، لا قيمة جديدة ولا قرار تكلفة جديد.
+fn build_ollama_chat_body(model: &str, messages: &Value, thinking_budget: u64) -> Value {
+    json!({
+        "model": model,
+        "messages": messages,
+        "stream": false,
+        "format": "json",
+        "think": thinking_budget > 0
+    })
+}
+
+/// مطابقة اسم النموذج المضبوط بأسماء /api/tags: تطابق حرفي أولًا، وإن فشل
+/// فتجريد وسم ":latest" الضمني من الطرفين — فـ"qwen3" يطابق "qwen3:latest"
+/// كما يطابقه نداء /api/chat الفعلي (Ollama يحلّه ضمنيًا خلف الكواليس)
+fn strip_latest_tag(s: &str) -> &str {
+    s.strip_suffix(":latest").unwrap_or(s)
+}
+
+fn ollama_model_matches(configured: &str, listed: &str) -> bool {
+    if configured.eq_ignore_ascii_case(listed) {
+        return true;
+    }
+    strip_latest_tag(configured).eq_ignore_ascii_case(strip_latest_tag(listed))
+}
+
+/// نقل مخصّص لـ Ollama المحلي — واجهته الرسمية مختلفة عن OpenAI-compatible
+/// (بلا مفتاح، وجسم/استجابة مختلفا الشكل)، ففرع منفصل داخل نقل shared نفسه
+/// لا نظام موازٍ. لا محاولة ثانية ولا streaming ولا تحويل تلقائي لمزوّد آخر
+/// عند الفشل — خطأ واضح فقط.
+async fn request_completion_ollama(
+    settings: &Settings,
+    messages: &Value,
+    thinking_budget: u64,
+) -> Result<String, String> {
+    let base = settings.base_url.trim().trim_end_matches('/');
+    if base.is_empty() {
+        return Err("عنوان خادم Ollama غير مضبوط — أضفه من لوحة الإعدادات.".to_string());
+    }
+    let model = settings.model.trim();
+    if model.is_empty() {
+        return Err("اسم نموذج Ollama غير مضبوط — أضفه من لوحة الإعدادات.".to_string());
+    }
+
+    let client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(120))
+        .build()
+        .map_err(|_| "تعذّر تهيئة الاتصال.".to_string())?;
+
+    let body = build_ollama_chat_body(model, messages, thinking_budget);
+    let url = format!("{}/api/chat", base);
+
+    let response = client.post(&url).json(&body).send().await.map_err(|e| {
+        if e.is_timeout() {
+            "انتهت مهلة الاتصال — حاول مرة أخرى.".to_string()
+        } else if e.is_connect() {
+            "Ollama غير مشغّل على هذا الجهاز.".to_string()
+        } else {
+            "تعذر الاتصال بالعنوان المحلي.".to_string()
+        }
+    })?;
+
+    let status = response.status();
+    if !status.is_success() {
+        return Err(match status.as_u16() {
+            404 => "النموذج المحدد غير موجود.".to_string(),
+            code => format!("فشل الطلب (رمز {}). تحقق من الإعدادات وأعد المحاولة.", code),
+        });
+    }
+
+    let payload: Value = response
+        .json()
+        .await
+        .map_err(|_| "استجابة Ollama غير صالحة.".to_string())?;
+
+    let content = payload["message"]["content"]
+        .as_str()
+        .unwrap_or("")
+        .trim()
+        .to_string();
+
+    if content.is_empty() {
+        return Err("أعاد النموذج نتيجة فارغة — أعد المحاولة.".to_string());
+    }
+
+    Ok(content)
+}
+
+/// اختبار اتصال Ollama من لوحة الإعدادات: GET /api/tags — يتحقق أن الخادم
+/// يعمل وأن النموذج المطلوب مُنزَّل. لا يمسّ settings.json ولا يعرف عقدًا؛
+/// يستقبل القيم من الحقول مباشرة (قد تكون غير محفوظة بعد).
+#[tauri::command]
+pub(crate) async fn test_ollama_connection(base_url: String, model: String) -> Result<String, String> {
+    let base = base_url.trim().trim_end_matches('/');
+    if base.is_empty() {
+        return Err("تعذر الاتصال بالعنوان المحلي.".to_string());
+    }
+    let model = model.trim();
+
+    let client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(10))
+        .build()
+        .map_err(|_| "تعذّر تهيئة الاتصال.".to_string())?;
+
+    let url = format!("{}/api/tags", base);
+    let response = client.get(&url).send().await.map_err(|e| {
+        if e.is_connect() {
+            "Ollama غير مشغّل على هذا الجهاز.".to_string()
+        } else {
+            "تعذر الاتصال بالعنوان المحلي.".to_string()
+        }
+    })?;
+
+    if !response.status().is_success() {
+        return Err("استجابة Ollama غير صالحة.".to_string());
+    }
+
+    let payload: Value = response
+        .json()
+        .await
+        .map_err(|_| "استجابة Ollama غير صالحة.".to_string())?;
+
+    let models = payload["models"]
+        .as_array()
+        .ok_or_else(|| "استجابة Ollama غير صالحة.".to_string())?;
+
+    if model.is_empty() {
+        return Ok("تم الاتصال بـ Ollama.".to_string());
+    }
+
+    let found = models.iter().any(|m| {
+        m["name"]
+            .as_str()
+            .is_some_and(|n| ollama_model_matches(model, n))
+            || m["model"]
+                .as_str()
+                .is_some_and(|n| ollama_model_matches(model, n))
+    });
+
+    if found {
+        Ok("تم الاتصال بـ Ollama.".to_string())
+    } else {
+        Err("النموذج المحدد غير موجود.".to_string())
+    }
+}
 
 #[cfg(test)]
 mod tests {
@@ -288,5 +444,47 @@ mod tests {
         assert!(gemini.to_lowercase().contains("generativelanguage.googleapis.com"));
         assert!(!groq.to_lowercase().contains("generativelanguage.googleapis.com"));
         assert!(!openrouter.to_lowercase().contains("generativelanguage.googleapis.com"));
+    }
+
+    #[test]
+    fn ollama_body_has_no_auth_field_and_forces_json_format() {
+        // لا مفتاح API إطلاقًا في جسم أو رأس طلب Ollama — الضمان الصلب لهذا المزوّد
+        let messages = json!([{ "role": "system", "content": "s" }, { "role": "user", "content": "u" }]);
+        let body = build_ollama_chat_body("qwen3:8b", &messages, 0);
+        assert_eq!(body["model"], "qwen3:8b");
+        assert_eq!(body["messages"], messages);
+        assert_eq!(body["stream"], false);
+        // عقد نسق/شَذْب يطلب JSON من أي مزوّد — "format" يُلزم Ollama به فعليًا
+        // بدل الاتكال على نص العقد وحده، كما يفعل response_format للمسار السحابي
+        assert_eq!(body["format"], "json");
+        // الشكل مقفول تمامًا: خمسة حقول لا أكثر — لا مفتاح ولا رأس اعتماد بأي اسم
+        let mut keys: Vec<&str> = body.as_object().unwrap().keys().map(String::as_str).collect();
+        keys.sort_unstable();
+        assert_eq!(keys, ["format", "messages", "model", "stream", "think"]);
+    }
+
+    #[test]
+    fn ollama_think_field_mirrors_thinking_budget_like_other_providers() {
+        let messages = json!([]);
+        // نسق: ميزانية مقفولة صفرًا — تعطيل صريح كما في Gemini/OpenRouter
+        let nasaq_body = build_ollama_chat_body("qwen3:8b", &messages, 0);
+        assert_eq!(nasaq_body["think"], false);
+        // شَذْب: ميزانية غير صفرية — تفكير مفعَّل
+        let shadhb_body = build_ollama_chat_body("qwen3:8b", &messages, 1024);
+        assert_eq!(shadhb_body["think"], true);
+    }
+
+    #[test]
+    fn ollama_model_matches_handles_implicit_latest_tag() {
+        // تطابق حرفي مباشر (الحالة الشائعة: وسم صريح كـ qwen3:8b)
+        assert!(ollama_model_matches("qwen3:8b", "qwen3:8b"));
+        // Ollama يحلّ الاسم غير الموسوم إلى ":latest" ضمنيًا خلف الكواليس عند
+        // /api/chat الفعلي — فمطابقة اختبار الاتصال يجب أن تحاكي ذلك لا أن
+        // تُبلّغ زورًا بغياب نموذج موجود فعلًا
+        assert!(ollama_model_matches("qwen3", "qwen3:latest"));
+        assert!(ollama_model_matches("qwen3:latest", "qwen3"));
+        // وسوم مختلفة فعلًا ليست تطابقًا
+        assert!(!ollama_model_matches("qwen3:8b", "qwen3:14b"));
+        assert!(!ollama_model_matches("qwen3", "llama3"));
     }
 }

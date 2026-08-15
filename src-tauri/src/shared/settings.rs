@@ -10,6 +10,10 @@ pub(crate) const DEFAULT_BASE_URL: &str =
     "https://generativelanguage.googleapis.com/v1beta/openai/";
 pub(crate) const DEFAULT_MODEL: &str = "gemini-2.5-flash";
 
+// قيمة provider الوحيدة ذات المعنى للنقل: أي شيء آخر (فارغ أو "cloud" أو غيره)
+// يعني المسار السحابي القديم (OpenAI-compatible) بلا أي تغيير في سلوكه
+pub(crate) const PROVIDER_OLLAMA: &str = "ollama";
+
 #[derive(Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct Settings {
@@ -19,6 +23,8 @@ pub(crate) struct Settings {
     pub(crate) base_url: String,
     #[serde(default)]
     pub(crate) model: String,
+    #[serde(default)]
+    pub(crate) provider: String,
 }
 
 impl Default for Settings {
@@ -27,6 +33,7 @@ impl Default for Settings {
             api_key: String::new(),
             base_url: DEFAULT_BASE_URL.to_string(),
             model: DEFAULT_MODEL.to_string(),
+            provider: String::new(),
         }
     }
 }

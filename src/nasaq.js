@@ -291,10 +291,15 @@ function syncInterventionControls() {
   } else if (level === LEVELS.CLEAN) {
     // «تنظيف فقط» يعمل محليًا — يستحق توضيحًا لأنه يختلف عن بقية المستويات
     interventionHint.textContent = "فوري ومحلي — لا يغيّر أي كلمة";
+  } else if (level === LEVELS.READ) {
+    // الافتراضي — يستحق تلميحًا كبقية المستويات لا فراغًا في الصف (مطابق لقاعدته في nasaq/contracts.rs)
+    interventionHint.textContent = "يقسّم الفقرات الطويلة ويضبط وقفات القراءة";
   } else if (level === LEVELS.RHYTHM) {
     interventionHint.textContent = "يوزّع النَّفَس والوقفات بعين كاتب";
   } else if (level === LEVELS.RHYTHM_DOTTED) {
     interventionHint.textContent = "يكسر عند وقفات الترقيم الحقيقية لا كل نقطة وفاصلة";
+  } else if (level === LEVELS.PUBLISH) {
+    interventionHint.textContent = "يرتّب النص كنسخة نهائية جاهزة للنشر";
   } else {
     interventionHint.textContent = "";
   }
@@ -1059,4 +1064,126 @@ registerRestoreHandler(restoreDraft);
 // [العدسة، التنويعات، المسودات، الإعدادات] كسلوك v4.1 حرفيًا
 registerEscapeCloser(() => !variationsOverlay.hidden, closeVariations);
 registerEscapeCloser(() => !readingLensOverlay.hidden, closeReadingLens);
+
+// ---------- بحث في النتيجة (دالة «بحث» ضمن شريط NSQ/Toolbar الجديد) ----------
+// إضافة جديدة بحتة — لا تمسّ أي دالة قائمة. قراءة فقط من outputText، والتمييز
+// عبر CSS Custom Highlight API فلا تُدرَج عقد <mark> في الشجرة، فتبقى تراجع/
+// تنظيف الأسطر الفارغة/فصل الجمل (التي تقرأ نصّ outputText مباشرة) بمنأى تام
+// عن أي تأثير. بلا نداء نموذج ولا حفظ — عرض وتنقّل محليان فقط.
+(function initOutputSearch() {
+  const btn = el("output-search-btn");
+  const bar = el("output-search-bar");
+  const input = el("output-search-input");
+  const countEl = el("output-search-count");
+  const prevBtn = el("output-search-prev");
+  const nextBtn = el("output-search-next");
+  const closeBtn = el("output-search-close");
+  if (!btn || !bar || !input) return;
+
+  const supportsHighlight =
+    typeof CSS !== "undefined" && "highlights" in CSS && typeof Highlight !== "undefined";
+
+  let matches = [];
+  let activeIndex = -1;
+
+  function clearHighlights() {
+    if (!supportsHighlight) return;
+    CSS.highlights.delete("nsq-search");
+    CSS.highlights.delete("nsq-search-current");
+  }
+
+  function collectMatches(term) {
+    matches = [];
+    activeIndex = -1;
+    if (!term) return;
+    const needle = term.toLocaleLowerCase("ar");
+    const walker = document.createTreeWalker(outputText, NodeFilter.SHOW_TEXT);
+    let node;
+    while ((node = walker.nextNode())) {
+      const hay = node.data.toLocaleLowerCase("ar");
+      let from = 0;
+      let idx;
+      while ((idx = hay.indexOf(needle, from)) !== -1) {
+        const range = document.createRange();
+        range.setStart(node, idx);
+        range.setEnd(node, idx + needle.length);
+        matches.push(range);
+        from = idx + needle.length;
+      }
+    }
+  }
+
+  function renderHighlights() {
+    if (!supportsHighlight) return;
+    if (!matches.length) { clearHighlights(); return; }
+    CSS.highlights.set("nsq-search", new Highlight(...matches));
+    CSS.highlights.set(
+      "nsq-search-current",
+      new Highlight(...(activeIndex >= 0 ? [matches[activeIndex]] : []))
+    );
+  }
+
+  function updateCount() {
+    countEl.textContent = matches.length
+      ? `${activeIndex + 1} / ${matches.length}`
+      : input.value
+      ? "0 / 0"
+      : "";
+  }
+
+  function goTo(index) {
+    if (!matches.length) return;
+    activeIndex = ((index % matches.length) + matches.length) % matches.length;
+    const range = matches[activeIndex];
+    const container = range.startContainer.parentElement;
+    if (container && container.scrollIntoView) {
+      container.scrollIntoView({ block: "center", behavior: "smooth" });
+    }
+    renderHighlights();
+    updateCount();
+  }
+
+  function runSearch() {
+    collectMatches(input.value.trim());
+    renderHighlights();
+    updateCount();
+    if (matches.length) goTo(0);
+  }
+
+  function openSearch() {
+    bar.hidden = false;
+    btn.setAttribute("aria-expanded", "true");
+    input.focus();
+    if (input.value) runSearch();
+  }
+
+  function closeSearch() {
+    // إعادة التركيز لزر الفتح قبل الإخفاء: العنصر النشط قد يكون داخل الشريط
+    // (الحقل أو أزرار التنقّل) — إخفاؤه بلا نقل التركيز يُسقط تركيز لوحة
+    // المفاتيح إلى <body> فيضطر المستخدم لبدء التنقّل من رأس الصفحة (٢٫٤٫٣)
+    if (bar.contains(document.activeElement)) btn.focus();
+    bar.hidden = true;
+    btn.setAttribute("aria-expanded", "false");
+    clearHighlights();
+    matches = [];
+    activeIndex = -1;
+    countEl.textContent = "";
+  }
+
+  btn.addEventListener("click", () => (bar.hidden ? openSearch() : closeSearch()));
+  closeBtn.addEventListener("click", closeSearch);
+  input.addEventListener("input", runSearch);
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      goTo(activeIndex + (e.shiftKey ? -1 : 1));
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      closeSearch();
+    }
+  });
+  nextBtn.addEventListener("click", () => goTo(activeIndex + 1));
+  prevBtn.addEventListener("click", () => goTo(activeIndex - 1));
+  registerEscapeCloser(() => !bar.hidden, closeSearch);
+})();
 
