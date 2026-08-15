@@ -110,8 +110,47 @@
   --r-4: 4px; --r-8: 8px; --r-10: 10px; --r-12: 12px; --r-16: 16px;
   --r-full: 999px;
 
+  /* ------------------------------------------------------------
+     كثافة سطح المكتب (Desktop Density Pass — ٢٠٢٦-٠٨-١٥)
+     ------------------------------------------------------------
+     قانونان يجعلان بقية المقاسات حتميّة لا تقديريّة:
+
+     (١) ارتفاع كل متحكّم يُضبط صراحةً ولا يُشتق. سبب ذلك أن صندوق
+         السطر الافتراضي في Almarai يساوي ١٫١١٦em وفي Cairo ١٫٨٧٤em
+         (من جدول hhea في ملفَّي الخط) — فأي متحكّم ارتفاعه = صندوق
+         السطر + الحشو يتغيّر ١٠–١٢px تبعًا للخط الذي ورثه وحده. هذا
+         ما ولّد ١٣ ارتفاعًا مختلفًا للمتحكّمات، ثمانية منها كسريّة.
+     (٢) لا نصّ قشرة يُشحن بـ line-height: normal — كل قاعدة تعلن
+         تباعدها، وإلا عاد الاشتقاق من الخط من الباب الخلفي.
+
+     ثلاث درجات لا رابع لها، والخطوة ٨px: */
+  --ctl-lg: 44px;   /* L — الفعل الملتزم (نسّق، افحص، احفظ) */
+  --ctl-md: 36px;   /* M — الحقول والمشغّلات ومسارات الأشرطة */
+  --ctl-sm: 28px;   /* S — المدمج والأيقونات (أرضية هدف النقر) */
+
+  /* خارج السلّم عمدًا — عناصر غير تفاعلية يجب ألا تُقرأ كأزرار.
+     ٢٢px تقع ٦px تحت أصغر زر، وهذه الفجوة هي ما يجعل الدرجات تعني
+     «هذا قابل للنقر» */
+  --chip-h: 22px;
+  --mark-h: 32px;   /* بلاطة الهوية وحدها */
+
+  /* سلّم خط الواجهة — خمس درجات، كلها دون المتن. الفروق بين الدرجات
+     ٧٫٧٪–١٤٫٣٪ أي فوق عتبة الإدراك، فكل درجة تُقرأ درجةً فعلًا */
+  --fs-display: 16px;  /* سقف القشرة — لا يُتجاوز */
+  --fs-lg: 14px;
+  --fs-base: 13px;     /* مرساة نصّ المتحكّمات كلها */
+  --fs-sm: 12px;
+  --fs-xs: 11px;       /* أرضية العربية — لا شيء تحتها */
+  --fs-numeral: 10px;  /* أرقام لاتينية حصرًا، خارج السلّم النصّي */
+
+  /* المتن — لا يُصغَّر أبدًا مهما ضاقت النافذة */
+  --fs-content: 15px;
+  --fs-content-lg: 16px;
+
   /* هندسة القشرة (24 — Nasaq Workspace) */
-  --topbar-h: 72px;
+  --topbar-h: 48px;
+  --pane-head-h: 40px;
+  --gutter: var(--sp-24);
   --input-pane-w: 520px;
 
   --font-ui: "Almarai", sans-serif;
@@ -221,7 +260,7 @@ input, select, textarea { font-family: var(--font-text); }
   gap: var(--sp-16);
   height: var(--topbar-h);
   flex-shrink: 0;
-  padding: 0 var(--sp-24);
+  padding: 0 var(--gutter);
   background: var(--bg-raised);
   border-bottom: 1px solid var(--border-subtle);
 }
@@ -229,11 +268,11 @@ input, select, textarea { font-family: var(--font-text); }
 .topbar-actions { display: flex; align-items: center; gap: var(--sp-4); }
 
 /* تجمّع العلامة كتلة واحدة متلاصقة أقصى اليمين */
-.topbar-brand { display: flex; align-items: center; gap: var(--sp-14); }
+.topbar-brand { display: flex; align-items: center; gap: var(--sp-10); }
 
 .app-mark {
-  width: 34px;
-  height: 34px;
+  width: var(--mark-h);
+  height: var(--mark-h);
   display: grid;
   place-items: center;
   flex-shrink: 0;
@@ -241,7 +280,11 @@ input, select, textarea { font-family: var(--font-text); }
   background: var(--accent-soft);
 }
 
+/* الشعار في الشريط أصغر من نظيره في لوحة «حول»: النسبة داخل البلاطة
+   محفوظة (٢٠/٣٢ = ٠٫٦٣ مقابل ٢٢/٣٤ = ٠٫٦٥) فالوزن البصري للهوية كما هو،
+   والهندسة نفسها لم تُمس */
 .app-mark svg, .about-mark svg { display: none; width: 22px; height: 22px; }
+.app-mark svg { width: 20px; height: 20px; }
 .app-mark .mark-nasaq, .about-mark .mark-nasaq { display: block; }
 [data-mode="shadhb"] .app-mark .mark-nasaq,
 [data-mode="shadhb"] .about-mark .mark-nasaq { display: none; }
@@ -252,7 +295,8 @@ input, select, textarea { font-family: var(--font-text); }
 .app-mark .mark-ink, .about-mark .mark-ink { fill: var(--text-muted); }
 
 .app-title {
-  font-size: 20px;
+  font-size: var(--fs-display);
+  line-height: 1.3;
   font-weight: 800;
   margin: 0;
   flex-shrink: 0;
@@ -261,10 +305,11 @@ input, select, textarea { font-family: var(--font-text); }
 
 .app-subtitle {
   font-family: var(--font-text);
-  font-size: 12px;
+  font-size: var(--fs-sm);
+  line-height: 1.4;
   color: var(--text-muted);
   border-inline-start: 1px solid var(--border-subtle);
-  padding-inline-start: var(--sp-12);
+  padding-inline-start: var(--sp-10);
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -272,10 +317,13 @@ input, select, textarea { font-family: var(--font-text); }
 }
 
 /* مبدّل الوضعين: مسار غائر وحبّة مصمتة بلون الفعل للنشط (Figma 24) */
+/* المسار يساوي الدرجة M بالبناء لا بالمصادفة: قطعة S (٢٨) + حشو ٣px
+   على الجانبين + حدّ ١px = ٣٦. الحشو مكتوب calc ليُوثّق أن الـ١px
+   المطروح تعويضٌ عن الحدّ، لا رقمًا شاردًا */
 .mode-switch {
   display: flex;
   gap: var(--sp-2);
-  padding: 3px;
+  padding: calc(var(--sp-4) - 1px);
   background: var(--bg-soft);
   border: 1px solid var(--border-subtle);
   border-radius: var(--r-full);
@@ -283,12 +331,16 @@ input, select, textarea { font-family: var(--font-text); }
 }
 
 .mode-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--ctl-sm);
   background: transparent;
   color: var(--text-muted);
   border: none;
   border-radius: var(--r-full);
-  padding: 7px 18px;
-  font-size: 13px;
+  padding: 0 var(--sp-16);
+  font-size: var(--fs-base);
   font-weight: 700;
   cursor: pointer;
   line-height: 1.4;
@@ -305,8 +357,8 @@ input, select, textarea { font-family: var(--font-text); }
   align-items: center;
   justify-content: center;
   position: relative;
-  width: 36px;
-  height: 36px;
+  width: var(--ctl-sm);
+  height: var(--ctl-sm);
   padding: 0;
   background: transparent;
   color: var(--text-muted);
@@ -320,7 +372,9 @@ input, select, textarea { font-family: var(--font-text); }
 .icon-btn:hover { color: var(--text); background: var(--accent-soft); }
 .icon-btn:active { background: rgba(var(--line-rgb), 0.1); }
 .icon-btn svg { display: block; }
-.icon-btn-sm { width: 28px; height: 28px; }
+/* بقيت اسمًا مرادفًا: الدرجة S واحدة لكل أزرار الأيقونات، فلا يعود في
+   الصفّ الواحد زرّان متطابقان وظيفيًا يفترقان ٢px */
+.icon-btn-sm { width: var(--ctl-sm); height: var(--ctl-sm); }
 
 /* شارة عدد المسودات على الأيقونة نفسها (Figma 24) */
 .count-badge {
@@ -334,7 +388,7 @@ input, select, textarea { font-family: var(--font-text); }
   height: 15px;
   padding: 0 4px;
   font-family: var(--font-ui);
-  font-size: 9px;
+  font-size: var(--fs-numeral);
   font-weight: 700;
   line-height: 15px;
   text-align: center;
@@ -344,6 +398,8 @@ input, select, textarea { font-family: var(--font-text); }
 /* ============================================================
    ٢ — الأزرار (14 — Components / Actions)
    ============================================================ */
+/* الدرجة L — الفعل الملتزم وحده. بقيت ٤٤px بلا تغيير عمدًا: كل ما
+   حولها نزل، وهذا وحده يعيد الهرم البصري لصالحها دون تضخيمها */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -352,18 +408,24 @@ input, select, textarea { font-family: var(--font-text); }
   border: 1px solid transparent;
   border-radius: var(--r-8);
   padding: 0 var(--sp-24);
-  min-height: 44px;
+  height: var(--ctl-lg);
   font-family: var(--font-ui);
-  font-size: 14px;
+  font-size: var(--fs-base);
   font-weight: 700;
   line-height: 1.4;
+  white-space: nowrap;
   cursor: pointer;
   transition: background-color 0.15s ease, border-color 0.15s ease,
     color 0.15s ease, opacity 0.15s ease;
 }
 
 .btn-block { width: 100%; }
-.btn-sm { min-height: 34px; padding: 0 var(--sp-14); font-size: 12.5px; }
+
+/* الدرجة M — زر يرافق حقلًا (إظهار المفتاح، اختبار الاتصال) فيساويه */
+.btn-md { height: var(--ctl-md); padding: 0 var(--sp-16); font-size: var(--fs-base); }
+
+/* الدرجة S — الأزرار المدمجة داخل البطاقات والتذييلات */
+.btn-sm { height: var(--ctl-sm); padding: 0 var(--sp-14); font-size: var(--fs-sm); }
 
 .btn-primary { background: var(--accent); color: var(--accent-text); }
 .btn-primary:hover:not(:disabled) { background: var(--accent-hover); }
@@ -395,11 +457,13 @@ input, select, textarea { font-family: var(--font-text); }
   color: var(--text-dim);
   border: 1px solid var(--border);
   border-radius: var(--r-8);
-  min-height: 32px;
+  height: var(--ctl-sm);
   padding: 0 var(--sp-12);
   font-family: var(--font-ui);
-  font-size: 12px;
+  font-size: var(--fs-sm);
   font-weight: 700;
+  line-height: 1.4;
+  white-space: nowrap;
   cursor: pointer;
   transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
 }
@@ -444,11 +508,11 @@ input, select, textarea { font-family: var(--font-text); }
 .pane-scroll {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-14);
+  gap: var(--sp-12);
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: var(--sp-16) var(--sp-24);
+  padding: var(--sp-16) var(--gutter);
 }
 
 /* التذييل الثابت لفعل لوحة الإدخال الرئيس — خارج منطقة التمرير، على
@@ -457,25 +521,29 @@ input, select, textarea { font-family: var(--font-text); }
 .pane-input-footer {
   flex-shrink: 0;
   border-top: 1px solid var(--border-subtle);
-  padding: var(--sp-12) var(--sp-24);
+  padding: var(--sp-12) var(--gutter);
   background: var(--bg-raised);
 }
 
 .pane-title {
   margin: 0;
-  font-size: 16px;
+  font-size: var(--fs-lg);
+  line-height: 1.3;
   font-weight: 700;
   color: var(--text);
 }
 
+/* بأزرار الدرجة S يصير المحتوى ٢٨+٨+١ = ٣٧ < ٤٠، فتُلزِم القيمة
+   المعلنة لأول مرة (min-height: 60 السابقة كانت شفرة ميتة: المحتوى
+   كان يرسم ٦١ فيتجاوزها دائمًا) */
 .pane-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--sp-12);
-  min-height: 60px;
+  min-height: var(--pane-head-h);
   flex-shrink: 0;
-  padding: var(--sp-12) var(--sp-40);
+  padding: var(--sp-4) var(--gutter);
   border-bottom: 1px solid var(--border-subtle);
 }
 
@@ -486,11 +554,11 @@ input, select, textarea { font-family: var(--font-text); }
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: var(--sp-20);
+  gap: var(--sp-16);
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: var(--sp-32) var(--sp-40);
+  padding: var(--sp-20) var(--gutter);
 }
 
 .pane-divider { height: 1px; background: var(--border-subtle); flex-shrink: 0; }
@@ -503,35 +571,42 @@ input, select, textarea { font-family: var(--font-text); }
   position: relative;
 }
 
+/* نسخة مدمجة: فجوة أضيق بين العنوان وحقله — الأولوية الرأسية في لوحة
+   الإدخال لمربع النص، والحقول الثانوية تتنازل عن كل بكسل زائد */
+.field-block-tight { gap: var(--sp-4); }
+
 .field-label {
   font-family: var(--font-ui);
-  font-size: 12.5px;
+  font-size: var(--fs-sm);
+  line-height: 1.3;
   font-weight: 700;
   color: var(--text-dim);
 }
 
 .field-hint {
   font-family: var(--font-text);
-  font-size: 11.5px;
+  font-size: var(--fs-xs);
   color: var(--text-muted);
-  line-height: 1.6;
+  line-height: 1.5;
 }
 
 .section-title {
   margin: 0;
-  font-size: 14px;
+  font-size: var(--fs-lg);
+  line-height: 1.3;
   font-weight: 700;
   color: var(--text);
 }
 
-/* خانة الكتابة داخل صندوق بحدّ (Figma 24) والعدّاد أسفلها داخله — ارتفاع
-   ديناميكي (flex) يستفيد من مساحة اللوحة الفعلية بدل رقم ثابت كبير:
-   يكبر حين تسمح النافذة، ويتقلّص لحدّه الأدنى فيتولى .pane-scroll التمرير */
+/* خانة الكتابة داخل صندوق بحدّ (Figma 24) والعدّاد أسفلها داخله — العنصر
+   الأكبر في اللوحة: يبتلع كل ارتفاع فائض بعد الحقول الثانوية الثابتة
+   (flex-grow) فيكبر مع كبر النافذة، ويتقلّص لحدّه الأدنى في أصغر نافذة
+   مسموحة فيتولى .pane-scroll التمرير حينها */
 .textarea-shell {
   display: flex;
   flex-direction: column;
-  flex: 1 1 130px;
-  min-height: 130px;
+  flex: 1 1 auto;
+  min-height: 150px;
   background: var(--bg-input);
   border: 1px solid var(--border);
   border-radius: var(--r-12);
@@ -550,7 +625,7 @@ input, select, textarea { font-family: var(--font-text); }
   resize: none;
   color: var(--text);
   padding: var(--sp-16);
-  font-size: 15px;
+  font-size: var(--fs-content);
   line-height: 1.9;
   caret-color: var(--accent);
   direction: rtl;
@@ -567,16 +642,22 @@ textarea.empty-bidi { unicode-bidi: isolate; }
   border-top: 1px solid var(--border-subtle);
 }
 
+/* حقل سطر واحد: rows="1" وحدها تحدد الارتفاع (سطر + حشو + حدّ بالضبط)
+   فلا شريط تمرير شبحي من ارتفاع مفروض أقصر من السطر؛ والنص الطويل يمرّر
+   داخليًا لأن الحقل لا ينمو، فلا يقتطع من مربع النص أعلاه */
 #custom-directives {
   background: var(--bg-input);
   border: 1px solid var(--border);
   border-radius: var(--r-8);
   outline: none;
   resize: none;
+  overflow-y: auto;
+  flex-shrink: 0;
+  height: var(--ctl-md);
   color: var(--text);
-  padding: var(--sp-10) var(--sp-14);
-  font-size: 13px;
-  line-height: 1.7;
+  padding: 6px var(--sp-14);
+  font-size: var(--fs-base);
+  line-height: 1.6;
   caret-color: var(--accent);
   direction: rtl;
   unicode-bidi: plaintext;
@@ -584,9 +665,20 @@ textarea.empty-bidi { unicode-bidi: isolate; }
 }
 #custom-directives:focus { border-color: var(--accent); }
 
+/* شريط تمرير رفيع هادئ حين يطول النص فعلًا — الافتراضي في WebKit عريض
+   وفاتح، فيبدو دخيلًا داخل حقل بارتفاع سطر واحد */
+#custom-directives { scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+#custom-directives::-webkit-scrollbar { width: 6px; }
+#custom-directives::-webkit-scrollbar-track { background: transparent; }
+#custom-directives::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: var(--r-full);
+}
+
 .char-count {
   font-family: var(--font-text);
-  font-size: 11px;
+  font-size: var(--fs-xs);
+  line-height: 1.4;
   color: var(--text-muted);
   direction: ltr;
   flex-shrink: 0;
@@ -597,21 +689,38 @@ textarea.empty-bidi { unicode-bidi: isolate; }
 .format-settings {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-10);
+  gap: var(--sp-8);
   flex-shrink: 0;
+}
+
+/* المحاور الثلاثة في صفّ واحد: auto-fit يعطي ثلاثة أعمدة حين يتّسع عرض
+   اللوحة (٥٢٠px) وعمودين حين يضيق (٤٠٠px) بلا استعلام وسائط — والمنصة
+   حقل مخفي (display:none) فلا يشغل عمودًا إلا حين يظهر فعلًا */
+.settings-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
+  gap: var(--sp-8) var(--sp-10);
+  align-items: start;
 }
 
 .input-actions {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-8);
+  gap: var(--sp-6);
   flex-shrink: 0;
 }
+
+/* «نسّق» يملأ الصفّ وحده؛ وحين يظهر «أرِني تنويعات» يقتسمانه في السطر
+   نفسه بدل تكديس زرّين بعرض كامل يضاعفان ارتفاع التذييل */
+.input-actions-row { display: flex; gap: var(--sp-8); }
+.input-actions-row .btn { flex: 1; min-width: 0; }
+#variations-btn { flex: 0 1 auto; }
 
 .kbd-hint {
   margin: 0;
   font-family: var(--font-text);
-  font-size: 11.5px;
+  font-size: var(--fs-xs);
+  line-height: 1.4;
   color: var(--text-muted);
   text-align: center;
 }
@@ -625,21 +734,25 @@ textarea.empty-bidi { unicode-bidi: isolate; }
   justify-content: space-between;
   gap: var(--sp-8);
   width: 100%;
-  min-height: 38px;
+  height: var(--ctl-md);
   padding: 0 var(--sp-14);
   background: var(--bg-input);
   color: var(--text);
   border: 1px solid var(--border);
   border-radius: var(--r-8);
   font-family: var(--font-ui);
-  font-size: 13px;
+  font-size: var(--fs-base);
   font-weight: 700;
+  line-height: 1.4;
   cursor: pointer;
   transition: border-color 0.15s ease;
 }
 
 .dd-btn:hover, .dd-btn[aria-expanded="true"] { border-color: var(--accent); }
 .dd-chevron { color: var(--text-muted); flex-shrink: 0; }
+
+/* القيمة تُقصّ بثلاث نقاط بدل أن تدفع الشيفرون خارج الزر في عمود ضيّق */
+.dd-value { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* موضعها ثابت (fixed) بمعزل عن أي سلف قابل للتمرير — .pane-scroll يقصّ أي
    عنصر absolute يتجاوز حدوده، بينما fixed يُحسب حسب النافذة نفسها فيبقى
@@ -657,16 +770,21 @@ textarea.empty-bidi { unicode-bidi: isolate; }
   z-index: 40;
 }
 
+/* min-height لا height: نصّ الخيار قد يلتفّ في عمود ضيّق. مساوٍ لمشغّله
+   فتُقرأ اللوحة امتدادًا للزر لا عنصرًا آخر */
 .dd-option {
-  display: block;
+  display: flex;
+  align-items: center;
   width: 100%;
+  min-height: var(--ctl-md);
   text-align: start;
-  padding: var(--sp-10) var(--sp-14);
+  padding: var(--sp-6) var(--sp-14);
   background: transparent;
   color: var(--text-dim);
   border: none;
   font-family: var(--font-ui);
-  font-size: 13px;
+  font-size: var(--fs-base);
+  line-height: 1.4;
   cursor: pointer;
   transition: background-color 0.12s ease;
 }
@@ -692,7 +810,7 @@ textarea.empty-bidi { unicode-bidi: isolate; }
 .nsq-toolbar {
   display: flex;
   align-items: center;
-  gap: var(--sp-4);
+  gap: var(--sp-6);
   overflow-x: auto;
   /* visible لا hidden: hidden كان يقصّ حلقة التركيز أعلى/أسفل الأزرار */
   overflow-y: visible;
@@ -701,35 +819,41 @@ textarea.empty-bidi { unicode-bidi: isolate; }
 }
 .nsq-toolbar::-webkit-scrollbar { display: none; }
 
-.toolbar-group { display: flex; align-items: center; gap: var(--sp-2); flex-shrink: 0; }
+.toolbar-group { display: flex; align-items: center; gap: var(--sp-4); flex-shrink: 0; }
 
 .toolbar-divider {
   width: 1px;
-  height: 20px;
+  height: 16px;
   background: var(--border-subtle);
   flex-shrink: 0;
   margin: 0 var(--sp-2);
 }
 
 .nsq-toolbar .tool-btn {
-  width: 34px;
-  height: 34px;
-  min-height: 34px;
+  width: var(--ctl-sm);
+  height: var(--ctl-sm);
   padding: 0;
   border-color: transparent;
   color: var(--tool-text);
   flex-shrink: 0;
 }
+
+/* الرمز ١٥px داخل زر ٢٨px (٥٤٪): الأدوات خدمة للنتيجة لا منافِسة لها،
+   وهدف النقر يبقى ٢٨ كاملًا فلا تُدفع الدقة ثمنًا للهدوء البصري */
+.nsq-toolbar .tool-btn svg { width: 15px; height: 15px; }
 .nsq-toolbar .tool-btn:hover { color: var(--text); background: var(--accent-soft); }
 .nsq-toolbar .tool-btn:disabled { background: none; }
 
 /* «نسخ» وحده Icon+Label — الفعل الختامي الأكثر استخدامًا */
 .nsq-toolbar .tool-btn-label {
   width: auto;
-  padding: 0 var(--sp-14) 0 var(--sp-10);
-  font-size: 12.5px;
+  padding: 0 var(--sp-12) 0 var(--sp-8);
+  font-size: var(--fs-sm);
   border-color: var(--border);
 }
+
+/* الأدوات الثانوية على مقاس رموز الشريط نفسها — صفّ الرأس عائلة واحدة */
+.secondary-tools .icon-btn svg { width: 15px; height: 15px; }
 
 .secondary-tools {
   display: flex;
@@ -759,14 +883,14 @@ textarea.empty-bidi { unicode-bidi: isolate; }
   border: none;
   outline: none;
   color: var(--text);
-  font-size: 13px;
+  font-size: var(--fs-base);
   caret-color: var(--accent);
 }
 .output-search-bar input[type="search"]::-webkit-search-cancel-button { display: none; }
 
 .output-search-count {
   font-family: var(--font-text);
-  font-size: 11px;
+  font-size: var(--fs-xs);
   color: var(--text-muted);
   direction: ltr;
   white-space: nowrap;
@@ -784,7 +908,7 @@ textarea.empty-bidi { unicode-bidi: isolate; }
 /* النتيجة بطاقة بحدّ ونصف قطر — فارغةً بلا صندوق */
 .result-card {
   font-family: var(--font-text);
-  font-size: 16px;
+  font-size: var(--fs-content-lg);
   line-height: 2;
   white-space: pre-wrap;
   word-wrap: break-word;
@@ -809,7 +933,7 @@ textarea.empty-bidi { unicode-bidi: isolate; }
   border-radius: var(--r-8);
   background: var(--accent-soft);
   font-family: var(--font-text);
-  font-size: 12.5px;
+  font-size: var(--fs-sm);
   color: var(--text-dim);
   flex-shrink: 0;
 }
@@ -840,7 +964,7 @@ textarea.empty-bidi { unicode-bidi: isolate; }
   padding: var(--sp-14) var(--sp-20);
   cursor: pointer;
   font-family: var(--font-ui);
-  font-size: 14px;
+  font-size: var(--fs-base);
   font-weight: 700;
   color: var(--text);
   list-style: none;
@@ -864,7 +988,7 @@ textarea.empty-bidi { unicode-bidi: isolate; }
   display: flex;
   gap: var(--sp-8);
   font-family: var(--font-text);
-  font-size: 13px;
+  font-size: var(--fs-base);
   line-height: 1.7;
   color: var(--text-dim);
   white-space: pre-line;
@@ -893,16 +1017,19 @@ textarea.empty-bidi { unicode-bidi: isolate; }
 .empty-icon {
   display: grid;
   place-items: center;
-  width: 64px;
-  height: 64px;
+  width: var(--sp-48);
+  height: var(--sp-48);
   border-radius: 50%;
   background: var(--accent-soft);
   color: var(--accent);
 }
 
+/* يساوي نصّ النتيجة التي سيحلّ محلّها، فلا تتراجع اللوحة بصريًا لحظة
+   امتلائها بما هو أهم */
 .empty-title {
   margin: 0;
-  font-size: 20px;
+  font-size: var(--fs-display);
+  line-height: 1.3;
   font-weight: 700;
   color: var(--text);
 }
@@ -911,8 +1038,8 @@ textarea.empty-bidi { unicode-bidi: isolate; }
   margin: 0;
   max-width: 360px;
   font-family: var(--font-text);
-  font-size: 14px;
-  line-height: 1.75;
+  font-size: var(--fs-base);
+  line-height: 1.6;
   color: var(--text-muted);
 }
 
@@ -942,7 +1069,8 @@ textarea.empty-bidi { unicode-bidi: isolate; }
 
 .loading-label {
   font-family: var(--font-ui);
-  font-size: 16px;
+  font-size: var(--fs-lg);
+  line-height: 1.3;
   font-weight: 700;
   color: var(--text-dim);
 }
@@ -960,12 +1088,12 @@ textarea.empty-bidi { unicode-bidi: isolate; }
 }
 
 .fragment-card-head { display: flex; flex-direction: column; gap: var(--sp-4); }
-.fragment-card-head h3 { margin: 0; font-size: 14px; font-weight: 700; color: var(--text); }
-.fragment-card-hint { font-family: var(--font-text); font-size: 12px; color: var(--text-muted); }
+.fragment-card-head h3 { margin: 0; font-size: var(--fs-lg); line-height: 1.3; font-weight: 700; color: var(--text); }
+.fragment-card-hint { font-family: var(--font-text); font-size: var(--fs-sm); color: var(--text-muted); }
 
 .fragment-options { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-12); }
 .fragment-option { display: flex; flex-direction: column; gap: var(--sp-10); min-width: 0; }
-.fragment-option h4 { margin: 0; font-size: 12px; font-weight: 700; color: var(--text-dim); }
+.fragment-option h4 { margin: 0; font-size: var(--fs-sm); font-weight: 700; color: var(--text-dim); }
 
 .fragment-preview {
   flex: 1;
@@ -974,7 +1102,7 @@ textarea.empty-bidi { unicode-bidi: isolate; }
   border: 1px solid var(--border-subtle);
   border-radius: var(--r-8);
   font-family: var(--font-text);
-  font-size: 13px;
+  font-size: var(--fs-base);
   line-height: 1.9;
   white-space: pre-wrap;
   word-wrap: break-word;
@@ -1010,12 +1138,12 @@ textarea.empty-bidi { unicode-bidi: isolate; }
   align-items: flex-start;
   gap: var(--sp-8);
   margin: 0;
-  padding: var(--sp-12) var(--sp-14);
+  padding: var(--sp-8) var(--sp-12);
   background: var(--bg-soft);
   border: 1px solid var(--border-subtle);
   border-radius: var(--r-8);
   font-family: var(--font-text);
-  font-size: 12px;
+  font-size: var(--fs-sm);
   line-height: 1.6;
   color: var(--text-dim);
 }
@@ -1033,14 +1161,20 @@ textarea.empty-bidi { unicode-bidi: isolate; }
 .shadhb-status-dot[data-status="pending"] { background: var(--accent); }
 .shadhb-status-dot[data-status="clear"] { background: var(--success); }
 
+/* شارة ساكنة لا زر: ٢٢px تقع ٦px تحت أصغر متحكّم، وهذه الفجوة هي ما
+   يمنع قراءتها كشيء قابل للنقر */
 .shadhb-status-badge {
+  display: inline-flex;
+  align-items: center;
+  height: var(--chip-h);
   font-family: var(--font-ui);
-  font-size: 11.5px;
+  font-size: var(--fs-xs);
+  line-height: 1.4;
   font-weight: 700;
   color: var(--text-muted);
   background: var(--bg-soft);
   border-radius: var(--r-full);
-  padding: 5px var(--sp-12);
+  padding: 0 var(--sp-10);
   white-space: nowrap;
 }
 
@@ -1057,8 +1191,8 @@ textarea.empty-bidi { unicode-bidi: isolate; }
 .reading-card {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-12);
-  padding: var(--sp-20);
+  gap: var(--sp-10);
+  padding: var(--sp-16);
   background: var(--bg-input);
   border: 1px solid var(--border-subtle);
   border-radius: var(--r-12);
@@ -1068,23 +1202,27 @@ textarea.empty-bidi { unicode-bidi: isolate; }
 .reading-card-title {
   margin: 0;
   font-family: var(--font-ui);
-  font-size: 14px;
+  font-size: var(--fs-lg);
+  line-height: 1.3;
   font-weight: 700;
   color: var(--text);
 }
 
-.reading-card .card-row { display: flex; flex-direction: column; gap: 3px; }
+.reading-card .card-row { display: flex; flex-direction: column; gap: var(--sp-2); }
 
 .reading-card .card-label {
   font-family: var(--font-text);
-  font-size: 11.5px;
+  font-size: var(--fs-xs);
+  line-height: 1.5;
   color: var(--text-muted);
 }
 
+/* قيمة البطاقة وصفٌ من عالم الكاتب لا كلامَ واجهة: Cairo بوزن عادي —
+   قاعدة واحدة بلا استثناء، كل ما يخصّ نصّ الكاتب بخط المتن */
 .reading-card .card-value {
-  font-family: var(--font-ui);
-  font-size: 14px;
-  font-weight: 700;
+  font-family: var(--font-text);
+  font-size: var(--fs-lg);
+  font-weight: 400;
   line-height: 1.6;
   color: var(--text);
 }
@@ -1095,8 +1233,8 @@ textarea.empty-bidi { unicode-bidi: isolate; }
 .cut-entry {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-8);
-  padding: var(--sp-16);
+  gap: var(--sp-6);
+  padding: var(--sp-14);
   background: var(--bg-input);
   border: 1px solid var(--border);
   border-radius: var(--r-10);
@@ -1109,27 +1247,32 @@ textarea.empty-bidi { unicode-bidi: isolate; }
 .cut-index {
   display: grid;
   place-items: center;
-  min-width: 22px;
-  height: 22px;
+  min-width: var(--chip-h);
+  height: var(--chip-h);
   padding: 0 var(--sp-6);
   border-radius: var(--r-full);
   background: var(--accent-soft);
   font-family: var(--font-ui);
-  font-size: 11px;
+  font-size: var(--fs-xs);
+  line-height: 1.4;
   font-weight: 700;
   color: var(--accent);
 }
 
+/* الاقتباس نصّ الكاتب حرفيًا — يرتفع إلى مقاس المتن. كان ١٤px بينما
+   تعليل النموذج بجواره يرث ١٦px، أي أن كلام الآلة كان يعلو النصّ الذي
+   تحكم عليه. لا نصّ متن يُصغَّر في هذه المراجعة، وهذا يُرفع */
 .cut-quote {
   margin: 0;
   font-family: var(--font-text);
-  font-size: 14px;
-  line-height: 1.8;
+  font-size: var(--fs-content);
+  line-height: 1.75;
   color: var(--text);
 }
 
-.cut-meta { font-size: 11.5px; color: var(--text-muted); }
-.cut-effect { font-size: 12px; color: var(--text-dim); }
+.cut-why { font-size: var(--fs-base); line-height: 1.6; }
+.cut-meta { font-size: var(--fs-xs); line-height: 1.5; color: var(--text-muted); }
+.cut-effect { font-size: var(--fs-xs); line-height: 1.5; color: var(--text-dim); }
 
 .cut-entry.cut { background: var(--bg-raised); border-color: var(--border-subtle); }
 .cut-entry.cut .cut-quote { color: var(--text-muted); text-decoration: line-through; }
@@ -1138,13 +1281,22 @@ textarea.empty-bidi { unicode-bidi: isolate; }
 
 .cut-actions { display: flex; gap: var(--sp-8); margin-top: var(--sp-2); }
 
+/* flex:1 كان يمطّ «احذف» إلى عرض البطاقة كاملًا، فتصير كتلة اللون
+   العنصرَ الأعلى صوتًا في بطاقة جوهرها الاقتباس. min-width يحفظ هدف
+   النقر (٩٦×٢٨) دون أن يبتلع الاقتباس بصريًا */
 .cut-keep, .cut-do {
-  flex: 1;
+  flex: 0 1 auto;
+  min-width: 96px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--ctl-sm);
   border-radius: var(--r-8);
-  padding: var(--sp-8) 0;
+  padding: 0 var(--sp-20);
   font-family: var(--font-ui);
-  font-size: 13px;
+  font-size: var(--fs-sm);
   font-weight: 700;
+  line-height: 1.4;
   cursor: pointer;
   text-align: center;
   transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
@@ -1159,7 +1311,7 @@ textarea.empty-bidi { unicode-bidi: isolate; }
 .cut-chip {
   align-self: flex-start;
   font-family: var(--font-ui);
-  font-size: 11px;
+  font-size: var(--fs-xs);
   font-weight: 700;
   border-radius: var(--r-full);
   padding: 4px var(--sp-10);
@@ -1185,10 +1337,10 @@ textarea.empty-bidi { unicode-bidi: isolate; }
 .cuts-empty-icon { color: var(--text-muted); }
 .cuts-empty.dropped-all .cuts-empty-icon { color: var(--warning); }
 .cuts-empty-icon svg { display: block; }
-.cuts-empty-main { margin: 0; font-family: var(--font-text); font-size: 14px; font-weight: 500; color: var(--text-dim); }
-.cuts-empty-detail { margin: 0; font-family: var(--font-text); font-size: 12px; color: var(--text-muted); }
+.cuts-empty-main { margin: 0; font-family: var(--font-text); font-size: var(--fs-lg); line-height: 1.4; font-weight: 500; color: var(--text-dim); }
+.cuts-empty-detail { margin: 0; font-family: var(--font-text); font-size: var(--fs-sm); color: var(--text-muted); }
 
-.dropped-note { margin: 0; font-family: var(--font-text); font-size: 11.5px; color: var(--text-muted); }
+.dropped-note { margin: 0; font-family: var(--font-text); font-size: var(--fs-xs); line-height: 1.5; color: var(--text-muted); }
 
 /* معاينة بعد التشذيب */
 .prune-preview-wrap { display: flex; flex-direction: column; gap: var(--sp-10); flex-shrink: 0; }
@@ -1200,7 +1352,7 @@ textarea.empty-bidi { unicode-bidi: isolate; }
   gap: var(--sp-8);
 }
 
-.prune-preview-wrap h3 { margin: 0; font-size: 14px; font-weight: 700; color: var(--text); }
+.prune-preview-wrap h3 { margin: 0; font-size: var(--fs-lg); line-height: 1.3; font-weight: 700; color: var(--text); }
 
 .prune-preview {
   padding: var(--sp-16);
@@ -1208,7 +1360,7 @@ textarea.empty-bidi { unicode-bidi: isolate; }
   border: 1px solid var(--border-subtle);
   border-radius: var(--r-10);
   font-family: var(--font-text);
-  font-size: 14px;
+  font-size: var(--fs-content);
   line-height: 1.85;
   color: var(--text-dim);
   white-space: pre-wrap;
@@ -1230,13 +1382,14 @@ textarea.empty-bidi { unicode-bidi: isolate; }
   display: inline-flex;
   align-items: center;
   gap: var(--sp-8);
-  padding: var(--sp-12) var(--sp-16);
+  padding: var(--sp-8) var(--sp-14);
   border-radius: var(--r-10);
   background: var(--success-soft);
   border: 1px solid color-mix(in srgb, var(--success) 36%, transparent);
   color: var(--success);
   font-family: var(--font-text);
-  font-size: 13px;
+  font-size: var(--fs-base);
+  line-height: 1.5;
 }
 
 .covenant-bar-icon { display: inline-flex; flex-shrink: 0; }
@@ -1250,13 +1403,13 @@ textarea.empty-bidi { unicode-bidi: isolate; }
   align-items: flex-start;
   gap: var(--sp-10);
   flex-shrink: 0;
-  padding: var(--sp-14) var(--sp-24);
+  padding: var(--sp-10) var(--gutter);
   background: var(--error-bg);
   color: var(--error-text);
   border-bottom: 1px solid color-mix(in srgb, var(--error-text) 30%, transparent);
   font-family: var(--font-text);
-  font-size: 13px;
-  line-height: 1.6;
+  font-size: var(--fs-base);
+  line-height: 1.4;
 }
 
 .feedback-icon { flex-shrink: 0; margin-top: 1px; }
@@ -1275,10 +1428,11 @@ textarea.empty-bidi { unicode-bidi: isolate; }
   gap: var(--sp-8);
   background: var(--accent);
   color: var(--accent-text);
-  padding: var(--sp-12) var(--sp-20);
+  padding: var(--sp-8) var(--sp-16);
   border-radius: var(--r-10);
   font-family: var(--font-text);
-  font-size: 13px;
+  font-size: var(--fs-base);
+  line-height: 1.4;
   font-weight: 500;
   box-shadow: 0 8px 24px var(--shadow);
   z-index: 60;
@@ -1294,7 +1448,7 @@ textarea.empty-bidi { unicode-bidi: isolate; }
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: var(--sp-24);
+  padding: var(--sp-24) var(--sp-40);
   z-index: 50;
 }
 
@@ -1308,8 +1462,10 @@ textarea.empty-bidi { unicode-bidi: isolate; }
   overflow: hidden;
 }
 
-.modal-md { width: min(760px, 100%); }
-.modal-lg { width: min(1240px, 100%); }
+/* ٧٦٠ و١٢٤٠ كانتا تُقرآن استيلاءً على النافذة لا حوارًا داخلها: عند
+   ١١٠٠px لم يكن يبقى حول اللوحة الكبرى غير ٢٤px من كل جهة */
+.modal-md { width: min(600px, 100%); }
+.modal-lg { width: min(940px, 100%); }
 
 .modal-head {
   display: flex;
@@ -1317,25 +1473,32 @@ textarea.empty-bidi { unicode-bidi: isolate; }
   justify-content: space-between;
   gap: var(--sp-16);
   flex-shrink: 0;
-  padding: var(--sp-24) 28px var(--sp-20);
+  padding: var(--sp-20) var(--gutter) var(--sp-16);
   border-bottom: 1px solid var(--border-subtle);
 }
 
 .modal-head h2 {
   margin: 0;
-  font-size: 22px;
+  font-size: var(--fs-display);
+  line-height: 1.3;
   font-weight: 800;
   color: var(--text);
 }
 
 .modal-head-text { display: flex; flex-direction: column; gap: var(--sp-4); }
-.modal-sub { margin: 0; font-family: var(--font-text); font-size: 13px; color: var(--text-muted); }
+.modal-sub {
+  margin: 0;
+  font-family: var(--font-text);
+  font-size: var(--fs-base);
+  line-height: 1.6;
+  color: var(--text-muted);
+}
 
 .modal-body {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-16);
-  padding: var(--sp-20) 28px var(--sp-24);
+  gap: var(--sp-12);
+  padding: var(--sp-16) var(--gutter) var(--sp-20);
   overflow-y: auto;
   min-height: 0;
 }
@@ -1348,29 +1511,35 @@ textarea.empty-bidi { unicode-bidi: isolate; }
   border-top: 1px solid var(--border-subtle);
 }
 
-.modal-foot-center { justify-content: center; padding: var(--sp-16) 28px var(--sp-24); border-top: 1px solid var(--border-subtle); }
+.modal-foot-center { justify-content: center; padding: var(--sp-12) var(--gutter) var(--sp-16); border-top: 1px solid var(--border-subtle); }
 
-/* تبويبات بنمط Contained/Pill (Figma 26) */
+/* تبويبات بنمط Contained/Pill (Figma 26) — المسار بلا حدّ، فحشو ٤px
+   حول قطعة ٢٨ يعطي ٣٦ (الدرجة M) مباشرةً */
 .tabs {
   display: flex;
   gap: var(--sp-2);
   flex-shrink: 0;
-  margin: var(--sp-16) 28px 0;
-  padding: 3px;
+  margin: var(--sp-12) var(--gutter) 0;
+  padding: var(--sp-4);
   background: var(--bg-soft);
   border-radius: var(--r-10);
 }
 
 .tab-btn {
   flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--ctl-sm);
   background: transparent;
   border: none;
   border-radius: var(--r-8);
   color: var(--text-muted);
   font-family: var(--font-ui);
-  font-size: 13px;
+  font-size: var(--fs-base);
   font-weight: 700;
-  padding: var(--sp-10) var(--sp-16);
+  line-height: 1.4;
+  padding: 0 var(--sp-16);
   cursor: pointer;
   transition: color 0.2s ease, background-color 0.2s ease;
 }
@@ -1381,24 +1550,27 @@ textarea.empty-bidi { unicode-bidi: isolate; }
 .tab-body {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-20);
-  padding: var(--sp-24) 28px var(--sp-24);
+  gap: var(--sp-16);
+  padding: var(--sp-20) var(--gutter);
   overflow-y: auto;
   min-height: 0;
 }
 
-/* حقول الإعدادات */
+/* حقول الإعدادات — ارتفاع معلن لا مشتق: الحشو وحده كان يترك الارتفاع
+   رهينة صندوق سطر Cairo (١٫٨٧٤em) فيخرج ٥٢px، أي أطول من الفعل الرئيس */
 .field-block input[type="text"],
 .field-block input[type="password"],
 .modal-body input[type="search"] {
   width: 100%;
+  height: var(--ctl-md);
   background: var(--bg-input);
   color: var(--text);
   border: 1px solid var(--border);
   border-radius: var(--r-8);
-  padding: var(--sp-12) var(--sp-14);
+  padding: 0 var(--sp-14);
   font-family: var(--font-text);
-  font-size: 14px;
+  font-size: var(--fs-base);
+  line-height: 1.4;
   outline: none;
   caret-color: var(--accent);
   transition: border-color 0.15s ease;
@@ -1406,21 +1578,27 @@ textarea.empty-bidi { unicode-bidi: isolate; }
 
 .field-block input:focus, .modal-body input[type="search"]:focus { border-color: var(--accent); }
 
-.key-row { display: flex; gap: var(--sp-8); }
+/* بلا هذا يمطّ flex الزرَّ المرافق لارتفاع الحقل مهما ضُبط */
+.key-row { display: flex; align-items: center; gap: var(--sp-8); }
 .key-row input { flex: 1; }
 
 .provider-row { display: flex; gap: var(--sp-8); flex-wrap: wrap; }
 
 .provider-btn {
   flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--ctl-md);
   min-width: 110px;
   background: transparent;
   color: var(--text-dim);
   border: 1px solid var(--border-subtle);
   border-radius: var(--r-8);
-  padding: var(--sp-10) var(--sp-12);
+  padding: 0 var(--sp-12);
   font-family: var(--font-text);
-  font-size: 13px;
+  font-size: var(--fs-base);
+  line-height: 1.4;
   cursor: pointer;
   direction: ltr;
   transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
@@ -1436,16 +1614,16 @@ textarea.empty-bidi { unicode-bidi: isolate; }
   background: var(--bg-raised);
   border-radius: var(--r-8);
   font-family: var(--font-text);
-  font-size: 12px;
+  font-size: var(--fs-sm);
   line-height: 1.7;
   color: var(--text-muted);
 }
 
 .settings-msg {
   flex-shrink: 0;
-  padding: 0 28px var(--sp-20);
+  padding: 0 var(--gutter) var(--sp-16);
   font-family: var(--font-text);
-  font-size: 12.5px;
+  font-size: var(--fs-sm);
   color: var(--accent);
 }
 .settings-msg.error { color: var(--error-text); }
@@ -1485,7 +1663,7 @@ textarea.empty-bidi { unicode-bidi: isolate; }
 .swatch-dark { background: #1a1816; }
 .swatch-auto { background: linear-gradient(to left, #faf7f3 50%, #1a1816 50%); }
 
-.appearance-name { font-size: 12.5px; font-weight: 700; color: var(--text-dim); }
+.appearance-name { font-size: var(--fs-sm); font-weight: 700; color: var(--text-dim); }
 .appearance-card[aria-pressed="true"] .appearance-name { color: var(--accent); }
 
 /* تبويب «حول» */
@@ -1503,8 +1681,8 @@ textarea.empty-bidi { unicode-bidi: isolate; }
 .about-mark svg { width: 28px; height: 28px; }
 
 .about-identity-text { display: flex; flex-direction: column; gap: var(--sp-2); }
-.about-app-name { margin: 0; font-size: 20px; font-weight: 800; color: var(--text); }
-.about-tagline { margin: 0; font-family: var(--font-text); font-size: 12.5px; color: var(--text-muted); }
+.about-app-name { margin: 0; font-size: var(--fs-display); line-height: 1.3; font-weight: 800; color: var(--text); }
+.about-tagline { margin: 0; font-family: var(--font-text); font-size: var(--fs-sm); color: var(--text-muted); }
 
 .about-meta {
   margin: 0;
@@ -1522,8 +1700,8 @@ textarea.empty-bidi { unicode-bidi: isolate; }
   padding: var(--sp-12) var(--sp-16);
 }
 .about-meta-row + .about-meta-row { border-top: 1px solid var(--border-subtle); }
-.about-meta-row dt { font-family: var(--font-ui); font-size: 12.5px; font-weight: 700; color: var(--text-muted); }
-.about-meta-row dd { margin: 0; font-family: var(--font-text); font-size: 13px; color: var(--text); }
+.about-meta-row dt { font-family: var(--font-ui); font-size: var(--fs-sm); font-weight: 700; color: var(--text-muted); }
+.about-meta-row dd { margin: 0; font-family: var(--font-text); font-size: var(--fs-base); color: var(--text); }
 .about-meta-row dd[dir="ltr"] { text-align: start; unicode-bidi: isolate; }
 
 .update-card {
@@ -1557,7 +1735,7 @@ textarea.empty-bidi { unicode-bidi: isolate; }
   margin: 0;
   min-height: 1em;
   font-family: var(--font-text);
-  font-size: 12.5px;
+  font-size: var(--fs-sm);
   color: var(--text-dim);
   line-height: 1.6;
 }
@@ -1571,7 +1749,7 @@ textarea.empty-bidi { unicode-bidi: isolate; }
   text-decoration: none;
   font-family: var(--font-ui);
   font-weight: 700;
-  font-size: 13px;
+  font-size: var(--fs-base);
   transition: color 0.15s ease;
 }
 .about-project-link:hover { color: var(--accent); }
@@ -1586,11 +1764,11 @@ textarea.empty-bidi { unicode-bidi: isolate; }
 .about-rights { display: flex; align-items: center; gap: var(--sp-10); }
 .about-rights .sultan-monogram { width: 30px; height: 30px; }
 .about-rights-lines { display: flex; flex-direction: column; gap: 1px; }
-.about-rights-ar { margin: 0; font-family: var(--font-ui); font-size: 12.5px; font-weight: 700; color: var(--text-dim); }
+.about-rights-ar { margin: 0; font-family: var(--font-ui); font-size: var(--fs-sm); font-weight: 700; color: var(--text-dim); }
 .about-rights-en {
   margin: 0;
   font-family: var(--font-text);
-  font-size: 10.5px;
+  font-size: var(--fs-xs);
   color: var(--text-muted);
   direction: ltr;
   unicode-bidi: isolate;
@@ -1603,7 +1781,7 @@ textarea.empty-bidi { unicode-bidi: isolate; }
   padding: var(--sp-40) var(--sp-16);
   text-align: center;
   font-family: var(--font-text);
-  font-size: 13px;
+  font-size: var(--fs-base);
   color: var(--text-muted);
 }
 
@@ -1638,7 +1816,7 @@ textarea.empty-bidi { unicode-bidi: isolate; }
   cursor: pointer;
 }
 
-.draft-excerpt { font-family: var(--font-text); font-size: 13.5px; line-height: 1.6; color: var(--text); }
+.draft-excerpt { font-family: var(--font-text); font-size: var(--fs-base); line-height: 1.6; color: var(--text); }
 .draft-meta { display: flex; align-items: center; gap: var(--sp-6); flex-wrap: wrap; }
 
 .chip {
@@ -1646,11 +1824,11 @@ textarea.empty-bidi { unicode-bidi: isolate; }
   border-radius: var(--r-4);
   color: var(--text-muted);
   font-family: var(--font-text);
-  font-size: 10.5px;
+  font-size: var(--fs-xs);
   padding: 2px var(--sp-8);
 }
 
-.draft-date { color: var(--text-muted); font-family: var(--font-text); font-size: 10.5px; margin-inline-start: auto; }
+.draft-date { color: var(--text-muted); font-family: var(--font-text); font-size: var(--fs-xs); margin-inline-start: auto; }
 
 .draft-texts {
   display: flex;
@@ -1659,7 +1837,7 @@ textarea.empty-bidi { unicode-bidi: isolate; }
   border-top: 1px solid var(--border-subtle);
   padding-top: var(--sp-10);
 }
-.draft-texts h3 { margin: 0 0 var(--sp-4); font-family: var(--font-ui); font-size: 11.5px; font-weight: 700; color: var(--text-muted); }
+.draft-texts h3 { margin: 0 0 var(--sp-4); font-family: var(--font-ui); font-size: var(--fs-xs); font-weight: 700; color: var(--text-muted); }
 
 .draft-text {
   padding: var(--sp-10) var(--sp-12);
@@ -1667,7 +1845,7 @@ textarea.empty-bidi { unicode-bidi: isolate; }
   border: 1px solid var(--border-subtle);
   border-radius: var(--r-8);
   font-family: var(--font-text);
-  font-size: 13px;
+  font-size: var(--fs-base);
   line-height: 1.7;
   white-space: pre-wrap;
   word-wrap: break-word;
@@ -1693,14 +1871,14 @@ textarea.empty-bidi { unicode-bidi: isolate; }
   border-radius: var(--r-8);
   padding: var(--sp-8) var(--sp-12);
   font-family: var(--font-ui);
-  font-size: 12px;
+  font-size: var(--fs-sm);
   color: var(--text);
   cursor: pointer;
   text-align: start;
 }
 .type-btn:hover, .version-btn:hover { border-color: var(--border); }
 .type-btn.open, .version-btn.open { border-color: var(--accent); }
-.version-btn { font-size: 11.5px; }
+.version-btn { font-size: var(--fs-xs); }
 .version-btn .draft-date { margin-inline-start: auto; }
 
 .lines-badge {
@@ -1708,20 +1886,20 @@ textarea.empty-bidi { unicode-bidi: isolate; }
   border: 1px dashed var(--border);
   border-radius: var(--r-full);
   color: var(--text-muted);
-  font-size: 9.5px;
+  font-size: var(--fs-xs);
   padding: 0 var(--sp-6);
   direction: ltr;
 }
 
-.confirm-msg { font-family: var(--font-text); font-size: 12px; color: var(--error-text); }
-.row-label { font-family: var(--font-ui); font-size: 12px; font-weight: 700; color: var(--text-dim); }
+.confirm-msg { font-family: var(--font-text); font-size: var(--fs-sm); color: var(--error-text); }
+.row-label { font-family: var(--font-ui); font-size: var(--fs-sm); font-weight: 700; color: var(--text-dim); }
 
 /* ---------- لوحة التنويعات ---------- */
 .variations-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: var(--sp-20);
-  padding: var(--sp-24) 28px;
+  gap: var(--sp-16);
+  padding: var(--sp-20) var(--gutter);
   overflow-y: auto;
   min-height: 240px;
 }
@@ -1739,7 +1917,7 @@ textarea.empty-bidi { unicode-bidi: isolate; }
 
 .variation-num {
   font-family: var(--font-ui);
-  font-size: 13px;
+  font-size: var(--fs-base);
   font-weight: 700;
   color: var(--text-muted);
 }
@@ -1747,7 +1925,7 @@ textarea.empty-bidi { unicode-bidi: isolate; }
 .variation-text {
   flex: 1;
   font-family: var(--font-text);
-  font-size: 14px;
+  font-size: var(--fs-content);
   line-height: 1.9;
   white-space: pre-wrap;
   word-wrap: break-word;
@@ -1764,7 +1942,7 @@ textarea.empty-bidi { unicode-bidi: isolate; }
   justify-content: center;
   padding: var(--sp-20) var(--sp-6);
   font-family: var(--font-text);
-  font-size: 12.5px;
+  font-size: var(--fs-sm);
   color: var(--text-muted);
   text-align: center;
 }
@@ -1775,10 +1953,10 @@ textarea.empty-bidi { unicode-bidi: isolate; }
   color: var(--text-dim);
   border: 1px solid var(--border-subtle);
   border-radius: var(--r-8);
-  min-height: 38px;
+  height: var(--ctl-md);
   padding: 0 var(--sp-16);
   font-family: var(--font-ui);
-  font-size: 12.5px;
+  font-size: var(--fs-sm);
   font-weight: 700;
   cursor: pointer;
   transition: background-color 0.15s ease, color 0.15s ease;
@@ -1809,14 +1987,14 @@ textarea.empty-bidi { unicode-bidi: isolate; }
   padding: var(--sp-16) var(--sp-20) var(--sp-12);
 }
 
-.lens-head h2 { margin: 0; font-size: 14px; font-weight: 700; color: var(--text); }
+.lens-head h2 { margin: 0; font-size: var(--fs-lg); line-height: 1.3; font-weight: 700; color: var(--text); }
 
 .lens-text {
   flex: 1;
   overflow-y: auto;
   padding: var(--sp-8) var(--sp-24) var(--sp-40);
   font-family: var(--font-text);
-  font-size: 16px;
+  font-size: var(--fs-content-lg);
   line-height: 1.85;
   white-space: pre-wrap;
   word-wrap: break-word;
@@ -1830,7 +2008,7 @@ textarea.empty-bidi { unicode-bidi: isolate; }
   max-width: 375px;
   text-align: center;
   font-family: var(--font-text);
-  font-size: 11.5px;
+  font-size: var(--fs-xs);
   line-height: 1.6;
   color: var(--text-muted);
 }
@@ -1847,7 +2025,7 @@ textarea.empty-bidi { unicode-bidi: isolate; }
   padding: var(--sp-8) var(--sp-20);
   border-top: 1px solid var(--border-subtle);
   font-family: var(--font-text);
-  font-size: 10.5px;
+  font-size: var(--fs-xs);
   color: var(--text-muted);
   flex-wrap: wrap;
 }
@@ -1882,7 +2060,7 @@ textarea.empty-bidi { unicode-bidi: isolate; }
   border: 1px dashed var(--border);
   border-radius: var(--r-8);
   font-family: var(--font-text);
-  font-size: 12px;
+  font-size: var(--fs-sm);
 }
 .shathb-trial-row { display: flex; align-items: center; gap: var(--sp-8); flex-wrap: wrap; }
 .shathb-trial-label { font-family: var(--font-ui); font-weight: 700; color: var(--text-dim); }
@@ -1892,7 +2070,7 @@ textarea.empty-bidi { unicode-bidi: isolate; }
   border: 1px solid var(--border-subtle);
   border-radius: var(--r-4);
   padding: 2px var(--sp-8);
-  font-size: 11px;
+  font-size: var(--fs-xs);
   cursor: pointer;
 }
 .shathb-trial-btn {
@@ -1901,7 +2079,7 @@ textarea.empty-bidi { unicode-bidi: isolate; }
   border-radius: var(--r-8);
   padding: var(--sp-6) var(--sp-12);
   font-family: var(--font-ui);
-  font-size: 11.5px;
+  font-size: var(--fs-sm);
   font-weight: 700;
   color: var(--text-dim);
   cursor: pointer;
@@ -1920,6 +2098,12 @@ textarea.empty-bidi { unicode-bidi: isolate; }
    ============================================================ */
 @media (max-width: 1000px) {
   :root { --input-pane-w: 400px; }
+}
+
+/* نافذة قصيرة (أدنى ارتفاع مسموح ٥٦٠): أرضية مربع النص وحدها تنزل قليلًا
+   حتى تسع اللوحة محتواها بلا تمرير — الفعل الرئيس ثابت في تذييله أصلًا */
+@media (max-height: 620px) {
+  .textarea-shell { min-height: 120px; }
 }
 
 @media (max-width: 640px) {

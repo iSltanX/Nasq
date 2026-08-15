@@ -111,32 +111,39 @@
           </div>
         </div>
 
-        <!-- التوجيهات الخاصة (v4.0): قرارات موضعية لا يغطيها زر -->
-        <div class="field-block">
+        <!-- التوجيهات الخاصة (v4.0): قرارات موضعية لا يغطيها زر — حقل
+             مدمج بسطر واحد، يتمدد لحدّ ثم يمرّر داخليًا (CSS) فلا يزاحم
+             مربع النص على المساحة -->
+        <div class="field-block field-block-tight">
           <span class="field-label">توجيهات إضافية (اختياري)</span>
-          <textarea id="custom-directives" dir="rtl" rows="2" placeholder="مثال: اجعل الجملة الأخيرة في سطر مستقل" spellcheck="false"></textarea>
+          <textarea id="custom-directives" dir="rtl" rows="1" placeholder="مثال: اجعل الجملة الأخيرة في سطر مستقل" spellcheck="false"></textarea>
         </div>
 
         <!-- محاور التنسيق الثلاثة: حقول معنونة داخل لوحة الإدخال (Figma 24)
              بدل صفّ التحكّم المستقل القديم. الـselect يبقى مصدر القيمة
              (المعرّفات والقراءة البرمجية كما هي) وتُبنى فوقه قائمة الهوية
-             المنسدلة في nasaq.js عبر .control -->
+             المنسدلة في nasaq.js عبر .control.
+             مدمجة في صفّ واحد (grid auto-fit) بدل ثلاث كتل رأسية: ثلاثة
+             أعمدة حين يتّسع عرض اللوحة، وعمودان حين يضيق — والتلميح خارج
+             الصفّ بعرضه كاملًا فلا يُطيل عمودًا واحدًا دون إخوته -->
         <div class="format-settings">
           <div class="pane-divider" role="presentation"></div>
           <h3 class="section-title">إعدادات التنسيق</h3>
-          <div class="control field-block">
-            <span class="field-label">نمط التنسيق</span>
-            <select id="format-style"></select>
+          <div class="settings-row">
+            <div class="control field-block field-block-tight">
+              <span class="field-label">نمط التنسيق</span>
+              <select id="format-style"></select>
+            </div>
+            <div class="control field-block field-block-tight">
+              <span class="field-label">مستوى التدخل</span>
+              <select id="intervention"></select>
+            </div>
+            <div class="control field-block field-block-tight" id="platform-control" hidden>
+              <span class="field-label">المنصة</span>
+              <select id="platform"></select>
+            </div>
           </div>
-          <div class="control field-block">
-            <span class="field-label">مستوى التدخل</span>
-            <select id="intervention"></select>
-            <span id="intervention-hint" class="field-hint"></span>
-          </div>
-          <div class="control field-block" id="platform-control" hidden>
-            <span class="field-label">المنصة</span>
-            <select id="platform"></select>
-          </div>
+          <span id="intervention-hint" class="field-hint"></span>
         </div>
 
       </div>
@@ -146,10 +153,13 @@
            data-mode يبقى ظاهرًا وقابلًا للنقر دومًا دون تمرير — إصلاح
            قابلية الاستخدام في المقاس الحقيقي (٢٠٢٦-٠٨-١٥) -->
       <div class="pane-input-footer">
-        <!-- الفعل الرئيس (Figma 24) -->
+        <!-- الفعل الرئيس (Figma 24) — «نسّق» يملأ الصفّ وحده، وحين يظهر
+             «أرِني تنويعات» يقتسمانه جنبًا إلى جنب فلا يزيد ارتفاع التذييل -->
         <div class="input-actions">
-          <button id="format-btn" class="btn btn-primary btn-block">نسّق</button>
-          <button id="variations-btn" class="btn btn-secondary btn-block" type="button" title="ثلاث تنويعات تختلف في مواضع كسر السطر" hidden>أرِني تنويعات</button>
+          <div class="input-actions-row">
+            <button id="format-btn" class="btn btn-primary">نسّق</button>
+            <button id="variations-btn" class="btn btn-secondary" type="button" title="ثلاث تنويعات تختلف في مواضع كسر السطر" hidden>أرِني تنويعات</button>
+          </div>
           <p class="kbd-hint">اختصار سريع: ⌘/Ctrl + Enter للتنسيق</p>
         </div>
 
@@ -395,7 +405,7 @@
           <span class="field-label">API Key</span>
           <div class="key-row">
             <input id="api-key" type="password" dir="ltr" autocomplete="off" placeholder="أدخل المفتاح هنا" />
-            <button id="toggle-key" class="btn btn-outline btn-sm" type="button">إظهار</button>
+            <button id="toggle-key" class="btn btn-outline btn-md" type="button">إظهار</button>
           </div>
         </label>
         <label class="field-block">
@@ -407,7 +417,7 @@
           <input id="model-name" type="text" dir="ltr" autocomplete="off" />
         </label>
         <div id="ollama-test-row" class="test-row" hidden>
-          <button id="ollama-test-btn" class="btn btn-outline btn-sm" type="button">اختبار الاتصال</button>
+          <button id="ollama-test-btn" class="btn btn-outline btn-md" type="button">اختبار الاتصال</button>
           <span class="field-hint">يفحص الاتصال بـ Ollama محليًا فقط — بلا اتصال سحابي</span>
         </div>
         <p id="settings-privacy-hint" class="note-card">أزرار المزوّدات تملأ الرابط واسم النموذج فقط ولا تغيّر المفتاح. يُحفظ كل شيء محليًا على جهازك فقط، ولا يُرسل أي نص إلا عند ضغط «نسّق» أو «افحص الشذرة».</p>
