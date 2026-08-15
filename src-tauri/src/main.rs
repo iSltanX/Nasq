@@ -29,6 +29,7 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             shared::settings::load_settings,
             shared::settings::save_settings,
+            shared::llm::test_ollama_connection,
             shared::drafts::load_drafts,
             shared::drafts::save_drafts,
             shared::drafts::export_drafts,

@@ -10,9 +10,13 @@ const invoke = window.__TAURI__?.core?.invoke
 
 const el = (id) => document.getElementById(id);
 
-// عنصرا الرسائل العامان — يخصّان القشرة، وبقية العناصر لوحداتها
+// عنصرا الرسائل العامان — يخصّان القشرة، وبقية العناصر لوحداتها.
+// كل حاوية تحمل أيقونة تشريح ثابتة + عنصر رسالة فرعي (15 — Content &
+// Feedback: Alert/Toast) — النص يُكتب في الفرعي فلا يمحو الأيقونة
 const errorBar = el("error-bar");
+const errorBarMessage = el("error-bar-message");
 const toast = el("toast");
+const toastMessage = el("toast-message");
 
 // ---------- عدّاد الأحرف ----------
 // عدّ نقاط الترميز لا وحدات UTF-16 (الإصلاح ١-د): الإيموجي الواحد محرف
@@ -25,19 +29,19 @@ function updateCount(node, text) {
 
 // ---------- عرض الخطأ ----------
 function showError(msg) {
-  errorBar.textContent = msg;
+  errorBarMessage.textContent = msg;
   errorBar.hidden = false;
 }
 
 function clearError() {
   errorBar.hidden = true;
-  errorBar.textContent = "";
+  errorBarMessage.textContent = "";
 }
 
 // ---------- رسالة التنبيه ----------
 let toastTimer = null;
 function showToast(text) {
-  toast.textContent = text;
+  toastMessage.textContent = text;
   toast.hidden = false;
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => (toast.hidden = true), 1800);
@@ -65,10 +69,13 @@ async function copyText(text) {
 
 // ---------- الإعدادات ----------
 const overlay = el("settings-overlay");
+const apiKeyField = el("api-key-field");
 const apiKeyInput = el("api-key");
 const baseUrlInput = el("base-url");
 const modelInput = el("model-name");
 const settingsMsg = el("settings-msg");
+const ollamaTestRow = el("ollama-test-row");
+const ollamaTestBtn = el("ollama-test-btn");
 
 // مزوّدات جاهزة — تملأ Base URL وModel Name فقط، ولا تمسّ المفتاح
 const PROVIDERS = {
@@ -84,9 +91,23 @@ const PROVIDERS = {
     baseUrl: "https://openrouter.ai/api/v1",
     model: "google/gemini-2.5-flash",
   },
+  ollama: {
+    baseUrl: "http://127.0.0.1:11434",
+    model: "qwen3:8b",
+  },
 };
 
 const DEFAULTS = PROVIDERS.gemini;
+
+// المزوّد المختار حاليًا في لوحة الإعدادات — "ollama" أو "cloud" (أي مزوّد
+// سحابي متوافق مع OpenAI). يقود إظهار/إخفاء حقل API Key وزر اختبار الاتصال
+let selectedProvider = "cloud";
+
+function applyProviderUI(provider) {
+  const isOllama = provider === "ollama";
+  apiKeyField.hidden = isOllama;
+  ollamaTestRow.hidden = !isOllama;
+}
 
 function showSettingsMsg(text, isError) {
   settingsMsg.textContent = text;
@@ -114,6 +135,8 @@ async function openSettings() {
   modelInput.value = s.model || DEFAULTS.model;
   apiKeyInput.type = "password";
   el("toggle-key").textContent = "إظهار";
+  selectedProvider = s.provider === "ollama" ? "ollama" : "cloud";
+  applyProviderUI(selectedProvider);
   settingsMsg.hidden = true;
   switchTab("general");
   overlay.hidden = false;
@@ -136,6 +159,8 @@ for (const btn of document.querySelectorAll(".provider-btn")) {
     if (!p) return;
     baseUrlInput.value = p.baseUrl;
     modelInput.value = p.model;
+    selectedProvider = btn.dataset.provider === "ollama" ? "ollama" : "cloud";
+    applyProviderUI(selectedProvider);
     settingsMsg.hidden = true;
   });
 }
@@ -148,24 +173,45 @@ el("toggle-key").addEventListener("click", () => {
 
 el("save-settings").addEventListener("click", async () => {
   const apiKey = apiKeyInput.value.trim();
-  if (!apiKey) {
+  if (selectedProvider !== "ollama" && !apiKey) {
     showSettingsMsg("أدخل مفتاح المزود أولًا.", true);
     return;
   }
 
-  const baseUrl = baseUrlInput.value.trim() || DEFAULTS.baseUrl;
-  const model = modelInput.value.trim() || DEFAULTS.model;
+  const providerDefaults = selectedProvider === "ollama" ? PROVIDERS.ollama : DEFAULTS;
+  const baseUrl = baseUrlInput.value.trim() || providerDefaults.baseUrl;
+  const model = modelInput.value.trim() || providerDefaults.model;
   baseUrlInput.value = baseUrl;
   modelInput.value = model;
 
   try {
     await invoke("save_settings", {
-      settings: { apiKey, baseUrl, model },
+      settings: { apiKey, baseUrl, model, provider: selectedProvider },
     });
     showSettingsMsg("حُفظت الإعدادات محليًا.");
     setTimeout(closeSettings, 600);
   } catch (err) {
     showSettingsMsg(String(err), true);
+  }
+});
+
+// اختبار اتصال Ollama المحلي — يفحص الحقول الحالية (قد تكون غير محفوظة بعد)
+// عبر GET /api/tags، ولا يرسل أي نص ولا يتصل بأي مزوّد سحابي
+ollamaTestBtn.addEventListener("click", async () => {
+  const baseUrl = baseUrlInput.value.trim() || PROVIDERS.ollama.baseUrl;
+  const model = modelInput.value.trim() || PROVIDERS.ollama.model;
+  const originalLabel = ollamaTestBtn.textContent;
+  ollamaTestBtn.disabled = true;
+  ollamaTestBtn.textContent = "جارٍ الاختبار…";
+  settingsMsg.hidden = true;
+  try {
+    const msg = await invoke("test_ollama_connection", { baseUrl, model });
+    showSettingsMsg(msg, false);
+  } catch (err) {
+    showSettingsMsg(String(err), true);
+  } finally {
+    ollamaTestBtn.disabled = false;
+    ollamaTestBtn.textContent = originalLabel;
   }
 });
 

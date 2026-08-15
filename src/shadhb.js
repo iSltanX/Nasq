@@ -29,8 +29,20 @@
     const previewBox = el("prune-preview");
     const copyPrunedBtn = el("copy-pruned-btn");
     const covenantBar = el("covenant-bar");
+    const statusDot = el("shadhb-status-dot");
+    const statusBadge = el("shadhb-status-badge");
 
     const AR = (n) => Number(n).toLocaleString("ar");
+
+    // أيقونة معلومات محايدة صغيرة — تُستعمل في حالتي فراغ القصّات
+    function mkInfoIcon() {
+      const span = document.createElement("span");
+      span.className = "cuts-empty-icon";
+      span.setAttribute("aria-hidden", "true");
+      span.innerHTML =
+        '<svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6.2" /><line x1="8" y1="7.3" x2="8" y2="11" /><circle cx="8" cy="4.8" r="0.75" fill="currentColor" stroke="none" /></svg>';
+      return span;
+    }
 
     // ---------- التبديل بين الوضعين ----------
     // data-mode على الجذر يقود CSS وحده: لوحة شَذْب محل لوحة النتيجة وأدوات
@@ -63,6 +75,8 @@
     }
 
     // ---------- بطاقة القراءة: وصف يسبق المقص ----------
+    // عنوان «قراءة شَذْب» (مرجع Figma — node 20:7) يسمّي البطاقة قبل بنودها —
+    // إضافة عرض بحتة، readingCard نفسها من الفحص كما هي بلا مساس
     function renderCard() {
       cardBox.innerHTML = "";
       const rows = [
@@ -71,8 +85,16 @@
         ["الخاتمة", state.readingCard.ending],
         ["الإيقاع", state.readingCard.rhythm],
       ];
-      for (const [label, value] of rows) {
-        if (!value) continue;
+      const present = rows.filter(([, value]) => value);
+      if (present.length === 0) {
+        cardBox.hidden = true;
+        return;
+      }
+      const title = document.createElement("h3");
+      title.className = "reading-card-title";
+      title.textContent = "قراءة شَذْب";
+      cardBox.appendChild(title);
+      for (const [label, value] of present) {
         const row = document.createElement("div");
         row.className = "card-row";
         const l = document.createElement("span");
@@ -85,7 +107,7 @@
         row.append(l, v);
         cardBox.appendChild(row);
       }
-      cardBox.hidden = cardBox.children.length === 0;
+      cardBox.hidden = false;
     }
 
     // ---------- القصّات: قرار الكاتب لكل واحدة — احذف أو أبقِ ----------
@@ -98,6 +120,17 @@
     function buildCutEntry(cut, index) {
       const box = document.createElement("div");
       box.className = "cut-entry " + cut.status;
+
+      // ترقيم القصّة (مرجع Figma — node 20:7): رقم الموضع مجرَّدًا («١»، «٢»…)
+      // بلا إجمالي — أهدأ من «١ من ٣» ويكفي لمراجعة متتابعة. عرض بحت،
+      // لا يغيّر ترتيب المصفوفة ولا فهرسها
+      const indexRow = document.createElement("div");
+      indexRow.className = "cut-index-row";
+      const indexNum = document.createElement("span");
+      indexNum.className = "cut-index";
+      indexNum.textContent = AR(index + 1);
+      indexRow.appendChild(indexNum);
+      box.appendChild(indexRow);
 
       const quote = document.createElement("div");
       quote.className = "cut-quote";
@@ -165,11 +198,11 @@
           const detail = document.createElement("p");
           detail.className = "cuts-empty-detail";
           detail.textContent = droppedLabel(state.droppedCuts);
-          empty.append(main, detail);
+          empty.append(mkInfoIcon(), main, detail);
         } else {
           empty.className = "cuts-empty";
           main.textContent = "لم يجد شَذْب موضع حذف آمن.";
-          empty.appendChild(main);
+          empty.append(mkInfoIcon(), main);
         }
         cutsList.appendChild(empty);
         return;
@@ -178,21 +211,63 @@
     }
 
     // ---------- شريط الضمانة: العهد مفحوصًا حيًّا لا موعودًا ----------
+    // أيقونة صغيرة (✓ عند السلامة، ✕ عند الخرق) قبل النص — شارة مندمجة
+    // (مرجع Figma — node 20:7) لا تمسّ verifySubset ولا نتيجة الفحص نفسها
     function renderCovenant() {
       const check = prune.verifySubset(state.original, state.currentText);
       const removed =
         prune.wordCores(state.original).length - prune.wordCores(state.currentText).length;
       covenantBar.classList.toggle("fail", !check.ok);
-      covenantBar.textContent = check.ok
+      covenantBar.innerHTML = "";
+      const icon = document.createElement("span");
+      icon.className = "covenant-bar-icon";
+      icon.setAttribute("aria-hidden", "true");
+      icon.innerHTML = check.ok
+        ? '<svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><polyline points="3.5 8.5 6.5 11.5 12.5 4.5" /></svg>'
+        : '<svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><line x1="4.5" y1="4.5" x2="11.5" y2="11.5" /><line x1="11.5" y1="4.5" x2="4.5" y2="11.5" /></svg>';
+      const text = document.createElement("span");
+      text.textContent = check.ok
         ? `تحقق آلي: لم تُضف كلمة — كل الناتج من نصّك · ${wordsLabel(removed)}`
         : `خرق العهد: كلمات ليست من نصّك (${check.addedWords.join("، ")}) — النتيجة لن تُرسل`;
+      covenantBar.append(icon, text);
       covenantBar.hidden = false;
       sendBtn.hidden = !check.ok;
       return check.ok;
     }
 
+    // «قصّة واحدة مقترحة / قصّتان مقترحتان / N قصّات مقترحة» — جمع عربي سليم
+    function cutsCountLabel(n) {
+      if (n === 1) return "قصّة واحدة مقترحة";
+      if (n === 2) return "قصّتان مقترحتان";
+      return n <= 10 ? `${AR(n)} قصّات مقترحة` : `${AR(n)} قصّة مقترحة`;
+    }
+
+    // ---------- مؤشّر الحالة في رأس اللوحة (مرجع Figma — node 20:7) ----------
+    // نقطة وشارة تعكسان حالة state حيًّا — idle قبل أي فحص، pending وفيها
+    // قصّات (العدد الكلي كما اقترحه الفحص، لا يتناقص بالقرار)، وclear حين
+    // لم يتغيّر شيء (لا اقتراحات، سواء لعدم وجودها أو لإسقاط التحقق لها كلها)
+    function renderStatusBadge() {
+      if (!state) {
+        statusDot.dataset.status = "idle";
+        statusBadge.dataset.status = "idle";
+        statusBadge.textContent = "مقصّ لا قلم";
+        return;
+      }
+      const n = state.cuts.length;
+      if (n === 0) {
+        statusDot.dataset.status = "clear";
+        statusBadge.dataset.status = "clear";
+        statusBadge.textContent = "لم يتغيّر النص";
+      } else {
+        statusDot.dataset.status = "pending";
+        statusBadge.dataset.status = "pending";
+        statusBadge.textContent = cutsCountLabel(n);
+      }
+    }
+
     function renderAll() {
       placeholder.hidden = true;
+      renderStatusBadge();
       renderCard();
       renderCuts();
       // سطر الإسقاط الصغير فقط حين نجت قصّات — الإسقاط الكامل تحمله
