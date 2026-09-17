@@ -407,6 +407,7 @@
   window.addEventListener("resize", positionPopover);
 
   window.NasaqWindow = {
+    showView: setView,
     openMenu,
     openMenuAt,
     presentModal,
@@ -465,10 +466,24 @@
       layoutToolbar();
     });
   }
+  // ---------- النصّ النائب في الحقول المشتركة ----------
+  // خانة النص واحدة تخدم البرجين، وكل وحدة تسمّي خامَها باسمه (Figma 108:625
+  // و99:557): النصّ النائب يُقرأ من السمة الموافقة للوحدة الفعّالة، فلا يحمل
+  // الهيكل اسم برج ولا نصًّا من نصوصه
+  function applyModulePlaceholders() {
+    for (const field of document.querySelectorAll("[data-placeholders]")) {
+      const text = field.getAttribute(`data-placeholder-${root.dataset.module}`);
+      if (text !== null) field.placeholder = text;
+    }
+  }
+
   new ResizeObserver(scheduleLayout).observe(toolbar);
   new MutationObserver((records) => {
     scheduleLayout();
-    if (records.some((r) => r.attributeName === "data-module")) markModuleSwitch();
+    if (records.some((r) => r.attributeName === "data-module")) {
+      applyModulePlaceholders();
+      markModuleSwitch();
+    }
   }).observe(root, { attributes: true, attributeFilter: ["data-module", "data-titlebar", "data-fullscreen"] });
 
   // تلاشي الوحدة يعمل عند التبديل وحده، لا عند أول ظهور ولا عند كل رسم
@@ -508,6 +523,7 @@
     fullscreenTimers.forEach(clearTimeout);
     fullscreenTimers = [setTimeout(syncFullscreen, 150), setTimeout(syncFullscreen, 900)];
   });
+  applyModulePlaceholders();
   applyPanels();
   syncFullscreen();
 

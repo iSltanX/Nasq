@@ -71,14 +71,15 @@
         <input id="import-drafts-input" type="file" accept=".json,application/json" hidden />
       </footer>
 
-      <!-- شَذْب: القصّات -->
+      <!-- شَذْب: القصّات (Figma 105:525) — عددها في العنوان، وصفٌّ لكل قصّة
+           باقتباسها وسببها ورمز قرارها، والقرار نفسه في المفتّش -->
       <div class="sidebar-body" data-for="shadhb">
-        <h2 class="sidebar-section-header">
+        <h2 class="sidebar-section-header" id="cuts-heading">
           <span class="section-title">القصّات</span>
+          <span id="cuts-count" class="count-badge" hidden></span>
         </h2>
-        <p class="sidebar-hint">تظهر القصّات المقترحة هنا بعد الفحص، ولكل واحدة قرارك: احذف أو أبقِ.</p>
-        <div id="cuts-list" class="cuts-list"></div>
-        <p id="dropped-note" class="dropped-note" hidden></p>
+        <p id="cuts-note" class="sidebar-hint">تظهر القصّات المقترحة هنا بعد الفحص، ولكل واحدة قرارك: احذف أو أبقِ.</p>
+        <div id="cuts-list" class="cuts-list" role="listbox" aria-labelledby="cuts-heading"></div>
       </div>
       <footer class="sidebar-footer sidebar-footer-note" data-for="shadhb">
         <svg class="icon footer-icon" aria-hidden="true"><use href="#scissors.16r" /></svg>
@@ -178,13 +179,13 @@
                 <svg class="icon icon-20 bare-icon" aria-hidden="true"><use href="#doc.on.doc.20r" /></svg>
                 <span class="item-label">نسخ</span>
               </button>
-              <button id="send-to-nasaq-btn" class="toolbar-item has-label" type="button" title="النص المشذَّب يصير خامًا لنَسَق — جلسة جديدة" aria-label="أرسل إلى نَسَق" hidden>
+              <button id="send-to-nasaq-btn" class="toolbar-item has-label" type="button" title="النص المشذَّب يصير خامًا لنَسَق — جلسة جديدة" aria-label="أرسل إلى نَسَق" disabled>
                 <svg class="icon label-icon" aria-hidden="true"><use href="#nsq.nasaq.16m" /></svg>
                 <svg class="icon icon-20 bare-icon" aria-hidden="true"><use href="#nsq.nasaq.20r" /></svg>
                 <span class="item-label">أرسل إلى نَسَق</span>
               </button>
             </div>
-            <button id="prune-btn" class="action-button" type="button" data-style="glass" title="فحص واحد يعيد بطاقة قراءة وقصّات مقترحة — لا يغيّر نصك حتى تقرر">
+            <button id="prune-btn" class="action-button" type="button" data-style="primary" title="افحص الشذرة ⌘↩ — فحص واحد يعيد بطاقة قراءة وقصّات مقترحة، ولا يغيّر نصك حتى تقرر" disabled>
               <svg class="icon action-icon" aria-hidden="true"><use href="#nsq.shadhb.16m" /></svg>
               <span>افحص الشذرة</span>
             </button>
@@ -252,7 +253,7 @@
                     <svg class="icon" aria-hidden="true"><use href="#xmark.16r" /></svg>
                   </button>
                 </div>
-                <div class="banner" data-for="shadhb" data-error-slot data-reveals-source role="alert" hidden>
+                <div id="shadhb-error-source" class="banner" data-for="shadhb" data-error-slot role="alert" hidden>
                   <svg class="icon icon-20 banner-icon" aria-hidden="true"><use href="#xmark.octagon.20r" /></svg>
                   <div class="banner-text">
                     <p class="banner-title" data-error-title></p>
@@ -266,7 +267,20 @@
                   </button>
                 </div>
               </div>
-              <textarea id="input-text" class="editor" dir="rtl" rows="1" placeholder="الصق نصّك هنا أو ابدأ الكتابة مباشرة…" spellcheck="false" aria-label="النص"></textarea>
+              <!-- لا قصّات: ملاحظة معلومات فوق الشذرة في العمود الواحد (Figma 200:17509) -->
+              <div id="no-cuts-source" class="banner" data-for="shadhb" role="status" hidden>
+                <svg class="icon icon-20 banner-icon is-info" aria-hidden="true"><use href="#info.circle.20r" /></svg>
+                <div class="banner-text">
+                  <p class="banner-title">لا قصّات مقترحة</p>
+                  <p class="banner-message">لم يجد شَذْب موضع حذف آمن في هذه الشذرة، ونصّك كما هو.</p>
+                </div>
+              </div>
+              <!-- الخانة مشتركة، ونصّها النائب يسمّي خامَ كل وحدة. طبقة العلامات فوقها
+                   لشَذْب وحده (Figma 108:711): منقّطة لم تُحسم، متصلة للمحددة، شطب للمحذوفة -->
+              <div class="editor-stack">
+                <textarea id="input-text" class="editor" dir="rtl" rows="1" placeholder="الصق نصّك هنا أو ابدأ الكتابة مباشرة…" spellcheck="false" aria-label="النص" data-placeholders data-placeholder-nasaq="الصق نصّك هنا أو ابدأ الكتابة مباشرة…" data-placeholder-shadhb="الصق الشذرة هنا أو اكتبها مباشرة…"></textarea>
+                <div id="shard-marks" class="marked-text" data-for="shadhb" dir="rtl" aria-hidden="true" hidden></div>
+              </div>
             </div>
 
             <div class="compare-divider" aria-hidden="true"></div>
@@ -313,10 +327,10 @@
               </div>
             </div>
 
+            <!-- شَذْب: لكل حالة عنصرها — فارغة، أثناء الفحص، نتيجة، لا قصّات، خطأ (Figma 108:781) -->
             <div class="column column-result" data-for="shadhb">
               <h2 class="column-header">بعد التشذيب</h2>
-              <!-- مؤقت حتى المرحلة ٤: تنبيه شَذْب في عموده -->
-              <div class="banner" data-error-slot role="alert" hidden>
+              <div id="shadhb-error" class="banner" data-error-slot role="alert" hidden>
                 <svg class="icon icon-20 banner-icon" aria-hidden="true"><use href="#xmark.octagon.20r" /></svg>
                 <div class="banner-text">
                   <p class="banner-title" data-error-title></p>
@@ -329,19 +343,33 @@
                   <svg class="icon" aria-hidden="true"><use href="#xmark.16r" /></svg>
                 </button>
               </div>
-              <div id="prune-preview-wrap" hidden>
-                <div id="prune-preview" class="result-text selectable" dir="rtl" data-reveals-result></div>
+              <div id="no-cuts-result" class="banner" role="status" hidden>
+                <svg class="icon icon-20 banner-icon is-info" aria-hidden="true"><use href="#info.circle.20r" /></svg>
+                <div class="banner-text">
+                  <p class="banner-title">لا قصّات مقترحة</p>
+                  <p class="banner-message">لم يجد شَذْب موضع حذف آمن في هذه الشذرة، ونصّك كما هو.</p>
+                </div>
               </div>
-              <div id="shadhb-loading" class="loading-state" role="status" aria-live="polite" hidden>
-                <span class="spinner" aria-hidden="true"></span>
-                <span>جارٍ الفحص…</span>
+              <div id="shadhb-progress" class="result-progress" hidden>
+                <p class="progress-row" role="status">
+                  <span class="spinner spinner-16" aria-hidden="true"></span>
+                  <span>جارٍ فحص الشذرة… نصّك لن يتغيّر</span>
+                </p>
+                <div class="skeleton-paragraph" aria-hidden="true">
+                  <span class="skeleton-line"></span><span class="skeleton-line"></span><span class="skeleton-line"></span><span class="skeleton-line"></span><span class="skeleton-line"></span>
+                </div>
               </div>
+              <div id="prune-preview" class="result-text selectable" dir="rtl"></div>
               <div id="shadhb-placeholder" class="empty-state">
                 <span class="empty-illustration" aria-hidden="true">
                   <svg class="icon" aria-hidden="true"><use href="#nsq.shadhb.20r" /></svg>
                 </span>
                 <p class="empty-title">لم يُفحص النص بعد</p>
                 <p class="empty-body">اضغط «افحص الشذرة» ليقترح شَذْب قصّات دقيقة، وتقرّر كل واحدة منها بنفسك.</p>
+                <kbd class="shortcut" aria-label="الاختصار: الأمر مع الإدخال">
+                  <svg class="icon" aria-hidden="true"><use href="#command.16r" /></svg>
+                  <svg class="icon" aria-hidden="true"><use href="#return.16r" /></svg>
+                </kbd>
               </div>
             </div>
           </div>
@@ -357,14 +385,15 @@
               <span class="status-indicator" aria-hidden="true"></span>
               <span id="nasaq-status-label" class="status-label">لم يُنسَّق بعد</span>
             </span>
-            <span class="polish-status" data-for="shadhb">
-              <span id="shadhb-status-dot" class="status-indicator" data-status="idle" aria-hidden="true"></span>
-              <span id="shadhb-status-badge" class="status-label" data-status="idle">لم يُفحص بعد</span>
+            <span id="shadhb-status" class="polish-status" data-for="shadhb" data-status="before">
+              <span class="status-indicator" aria-hidden="true"></span>
+              <span id="shadhb-status-label" class="status-label">لم يُفحص بعد</span>
             </span>
           </div>
           <div class="status-counts">
             <span id="output-count" data-for="nasaq" hidden></span>
             <span id="input-count"></span>
+            <span id="shadhb-count" data-for="shadhb"></span>
           </div>
         </footer>
 
@@ -477,28 +506,92 @@
           </section>
         </div>
 
+        <!-- شَذْب (Figma 107:504): بطاقة القراءة، ثم القصّة المحددة عند المراجعة،
+             ثم الضمانة — وتحلّ «النتيجة» محل الضمانة بعد الحسم -->
         <div class="inspector-body" data-for="shadhb">
-          <section class="inspector-section">
-            <button class="section-header" type="button" aria-expanded="true">
+          <section class="inspector-section" id="reading-card-section">
+            <button class="section-header" type="button" aria-expanded="true" aria-controls="reading-card-content">
               <svg class="icon section-icon" aria-hidden="true"><use href="#doc.text.magnifyingglass.16r" /></svg>
               <span class="section-title">بطاقة القراءة</span>
               <svg class="icon disclosure" aria-hidden="true"><use href="#chevron.down.16m" /></svg>
             </button>
-            <div class="section-content">
-              <p class="section-note when-empty">تظهر بعد الفحص: الجملة المركزية، وموضع الشرح الزائد، والخاتمة، والإيقاع.</p>
+            <div class="section-content" id="reading-card-content">
+              <p id="reading-card-note" class="section-note">تظهر بعد الفحص: الجملة المركزية، وموضع الشرح الزائد، والخاتمة، والإيقاع.</p>
+              <div id="reading-card-skeleton" class="reading-card-skeleton" aria-hidden="true" hidden>
+                <span class="skeleton-line"></span><span class="skeleton-line"></span><span class="skeleton-line"></span><span class="skeleton-line"></span>
+              </div>
               <div id="reading-card" class="reading-card" hidden></div>
             </div>
           </section>
 
-          <section class="inspector-section">
-            <button class="section-header" type="button" aria-expanded="true">
-              <svg class="icon section-icon" aria-hidden="true"><use href="#checkmark.seal.16r" /></svg>
+          <section class="inspector-section" id="cut-card-section" hidden>
+            <button class="section-header" type="button" aria-expanded="true" aria-controls="cut-card-content">
+              <svg class="icon section-icon" aria-hidden="true"><use href="#scissors.16r" /></svg>
+              <span class="section-title">القصّة المحددة</span>
+              <svg class="icon disclosure" aria-hidden="true"><use href="#chevron.down.16m" /></svg>
+            </button>
+            <div class="section-content" id="cut-card-content">
+              <article id="cut-card" class="suggestion-card" data-state="selected" aria-labelledby="cut-card-title">
+                <header class="card-header">
+                  <h3 id="cut-card-title" class="card-title"></h3>
+                  <span id="cut-card-tag" class="tag" data-tone="neutral">
+                    <svg class="icon" aria-hidden="true"><use href="#circle.dotted.16m" /></svg>
+                    <span class="tag-label"></span>
+                  </span>
+                </header>
+                <div id="cut-card-quote" class="card-quote selectable" dir="rtl"></div>
+                <p id="cut-card-meta" class="card-meta"></p>
+                <p id="cut-card-effect" class="card-effect" hidden>
+                  <svg class="icon" aria-hidden="true"><use href="#info.circle.16r" /></svg>
+                  <span></span>
+                </p>
+                <div id="cut-card-actions" class="card-actions">
+                  <button id="keep-cut-btn" class="button button-secondary" type="button">أبقِ</button>
+                  <button id="apply-cut-btn" class="button button-primary" type="button">
+                    <svg class="icon" aria-hidden="true"><use href="#scissors.16m" /></svg>
+                    <span>احذف</span>
+                  </button>
+                </div>
+              </article>
+            </div>
+          </section>
+
+          <section class="inspector-section" id="covenant-section">
+            <button class="section-header" type="button" aria-expanded="true" aria-controls="covenant-content">
+              <svg id="covenant-section-icon" class="icon section-icon" aria-hidden="true"><use href="#checkmark.seal.16r" /></svg>
               <span class="section-title">الضمانة</span>
               <svg class="icon disclosure" aria-hidden="true"><use href="#chevron.down.16m" /></svg>
             </button>
-            <div class="section-content">
-              <p class="section-note when-empty">كل قصّة اقتباس حرفي من نصّك، ويتحقق شَذْب آليًا أن لا كلمة أُضيفت قبل أن يعرضها.</p>
+            <div class="section-content" id="covenant-content">
+              <p id="covenant-note" class="section-note">كل قصّة اقتباس حرفي من نصّك، ويتحقق شَذْب آليًا أن لا كلمة أُضيفت قبل أن يعرضها.</p>
               <div id="covenant-bar" class="covenant-bar" hidden></div>
+            </div>
+          </section>
+
+          <section class="inspector-section" id="outcome-section" hidden>
+            <button class="section-header" type="button" aria-expanded="true" aria-controls="outcome-content">
+              <svg class="icon section-icon" aria-hidden="true"><use href="#checkmark.seal.16r" /></svg>
+              <span class="section-title">النتيجة</span>
+              <svg class="icon disclosure" aria-hidden="true"><use href="#chevron.down.16m" /></svg>
+            </button>
+            <div class="section-content" id="outcome-content">
+              <span id="outcome-status" class="polish-status" data-status="polished">
+                <span class="status-indicator" aria-hidden="true"></span>
+                <span class="status-label">حُسمت كل القصّات</span>
+              </span>
+              <div class="inspector-row">
+                <span class="row-label">القصّات المحذوفة</span>
+                <span id="outcome-cut" class="row-value"></span>
+              </div>
+              <div class="inspector-row">
+                <span class="row-label">القصّات المُبقاة</span>
+                <span id="outcome-kept" class="row-value"></span>
+              </div>
+              <div class="inspector-row">
+                <span class="row-label">الكلمات المحذوفة</span>
+                <span id="outcome-words" class="row-value"></span>
+              </div>
+              <div id="outcome-covenant" class="covenant-bar"></div>
             </div>
           </section>
         </div>
