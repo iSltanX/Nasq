@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>الإعدادات</title>
+    <link rel="stylesheet" href="tokens.css" />
+    <link rel="stylesheet" href="base.css" />
+    <link rel="stylesheet" href="secondary.css" />
+  </head>
+  <body data-window="settings">
+    <!-- الهيئة ٨٨: صفّ عنوان ٣٢ عنوانه اسم التبويب، وشريط تبويبات ٥٦ -->
+    <header class="titlebar" data-tauri-drag-region>
+      <div class="title-row" data-tauri-drag-region>
+        <h1 id="window-title">عام</h1>
+      </div>
+      <div class="tabs" role="tablist" aria-label="أقسام الإعدادات" data-tauri-drag-region>
+        <button
+          class="tab"
+          type="button"
+          role="tab"
+          id="tab-general"
+          data-tab="general"
+          aria-selected="true"
+          aria-controls="pane-general"
+        >
+          <svg aria-hidden="true"><use href="#gearshape.20r"></use></svg>
+          <span>عام</span>
+        </button>
+        <button
+          class="tab"
+          type="button"
+          role="tab"
+          id="tab-updates"
+          data-tab="updates"
+          aria-selected="false"
+          aria-controls="pane-updates"
+          tabindex="-1"
+        >
+          <svg aria-hidden="true"><use href="#arrow.clockwise.20r"></use></svg>
+          <span>التحديثات</span>
+        </button>
+      </div>
+    </header>
+
+    <main>
+      <section class="pane" id="pane-general" role="tabpanel" aria-labelledby="tab-general">
+        <div class="form-section">
+          <h2 class="section-header">النموذج</h2>
+          <div class="section-rows">
+            <div class="form-row" data-control="picker">
+              <span class="row-label" id="label-provider">المزوّد</span>
+              <span class="row-spacer"></span>
+              <button
+                class="row-picker"
+                type="button"
+                id="provider-picker"
+                aria-labelledby="label-provider"
+                aria-haspopup="menu"
+                aria-expanded="false"
+              >
+                <span id="provider-value">Gemini</span>
+                <span class="picker-chevron" aria-hidden="true">
+                  <svg><use href="#chevron.up.chevron.down.16m"></use></svg>
+                </span>
+              </button>
+            </div>
+            <div class="form-row" data-control="field">
+              <label class="row-label" for="api-key">مفتاح API</label>
+              <input
+                class="row-field"
+                id="api-key"
+                type="password"
+                dir="ltr"
+                autocomplete="off"
+                spellcheck="false"
+                placeholder="الصق المفتاح هنا"
+              />
+            </div>
+            <div class="form-row" data-control="field">
+              <label class="row-label" for="model-name">النموذج</label>
+              <input
+                class="row-field"
+                id="model-name"
+                type="text"
+                dir="ltr"
+                autocomplete="off"
+                spellcheck="false"
+              />
+            </div>
+          </div>
+          <p class="section-footer">
+            يُحفظ المفتاح في سلسلة المفاتيح على جهازك، ولا يُرسَل نصّك إلا حين تطلب التنسيق أو الفحص.
+          </p>
+        </div>
+
+        <div class="form-section">
+          <h2 class="section-header">الاتصال</h2>
+          <div class="section-rows">
+            <div class="form-row" data-control="field">
+              <label class="row-label" for="base-url">عنوان الخادم</label>
+              <input
+                class="row-field"
+                id="base-url"
+                type="text"
+                dir="ltr"
+                autocomplete="off"
+                spellcheck="false"
+              />
+            </div>
+            <div class="form-row" data-control="button">
+              <span class="row-label">اختبار الاتصال</span>
+              <span class="row-spacer"></span>
+              <span class="row-status" id="connection-status" role="status" aria-live="polite" hidden>
+                <span id="connection-message"></span>
+                <svg aria-hidden="true"><use id="connection-icon" href="#checkmark.circle.16m"></use></svg>
+              </span>
+              <button class="row-button" type="button" id="test-connection">اختبر</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h2 class="section-header">المظهر</h2>
+          <div class="section-rows">
+            <div class="form-row" data-control="picker">
+              <span class="row-label" id="label-appearance">المظهر</span>
+              <span class="row-spacer"></span>
+              <button
+                class="row-picker"
+                type="button"
+                id="appearance-picker"
+                aria-labelledby="label-appearance"
+                aria-haspopup="menu"
+                aria-expanded="false"
+              >
+                <span id="appearance-value">تلقائي</span>
+                <span class="picker-chevron" aria-hidden="true">
+                  <svg><use href="#chevron.up.chevron.down.16m"></use></svg>
+                </span>
+              </button>
+            </div>
+          </div>
+          <p class="section-footer">«تلقائي» يتبع مظهر النظام ويتبدّل معه فورًا.</p>
+        </div>
+      </section>
+
+      <section class="pane" id="pane-updates" role="tabpanel" aria-labelledby="tab-updates" hidden>
+        <div class="form-section">
+          <div class="section-rows">
+            <div class="form-row" data-control="switch">
+              <span class="row-label" id="label-auto-updates">التحقق من التحديثات تلقائيًا</span>
+              <span class="row-spacer"></span>
+              <button
+                class="row-switch"
+                type="button"
+                id="auto-updates"
+                role="switch"
+                aria-checked="true"
+                aria-labelledby="label-auto-updates"
+              ></button>
+            </div>
+            <div class="form-row" data-control="value">
+              <span class="row-label">الإصدار الحالي</span>
+              <span class="row-value" id="app-version" dir="ltr"></span>
+            </div>
+            <div class="form-row" data-control="button">
+              <span class="row-label">آخر تحقق</span>
+              <span class="row-spacer"></span>
+              <span class="row-status" id="update-status" role="status" aria-live="polite" hidden>
+                <span id="update-message"></span>
+              </span>
+              <button class="row-button" type="button" id="check-updates">تحقّق الآن</button>
+            </div>
+          </div>
+          <p class="section-footer">لا يُنزَّل أي تحديث قبل موافقتك.</p>
+        </div>
+      </section>
+    </main>
+
+    <div id="sprite" hidden aria-hidden="true"></div>
+
+    <!-- قائمة اختيار واحدة تخدم المزوّد والمظهر معًا -->
+    <div class="menu" id="picker-menu" role="menu" hidden></div>
+
+    <script src="appearance.js"></script>
+    <script src="secondary.js"></script>
+    <script src="settings.js"></script>
+  </body>
+</html>

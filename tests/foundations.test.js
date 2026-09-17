@@ -103,13 +103,42 @@ test("الأيقونات: كل رمز يشير إليه الهيكل أو الأ
   // اسم الرمز في السمة مكتوبًا، أو قيمةً نصية تُركَّب في وقت التشغيل (خرائط
   // الحالات) — الشكل نفسه: kebab بنقاط فمقاس ١٦ أو ٢٠ فوزن r أو m
   const NAME_RE = /["'`]#?([a-z][a-z0-9.]*\.\d\d[rm])["'`]/g;
-  for (const file of ["index.html", "nasaq.js", "shadhb.js", "shell.js", "layout.js"]) {
+  for (const file of [
+    "index.html",
+    "settings.html",
+    "about.html",
+    "nasaq.js",
+    "shadhb.js",
+    "shell.js",
+    "layout.js",
+    "settings.js",
+  ]) {
     const code = fs.readFileSync(srcPath(file), "utf8");
     for (const m of code.matchAll(/<use href="#([^"]+)"/g)) {
       assert.ok(ids.has(m[1]), `${file} يشير إلى رمز غائب: ${m[1]}`);
     }
     for (const m of code.matchAll(NAME_RE)) {
       assert.ok(ids.has(m[1]), `${file} يركّب رمزًا غائبًا: ${m[1]}`);
+    }
+  }
+});
+
+test("أوراق الأنماط: لا لون مثبّت، وكل إحالة var() تجد توكنها", () => {
+  const defined = new Set([
+    ...[...tokens.matchAll(/(--[a-z0-9-]+)\s*:/g)].map((m) => m[1]),
+    ...[...base.matchAll(/(--[a-z0-9-]+)\s*:/g)].map((m) => m[1]),
+    // ومنها ما تضبطه الواجهة وقت التشغيل (موضع سهم النافذة المنبثقة مثلًا)
+    ...["layout.js", "shell.js", "nasaq.js", "shadhb.js", "settings.js"].flatMap((file) =>
+      [...fs.readFileSync(srcPath(file), "utf8").matchAll(/setProperty\("(--[a-z0-9-]+)"/g)].map((m) => m[1])
+    ),
+  ]);
+  for (const sheet of ["app.css", "secondary.css"]) {
+    const css = fs.readFileSync(srcPath(sheet), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+    assert.ok(!/#[0-9a-f]{3,8}\b|rgba?\(/i.test(css), `لون مثبت في ${sheet} بدل التوكنز`);
+    // للورقة أن تعرّف متغيّراتها المحلية (عرض الشريط الجانبي مثلًا)
+    const known = new Set([...defined, ...[...css.matchAll(/(--[a-z0-9-]+)\s*:/g)].map((m) => m[1])]);
+    for (const m of css.matchAll(/var\((--[a-z0-9-]+)/g)) {
+      assert.ok(known.has(m[1]), `${sheet} يحيل إلى توكن غير معرّف: ${m[1]}`);
     }
   }
 });

@@ -641,91 +641,6 @@
     </div>
   </div>
 
-  <!-- ================= مؤقت حتى المرحلة ٥ ================= -->
-  <!-- الإعدادات: تحل محلها نافذة المرحلة ٥. الوصول إليها بـ ⌘, وعند أول تشغيل -->
-  <div id="settings-overlay" class="interim-overlay" role="dialog" aria-modal="true" aria-labelledby="settings-title" hidden>
-    <div class="interim-sheet">
-      <div class="sheet-head">
-        <h2 id="settings-title">الإعدادات</h2>
-        <button id="close-settings" class="icon-button" type="button" title="إغلاق" aria-label="إغلاق">
-          <svg class="icon" aria-hidden="true"><use href="#xmark.16r" /></svg>
-        </button>
-      </div>
-      <div class="interim-tabs" role="tablist">
-        <button id="tab-general-btn" class="view-segment active" type="button" role="tab" aria-controls="tab-general" aria-selected="true">عام</button>
-        <button id="tab-appearance-btn" class="view-segment" type="button" role="tab" aria-controls="tab-appearance" aria-selected="false">المظهر</button>
-        <button id="tab-about-btn" class="view-segment" type="button" role="tab" aria-controls="tab-about" aria-selected="false">حول</button>
-      </div>
-
-      <div id="tab-general" class="sheet-body-interim" role="tabpanel" aria-labelledby="tab-general-btn">
-        <div class="form-field">
-          <span class="field-label">مزوّد النموذج</span>
-          <div class="provider-row" role="group" aria-label="مزوّد النموذج">
-            <button type="button" class="provider-btn" data-provider="gemini" aria-pressed="false">Gemini</button>
-            <button type="button" class="provider-btn" data-provider="openai" aria-pressed="false">OpenAI</button>
-            <button type="button" class="provider-btn" data-provider="claude" aria-pressed="false">Claude</button>
-            <button type="button" class="provider-btn" data-provider="groq" aria-pressed="false">Groq</button>
-            <button type="button" class="provider-btn" data-provider="openrouter" aria-pressed="false">OpenRouter</button>
-            <button type="button" class="provider-btn" data-provider="ollama" aria-pressed="false">Ollama المحلي</button>
-          </div>
-        </div>
-        <label id="api-key-field" class="form-field">
-          <span class="field-label">API Key</span>
-          <span class="key-row">
-            <input id="api-key" class="text-field" type="password" dir="ltr" autocomplete="off" placeholder="أدخل المفتاح هنا" />
-            <button id="toggle-key" class="button button-secondary button-small" type="button">إظهار</button>
-          </span>
-        </label>
-        <label class="form-field">
-          <span class="field-label">عنوان الخادم (Base URL)</span>
-          <input id="base-url" class="text-field" type="text" dir="ltr" autocomplete="off" />
-        </label>
-        <label class="form-field">
-          <span class="field-label">اسم النموذج (Model Name)</span>
-          <input id="model-name" class="text-field" type="text" dir="ltr" autocomplete="off" />
-        </label>
-        <div id="ollama-test-row" class="form-field" hidden>
-          <button id="ollama-test-btn" class="button button-secondary button-small" type="button">اختبار الاتصال</button>
-          <span class="field-hint">يفحص الاتصال بـ Ollama محليًا فقط — بلا اتصال سحابي</span>
-        </div>
-        <p id="settings-privacy-hint" class="field-hint"></p>
-        <button id="save-settings" class="button button-primary button-small" type="button">حفظ الإعدادات</button>
-      </div>
-
-      <div id="tab-appearance" class="sheet-body-interim" role="tabpanel" aria-labelledby="tab-appearance-btn" hidden>
-        <div class="form-field">
-          <span class="field-label">المظهر</span>
-          <div class="provider-row" role="group" aria-label="مظهر الواجهة">
-            <button id="appearance-light-btn" class="choice-btn" type="button" aria-pressed="false">فاتح</button>
-            <button id="appearance-dark-btn" class="choice-btn" type="button" aria-pressed="false">داكن</button>
-            <button id="appearance-auto-btn" class="choice-btn" type="button" aria-pressed="false">تلقائي</button>
-          </div>
-        </div>
-        <p class="field-hint">«تلقائي» يتبع مظهر النظام. يُطبَّق الاختيار فورًا ويُحفَظ.</p>
-      </div>
-
-      <div id="tab-about" class="sheet-body-interim" role="tabpanel" aria-labelledby="tab-about-btn" hidden>
-        <p class="about-app-name">نَسَق</p>
-        <p class="about-tagline field-hint"></p>
-        <p class="field-hint">الإصدار <span dir="ltr">9.0.0</span></p>
-        <div class="form-field">
-          <span class="field-label">التحديثات</span>
-          <span class="key-row">
-            <button id="update-check-btn" class="button button-secondary button-small" type="button">البحث عن تحديثات</button>
-            <button id="update-download-btn" class="button button-secondary button-small" type="button" hidden>تنزيل التحديث</button>
-            <button id="update-install-btn" class="button button-primary button-small" type="button" hidden>تثبيت وإعادة التشغيل</button>
-          </span>
-          <div id="update-progress" class="progress" hidden aria-hidden="true">
-            <div id="update-progress-bar" class="progress-bar"></div>
-          </div>
-          <p id="update-status-text" class="field-hint" role="status" aria-live="polite"></p>
-        </div>
-        <a id="about-project-link" class="text-link" href="https://github.com/iSltanX/Nasq" target="_blank" rel="noopener noreferrer">صفحة المشروع</a>
-      </div>
-      <div id="settings-msg" class="field-hint settings-msg" role="status" aria-live="polite" hidden></div>
-    </div>
-  </div>
-
   <!-- ترتيب التحميل عقد عزل: الوحدات النقية، فهيكل النافذة، فالقشرة المشتركة،
        فنَسَق، وشَذْب أخيرًا حصرًا بدرعه الداخلي -->
   <script src="lines.js"></script>
@@ -733,6 +648,7 @@
   <script src="fragments.js"></script>
   <script src="substack-markers.js"></script>
   <script src="prune.js"></script>
+  <script src="appearance.js"></script>
   <script src="layout.js"></script>
   <script src="shell.js"></script>
   <script src="nasaq.js"></script>

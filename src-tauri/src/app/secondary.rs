@@ -26,9 +26,9 @@ const SETTINGS_PAGE: &str = "settings.html";
 
 /// صفحة «حول» تأتي مع واجهة المرحلة ٥ كذلك
 const ABOUT_PAGE: &str = "about.html";
-/// لوحة «حول» في الماك مقيسة: ٢٨٤×٢١٢، بزر إغلاق وحده
+/// لوحة «حول» كما رُسمت ٢٨٤×٢١٣، بزر إغلاق وحده
 const ABOUT_WIDTH: f64 = 284.0;
-const ABOUT_HEIGHT: f64 = 212.0;
+const ABOUT_HEIGHT: f64 = 213.0;
 
 const SETTINGS_WIDTH: f64 = 500.0;
 /// صفّ العنوان ٣٢ + شريط التبويبات ٥٦
@@ -265,7 +265,7 @@ mod tests {
 
     #[test]
     fn the_about_panel_keeps_the_measured_size_of_the_system_one() {
-        assert_eq!((ABOUT_WIDTH, ABOUT_HEIGHT), (284.0, 212.0));
+        assert_eq!((ABOUT_WIDTH, ABOUT_HEIGHT), (284.0, 213.0));
         // أصغر من أقصر نافذة إعدادات: لوحة لا نافذة عمل
         assert!(ABOUT_HEIGHT < settings_height(SETTINGS_MIN_PANE, ROOMY_SCREEN));
     }

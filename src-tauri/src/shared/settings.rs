@@ -3,8 +3,9 @@
 // في تحصين v4.1)
 use serde::{Deserialize, Serialize};
 use std::fs;
+use std::sync::Mutex;
 use std::path::{Path, PathBuf};
-use tauri::Manager;
+use tauri::{Emitter, Manager};
 
 use super::secrets::{Keychain, SecretStore, ACCOUNT_API_KEY};
 
@@ -39,6 +40,15 @@ pub(crate) struct Settings {
     pub(crate) model: String,
     #[serde(default)]
     pub(crate) provider: String,
+    /// «تلقائي» يتبع النظام، و«فاتح»/«داكن» يفرضان مخططًا — لوحة الإعدادات
+    #[serde(default = "default_appearance")]
+    pub(crate) appearance: String,
+    /// التحقق من التحديثات تلقائيًا — تقرأه المرحلة ٦ حين يُبنى تدفّقها
+    #[serde(default = "default_true")]
+    pub(crate) auto_updates: bool,
+    /// آخر تحقق ناجح بالثواني منذ ١٩٧٠، وصفرٌ يعني «لم يحدث بعد»
+    #[serde(default)]
+    pub(crate) last_update_check: i64,
     /// المفتاح محفوظ لكن تعذّرت قراءته الآن — يميّز «لا مفتاح» عن «لم أصل
     /// إليه»، فلا يرى صاحب مفتاحٍ قائمٍ رسالةَ من لا مفتاح له. لا يُكتب في
     /// الملف ولا يُرسل إلى الواجهة إلا حين يكون صحيحًا
@@ -50,6 +60,17 @@ fn is_false(value: &bool) -> bool {
     !*value
 }
 
+fn default_appearance() -> String {
+    APPEARANCE_AUTO.to_string()
+}
+
+fn default_true() -> bool {
+    true
+}
+
+pub(crate) const APPEARANCE_AUTO: &str = "auto";
+const APPEARANCES: [&str; 3] = [APPEARANCE_AUTO, "light", "dark"];
+
 impl Default for Settings {
     fn default() -> Self {
         Settings {
@@ -57,10 +78,62 @@ impl Default for Settings {
             base_url: DEFAULT_BASE_URL.to_string(),
             model: DEFAULT_MODEL.to_string(),
             provider: String::new(),
+            appearance: default_appearance(),
+            auto_updates: true,
+            last_update_check: 0,
             key_unavailable: false,
         }
     }
 }
+
+/// ما تراه الواجهة: **لا يعبر المفتاح الجسر إطلاقًا**. يكفيها أن تعرف أنه
+/// محفوظ لتعرض حقلًا مقنّعًا، وأن تعرف حين يتعذّر الوصول إليه لتقول السبب
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct SettingsView {
+    pub(crate) base_url: String,
+    pub(crate) model: String,
+    pub(crate) provider: String,
+    pub(crate) appearance: String,
+    pub(crate) auto_updates: bool,
+    pub(crate) last_update_check: i64,
+    pub(crate) has_api_key: bool,
+    pub(crate) key_unavailable: bool,
+}
+
+impl From<&Settings> for SettingsView {
+    fn from(settings: &Settings) -> Self {
+        SettingsView {
+            base_url: settings.base_url.clone(),
+            model: settings.model.clone(),
+            provider: settings.provider.clone(),
+            appearance: settings.appearance.clone(),
+            auto_updates: settings.auto_updates,
+            last_update_check: settings.last_update_check,
+            has_api_key: !settings.api_key.trim().is_empty(),
+            key_unavailable: settings.key_unavailable,
+        }
+    }
+}
+
+/// ما ترسله الواجهة: الحقل الغائب لم يتغيّر، فالتطبيق الفوري يرسل ما مسّه
+/// المستخدم وحده. و`apiKey` فارغةً تعني المحو صراحةً لا سهوًا
+#[derive(Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct SettingsPatch {
+    pub(crate) base_url: Option<String>,
+    pub(crate) model: Option<String>,
+    pub(crate) provider: Option<String>,
+    pub(crate) appearance: Option<String>,
+    pub(crate) auto_updates: Option<bool>,
+    pub(crate) last_update_check: Option<i64>,
+    pub(crate) api_key: Option<String>,
+}
+
+/// الحفظ دورةُ قراءة-تعديل-كتابة، وأوامر تاوري تُنفَّذ على مجمّع خيوط —
+/// فحفظان متسارعان (حقلان يتغيّران بسرعة) يقرآن النسخة نفسها ويمحو آخرهما
+/// تعديل الأول. قفل واحد يجعل الدورة ذرّية
+static SETTINGS_LOCK: Mutex<()> = Mutex::new(());
 
 /// مجلد بيانات التطبيق — تستخدمه الإعدادات والمسودات معًا
 pub(crate) fn data_file_path(app: &tauri::AppHandle, name: &str) -> Result<PathBuf, String> {
@@ -114,6 +187,8 @@ fn blank_key_in_file(path: &Path, expected_key: &str) {
 
 pub(crate) fn read_settings(app: &tauri::AppHandle) -> Result<Settings, String> {
     let path = settings_path(app)?;
+    // القراءة قد تكتب (ترحيل المفتاح عند أول مرة)، فتدخل القفل نفسه
+    let _guard = SETTINGS_LOCK.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
     read_settings_with(&Keychain, &path)
 }
 
@@ -168,14 +243,67 @@ fn fill_empty_defaults(settings: &mut Settings) {
 }
 
 #[tauri::command]
-pub(crate) fn load_settings(app: tauri::AppHandle) -> Result<Settings, String> {
-    read_settings(&app)
+pub(crate) fn load_settings(app: tauri::AppHandle) -> Result<SettingsView, String> {
+    Ok(SettingsView::from(&read_settings(&app)?))
 }
 
+/// الدورة كاملة تحت القفل: تُقرأ الحالة، وتُدمج الرقعة، وتُكتب — فلا يمحو
+/// حفظٌ متسارعٌ تعديلَ سابقه
+fn save_patch_with(
+    store: &dyn SecretStore,
+    path: &Path,
+    patch: SettingsPatch,
+) -> Result<Settings, String> {
+    let _guard = SETTINGS_LOCK.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
+    let current = read_settings_with(store, path)?;
+    save_settings_with(store, path, apply_patch(current, patch))
+}
+
+/// دمج ما أرسلته الواجهة على المحفوظ: الغائب لم يتغيّر
+fn apply_patch(mut settings: Settings, patch: SettingsPatch) -> Settings {
+    if let Some(value) = patch.base_url {
+        settings.base_url = value;
+    }
+    if let Some(value) = patch.model {
+        settings.model = value;
+    }
+    if let Some(value) = patch.provider {
+        settings.provider = value;
+    }
+    if let Some(value) = patch.appearance {
+        // قيمة لا يعرفها المظهر تعود إلى «تلقائي» بدل أن تُحفظ كما وردت
+        let value = value.trim();
+        settings.appearance = if APPEARANCES.contains(&value) {
+            value.to_string()
+        } else {
+            APPEARANCE_AUTO.to_string()
+        };
+    }
+    if let Some(value) = patch.auto_updates {
+        settings.auto_updates = value;
+    }
+    if let Some(value) = patch.last_update_check {
+        settings.last_update_check = value;
+    }
+    if let Some(value) = patch.api_key {
+        settings.api_key = value;
+    }
+    settings
+}
+
+/// التطبيق فوري: تُرسَل الحقول الممسوسة وحدها، ويعود ما استقرّ فعلًا بعد
+/// أن تملأ النواة الفارغ بقيم مزوّده
 #[tauri::command]
-pub(crate) fn save_settings(app: tauri::AppHandle, settings: Settings) -> Result<(), String> {
+pub(crate) fn save_settings(
+    app: tauri::AppHandle,
+    patch: SettingsPatch,
+) -> Result<SettingsView, String> {
     let path = settings_path(&app)?;
-    save_settings_with(&Keychain, &path, settings)
+    let settled = save_patch_with(&Keychain, &path, patch)?;
+    let view = SettingsView::from(&settled);
+    // النوافذ المفتوحة تتبع ما تغيّر (المظهر اليوم) بلا أن تسأل
+    let _ = app.emit("settings:changed", &view);
+    Ok(view)
 }
 
 /// المفتاح إلى الخزنة والباقي إلى الملف. ثلاثة مسارات مقصودة:
@@ -186,7 +314,7 @@ fn save_settings_with(
     store: &dyn SecretStore,
     path: &Path,
     settings: Settings,
-) -> Result<(), String> {
+) -> Result<Settings, String> {
     let mut settings = settings;
     fill_empty_defaults(&mut settings);
     let key = settings.api_key.trim().to_string();
@@ -206,7 +334,8 @@ fn save_settings_with(
         on_disk.api_key = key;
     }
 
-    write_settings_file(path, &on_disk)
+    write_settings_file(path, &on_disk)?;
+    Ok(settings)
 }
 
 #[cfg(test)]
@@ -401,6 +530,108 @@ mod tests {
         save_settings_with(&store, &path, settings).unwrap();
 
         assert_eq!(store.peek(ACCOUNT_API_KEY), None, "المسح من الواجهة لم يصل الخزنة");
+    }
+
+    #[test]
+    fn two_saves_at_once_never_lose_a_field() {
+        // حقلان يتغيّران معًا من خيطين: بلا قفل يقرأ كلٌّ النسخة نفسها
+        // ويمحو آخرُهما تعديلَ الأول
+        let path = temp_settings("concurrent");
+        write_raw(&path, "");
+        let a = path.clone();
+        let b = path.clone();
+
+        let one = std::thread::spawn(move || {
+            for _ in 0..40 {
+                save_patch_with(
+                    &MemoryStore::new(),
+                    &a,
+                    SettingsPatch { base_url: Some("https://one.test".to_string()), ..SettingsPatch::default() },
+                )
+                .unwrap();
+            }
+        });
+        let two = std::thread::spawn(move || {
+            for _ in 0..40 {
+                save_patch_with(
+                    &MemoryStore::new(),
+                    &b,
+                    SettingsPatch { model: Some("نموذج-اثنين".to_string()), ..SettingsPatch::default() },
+                )
+                .unwrap();
+            }
+        });
+        one.join().unwrap();
+        two.join().unwrap();
+
+        let settled = read_settings_file(&path).unwrap();
+        assert_eq!(settled.base_url, "https://one.test", "ضاع تعديل الخيط الأول");
+        assert_eq!(settled.model, "نموذج-اثنين", "ضاع تعديل الخيط الثاني");
+    }
+
+    #[test]
+    fn the_view_never_carries_the_key_across_the_bridge() {
+        let settings = Settings { api_key: "sk-secret".to_string(), ..Settings::default() };
+        let json = serde_json::to_string(&SettingsView::from(&settings)).unwrap();
+
+        assert!(!json.contains("sk-secret"), "المفتاح عبر إلى الواجهة: {json}");
+        assert!(!json.contains("apiKey"), "حقل المفتاح موجود أصلًا: {json}");
+        assert!(json.contains("\"hasApiKey\":true"), "الواجهة لا تعرف أنه محفوظ");
+
+        let empty = Settings::default();
+        let json = serde_json::to_string(&SettingsView::from(&empty)).unwrap();
+        assert!(json.contains("\"hasApiKey\":false"));
+    }
+
+    #[test]
+    fn a_field_absent_from_the_patch_changes_nothing() {
+        let current = Settings {
+            base_url: "https://example.test".to_string(),
+            model: "قديم".to_string(),
+            provider: PROVIDER_ANTHROPIC.to_string(),
+            ..Settings::default()
+        };
+        let patched = apply_patch(
+            current,
+            SettingsPatch { model: Some("جديد".to_string()), ..SettingsPatch::default() },
+        );
+
+        assert_eq!(patched.model, "جديد");
+        assert_eq!(patched.base_url, "https://example.test", "تغيّر حقل لم يُرسل");
+        assert_eq!(patched.provider, PROVIDER_ANTHROPIC, "تغيّر حقل لم يُرسل");
+    }
+
+    #[test]
+    fn an_absent_key_keeps_the_stored_one_and_an_empty_one_clears_it() {
+        let path = temp_settings("patch-key");
+        let store = MemoryStore::with(ACCOUNT_API_KEY, "sk-live");
+
+        // لا مفتاح في الرقعة: تعديل حقل آخر لا يمسّ المخزون
+        let current = read_settings_with(&store, &path).unwrap();
+        let patched = apply_patch(current, SettingsPatch { model: Some("m".to_string()), ..SettingsPatch::default() });
+        save_settings_with(&store, &path, patched).unwrap();
+        assert_eq!(store.peek(ACCOUNT_API_KEY).as_deref(), Some("sk-live"), "ضاع المفتاح بحفظ حقل آخر");
+
+        // مفتاح فارغ صراحةً: محوٌ مقصود
+        let current = read_settings_with(&store, &path).unwrap();
+        let patched = apply_patch(current, SettingsPatch { api_key: Some(String::new()), ..SettingsPatch::default() });
+        save_settings_with(&store, &path, patched).unwrap();
+        assert_eq!(store.peek(ACCOUNT_API_KEY), None, "المحو الصريح لم يصل");
+    }
+
+    #[test]
+    fn an_unknown_appearance_falls_back_to_auto() {
+        let patched = apply_patch(
+            Settings::default(),
+            SettingsPatch { appearance: Some("  dark ".to_string()), ..SettingsPatch::default() },
+        );
+        assert_eq!(patched.appearance, "dark", "لم تُقبل قيمة معروفة بعد التشذيب");
+
+        let patched = apply_patch(
+            Settings::default(),
+            SettingsPatch { appearance: Some("neon".to_string()), ..SettingsPatch::default() },
+        );
+        assert_eq!(patched.appearance, APPEARANCE_AUTO, "حُفظت قيمة مظهر لا يعرفها أحد");
     }
 
     #[test]

@@ -156,398 +156,15 @@ async function copyText(text) {
   }
 }
 
-// ---------- الإعدادات ----------
-const overlay = el("settings-overlay");
-const apiKeyField = el("api-key-field");
-const apiKeyInput = el("api-key");
-const baseUrlInput = el("base-url");
-const modelInput = el("model-name");
-const settingsMsg = el("settings-msg");
-const ollamaTestRow = el("ollama-test-row");
-const ollamaTestBtn = el("ollama-test-btn");
-
-// مزوّدات جاهزة — تملأ Base URL وModel Name فقط، ولا تمسّ المفتاح.
-// transport قيمة provider التي تُحفظ ويفهمها النقل: "cloud" (متوافق مع
-// OpenAI)، "anthropic" (واجهة Messages الأصلية لـ Claude)، "ollama" (محلي)
-const PROVIDERS = {
-  gemini: {
-    baseUrl: "https://generativelanguage.googleapis.com/v1beta/openai/",
-    model: "gemini-2.5-flash",
-    transport: "cloud",
-  },
-  openai: {
-    baseUrl: "https://api.openai.com/v1",
-    model: "gpt-5.6-terra",
-    transport: "cloud",
-  },
-  claude: {
-    baseUrl: "https://api.anthropic.com",
-    model: "claude-opus-5",
-    transport: "anthropic",
-  },
-  groq: {
-    baseUrl: "https://api.groq.com/openai/v1",
-    model: "llama-3.3-70b-versatile",
-    transport: "cloud",
-  },
-  openrouter: {
-    baseUrl: "https://openrouter.ai/api/v1",
-    model: "google/gemini-2.5-flash",
-    transport: "cloud",
-  },
-  ollama: {
-    baseUrl: "http://127.0.0.1:11434",
-    model: "qwen3:8b",
-    transport: "ollama",
-  },
-};
-
-const DEFAULTS = PROVIDERS.gemini;
-const providerButtons = document.querySelectorAll(".provider-btn");
-
-// المزوّد المختار حاليًا في لوحة الإعدادات: selectedProvider قيمة النقل
-// ("cloud" أو "anthropic" أو "ollama") وتقود إظهار/إخفاء حقل API Key وزر
-// اختبار الاتصال؛ وselectedPreset مفتاح الزر المضاء في PROVIDERS (أو null
-// لعنوان مخصّص)، ومنه تُملأ الحقول الفارغة عند الحفظ
-let selectedProvider = "cloud";
-let selectedPreset = "gemini";
-
-// الزر المطابق لإعداد محفوظ: Claude وOllama بقيمة النقل نفسها، والسحابي
-// بمضيف Base URL — والعنوان المخصّص لا يضيء زرًا
-function presetFor(provider, baseUrl) {
-  if (provider === "anthropic") return "claude";
-  if (provider === "ollama") return "ollama";
-  const url = String(baseUrl || "").toLowerCase();
-  return (
-    Object.keys(PROVIDERS).find(
-      (key) => PROVIDERS[key].transport === "cloud" && url.includes(new URL(PROVIDERS[key].baseUrl).host)
-    ) ?? null
-  );
-}
-
-function selectProvider(provider, preset) {
-  selectedProvider = provider;
-  selectedPreset = preset;
-  const isOllama = provider === "ollama";
-  apiKeyField.hidden = isOllama;
-  ollamaTestRow.hidden = !isOllama;
-  for (const btn of providerButtons) {
-    btn.setAttribute("aria-pressed", String(btn.dataset.provider === preset));
-  }
-}
-
-function showSettingsMsg(text, isError) {
-  settingsMsg.textContent = text;
-  settingsMsg.classList.toggle("error", Boolean(isError));
-  settingsMsg.hidden = false;
-}
-
-// الإعدادات مؤقتة في النافذة الرئيسية حتى تحل محلها نافذة المرحلة ٥، فيعود
-// التركيز عند الإغلاق إلى ما كان عليه قبل الفتح — لا يسقط إلى <body> (٢٫٤٫٣)
-let settingsReturnFocus = null;
-
-function closeSettings() {
-  if (overlay.contains(document.activeElement)) settingsReturnFocus?.focus();
-  overlay.hidden = true;
-  settingsMsg.hidden = true;
-}
-
-async function openSettings() {
-  let s = {};
-  try {
-    s = (await invoke("load_settings")) || {};
-  } catch {
-    // إن تعذّرت القراءة تُملأ الحقول بالقيم الافتراضية أدناه
-  }
-  apiKeyInput.value = s.apiKey || "";
-  baseUrlInput.value = s.baseUrl || DEFAULTS.baseUrl;
-  modelInput.value = s.model || DEFAULTS.model;
-  apiKeyInput.type = "password";
-  el("toggle-key").textContent = "إظهار";
-  const provider = s.provider === "ollama" || s.provider === "anthropic" ? s.provider : "cloud";
-  selectProvider(provider, presetFor(provider, baseUrlInput.value));
-  settingsMsg.hidden = true;
-  switchTab("general");
-  if (overlay.hidden) settingsReturnFocus = document.activeElement;
-  overlay.hidden = false;
-  if (!apiKeyInput.value) apiKeyInput.focus();
-}
-
-// ⌘, اختصار الإعدادات المعتاد في الماك
-document.addEventListener("keydown", (e) => {
-  if (e.metaKey && !e.ctrlKey && !e.altKey && e.key === ",") {
-    e.preventDefault();
-    // ورقة أو تنبيه يحجب النافذة: لا طبقة إعدادات فوقه تتنازع معه التركيز
-    if (window.NasaqWindow.isModalOpen()) return;
-    // مفتوحة أصلًا: لا تُعاد قراءتها فتضيع تعديلات لم تُحفظ
-    if (overlay.hidden) openSettings();
-  }
-});
-
-// زر الترس الصغير أسفل الشريط الجانبي في الوحدتين — بجانب ⌘، وقائمة التطبيق
-for (const button of document.querySelectorAll("[data-open-settings]")) {
-  button.addEventListener("click", () => {
-    if (overlay.hidden) openSettings();
-  });
-}
-
-// الإغلاق: يغلق فقط، بلا حفظ وبلا مسح قيم
-el("close-settings").addEventListener("click", closeSettings);
-
-overlay.addEventListener("click", (e) => {
-  if (e.target === overlay) closeSettings();
-});
-
-// أزرار المزوّدات
-for (const btn of providerButtons) {
-  btn.addEventListener("click", () => {
-    const p = PROVIDERS[btn.dataset.provider];
-    if (!p) return;
-    baseUrlInput.value = p.baseUrl;
-    modelInput.value = p.model;
-    selectProvider(p.transport, btn.dataset.provider);
-    settingsMsg.hidden = true;
-  });
-}
-
-el("toggle-key").addEventListener("click", () => {
-  const hidden = apiKeyInput.type === "password";
-  apiKeyInput.type = hidden ? "text" : "password";
-  el("toggle-key").textContent = hidden ? "إخفاء" : "إظهار";
-});
-
-el("save-settings").addEventListener("click", async () => {
-  const apiKey = apiKeyInput.value.trim();
-  if (selectedProvider !== "ollama" && !apiKey) {
-    showSettingsMsg("أدخل مفتاح المزود أولًا.", true);
-    return;
-  }
-
-  // الحقل الفارغ يُملأ من الزر المختار — فلا يسقط إعداد OpenAI أو Claude إلى
-  // قيم Gemini بصمت؛ وGemini يبقى لعنوان سحابي مخصّص فقط كما كان
-  const providerDefaults = PROVIDERS[selectedPreset] ?? DEFAULTS;
-  const baseUrl = baseUrlInput.value.trim() || providerDefaults.baseUrl;
-  const model = modelInput.value.trim() || providerDefaults.model;
-  baseUrlInput.value = baseUrl;
-  modelInput.value = model;
-
-  try {
-    await invoke("save_settings", {
-      settings: { apiKey, baseUrl, model, provider: selectedProvider },
-    });
-    showSettingsMsg("حُفظت الإعدادات محليًا.");
-    setTimeout(closeSettings, 600);
-  } catch (err) {
-    showSettingsMsg(String(err), true);
-  }
-});
-
-// اختبار اتصال Ollama المحلي — يفحص الحقول الحالية (قد تكون غير محفوظة بعد)
-// عبر GET /api/tags، ولا يرسل أي نص ولا يتصل بأي مزوّد سحابي
-ollamaTestBtn.addEventListener("click", async () => {
-  const baseUrl = baseUrlInput.value.trim() || PROVIDERS.ollama.baseUrl;
-  const model = modelInput.value.trim() || PROVIDERS.ollama.model;
-  const originalLabel = ollamaTestBtn.textContent;
-  ollamaTestBtn.disabled = true;
-  ollamaTestBtn.textContent = "جارٍ الاختبار…";
-  settingsMsg.hidden = true;
-  try {
-    const msg = await invoke("test_ollama_connection", { baseUrl, model });
-    showSettingsMsg(msg, false);
-  } catch (err) {
-    showSettingsMsg(String(err), true);
-  } finally {
-    ollamaTestBtn.disabled = false;
-    ollamaTestBtn.textContent = originalLabel;
-  }
-});
-
-// ---------- تبويبات لوحة الإعدادات ----------
-// ثلاثة تبويبات على نمط واحد: زر/جسم لكل اسم، وswitchTab تُظهر واحدًا
-// وتُخفي الباقي — «حول» (المرحلة 2 من خطة التحديثات) يتبع النمط نفسه
-// حرفيًا، بلا أي منطق إضافي أو تفريع خاص
-const TABS = {
-  general: { btn: el("tab-general-btn"), body: el("tab-general") },
-  appearance: { btn: el("tab-appearance-btn"), body: el("tab-appearance") },
-  about: { btn: el("tab-about-btn"), body: el("tab-about") },
-};
-
-function switchTab(name) {
-  for (const [key, { btn, body }] of Object.entries(TABS)) {
-    const active = key === name;
-    body.hidden = !active;
-    btn.classList.toggle("active", active);
-    btn.setAttribute("aria-selected", String(active));
-  }
-  settingsMsg.hidden = true;
-}
-
-for (const [name, { btn }] of Object.entries(TABS)) {
-  btn.addEventListener("click", () => switchTab(name));
-}
-
-// ---------- نظام التحديث التلقائي (v8.2.0) ----------
-// آلة حالات حقيقية فوق أوامر plugin:updater الرسمية حصرًا: فحص → تنزيل
-// (بقناة تقدّم) → تثبيت → إعادة تشغيل آمنة عبر plugin:process|restart. لا
-// مُنزِّل مخصّص ولا تنفيذ يدويّ للملفات ولا إضعاف للتحقّق — الإضافة تتحقّق
-// من توقيع minisign داخليًّا قبل التثبيت. الأخطاء تُعرَض برسائل عربية
-// موجزة، وتفاصيلها التقنية في console (التطوير) دون تسريب أي سرّ أو مسار.
-const updCheckBtn = el("update-check-btn");
-const updDownloadBtn = el("update-download-btn");
-const updInstallBtn = el("update-install-btn");
-const updStatusText = el("update-status-text");
-const updProgress = el("update-progress");
-const updProgressBar = el("update-progress-bar");
-
-let updBusy = false; // يمنع الازدواج: فحص/تنزيل/تثبيت متزامن
-let updRid = null; // معرّف مورد التحديث المتاح (من الفحص)
-let updBytesRid = null; // معرّف مورد البايتات (من التنزيل)
-let updVersion = null;
-let updDownloaded = 0;
-let updTotal = 0;
-
-function updToggle(node, show) {
-  node.hidden = !show;
-}
-
-// الحالات: idle / checking / no-update / available / downloading /
-// downloaded / installing / restart / error-{check,download,install} / web
-function setUpdateState(state, opt = {}) {
-  updToggle(updCheckBtn, state === "idle" || state === "no-update" || state === "error-check" || state === "web");
-  updToggle(updDownloadBtn, state === "available" || state === "error-download");
-  updToggle(updInstallBtn, state === "downloaded" || state === "error-install");
-  updToggle(updProgress, state === "downloading");
-  updCheckBtn.disabled = updBusy;
-  updDownloadBtn.disabled = updBusy;
-  updInstallBtn.disabled = updBusy;
-  const v = opt.version || updVersion || "";
-  const messages = {
-    idle: "التحديث التلقائي مُفعّل.",
-    checking: "جارٍ البحث…",
-    "no-update": "لا توجد تحديثات — لديك أحدث إصدار.",
-    available: "يتوفر الإصدار " + v,
-    downloading: opt.pct != null ? "جارٍ التنزيل… " + arabicDigits.format(opt.pct) + "٪" : "جارٍ التنزيل…",
-    downloaded: "تم تنزيل التحديث.",
-    installing: "جارٍ التثبيت…",
-    restart: "سيُعاد تشغيل نَسَق لإكمال التحديث…",
-    "error-check": "تعذّر البحث عن تحديث.",
-    "error-download": "تعذّر تنزيل التحديث.",
-    "error-install": "تعذّر تثبيت التحديث.",
-    web: "التحديث التلقائي متاح داخل التطبيق فقط.",
-  };
-  updStatusText.textContent = messages[state] != null ? messages[state] : "";
-}
-
-// فحص يدويّ: check يعيد بيانات التحديث إن توفّر إصدار أحدث، وإلا null
-async function updaterCheck() {
-  if (updBusy) return;
-  if (!window.__TAURI__) {
-    setUpdateState("web");
-    return;
-  }
-  updBusy = true;
-  setUpdateState("checking");
-  try {
-    const meta = await invoke("plugin:updater|check", {});
-    updBusy = false;
-    if (meta && meta.rid != null) {
-      updRid = meta.rid;
-      updVersion = meta.version;
-      updBytesRid = null;
-      setUpdateState("available", { version: meta.version });
-    } else {
-      setUpdateState("no-update");
-    }
-  } catch (e) {
-    updBusy = false;
-    console.error("[updater] check failed", e);
-    setUpdateState("error-check");
-  }
-}
-
-// تنزيل مع تقدّم حقيقيّ عبر قناة الأحداث (Started/Progress/Finished)
-async function updaterDownload() {
-  if (updBusy || updRid == null) return;
-  updBusy = true;
-  updDownloaded = 0;
-  updTotal = 0;
-  updProgressBar.style.width = "0%";
-  setUpdateState("downloading", { pct: 0 });
-  try {
-    const channel = new window.__TAURI__.core.Channel();
-    channel.onmessage = (msg) => {
-      if (!msg) return;
-      if (msg.event === "Started") {
-        updTotal = (msg.data && msg.data.contentLength) || 0;
-      } else if (msg.event === "Progress") {
-        updDownloaded += (msg.data && msg.data.chunkLength) || 0;
-        if (updTotal) {
-          const pct = Math.min(100, Math.round((updDownloaded / updTotal) * 100));
-          updProgressBar.style.width = pct + "%";
-          setUpdateState("downloading", { pct });
-        }
-      }
-    };
-    updBytesRid = await invoke("plugin:updater|download", { rid: updRid, onEvent: channel });
-    updBusy = false;
-    updProgressBar.style.width = "100%";
-    setUpdateState("downloaded");
-  } catch (e) {
-    updBusy = false;
-    console.error("[updater] download failed", e);
-    setUpdateState("error-download");
-  }
-}
-
-// تثبيت ثم إعادة تشغيل آمنة — لا حالة «مثبَّت» كاذبة قبل إعادة التشغيل
-async function updaterInstall() {
-  if (updBusy || updRid == null || updBytesRid == null) return;
-  updBusy = true;
-  setUpdateState("installing");
-  try {
-    await invoke("plugin:updater|install", { updateRid: updRid, bytesRid: updBytesRid });
-    setUpdateState("restart");
-    await invoke("plugin:process|restart", {});
-    // لا يُتوقَّع الوصول هنا — التطبيق يُعاد تشغيله بأمر restart أعلاه
-  } catch (e) {
-    updBusy = false;
-    console.error("[updater] install failed", e);
-    setUpdateState("error-install");
-  }
-}
-
-updCheckBtn.addEventListener("click", updaterCheck);
-updDownloadBtn.addEventListener("click", updaterDownload);
-updInstallBtn.addEventListener("click", updaterInstall);
-setUpdateState("idle");
-
-// رابط صفحة المشروع (تبويب «حول»): في وضع الويب المؤطّر يعمل الرابط طبيعيًا
-// (target="_blank"). وداخل التطبيق نمنع مغادرة نافذة نَسَق ونفتح الرابط في
-// المتصفح الافتراضي عبر مُشغّل Tauri الرسمي (plugin:opener|open_url) —
-// الصلاحية مقيّدة بنطاق github.com في القدرات
-const aboutProjectLink = el("about-project-link");
-if (aboutProjectLink) {
-  aboutProjectLink.addEventListener("click", (e) => {
-    if (window.__TAURI__) {
-      e.preventDefault();
-      invoke("plugin:opener|open_url", { url: aboutProjectLink.href }).catch(() => {});
-    }
-  });
-}
-
 // ---------- المظهر: فاتح / داكن / تلقائي ----------
-// خيار واحد محفوظ بثلاث قيم فقط. «تلقائي» (وهو الافتراضي عند غياب أي
-// اختيار) يتبع مظهر النظام حيًّا؛ «فاتح»/«داكن» يثبّتان يدويًا ويوقفان
-// اتباع النظام. data-appearance على الجذر يثبّت color-scheme في tokens.css،
-// وغيابه يترك light-dark() يتبع النظام. النافذة مخفية حتى أول رسم فلا وميض.
+// خيار واحد بثلاث قيم. «تلقائي» (وهو الافتراضي) يتبع مظهر النظام حيًّا؛
+// و«فاتح»/«داكن» يثبّتان يدويًا. data-appearance على الجذر يثبّت
+// color-scheme في tokens.css، وغيابه يترك light-dark() يتبع النظام.
+// مصدره منذ المرحلة ٥ ملفُّ الإعدادات لا مخزن المتصفح، وتبدّله نافذة
+// الإعدادات فيصل التغيير حدثًا من النواة. النافذة مخفية حتى أول رسم فلا وميض.
 const APPEARANCE_KEY = "nasaq-appearance-choice";
-const APPEARANCE_MODES = ["light", "dark", "auto"];
-
-const appearanceButtons = {
-  light: el("appearance-light-btn"),
-  dark: el("appearance-dark-btn"),
-  auto: el("appearance-auto-btn"),
-};
+const APPEARANCE_MODES = window.NasaqAppearance.VALUES;
+let appearanceChoice = "auto";
 
 // ترحيل هادئ: مفاتيح الهوية القديمة (العائلة اللونية، الأيقونة، ومفتاح
 // المظهر التلقائي الأقدم) لم تعد تُقرأ — تُمحى مرة واحدة عند الإقلاع فلا
@@ -560,68 +177,36 @@ for (const staleKey of ["nasaq-theme", "nasaq-logo", "nasaq-appearance"]) {
   }
 }
 
-// الاختيار المحفوظ إن كان من الثلاثة، وإلا «تلقائي» (بما فيه غياب المفتاح
-// أو قيمة قديمة تالفة) فلا يفسد مفتاح متقادم مسارَ اتباع النظام
-function savedAppearanceChoice() {
+// اختيار المرحلة الرابعة وما قبلها كان في مخزن المتصفح — يُقرأ مرة واحدة
+// ليُرحَّل إلى ملف الإعدادات، ثم يُمحى فلا يبقى مصدران للحقيقة
+function legacyAppearanceChoice() {
   try {
-    const v = localStorage.getItem(APPEARANCE_KEY);
-    return APPEARANCE_MODES.includes(v) ? v : "auto";
+    const value = localStorage.getItem(APPEARANCE_KEY);
+    return APPEARANCE_MODES.includes(value) ? value : null;
   } catch {
-    return "auto";
+    return null;
   }
 }
 
-const systemDarkQuery = window.matchMedia
-  ? window.matchMedia("(prefers-color-scheme: dark)")
-  : null;
-
-function systemPrefersDark() {
-  return Boolean(systemDarkQuery && systemDarkQuery.matches);
+function forgetLegacyAppearance() {
+  try {
+    localStorage.removeItem(APPEARANCE_KEY);
+  } catch {
+    // تعذّر المحو لا يضر: القيمة لم تعد تُقرأ بعد الترحيل
+  }
 }
 
-// الوضع الليلي فعّال؟ «تلقائي» يسأل النظام، وإلا فالاختيار الصريح
-function isDarkAppearance(choice) {
-  return choice === "dark" || (choice === "auto" && systemPrefersDark());
-}
-
-// تطبيق الحالة على الجذر والأزرار دون حفظ — يُستدعى عند البدء واتباع النظام
+// تطبيق الحالة على الجذر — يُستدعى عند البدء، واتباع النظام، وعند وصول
+// تغيير من نافذة الإعدادات
 function renderAppearance(choice) {
-  if (choice === "auto") {
-    document.documentElement.removeAttribute("data-appearance");
-  } else {
-    document.documentElement.setAttribute("data-appearance", isDarkAppearance(choice) ? "dark" : "light");
-  }
-  for (const mode of APPEARANCE_MODES) {
-    appearanceButtons[mode].setAttribute("aria-pressed", String(mode === choice));
-  }
+  appearanceChoice = window.NasaqAppearance.apply(choice);
 }
 
-// اختيار يدوي (من أي زر): يطبّق ويحفظ، فيثبت التطبيق على المختار
-function applyAppearanceChoice(choice) {
-  renderAppearance(choice);
-  try {
-    localStorage.setItem(APPEARANCE_KEY, choice);
-  } catch {
-    // تعذّر الحفظ لا يمنع التبديل في الجلسة الحالية
-  }
-}
+window.NasaqAppearance.followSystem(() => appearanceChoice);
 
-for (const mode of APPEARANCE_MODES) {
-  appearanceButtons[mode].addEventListener("click", () => applyAppearanceChoice(mode));
-}
-
-// تبدّل مظهر النظام أثناء التشغيل يتبعه التطبيق ما دام الاختيار «تلقائي» —
-// addListener بديل الإصدارات الأقدم من WebKit عن addEventListener
-if (systemDarkQuery) {
-  const followSystem = () => {
-    if (savedAppearanceChoice() === "auto") renderAppearance("auto");
-  };
-  if (systemDarkQuery.addEventListener) systemDarkQuery.addEventListener("change", followSystem);
-  else if (systemDarkQuery.addListener) systemDarkQuery.addListener(followSystem);
-}
-
-// البدء: يُحترم المحفوظ (أو «تلقائي») تطبيقًا بلا حفظ، قبل أن تظهر النافذة
-renderAppearance(savedAppearanceChoice());
+// البدء: «تلقائي» حتى تصل الإعدادات من النواة بعد قليل — والنافذة مخفية
+// حتى ذلك الحين، فلا يُرى تبدّل
+renderAppearance("auto");
 
 // ---------- هوية البرج الفعّال (خريطة واحدة مُلزمة) ----------
 // data-module على الجذر (يضبطه برج شَذْب وحده عند التبديل) هو مصدر الحقيقة
@@ -645,10 +230,6 @@ const PRODUCT_IDENTITY = {
   },
 };
 
-const aboutNameEl = document.querySelector(".about-app-name");
-const aboutStatementEl = document.querySelector(".about-tagline");
-const settingsPrivacyHintEl = el("settings-privacy-hint");
-
 function activeProduct() {
   return document.documentElement.getAttribute("data-module") === "shadhb" ? "shadhb" : "nasaq";
 }
@@ -656,12 +237,6 @@ function activeProduct() {
 function renderProductIdentity() {
   const identity = PRODUCT_IDENTITY[activeProduct()];
   el("input-text").placeholder = identity.editorPlaceholder;
-  // هوية «حول» تتبع البرج نفسه كوحدة: الاسم والعبارة
-  aboutNameEl.textContent = identity.name;
-  aboutStatementEl.textContent = identity.statement;
-  settingsPrivacyHintEl.textContent =
-    `أزرار المزوّدات تملأ الرابط واسم النموذج فقط ولا تغيّر المفتاح. ` +
-    `يُحفظ كل شيء محليًا على جهازك فقط، ولا يُرسل أي نص إلا عند ضغط «${identity.actionLabel}».`;
   document.title = identity.documentTitle;
 }
 
@@ -1276,7 +851,6 @@ document.addEventListener("keydown", (e) => {
     }
   }
 });
-registerEscapeCloser(() => !overlay.hidden, closeSettings);
 registerEscapeCloser(() => !deleteAlert.hidden, closeDeleteAlert);
 
 // تحميل المسودات المحفوظة عند فتح التطبيق — تُعرض في الشريط الجانبي فورًا
@@ -1285,17 +859,49 @@ registerEscapeCloser(() => !deleteAlert.hidden, closeDeleteAlert);
   renderDrafts();
 })();
 
-// إن لم يكن هناك مفتاح محفوظ، افتح الإعدادات عند أول تشغيل (داخل التطبيق فقط)
+// الإعدادات عند الإقلاع: المظهر منها، وترحيل اختيار قديم من مخزن المتصفح
+// مرة واحدة. وإن لم يكن هناك مفتاح محفوظ فُتحت نافذة الإعدادات عند أول تشغيل
 if (window.__TAURI__) {
   (async () => {
+    const legacy = legacyAppearanceChoice();
     try {
-      const s = await invoke("load_settings");
-      if (!s.apiKey) openSettings();
+      const settings = await invoke("load_settings");
+      if (legacy && settings.appearance === "auto") {
+        renderAppearance(legacy);
+        // لا يُمحى القديم إلا بعد أن يستقرّ الجديد: فشلٌ عابر هنا كان
+        // يُرجع اختيارًا صريحًا إلى «تلقائي» للأبد
+        const moved = await invoke("save_settings", { patch: { appearance: legacy } })
+          .then(() => true)
+          .catch(() => false);
+        if (moved) forgetLegacyAppearance();
+      } else {
+        renderAppearance(settings.appearance);
+        forgetLegacyAppearance();
+      }
+      if (!settings.hasApiKey) invoke("open_settings").catch(() => {});
     } catch {
-      openSettings();
+      invoke("open_settings").catch(() => {});
     }
   })();
+
+  // نافذة الإعدادات بدّلت شيئًا: المظهر يتبعها فورًا
+  window.__TAURI__.event
+    ?.listen("settings:changed", (event) => renderAppearance(event.payload?.appearance))
+    .catch(() => {});
 }
+
+// زر الترس في ذيل الشريط الجانبي و⌘، يفتحان نافذة الإعدادات
+for (const button of document.querySelectorAll("[data-open-settings]")) {
+  button.addEventListener("click", () => invoke("open_settings").catch(() => {}));
+}
+document.addEventListener("keydown", (e) => {
+  if (e.metaKey && !e.ctrlKey && !e.altKey && e.key === ",") {
+    // لا تُفتح فوق ورقة أو تنبيه: الأسبقية لما هو مفتوح أمام الكاتب
+    if (window.NasaqWindow.isModalOpen()) return;
+    e.preventDefault();
+    invoke("open_settings").catch(() => {});
+  }
+});
 
 // ---------- الجسر الوحيد بين البرجين ----------
 // نصٌّ اعتمده وضع آخر يصير خامًا لنسق كنصٍّ جديد تمامًا: حدث الإدخال نفسه

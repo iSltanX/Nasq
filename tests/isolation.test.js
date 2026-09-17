@@ -15,6 +15,11 @@ const shell = src("shell.js");
 const nasaq = src("nasaq.js");
 const shadhb = src("shadhb.js");
 const css = src("app.css");
+// نوافذ المرحلة ٥ الثانوية
+const settingsHtml = src("settings.html");
+const settingsJs = src("settings.js");
+const aboutHtml = src("about.html");
+const secondaryJs = src("secondary.js");
 
 test("ترتيب التحميل: الهيكل فالقشرة قبل نسق، وشَذْب أخيرًا، وmain.js زال", () => {
   const order = [...html.matchAll(/<script src="([^"]+)"><\/script>/g)].map((m) => m[1]);
@@ -24,6 +29,7 @@ test("ترتيب التحميل: الهيكل فالقشرة قبل نسق، و�
     "fragments.js",
     "substack-markers.js",
     "prune.js",
+    "appearance.js",
     "layout.js",
     "shell.js",
     "nasaq.js",
@@ -126,8 +132,7 @@ test("اكتمال القشرة: البنية المشتركة والوصلات 
     "showToast",
     "showError",
     "copyText",
-    "applyAppearanceChoice",
-    "openSettings",
+    "renderAppearance",
     "renderDrafts",
     "persistDrafts",
     "depositDraftVersions",
@@ -319,9 +324,11 @@ test("المرحلة ٣: الورقة والتنبيه والنافذة المن
 });
 
 test("المرحلة ٣: لا نافذة منبثقة داخل الصفحة لنَسَق، ولا حذف على خطوتين", () => {
-  // النافذة المؤقتة داخل الصفحة للإعدادات وحدها حتى المرحلة ٥ — أيًّا كان ترتيب الخصائص
-  const interim = [...html.matchAll(/<[a-z][^>]*\bclass="[^"]*\binterim-overlay\b[^"]*"[^>]*>/g)].map((m) => (/\sid="([^"]+)"/.exec(m[0]) || [])[1]);
-  assert.deepStrictEqual(interim, ["settings-overlay"]);
+  // لا طبقة داخل الصفحة بعد المرحلة ٥: الإعدادات و«حول» نافذتان من النظام
+  assert.ok(!/\binterim-overlay\b/.test(html) && !/\binterim-/.test(css), "طبقة مؤقتة باقية");
+  for (const gone of ["settings-overlay", "settings-title", "close-settings"]) {
+    assert.ok(!html.includes(gone) && !shell.includes(gone), `${gone} باقٍ`);
+  }
   for (const gone of ["variations-overlay", "reading-lens-overlay", "interim-sheet-wide", "interim-lens", "variation-col", "adopt-btn"]) {
     assert.ok(!html.includes(gone) && !css.includes(gone) && !nasaq.includes(gone), `${gone} باقٍ`);
   }
@@ -420,7 +427,10 @@ test("المرحلة ٣: الاختصارات قرينة أزرارها — لا
   assert.ok(/if \(s\.outsideFields && editable\(e\.target\)\) return;/.test(nasaq), "حارس الحقول غائب عن الاختصارات");
   const shortcutsHandler = nasaq.slice(nasaq.indexOf("const SHORTCUTS = ["));
   assert.ok(shortcutsHandler.includes("formatBtn.offsetParent === null") && shortcutsHandler.includes("isModalOpen()"), "الاختصارات تعمل خارج نسق أو تحت ورقة");
-  const settingsHandler = shell.slice(shell.indexOf('e.key === ","'), shell.indexOf("openSettings();", shell.indexOf('e.key === ","')));
+  const settingsHandler = shell.slice(
+    shell.indexOf('e.key === ","'),
+    shell.indexOf('invoke("open_settings")', shell.indexOf('e.key === ","'))
+  );
   assert.ok(settingsHandler.includes("isModalOpen()"), "⌘، يفتح الإعدادات فوق ورقة أو تنبيه");
 });
 
@@ -733,4 +743,104 @@ test("المرحلة ٤: منطق القصّ والتحقق لم يُمَس — 
     shadhb.includes("{ quote: cut.quote, occurrence: cut.occurrence }"),
     "القصّ لا يقرأ الظهور من مصدر العلامة نفسه"
   );
+});
+
+// ---------- حرّاس المرحلة ٥: نافذتا الإعدادات و«حول» ----------
+
+test("المرحلة ٥: نافذة الإعدادات كما رُسمت — تبويبان وثلاثة أقسام وصفوفها", () => {
+  const tabs = [...settingsHtml.matchAll(/data-tab="([a-z]+)"/g)].map((m) => m[1]);
+  assert.deepStrictEqual(tabs, ["general", "updates"], "التبويبان ليسا كما في اللوحة");
+
+  const headers = [...settingsHtml.matchAll(/class="section-header">([^<]+)</g)].map((m) => m[1]);
+  assert.deepStrictEqual(headers, ["النموذج", "الاتصال", "المظهر"], "أقسام «عام» ليست كما رُسمت");
+
+  for (const id of ["api-key", "model-name", "base-url", "provider-picker", "appearance-picker", "test-connection", "auto-updates", "app-version", "check-updates"]) {
+    assert.ok(settingsHtml.includes(`id="${id}"`), `صفّ ${id} غائب عن الصفحة`);
+  }
+
+  // تذييلان منصوصان في التصميم حرفًا بحرف
+  assert.ok(
+    settingsHtml.includes("يُحفظ المفتاح في سلسلة المفاتيح على جهازك، ولا يُرسَل نصّك إلا حين تطلب التنسيق أو الفحص."),
+    "تذييل قسم النموذج ليس نصّ التصميم"
+  );
+  assert.ok(settingsHtml.includes("«تلقائي» يتبع مظهر النظام ويتبدّل معه فورًا."), "تذييل المظهر ليس نصّ التصميم");
+  assert.ok(settingsHtml.includes("لا يُنزَّل أي تحديث قبل موافقتك."), "تذييل التحديثات ليس نصّ التصميم");
+});
+
+test("المرحلة ٥: المفتاح لا يعبر الجسر إلى صفحة الإعدادات", () => {
+  // الصفحة تعرف أنه محفوظ فحسب، ولا تقرأ قيمته من النواة أبدًا
+  assert.ok(settingsJs.includes("view.hasApiKey"), "الحقل المقنّع لا يتبع علم الحفظ");
+  assert.ok(!/view\.apiKey|\.apiKey\b(?!\s*:)/.test(settingsJs.replace(/apiKey: apiKeyInput\.value/g, "")), "الصفحة تقرأ المفتاح من النواة");
+  // والقشرة لم تعد تقرأه أيضًا بعد زوال الطبقة المؤقتة
+  assert.ok(!/\bs\.apiKey\b|settings\.apiKey/.test(shell), "القشرة ما زالت تقرأ المفتاح");
+  assert.ok(shell.includes("settings.hasApiKey"), "أول تشغيل لا يعرف أن المفتاح محفوظ");
+});
+
+test("المرحلة ٥: النافذتان مخفيتان حتى تعلنا جاهزيتهما", () => {
+  assert.ok(secondaryJs.includes('invoke("secondary_window_ready")'), "إعلان الجاهزية غائب");
+  assert.ok(settingsJs.includes("announceReady()"), "صفحة الإعدادات لا تعلن جاهزيتها");
+  assert.ok(src("about.js").includes("announceReady("), "لوحة «حول» لا تعلن جاهزيتها");
+  // والإطار يتبع اللوح كما تفعل إعدادات النظام
+  assert.ok(secondaryJs.includes('invoke("settings_pane_resized"'), "الإطار لا يتبع اللوح");
+});
+
+test("المرحلة ٥: المظهر مصدره ملف الإعدادات لا مخزن المتصفح", () => {
+  assert.ok(shell.includes("settings.appearance"), "القشرة لا تقرأ المظهر من الإعدادات");
+  assert.ok(shell.includes("legacyAppearanceChoice") && shell.includes("forgetLegacyAppearance"), "لا ترحيل للاختيار القديم");
+  assert.ok(!/localStorage\.setItem\(APPEARANCE_KEY/.test(shell), "المظهر ما زال يُحفظ في مخزن المتصفح");
+  assert.ok(shell.includes('listen("settings:changed"'), "المظهر لا يتبع نافذة الإعدادات");
+  // وحدة واحدة تطبّقه في النوافذ كلها
+  assert.ok(src("appearance.js").includes("data-appearance"), "وحدة المظهر لا تضبط السمة");
+  // والنوافذ الثلاث تتبعه: لا تبقى «حول» فاتحة والتطبيق داكن
+  const about = src("about.js");
+  // تطبّقه عن المحفوظ عند الفتح، لا عن الحدث وحده
+  assert.ok(/invoke\("load_settings"\)/.test(about), "«حول» لا تقرأ المظهر المحفوظ");
+  assert.ok(/appearance\.apply\(view\.appearance\)/.test(about), "«حول» لا تطبّق المظهر عند الفتح");
+  assert.ok(about.includes('listen("settings:changed"'), "«حول» لا تتبع تغيير المظهر");
+  assert.ok(aboutHtml.includes('src="appearance.js"'), "«حول» لا تحمّل وحدة المظهر");
+});
+
+test("المرحلة ٥: ما يتغيّر ديناميكيًا يُعلَن لقارئ الشاشة", () => {
+  for (const id of ["connection-status", "update-status"]) {
+    const tag = new RegExp(`<[^>]*id="${id}"[^>]*>`).exec(settingsHtml)[0];
+    assert.ok(/role="status"/.test(tag) && /aria-live="polite"/.test(tag), `${id} يتغيّر بلا إعلان`);
+  }
+});
+
+test("المرحلة ٥: ما يُكتب يُحفظ بعد سكتة لا عند مغادرة الحقل وحدها", () => {
+  // إغلاق النافذة بعد الكتابة مباشرة كان يُضيّع ما كُتب
+  for (const field of ["apiKeyInput", "modelInput", "baseUrlInput"]) {
+    assert.ok(
+      new RegExp(`${field}\\.addEventListener\\("input"`).test(settingsJs),
+      `${field} لا يُحفظ إلا عند مغادرته`
+    );
+  }
+  assert.ok(settingsJs.includes("function debounce("), "لا سكتة بين الكتابة والحفظ");
+  // والمفتاح لا يُمحى من الحقل إلا بعد أن يستقرّ حفظه
+  assert.ok(/if \(await save\(\{ apiKey: apiKeyInput\.value \}\)\) apiKeyInput\.value = "";/.test(settingsJs), "الحقل يُفرَّغ قبل أن ينجح الحفظ");
+});
+
+test("المرحلة ٥: المزوّدات نفسها في الواجهة وفي النواة", () => {
+  // جدولان يتباعدان بصمت لولا هذا الحارس
+  const rust = fs.readFileSync(path.join(__dirname, "..", "src-tauri", "src", "shared", "settings.rs"), "utf8");
+  // \b يمنع DEFAULT_BASE_URL من مطابقة ANTHROPIC_DEFAULT_BASE_URL،
+  // و\s* يسمح بالإعلان على سطرين
+  const constOf = (name) => new RegExp(`\\b${name}: &str =\\s*"([^"]+)"`).exec(rust)[1];
+  const jsOf = (key, field) =>
+    new RegExp(`${key}: \\{[^}]*${field}: "([^"]+)"`, "s").exec(settingsJs)[1];
+  assert.strictEqual(jsOf("claude", "baseUrl"), constOf("ANTHROPIC_DEFAULT_BASE_URL"));
+  assert.strictEqual(jsOf("claude", "model"), constOf("ANTHROPIC_DEFAULT_MODEL"));
+  assert.strictEqual(jsOf("gemini", "baseUrl"), constOf("DEFAULT_BASE_URL"));
+  assert.strictEqual(jsOf("gemini", "model"), constOf("DEFAULT_MODEL"));
+  assert.strictEqual(jsOf("openai", "model"), constOf("OPENAI_DEFAULT_MODEL"));
+});
+
+test("المرحلة ٥: لوحة «حول» بنصوص التصميم ومقاسه", () => {
+  for (const text of ["نَسَق", "كلماتك كما هي، بنَسَقٍ أوضح.", "© ٢٠٢٦ سلطان"]) {
+    assert.ok(aboutHtml.includes(text), `نصّ «${text}» غائب عن لوحة «حول»`);
+  }
+  assert.ok(aboutHtml.includes('src="app-icon.png"'), "أيقونة التطبيق غائبة");
+  assert.ok(fs.existsSync(srcPath("app-icon.png")), "ملف الأيقونة غير موجود في src");
+  const rust = fs.readFileSync(path.join(__dirname, "..", "src-tauri", "src", "app", "secondary.rs"), "utf8");
+  assert.ok(rust.includes("ABOUT_WIDTH: f64 = 284.0") && rust.includes("ABOUT_HEIGHT: f64 = 213.0"), "مقاس «حول» ليس مقاس التصميم");
 });

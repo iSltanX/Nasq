@@ -23,4 +23,6 @@ xcrun actool "$ICONS/AppIcon.icon" \
 cp "$OUT/Assets.car" "$ICONS/Assets.car"
 cp "$OUT/AppIcon.icns" "$ICONS/icon.icns"
 sips -s format png "$OUT/AppIcon.icns" --out "$ICONS/icon.png" >/dev/null
-echo "Assets.car و icon.icns و icon.png جاهزة في src-tauri/icons"
+# نسخة للواجهة: لوحة «حول» تعرض الأيقونة نفسها، ومجلد src وحده هو المخدوم
+cp "$ICONS/icon.png" "$(dirname "$0")/../../src/app-icon.png"
+echo "Assets.car و icon.icns و icon.png جاهزة في src-tauri/icons، و src/app-icon.png للواجهة"
