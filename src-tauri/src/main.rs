@@ -33,9 +33,13 @@ fn main() {
         })
         .invoke_handler(tauri::generate_handler![
             app::window::main_window_ready,
+            app::secondary::open_settings,
+            app::secondary::secondary_window_ready,
+            app::secondary::settings_pane_resized,
             shared::settings::load_settings,
             shared::settings::save_settings,
             shared::llm::test_ollama_connection,
+            shared::llm::test_connection,
             shared::drafts::load_drafts,
             shared::drafts::save_drafts,
             shared::drafts::export_drafts,

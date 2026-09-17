@@ -26,6 +26,9 @@ block2 = "0.6"
 objc2 = "0.6"
 objc2-app-kit = { version = "0.3", features = ["NSApplication", "NSAppearance", "NSButton", "NSControl", "NSResponder", "NSToolbar", "NSView", "NSWindow"] }
 objc2-foundation = { version = "0.3", features = ["NSArray", "NSGeometry", "NSLocale", "NSNotification", "NSOperation", "NSString", "block2"] }
+# سلسلة مفاتيح الماك لمفتاح المزوّد (src/shared/secrets.rs) — الحزمة حاضرة
+# أصلًا في الشجرة، والاعتماد المباشر يفتح واجهة SecItem للكلمات العامة
+security-framework = "3"
 
 [profile.release]
 codegen-units = 1

@@ -11,6 +11,10 @@ use super::settings::{Settings, OPENAI_API_HOST, PROVIDER_ANTHROPIC, PROVIDER_OL
 // رسائل يتقاسمها المساران السحابيان (المتوافق مع OpenAI وClaude) — نص واحد
 // لكل حالة حتى لا تنجرف صياغة أحدهما عن الآخر
 const ERR_NO_API_KEY: &str = "لا يوجد مفتاح API — أضفه من لوحة الإعدادات أولًا.";
+// المفتاح محفوظ لكن سلسلة المفاتيح لم تُقرأ — رسالة غير رسالة من لا مفتاح له،
+// فالعلاج مختلف: إذنُ وصول لا إدخالُ مفتاح جديد
+const ERR_KEY_LOCKED: &str =
+    "تعذّر الوصول إلى المفتاح في سلسلة المفاتيح — اسمح للتطبيق بالوصول، أو أعد إدخاله من الإعدادات.";
 const ERR_CLIENT_INIT: &str = "تعذّر تهيئة الاتصال.";
 const ERR_TIMEOUT: &str = "انتهت مهلة الاتصال — حاول مرة أخرى.";
 const ERR_CONNECT: &str = "فشل الاتصال بالخدمة — تحقق من الإنترنت ومن Base URL.";
@@ -23,6 +27,15 @@ const ERR_UNREADABLE: &str = "تعذّرت قراءة استجابة الخدم�
 const ERR_EMPTY_RESULT: &str = "أعاد النموذج نتيجة فارغة — أعد المحاولة.";
 const ERR_TOO_LONG: &str =
     "النص أطول من حد المعالجة — قسّمه إلى أجزاء أقصر ونسّق كل جزء على حدة.";
+
+/// «لا مفتاح» أم «لم أصل إليه» — الفرق يقرّره ما أعادته الإعدادات لا الحقل وحده
+fn missing_key_message(settings: &Settings) -> &'static str {
+    if settings.key_unavailable {
+        ERR_KEY_LOCKED
+    } else {
+        ERR_NO_API_KEY
+    }
+}
 
 fn request_failed(code: u16) -> String {
     format!("فشل الطلب (رمز {}). تحقق من الإعدادات وأعد المحاولة.", code)
@@ -221,7 +234,7 @@ pub(crate) async fn request_completion(
 
     let api_key = settings.api_key.trim();
     if api_key.is_empty() {
-        return Err(ERR_NO_API_KEY.to_string());
+        return Err(missing_key_message(settings).to_string());
     }
 
     let url = format!(
@@ -530,7 +543,7 @@ async fn request_completion_anthropic(
 ) -> Result<String, String> {
     let api_key = settings.api_key.trim();
     if api_key.is_empty() {
-        return Err(ERR_NO_API_KEY.to_string());
+        return Err(missing_key_message(settings).to_string());
     }
     let model = settings.model.trim();
     let url = anthropic_messages_url(&settings.base_url);
@@ -706,6 +719,239 @@ pub(crate) async fn test_ollama_connection(base_url: String, model: String) -> R
     } else {
         Err("النموذج المحدد غير موجود.".to_string())
     }
+}
+
+// ---------- اختبار الاتصال (لوحة الإعدادات) ----------
+
+// نقطة سرد النماذج عند كل مزوّد: أرخص طلب يثبت أمرين في نداء واحد — أن
+// المفتاح مقبول، وأن اسم النموذج المكتوب موجود فعلًا. والتفريق بينهما هو
+// المقصود: «المفتاح صحيح والاسم خاطئ» شكوى لا يجيب عنها نجاحٌ أو فشلٌ واحد.
+// لا prompt هنا ولا عقد ولا نصّ مستخدم — طلب سرد مجرّد، كبقية هذه الطبقة.
+
+const ERR_LIST_UNREACHABLE: &str = "تعذّر الوصول إلى قائمة النماذج — تحقق من Base URL.";
+const ERR_LIST_UNREADABLE: &str = "وردت قائمة النماذج بشكل غير مفهوم.";
+const ERR_OLLAMA_DOWN: &str = "Ollama غير مشغّل على هذا الجهاز.";
+const CONNECTION_TIMEOUT_SECS: u64 = 10;
+
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct ConnectionReport {
+    /// وصل الطلب إلى المزوّد وردّ بما يُفهم
+    pub(crate) connected: bool,
+    /// قبِل المزوّد المفتاح — ولـ Ollama صحيحٌ دائمًا إذ لا مفتاح له
+    pub(crate) key_accepted: bool,
+    /// None حين لا نموذج مكتوب أو حين لا تصلح القائمة للحكم
+    pub(crate) model_listed: Option<bool>,
+    pub(crate) model_count: usize,
+    /// نصّ عربي جاهز للعرض كما هو
+    pub(crate) message: String,
+}
+
+impl ConnectionReport {
+    fn failed(message: String) -> Self {
+        ConnectionReport {
+            connected: false,
+            key_accepted: false,
+            model_listed: None,
+            model_count: 0,
+            message,
+        }
+    }
+}
+
+fn models_url(provider: &str, base_url: &str) -> String {
+    let base = base_url.trim().trim_end_matches('/');
+    match provider.trim() {
+        PROVIDER_OLLAMA => format!("{}/api/tags", base),
+        PROVIDER_ANTHROPIC => {
+            if base.ends_with("/v1") {
+                format!("{}/models", base)
+            } else {
+                format!("{}/v1/models", base)
+            }
+        }
+        _ => format!("{}/models", base),
+    }
+}
+
+fn models_status_error(status: u16) -> Option<String> {
+    if (200..300).contains(&status) {
+        return None;
+    }
+    // 404 هنا يعني المسار لا العنوان الخاطئ للنموذج: نقطة السرد نفسها غائبة
+    Some(match status {
+        401 | 403 => ERR_BAD_KEY.to_string(),
+        402 => ERR_NO_CREDIT.to_string(),
+        404 => ERR_LIST_UNREACHABLE.to_string(),
+        429 => ERR_RATE_LIMITED.to_string(),
+        500..=599 => ERR_SERVER.to_string(),
+        code => request_failed(code),
+    })
+}
+
+fn listed_models(provider: &str, payload: &Value) -> Vec<String> {
+    if provider.trim() == PROVIDER_OLLAMA {
+        return payload["models"]
+            .as_array()
+            .into_iter()
+            .flatten()
+            .filter_map(|m| m["name"].as_str().or_else(|| m["model"].as_str()))
+            .map(|s| s.to_string())
+            .collect();
+    }
+    payload["data"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .filter_map(|m| m["id"].as_str())
+        .map(|s| s.to_string())
+        .collect()
+}
+
+/// Gemini عبر طبقة توافق OpenAI يسرد معرّفاته مسبوقة بـ models/ بينما يُكتب
+/// النموذج في الإعدادات بلا بادئة — فالمقارنة تُجرّدها قبل الحكم
+fn strip_models_prefix(s: &str) -> &str {
+    s.strip_prefix("models/").unwrap_or(s)
+}
+
+fn model_is_listed(provider: &str, configured: &str, listed: &[String]) -> bool {
+    let configured = configured.trim();
+    if configured.is_empty() {
+        return false;
+    }
+    let ollama = provider.trim() == PROVIDER_OLLAMA;
+    listed.iter().any(|entry| {
+        if ollama {
+            ollama_model_matches(configured, entry)
+        } else {
+            configured.eq_ignore_ascii_case(strip_models_prefix(entry))
+        }
+    })
+}
+
+fn connection_headers(provider: &str, api_key: &str) -> Result<HeaderMap, String> {
+    let mut headers = HeaderMap::new();
+    if provider.trim() == PROVIDER_ANTHROPIC {
+        let mut key = HeaderValue::from_str(api_key).map_err(|_| ERR_BAD_KEY.to_string())?;
+        key.set_sensitive(true);
+        headers.insert("x-api-key", key);
+        headers.insert(
+            "anthropic-version",
+            HeaderValue::from_static(ANTHROPIC_VERSION),
+        );
+    }
+    Ok(headers)
+}
+
+/// الفحص كاملًا: يعيد تقريرًا في كل الأحوال المفهومة، ولا يخطئ إلا حين يتعذّر
+/// حتى تكوين الطلب. تصنيف الحالة يبقى في التقرير لا في نوع النتيجة، فتعرض
+/// لوحة الإعدادات نصًّا واحدًا مهما كانت النتيجة
+pub(crate) async fn check_connection(settings: &Settings) -> ConnectionReport {
+    let provider = settings.provider.trim();
+    let ollama = provider == PROVIDER_OLLAMA;
+    let api_key = settings.api_key.trim();
+    let model = settings.model.trim();
+
+    if settings.base_url.trim().is_empty() {
+        return ConnectionReport::failed(ERR_LIST_UNREACHABLE.to_string());
+    }
+    if !ollama && api_key.is_empty() {
+        return ConnectionReport::failed(missing_key_message(settings).to_string());
+    }
+
+    let client = match reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(CONNECTION_TIMEOUT_SECS))
+        .build()
+    {
+        Ok(client) => client,
+        Err(_) => return ConnectionReport::failed(ERR_CLIENT_INIT.to_string()),
+    };
+
+    let headers = match connection_headers(provider, api_key) {
+        Ok(headers) => headers,
+        Err(message) => return ConnectionReport::failed(message),
+    };
+
+    let url = models_url(provider, &settings.base_url);
+    let mut request = client.get(&url).headers(headers);
+    if !ollama && provider != PROVIDER_ANTHROPIC {
+        request = request.bearer_auth(api_key);
+    }
+
+    let response = match request.send().await {
+        Ok(response) => response,
+        Err(e) => {
+            let message = if ollama && e.is_connect() {
+                ERR_OLLAMA_DOWN.to_string()
+            } else {
+                transport_error(&e)
+            };
+            return ConnectionReport::failed(message);
+        }
+    };
+
+    let status = response.status().as_u16();
+    if let Some(message) = models_status_error(status) {
+        let key_rejected = matches!(status, 401 | 403);
+        return ConnectionReport {
+            connected: true,
+            key_accepted: !key_rejected,
+            model_listed: None,
+            model_count: 0,
+            message,
+        };
+    }
+
+    let payload: Value = match response.json().await {
+        Ok(payload) => payload,
+        Err(_) => return ConnectionReport::failed(ERR_LIST_UNREADABLE.to_string()),
+    };
+
+    let models = listed_models(provider, &payload);
+    let count = models.len();
+    let service = if ollama { "Ollama" } else { "المزوّد" };
+
+    if model.is_empty() {
+        return ConnectionReport {
+            connected: true,
+            key_accepted: true,
+            model_listed: None,
+            model_count: count,
+            message: format!("تم الاتصال بـ{} — {} نموذجًا متاحًا.", service, count),
+        };
+    }
+
+    if model_is_listed(provider, model, &models) {
+        return ConnectionReport {
+            connected: true,
+            key_accepted: true,
+            model_listed: Some(true),
+            model_count: count,
+            message: format!("تم الاتصال، و«{}» متاح.", model),
+        };
+    }
+
+    // الحالة التي يخلطها الفحص البسيط: الاتصال سليم والمفتاح مقبول، والخطأ في
+    // اسم النموذج وحده
+    let message = if ollama {
+        format!("Ollama يعمل، لكن «{}» غير منزَّل على الجهاز.", model)
+    } else {
+        format!("المفتاح مقبول، لكن «{}» ليس بين نماذج المزوّد ({} نموذجًا).", model, count)
+    };
+    ConnectionReport {
+        connected: true,
+        key_accepted: true,
+        model_listed: Some(false),
+        model_count: count,
+        message,
+    }
+}
+
+/// المفتاح لا يعبر الجسر: الفحص يقرأ الإعدادات المحفوظة (ومنها الخزنة) بنفسه
+#[tauri::command]
+pub(crate) async fn test_connection(app: tauri::AppHandle) -> Result<ConnectionReport, String> {
+    let settings = super::settings::read_settings(&app)?;
+    Ok(check_connection(&settings).await)
 }
 
 #[cfg(test)]
@@ -1132,5 +1378,244 @@ mod tests {
         ] {
             assert!(!other.to_lowercase().contains(OPENAI_API_HOST), "{other}");
         }
+    }
+
+    // ---------- اختبار الاتصال ----------
+
+    #[test]
+    fn the_models_endpoint_follows_each_provider() {
+        assert_eq!(models_url(PROVIDER_OLLAMA, "http://localhost:11434"), "http://localhost:11434/api/tags");
+        assert_eq!(models_url(PROVIDER_OLLAMA, "http://localhost:11434/"), "http://localhost:11434/api/tags");
+        // Anthropic: لا تتكرر v1 حين يكتبها المستخدم في العنوان
+        assert_eq!(models_url(PROVIDER_ANTHROPIC, "https://api.anthropic.com"), "https://api.anthropic.com/v1/models");
+        assert_eq!(models_url(PROVIDER_ANTHROPIC, "https://api.anthropic.com/v1"), "https://api.anthropic.com/v1/models");
+        // المسار السحابي: العنوان كما حفظه المستخدم + models، والشرطة الأخيرة تُطرح
+        assert_eq!(models_url("", "https://api.openai.com/v1"), "https://api.openai.com/v1/models");
+        assert_eq!(
+            models_url("cloud", "https://generativelanguage.googleapis.com/v1beta/openai/"),
+            "https://generativelanguage.googleapis.com/v1beta/openai/models"
+        );
+    }
+
+    #[test]
+    fn a_rejected_key_is_told_apart_from_a_missing_endpoint() {
+        assert_eq!(models_status_error(200), None);
+        assert_eq!(models_status_error(204), None);
+        assert_eq!(models_status_error(401).as_deref(), Some(ERR_BAD_KEY));
+        assert_eq!(models_status_error(403).as_deref(), Some(ERR_BAD_KEY));
+        assert_eq!(models_status_error(402).as_deref(), Some(ERR_NO_CREDIT));
+        // ٤٠٤ على نقطة السرد يعني العنوان لا اسم النموذج
+        assert_eq!(models_status_error(404).as_deref(), Some(ERR_LIST_UNREACHABLE));
+        assert_eq!(models_status_error(429).as_deref(), Some(ERR_RATE_LIMITED));
+        assert_eq!(models_status_error(503).as_deref(), Some(ERR_SERVER));
+        assert!(models_status_error(418).unwrap().contains("418"));
+    }
+
+    #[test]
+    fn each_provider_list_shape_is_read_as_it_comes() {
+        let openai = json!({"data": [{"id": "gpt-5.6-terra"}, {"id": "o4-mini"}]});
+        assert_eq!(listed_models("", &openai), vec!["gpt-5.6-terra", "o4-mini"]);
+
+        let anthropic = json!({"data": [{"id": "claude-opus-5", "type": "model"}]});
+        assert_eq!(listed_models(PROVIDER_ANTHROPIC, &anthropic), vec!["claude-opus-5"]);
+
+        // Ollama: name أو model، وكلاهما مقبول
+        let ollama = json!({"models": [{"name": "qwen3:8b"}, {"model": "llama3.2:latest"}]});
+        assert_eq!(listed_models(PROVIDER_OLLAMA, &ollama), vec!["qwen3:8b", "llama3.2:latest"]);
+
+        // شكل غير متوقع لا يُسقط شيئًا: قائمة فارغة لا انهيار
+        assert!(listed_models("", &json!({"models": []})).is_empty());
+        assert!(listed_models(PROVIDER_OLLAMA, &json!({"data": [{"id": "x"}]})).is_empty());
+    }
+
+    #[test]
+    fn gemini_model_prefix_never_reads_as_a_missing_model() {
+        // Gemini عبر طبقة التوافق يسرد models/gemini-… ويُكتب في الإعدادات بلا بادئة
+        let listed = vec!["models/gemini-2.5-flash".to_string(), "models/gemini-2.5-pro".to_string()];
+        assert!(model_is_listed("cloud", "gemini-2.5-flash", &listed));
+        assert!(model_is_listed("cloud", "GEMINI-2.5-PRO", &listed));
+        assert!(!model_is_listed("cloud", "gemini-9-ultra", &listed));
+    }
+
+    #[test]
+    fn an_ollama_tag_matches_with_or_without_latest() {
+        let listed = vec!["llama3.2:latest".to_string()];
+        assert!(model_is_listed(PROVIDER_OLLAMA, "llama3.2", &listed));
+        assert!(model_is_listed(PROVIDER_OLLAMA, "llama3.2:latest", &listed));
+        assert!(!model_is_listed(PROVIDER_OLLAMA, "llama3.2:70b", &listed));
+    }
+
+    #[test]
+    fn an_empty_model_is_never_reported_as_listed() {
+        let listed = vec!["gpt-5.6-terra".to_string()];
+        assert!(!model_is_listed("", "", &listed));
+        assert!(!model_is_listed("", "   ", &listed));
+    }
+
+    #[test]
+    fn anthropic_authenticates_by_header_and_the_cloud_path_does_not() {
+        let headers = connection_headers(PROVIDER_ANTHROPIC, "sk-ant").unwrap();
+        assert_eq!(headers.get("x-api-key").unwrap(), "sk-ant");
+        assert_eq!(headers.get("anthropic-version").unwrap(), ANTHROPIC_VERSION);
+        assert!(headers.get("x-api-key").unwrap().is_sensitive(), "المفتاح غير معلَّم حسّاسًا");
+
+        // المسار السحابي يوقّع بـ bearer لا برأس، فلا رؤوس هنا
+        assert!(connection_headers("", "sk-open").unwrap().is_empty());
+        assert!(connection_headers(PROVIDER_OLLAMA, "").unwrap().is_empty());
+    }
+
+    #[test]
+    fn a_locked_keychain_does_not_read_as_a_missing_key() {
+        let missing = Settings { api_key: String::new(), ..Settings::default() };
+        assert_eq!(missing_key_message(&missing), ERR_NO_API_KEY);
+
+        let locked = Settings {
+            api_key: String::new(),
+            key_unavailable: true,
+            ..Settings::default()
+        };
+        assert_eq!(missing_key_message(&locked), ERR_KEY_LOCKED);
+        // العلاجان مختلفان، فالرسالتان مختلفتان
+        assert_ne!(ERR_KEY_LOCKED, ERR_NO_API_KEY);
+
+        // واختبار الاتصال يقول السبب نفسه لا رسالة من لا مفتاح له
+        let report = futures_lite_block_on(check_connection(&locked));
+        assert_eq!(report.message, ERR_KEY_LOCKED);
+        assert!(!report.key_accepted);
+    }
+
+    #[test]
+    fn a_missing_key_stops_before_any_request_except_for_ollama() {
+        let cloud = Settings { api_key: String::new(), ..Settings::default() };
+        let report = futures_lite_block_on(check_connection(&cloud));
+        assert!(!report.connected);
+        assert_eq!(report.message, ERR_NO_API_KEY);
+
+        // Ollama بلا مفتاح ليس خطأ — يمضي إلى الطلب، ويسقط هنا على عنوان فارغ
+        let ollama = Settings {
+            api_key: String::new(),
+            base_url: String::new(),
+            provider: PROVIDER_OLLAMA.to_string(),
+            ..Settings::default()
+        };
+        let report = futures_lite_block_on(check_connection(&ollama));
+        assert_eq!(report.message, ERR_LIST_UNREACHABLE);
+    }
+
+    /// وقت تشغيل Tauri نفسه: الاختبارات التي تطرق خادمًا حقيقيًا تحتاج مُفاعِلًا
+    fn futures_lite_block_on<F: std::future::Future>(future: F) -> F::Output {
+        tauri::async_runtime::block_on(future)
+    }
+
+    #[test]
+    fn a_key_that_cannot_be_a_header_is_refused_before_the_request() {
+        // مفتاح فيه سطر جديد لا يصلح قيمة ترويسة: يُرفض هنا لا عند المزوّد
+        let refused = connection_headers(PROVIDER_ANTHROPIC, "sk-ant\nbad");
+        assert_eq!(refused.unwrap_err(), ERR_BAD_KEY);
+    }
+
+    // ---------- المسار كاملًا، على خادم محلي ----------
+
+    /// خادم يردّ مرة واحدة بما يُملى عليه، ويعيد نصّ الطلب كما وصله.
+    /// الغرض: فحص ما بين الطلب والتقرير — وهو صلب الميزة — لا الدوال وحدها
+    fn stub_once(status: &str, body: &'static str) -> (String, std::sync::mpsc::Receiver<String>) {
+        use std::io::{Read, Write};
+        use std::net::TcpListener;
+
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let port = listener.local_addr().unwrap().port();
+        let (sender, receiver) = std::sync::mpsc::channel();
+        let status = status.to_string();
+
+        std::thread::spawn(move || {
+            let Ok((mut stream, _)) = listener.accept() else { return };
+            let mut request = Vec::new();
+            let mut buffer = [0u8; 1024];
+            while let Ok(read) = stream.read(&mut buffer) {
+                if read == 0 {
+                    break;
+                }
+                request.extend_from_slice(&buffer[..read]);
+                if request.windows(4).any(|w| w == b"\r\n\r\n") {
+                    break;
+                }
+            }
+            let _ = sender.send(String::from_utf8_lossy(&request).to_string());
+            let response = format!(
+                "HTTP/1.1 {}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
+                status,
+                body.len(),
+                body
+            );
+            let _ = stream.write_all(response.as_bytes());
+            let _ = stream.flush();
+        });
+
+        (format!("http://127.0.0.1:{port}"), receiver)
+    }
+
+    fn cloud_settings(base_url: &str, model: &str) -> Settings {
+        Settings {
+            api_key: "sk-test".to_string(),
+            base_url: base_url.to_string(),
+            model: model.to_string(),
+            ..Settings::default()
+        }
+    }
+
+    #[test]
+    fn a_listed_model_reports_a_clean_connection() {
+        let (base, request) = stub_once("200 OK", r#"{"data":[{"id":"gpt-5.6-terra"},{"id":"o4-mini"}]}"#);
+        let report = futures_lite_block_on(check_connection(&cloud_settings(&base, "gpt-5.6-terra")));
+
+        assert!(report.connected && report.key_accepted);
+        assert_eq!(report.model_listed, Some(true));
+        assert_eq!(report.model_count, 2);
+        assert!(report.message.contains("gpt-5.6-terra"));
+
+        // والطلب نفسه: سرد نماذج موقَّع بـ bearer، بلا أي حمولة
+        let sent = request.recv().unwrap();
+        assert!(sent.starts_with("GET /models "), "المسار ليس سرد نماذج: {sent}");
+        assert!(sent.to_lowercase().contains("authorization: bearer sk-test"));
+        assert!(!sent.contains("messages"), "حمولة في طلب سرد");
+    }
+
+    #[test]
+    fn a_good_key_with_a_wrong_model_name_says_exactly_that() {
+        // الشكوى التي لا يجيب عنها نجاحٌ أو فشلٌ واحد
+        let (base, _request) = stub_once("200 OK", r#"{"data":[{"id":"gpt-5.6-terra"}]}"#);
+        let report = futures_lite_block_on(check_connection(&cloud_settings(&base, "gpt-4o-mini")));
+
+        assert!(report.connected, "الاتصال نجح فعلًا");
+        assert!(report.key_accepted, "المفتاح قُبل فعلًا");
+        assert_eq!(report.model_listed, Some(false));
+        assert!(report.message.contains("gpt-4o-mini"), "الرسالة لا تسمّي النموذج: {}", report.message);
+        assert!(!report.message.contains(ERR_BAD_KEY), "لُمت المفتاح وهو سليم");
+    }
+
+    #[test]
+    fn a_rejected_key_never_blames_the_model_name() {
+        let (base, _request) = stub_once("401 Unauthorized", r#"{"error":{"message":"bad key"}}"#);
+        let report = futures_lite_block_on(check_connection(&cloud_settings(&base, "gpt-5.6-terra")));
+
+        assert!(report.connected, "وصلنا إلى المزوّد وردّ");
+        assert!(!report.key_accepted);
+        assert_eq!(report.model_listed, None, "لا حكم على النموذج والمفتاح مرفوض");
+        assert_eq!(report.message, ERR_BAD_KEY);
+    }
+
+    #[test]
+    fn a_dead_address_is_a_failure_to_connect_not_a_bad_key() {
+        // منفذ مغلق: العنوان لا يستجيب أصلًا
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let port = listener.local_addr().unwrap().port();
+        drop(listener);
+        let report = futures_lite_block_on(check_connection(&cloud_settings(
+            &format!("http://127.0.0.1:{port}"),
+            "gpt-5.6-terra",
+        )));
+
+        assert!(!report.connected);
+        assert!(!report.message.contains("المفتاح"), "اتُّهم المفتاح بعطل شبكة: {}", report.message);
     }
 }

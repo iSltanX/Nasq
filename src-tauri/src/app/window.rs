@@ -24,8 +24,8 @@ pub(crate) fn mark_launch() {
 
 // surface/window من Figma فاتحًا وداكنًا — لون ما قد يظهر قبل رسم الواجهة
 // أو على حوافها أثناء تغيير الحجم
-const WINDOW_LIGHT: Color = Color(0xFF, 0xFF, 0xFF, 0xFF);
-const WINDOW_DARK: Color = Color(0x1E, 0x1E, 0x1E, 0xFF);
+pub(crate) const WINDOW_LIGHT: Color = Color(0xFF, 0xFF, 0xFF, 0xFF);
+pub(crate) const WINDOW_DARK: Color = Color(0x1E, 0x1E, 0x1E, 0xFF);
 
 // إن لم تعلن الواجهة جاهزيتها (خطأ في JS مثلًا) تظهر النافذة على أي حال
 const SHOW_FALLBACK: Duration = Duration::from_millis(1500);
@@ -80,7 +80,7 @@ fn entry_page() -> String {
     "index.html".to_string()
 }
 
-fn titlebar_is_rtl() -> bool {
+pub(crate) fn titlebar_is_rtl() -> bool {
     #[cfg(target_os = "macos")]
     {
         macos::titlebar_is_rtl()
@@ -91,7 +91,7 @@ fn titlebar_is_rtl() -> bool {
     }
 }
 
-fn system_prefers_dark() -> bool {
+pub(crate) fn system_prefers_dark() -> bool {
     #[cfg(target_os = "macos")]
     {
         macos::system_prefers_dark()
