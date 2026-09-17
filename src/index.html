@@ -645,6 +645,19 @@
   <!-- ================= على مستوى التطبيق: أول تشغيل والتحديثات =================
        بلا data-for: البرجان لا يملكان شيئًا منها، فهي عن التطبيق نفسه -->
 
+  <!-- «جلسة جديدة ⌘N» تمحو نصًّا لم يُحفظ، فتُستأذن — غير مرسوم في اللوحة،
+       وهيئته هيئة تنبيه التأكيد المرسوم (263:7635) -->
+  <div id="new-session-alert" class="alert" role="alertdialog" aria-modal="true" aria-labelledby="new-session-title" aria-describedby="new-session-message" hidden>
+    <div class="alert-body">
+      <h2 id="new-session-title" class="alert-title">تبدأ جلسة جديدة؟</h2>
+      <p id="new-session-message" class="alert-message">يُمحى النص الحالي وما نتج عنه. والمسودات المحفوظة تبقى كما هي.</p>
+    </div>
+    <div class="alert-buttons">
+      <button id="new-session-cancel" class="alert-button" type="button">إلغاء</button>
+      <button id="new-session-confirm" class="alert-button is-destructive" type="button">ابدأ جديدة</button>
+    </div>
+  </div>
+
   <!-- ورقة أول تشغيل بخطوتيها في عنصر واحد (Figma 255:524 و256:1155): عرضها
        ٤٨٠ لا ٧٢٠، وخطوتها تُقرأ من data-step على الورقة نفسها -->
   <div id="welcome-sheet" class="sheet sheet-narrow" data-step="welcome" role="dialog" aria-modal="true" aria-labelledby="welcome-label" hidden>
@@ -759,13 +772,15 @@
   </div>
 
   <!-- ترتيب التحميل عقد عزل: الوحدات النقية، فهيكل النافذة، فالقشرة المشتركة،
-       فتدفّقا التطبيق (أول تشغيل وتحديث)، فنَسَق، وشَذْب أخيرًا حصرًا بدرعه الداخلي -->
+       فسجلّ القوائم قبلهما ليسجّل فيه الجميع، فتدفّقا التطبيق (أول تشغيل
+       وتحديث)، فنَسَق، وشَذْب أخيرًا حصرًا بدرعه الداخلي -->
   <script src="lines.js"></script>
   <script src="drafts-model.js"></script>
   <script src="fragments.js"></script>
   <script src="substack-markers.js"></script>
   <script src="prune.js"></script>
   <script src="appearance.js"></script>
+  <script src="menu.js"></script>
   <script src="layout.js"></script>
   <script src="shell.js"></script>
   <script src="providers.js"></script>

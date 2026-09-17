@@ -21,6 +21,7 @@ const settingsJs = src("settings.js");
 const aboutHtml = src("about.html");
 const secondaryJs = src("secondary.js");
 // وحدات المرحلة ٦: المشترك بين النافذتين، وتدفّقا أول تشغيل والتحديث
+const menuJs = src("menu.js");
 const providersJs = src("providers.js");
 const formsJs = src("forms.js");
 const onboardingJs = src("onboarding.js");
@@ -35,6 +36,7 @@ test("ترتيب التحميل: الهيكل فالقشرة قبل نسق، و�
     "substack-markers.js",
     "prune.js",
     "appearance.js",
+    "menu.js",
     "layout.js",
     "shell.js",
     "providers.js",
@@ -429,18 +431,53 @@ test("المرحلة ٣: التنبيه لصاحبه — لا يعبر من بر
   assert.ok(nasaq.includes('e.detail?.owner !== "nasaq"'), "نسق يتبع زوال تنبيهات غيره");
 });
 
-test("المرحلة ٣: الاختصارات قرينة أزرارها — لا تعمل تحت ورقة، و⌘Z في الحقل للكتابة", () => {
-  const enterHandler = nasaq.slice(nasaq.indexOf('e.key === "Enter"'), nasaq.indexOf("formatText();", nasaq.indexOf('e.key === "Enter"')));
-  assert.ok(enterHandler.includes("isModalOpen()"), "⌘↩ يعمل تحت ورقة مفتوحة");
-  assert.ok(/\{ keys: \{ meta: true, code: "KeyZ" \}, button: undoBtn, run: undoOutput, outsideFields: true \}/.test(nasaq), "⌘Z يسرق تراجع الكتابة");
-  assert.ok(/if \(s\.outsideFields && editable\(e\.target\)\) return;/.test(nasaq), "حارس الحقول غائب عن الاختصارات");
-  const shortcutsHandler = nasaq.slice(nasaq.indexOf("const SHORTCUTS = ["));
-  assert.ok(shortcutsHandler.includes("formatBtn.offsetParent === null") && shortcutsHandler.includes("isModalOpen()"), "الاختصارات تعمل خارج نسق أو تحت ورقة");
-  const settingsHandler = shell.slice(
-    shell.indexOf('e.key === ","'),
-    shell.indexOf('invoke("open_settings")', shell.indexOf('e.key === ","'))
-  );
-  assert.ok(settingsHandler.includes("isModalOpen()"), "⌘، يفتح الإعدادات فوق ورقة أو تنبيه");
+test("المرحلة ٧-ب: الاختصارات قرينة أزرارها — والقرين صار مسرّعًا لا مستمعًا", () => {
+  // كان لكل اختصار مستمع `keydown` يفحص زرّه بيده. صارت المسرّعات في الشريط،
+  // والسجلّ يقرأ الزرّ نفسه — فالقرينة محفوظة بمكان واحد لا بفحصين
+  assert.ok(menuJs.includes("!button.disabled && !button.hidden && button.offsetParent !== null"), "حالة الأمر لا تتبع زرّه");
+  assert.ok(/if \(!usable\(entry\) \|\| modalOpen\(\)\) return;/.test(menuJs), "أمرٌ ينفَّذ تحت ورقة مفتوحة");
+  // وكل أمر له زرّ يُسجَّل بزرّه: أمرٌ بلا زرّ لا حالة له فيبقى مفتوحًا دائمًا
+  for (const [file, code] of [["nasaq.js", nasaq], ["shadhb.js", shadhb]]) {
+    for (const m of code.matchAll(/NasaqMenu\.register\(\s*"([^"]+)"/g)) {
+      const call = code.slice(m.index, code.indexOf(")", code.indexOf("{", m.index)) + 1);
+      assert.ok(/button:/.test(call) || m[1] === "file.new-session", `${file}: ${m[1]} سُجّل بلا زرّه`);
+    }
+  }
+  // ⌘Z وحده بقي مستمعًا (لا معرّف له في اللوحة)، وفي الحقول يبقى للكتابة
+  const undoHandler = nasaq.slice(nasaq.indexOf('e.code !== "KeyZ"'), nasaq.indexOf("undoOutput();", nasaq.indexOf('e.code !== "KeyZ"')));
+  assert.ok(undoHandler.includes("editable(e.target)"), "⌘Z يسرق تراجع الكتابة");
+  assert.ok(undoHandler.includes("isModalOpen()"), "⌘Z يعمل تحت ورقة مفتوحة");
+  assert.ok(undoHandler.includes("formatBtn.offsetParent === null"), "⌘Z يعمل خارج نَسَق");
+});
+
+test("المرحلة ٧-ب: صفر مستمع لوحة مفاتيح لأمرٍ صار له مسرّع", () => {
+  // معيار الاكتمال حرفيًا. الاختصارات الباقية مشروعة: Esc والأسهم وTab
+  // والتنقّل داخل القوائم والحقول — ولا واحد منها أمرٌ في الشريط
+  const ACCELERATED = [
+    ['e.key === ","', "⌘، (الإعدادات)"],
+    ['code === "Digit1"', "⌘1 و⌘2 (تبديل الوحدة)"],
+    ['code !== "KeyG"', "⌘G و⇧⌘G (التالي والسابق)"],
+    ['code === "KeyS"', "⌃⌘S (الشريط الجانبي)"],
+    ['code === "KeyI"', "⌥⌘I (المفتّش)"],
+    ["const SHORTCUTS = [", "جدول اختصارات نَسَق"],
+  ];
+  for (const [marker, name] of ACCELERATED) {
+    for (const [file, code] of [["nasaq.js", nasaq], ["shadhb.js", shadhb], ["layout.js", layout], ["shell.js", shell]]) {
+      assert.ok(!code.includes(marker), `${file}: مستمع باقٍ لـ${name}`);
+    }
+  }
+  // و⌘↩ صار «الفعل الرئيس»: يسجّله كل برج باسمه، ولا يلتقطه أحد بمستمع.
+  // والفحص على التركيبة لا على Enter وحدها: Return داخل حقل البحث يبقى
+  // مشروعًا، وهو ليس أمرًا في الشريط
+  for (const [file, code] of [["nasaq.js", nasaq], ["shadhb.js", shadhb], ["layout.js", layout], ["shell.js", shell]]) {
+    const combo = code
+      .split("\n")
+      .find((line) => /metaKey|ctrlKey/.test(line) && /"Enter"/.test(line));
+    assert.ok(!combo, `${file}: مستمع باقٍ لـ⌘↩ — ${combo}`);
+  }
+  for (const [file, code] of [["nasaq.js", nasaq], ["shadhb.js", shadhb]]) {
+    assert.ok(/NasaqMenu\.register\("format\.primary"/.test(code), `${file}: لا يسجّل الفعل الرئيس`);
+  }
 });
 
 test("المرحلة ٣: الأرقام الهندية في كل ما يعرضه نَسَق والقشرة", () => {
@@ -493,7 +530,7 @@ test("المرحلة ٣: ورقة التنويعات تعرض دفعتها لل�
   assert.ok(!functionBody(nasaq, "closeVariations").includes("variationsBatch"), "الإغلاق يُسقط دفعة نداءاتها مدفوعة");
   const show = functionBody(nasaq, "showVariations");
   assert.ok(show.includes("if (variationStates.length && variationInputsCurrent()) {") && !show.includes("invoke("), "إعادة فتح الورقة للمدخلات نفسها تطلق نداءات");
-  assert.ok(nasaq.includes('variationsBtn.addEventListener("click", showVariations);') && nasaq.includes("button: variationsBtn, run: showVariations }"), "«أرِني تنويعات…» يولّد من جديد لمدخلات لها دفعة");
+  assert.ok(nasaq.includes('variationsBtn.addEventListener("click", showVariations);') && nasaq.includes('["format.variations", showVariations, variationsBtn]'), "«أرِني تنويعات…» يولّد من جديد لمدخلات لها دفعة");
   assert.ok(nasaq.includes('regenBtn.addEventListener("click", generateVariations);'), "«ولّد ثلاثًا جديدة» لا يولّد");
   const generate = functionBody(nasaq, "generateVariations");
   const running = generate.indexOf("if (variationsGenerating()) return;");
@@ -1016,5 +1053,90 @@ test("المرحلة ٦: صفحات المفاتيح مسموحة بالاسم �
     );
     assert.ok(!other.permissions.includes("updater:allow-download"), `${name} تملك التنزيل`);
     assert.ok(!other.permissions.includes("updater:allow-install"), `${name} تملك التثبيت`);
+  }
+});
+
+// ---------- حرّاس المرحلة ٧-ب: ربط الشريط وقوائم السياق ----------
+
+test("المرحلة ٧-ب: كل معرّف في الواجهة موجود في مواصفة النواة، والعكس", () => {
+  // الجانبان يتباعدان بصمت لولا هذا: معرّف يُسجَّل ولا وجود له في الشريط لا
+  // يُنفَّذ أبدًا، ومعرّف في الشريط بلا تسجيل يبقى معطّلًا للأبد
+  const rust = fs.readFileSync(path.join(__dirname, "..", "src-tauri", "src", "app", "menu.rs"), "utf8");
+  const spec = rust.split("#[cfg(test)]")[0];
+  const inSpec = new Set([...spec.matchAll(/(?:Action|Check) \{ id: (?:"([^"]+)"|(\w+))/g)].map((m) => m[1] ?? null).filter(Boolean));
+  // المعرّفات المعلَنة ثوابتَ تُقرأ من قيمها — عدا معرّف القائمة نفسها،
+  // فهي حاوية لا أمر
+  for (const m of spec.matchAll(/const (\w+_ID): &str = "([^"]+)";/g)) {
+    if (!m[1].endsWith("_MENU_ID")) inSpec.add(m[2]);
+  }
+
+  const ui = new Set();
+  for (const code of [shell, layout, nasaq, shadhb, updatesJs]) {
+    for (const m of code.matchAll(/NasaqMenu\.register\(\s*"([^"]+)"/g)) ui.add(m[1]);
+    for (const m of code.matchAll(/\["([a-z]+\.[a-z.-]+)",/g)) ui.add(m[1]);
+    // وما يُسجَّل بمعرّف من كائن (عناصر «عرض» في layout.js)
+    for (const m of code.matchAll(/id: "([a-z]+\.[a-z.-]+)"/g)) ui.add(m[1]);
+  }
+  for (const id of ui) {
+    assert.ok(inSpec.has(id), `الواجهة تسجّل معرّفًا لا وجود له في الشريط: ${id}`);
+  }
+  // وما في الشريط ولم تسجّله الواجهة: إما تنفّذه القشرة في Rust، وإما فجوة معلومة
+  const SHELL_SIDE = ["app.settings", "app.about"];
+  const KNOWN_GAP = ["help.guide"]; // «مساعدة نَسَق» بلا وجهة بعد (المرحلة ٨)
+  for (const id of inSpec) {
+    if (SHELL_SIDE.includes(id) || KNOWN_GAP.includes(id)) continue;
+    assert.ok(ui.has(id), `أمرٌ في الشريط بلا تسجيل في الواجهة: ${id}`);
+  }
+});
+
+test("المرحلة ٧-ب: السجلّ عقدٌ بالتسجيل — القشرة لا تنادي دالة برج باسمها", () => {
+  // قاعدة العزل نفسها التي تحرس مُغلقات Escape ومعالج الاستعادة
+  assert.ok(!/checkShard|formatText\(|showVariations|adjustLines/.test(menuJs), "سجلّ القوائم ينادي دالة برج");
+  assert.ok(!/nasaq|shadhb/.test(menuJs.replace(/\/\/[^\n]*/g, "").replace(/"nasaq"|"shadhb"/g, "")), "سجلّ القوائم يسمّي برجًا");
+  // ولا يرى عقدًا ولا نداءً نموذجيًا
+  for (const banned of ['invoke("format_text"', 'invoke("generate_variation"', 'invoke("adjust_lines"', 'invoke("prune_text"']) {
+    assert.ok(!menuJs.includes(banned), `سجلّ القوائم ينادي ${banned}`);
+  }
+  // والأمر ذو الصاحبين يُسجَّل باسم برجه في البرجين معًا
+  for (const id of ["format.primary", "edit.copy-result"]) {
+    for (const [file, code, owner] of [["nasaq.js", nasaq, "nasaq"], ["shadhb.js", shadhb, "shadhb"]]) {
+      const at = code.indexOf(`"${id}"`);
+      assert.ok(at !== -1, `${file}: لا يسجّل ${id}`);
+      assert.ok(code.slice(at, at + 220).includes(`owner: "${owner}"`), `${file}: ${id} بلا اسم برجه`);
+    }
+  }
+});
+
+test("المرحلة ٧-ب: القائمة الرابعة تتبدّل في النواة، والواجهة تخبرها لا ترسمها", () => {
+  const rust = fs.readFileSync(path.join(__dirname, "..", "src-tauri", "src", "app", "menu.rs"), "utf8");
+  assert.ok(rust.includes("fn swap_module_menu"), "لا استبدال للقائمة الرابعة");
+  // الواجهة لا تبني قائمة: تخبر النواة بالوحدة فحسب
+  assert.ok(shadhb.includes("NasaqMenu.setModule("), "تبديل الوحدة لا يصل الشريط");
+  assert.ok(layout.includes("NasaqMenu.setPane("), "تبديل اللوح لا يصل الشريط");
+  assert.ok(!/MenuItemBuilder|SubmenuBuilder|شَذْب"\s*,\s*entries/.test(menuJs), "الواجهة ترسم قائمة");
+  // والمزامنة بعد التبديل لا قبله: عناصر القائمة الجديدة تولد معطّلة
+  assert.ok(/invoke\("set_active_module", \{ module \}\)\s*\.then\(sync\)/.test(menuJs), "المزامنة لا تتبع تبديل الوحدة");
+});
+
+test("المرحلة ٧-ب: اللصق عبر النواة لا عبر WebKit", () => {
+  // قراءة الحافظة من الويب-فيو تستدعي مطالبة إذن عند كل لصق
+  assert.ok(shell.includes('invoke("read_from_clipboard")'), "اللصق لا يمرّ بالنواة");
+  assert.ok(!/navigator\.clipboard\.readText/.test(shell), "اللصق يقرأ الحافظة من الويب-فيو");
+  // وقائمة النص تُرسم بالواجهة كما تقول اللوحة، لا بقائمة النظام
+  assert.ok(/document\.addEventListener\("contextmenu"/.test(shell), "لا قائمة نقر أيمن على النص");
+  assert.ok(shell.includes("openMenuAt("), "قائمة النص ليست قائمة الواجهة");
+  // والنسخ من النتيجة يجرّد رموز سابستاك كما يفعل زرّها
+  assert.ok(shell.includes("stripSubstackMarkers(picked)"), "نسخ النتيجة من القائمة لا يجرّد الرموز");
+});
+
+test("المرحلة ٧-ب: «جلسة جديدة» تستأذن، والخانة تفرّغها القشرة لا البرج", () => {
+  assert.ok(html.includes('id="new-session-alert"'), "تنبيه «جلسة جديدة» غائب");
+  assert.strictEqual(regions["new-session-alert"]?.owner, null, "تنبيه «جلسة جديدة» صار ملكًا لبرج");
+  assert.ok(/if \(!el\("input-text"\)\.value\.trim\(\)\)/.test(shell), "المسح يمضي بلا استئذان ولو كان هناك نص");
+  // الخانة مشتركة تملكها القشرة، والبرج يصفّر ما يملكه هو
+  assert.ok(/function startNewSession\([\s\S]*?input\.value = "";/.test(shell), "القشرة لا تفرّغ الخانة");
+  for (const [file, code] of [["nasaq.js", nasaq], ["shadhb.js", shadhb]]) {
+    const body = code.slice(code.indexOf('"file.new-session"'), code.indexOf('"file.new-session"') + 600);
+    assert.ok(!/inputText\.value\s*=/.test(body), `${file}: البرج يفرّغ الخانة بنفسه`);
   }
 });

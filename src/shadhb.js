@@ -87,20 +87,17 @@
       } catch {
         // تعذّر الحفظ لا يمنع التبديل في الجلسة الحالية
       }
+      // الشريط يتبع الوحدة: قائمته الرابعة اسمًا وعناصر، واسم «نسخ النتيجة»،
+      // وعلامتا ⌘1 و⌘2 — كلها في نداء واحد تقوده النواة
+      window.NasaqMenu.setModule(shadhb ? "shadhb" : "nasaq");
     }
 
     nasaqBtn.addEventListener("click", () => setMode("nasaq"));
     shadhbBtn.addEventListener("click", () => setMode("shadhb"));
-    // ⌘1 نَسَق و⌘2 شَذْب
-    document.addEventListener("keydown", (e) => {
-      if (!e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return;
-      // لا تبديل تحت ورقة مفتوحة تخص الوحدة الحالية
-      if (window.NasaqWindow.isModalOpen()) return;
-      if (e.code === "Digit1" || e.code === "Digit2") {
-        e.preventDefault();
-        setMode(e.code === "Digit2" ? "shadhb" : "nasaq");
-      }
-    });
+    // ⌘1 و⌘2 صارا مسرّعَي «نَسَق» و«شَذْب» في قائمة «عرض» (المرحلة ٧-ب)،
+    // ومبدّل الوحدات هو مصدر حالتهما: مخفيًّا (مفتاح الإطفاء) لا تبديل
+    window.NasaqMenu.register("view.module.nasaq", () => setMode("nasaq"), { button: nasaqBtn });
+    window.NasaqMenu.register("view.module.shadhb", () => setMode("shadhb"), { button: shadhbBtn });
     modeSwitch.hidden = false; // المفتاح مفعَّل — المبدّل يظهر الآن فقط
 
     // ---------- حالة الفحص — مستقلة تمامًا عن حالة نَسَق ----------
@@ -643,14 +640,32 @@
     }
 
     pruneBtn.addEventListener("click", checkShard);
-    // ⌘↩ قرين زر «افحص الشذرة» تمامًا (Figma 71:438): لا يعمل والزر مخفيٌّ لأن
-    // وحدة أخرى تملأ الواجهة، ولا وهو معطّل، ولا تحت ورقة مفتوحة
-    document.addEventListener("keydown", (e) => {
-      if (!(e.metaKey || e.ctrlKey) || e.shiftKey || e.key !== "Enter") return;
-      if (pruneBtn.offsetParent === null || pruneBtn.disabled) return;
-      if (window.NasaqWindow.isModalOpen()) return;
-      e.preventDefault();
-      checkShard();
+    // ⌘↩ صار مسرّع «الفعل الرئيس» في القائمة الرابعة (المرحلة ٧-ب)، واسمه فيها
+    // «افحص الشذرة». وزرّ الفحص مصدر حالته كما كان: مخفيًّا لأن وحدة أخرى تملأ
+    // الواجهة، أو معطّلًا، أو تحت ورقة مفتوحة — فلا أمر
+    window.NasaqMenu.register("format.primary", checkShard, { button: pruneBtn, owner: "shadhb" });
+    // وبقيّة أوامر شَذْب في القائمة نفسها حين تكون هي الظاهرة (قرار المالك
+    // 2026-09-18؛ اللوحة لم ترسمها، وتُرسم في المرحلة ٨ توثيقًا)
+    window.NasaqMenu.register("shadhb.cut", () => applyBtn.click(), { button: applyBtn });
+    window.NasaqMenu.register("shadhb.keep", () => keepBtn.click(), { button: keepBtn });
+    window.NasaqMenu.register("shadhb.send-to-nasaq", () => sendBtn.click(), { button: sendBtn });
+    // «جلسة جديدة ⌘N»: شذرة فارغة وفحصٌ مُلغى. الاستئذان من القشرة، والمسح هنا
+    window.NasaqMenu.register(
+      "file.new-session",
+      () =>
+        // الخانة تفرّغها القشرة — شَذْب لا يكتب فيها. وهذا تصفير ما يملكه هو
+        window.NasaqShell.confirmNewSession(() => {
+          state = null;
+          selected = -1;
+          failed = false;
+          renderState();
+        }),
+      { owner: "shadhb" }
+    );
+    // «نسخ النتيجة» أمرٌ واحد باسمين: في شَذْب هو «نسخ النص المشذَّب»
+    window.NasaqMenu.register("edit.copy-result", () => copyBtn.click(), {
+      button: copyBtn,
+      owner: "shadhb",
     });
 
     // زوال التنبيه يُخرج البرج من حالة الخطأ إلى حالته الفعلية

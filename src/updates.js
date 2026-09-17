@@ -180,14 +180,8 @@
 
   // ---------- المنافذ ----------
 
-  // «نَسَق ← التحقق من وجود تحديثات…»: العنصر يبدأ معطّلًا في الشريط ولا
-  // تفتحه إلا الواجهة حين تجهز — وهذه جاهزيته
-  window.__TAURI__?.event
-    ?.listen("menu:action", (event) => {
-      if (event.payload === "app.check-updates") check(MANUAL);
-    })
-    .then(() => invoke("set_menu_state", { updates: [{ id: "app.check-updates", enabled: true }] }))
-    .catch(() => {});
+  // «نَسَق ← التحقق من وجود تحديثات…» — بلا زرّ، فهو مفعّل ما دامت الواجهة حيّة
+  window.NasaqMenu.register("app.check-updates", () => check(MANUAL));
 
   // الفحص التلقائي عند الإقلاع حين يأذن به المستخدم في الإعدادات
   window.NasaqShell.settingsReady.then((loaded) => {

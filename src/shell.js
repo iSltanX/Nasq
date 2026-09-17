@@ -4,6 +4,9 @@
 // المسودات، معالج الاستعادة، مُغلقات Escape) — القشرة لا تنادي دوال وضعٍ
 // باسمها أبدًا. (انقسمت عن main.js نقلًا حرفيًا في المرحلة 2 — v4.2)
 
+// صفحة المشروع — نطاقها وحده مسموح في القدرة، وتفتح في المتصفح الافتراضي
+const PROJECT_URL = "https://github.com/iSltanX/Nasq";
+
 // خارج التطبيق (معاينة متصفح) تبقى الواجهة والأدوات المحلية تعمل، وتفشل أوامر النواة برسالة واضحة
 const invoke = window.__TAURI__?.core?.invoke
   ?? (async () => { throw "هذه معاينة متصفح — التشغيل الكامل عبر التطبيق نفسه."; });
@@ -580,6 +583,79 @@ draftsList.addEventListener("contextmenu", (e) => {
   openRowMenu(row, e.clientX, e.clientY);
 });
 
+// ---------- قائمة النقر الأيمن على النص (المرحلة ٧-ب) ----------
+// اللوحة تقول: «قوائم النقر الأيمن يرسمها التطبيق بخطَّي Almarai وCairo
+// بسلوك الماك نفسه». وبنودها عرفُ الماك نفسه — لم تُرسم أطرها.
+//
+// واللصق يمرّ بالنواة لا بـWebKit: قراءة الحافظة من الويب-فيو تستدعي مطالبة
+// إذن في الماك عند كل لصق، وقوائم السياق تحتاجها بلا مطالبة.
+async function pasteFromCore(field) {
+  let text;
+  try {
+    text = await invoke("read_from_clipboard");
+  } catch (err) {
+    showError(String(err), { owner: document.documentElement.dataset.module });
+    return;
+  }
+  if (!text) return;
+  const start = field.selectionStart ?? field.value.length;
+  const end = field.selectionEnd ?? start;
+  field.value = field.value.slice(0, start) + text + field.value.slice(end);
+  const caret = start + text.length;
+  field.setSelectionRange(caret, caret);
+  field.dispatchEvent(new Event("input"));
+  field.focus();
+}
+
+function selectionIn(node) {
+  const selection = document.getSelection();
+  if (node.tagName === "TEXTAREA" || node.tagName === "INPUT") {
+    return node.value.slice(node.selectionStart ?? 0, node.selectionEnd ?? 0);
+  }
+  return selection && !selection.isCollapsed && selection.containsNode(node, true)
+    ? String(selection)
+    : "";
+}
+
+document.addEventListener("contextmenu", (e) => {
+  const field = e.target.closest("textarea.editor");
+  const readonly = field ? null : e.target.closest(".result-text, .card-quote, .lens-text");
+  const node = field || readonly;
+  if (!node) return;
+  e.preventDefault();
+  const picked = selectionIn(node);
+  const sections = [];
+  if (field) {
+    sections.push([
+      { label: "قص", disabled: !picked, run: () => {
+        const start = field.selectionStart;
+        field.value = field.value.slice(0, start) + field.value.slice(field.selectionEnd);
+        field.setSelectionRange(start, start);
+        field.dispatchEvent(new Event("input"));
+        copyText(picked);
+        field.focus();
+      } },
+      { label: "نسخ", disabled: !picked, run: () => copyText(picked) },
+      { label: "لصق", run: () => pasteFromCore(field) },
+    ]);
+    sections.push([{ label: "تحديد الكل", disabled: !field.value, run: () => { field.focus(); field.select(); } }]);
+  } else {
+    // النتيجة والاقتباسات تُقرأ ولا تُكتب: نسخٌ وتحديدٌ بلا قصّ ولا لصق،
+    // والنسخ يجرّد رموز سابستاك كما يفعل زرّ النسخ
+    sections.push([{ label: "نسخ", disabled: !picked, run: () => copyText(window.NasaqSubstackMarkers.stripSubstackMarkers(picked)) }]);
+    sections.push([
+      { label: "تحديد الكل", disabled: !node.textContent.trim(), run: () => {
+        const range = document.createRange();
+        range.selectNodeContents(node);
+        const selection = document.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+      } },
+    ]);
+  }
+  window.NasaqWindow.openMenuAt(e.clientX, e.clientY, sections, { label: "النص", returnFocus: node });
+});
+
 // لوحة المفاتيح كقائمة الماك الهرمية: الأسهم تتنقل، واليسار يفتح واليمين يطوي
 // (اتجاه عربي)، وReturn أو المسافة تفتح المسودة، وReturn على الصيغة أو ⇧F10 يفتح قائمة الصف
 draftsList.addEventListener("keydown", (e) => {
@@ -894,17 +970,60 @@ if (window.__TAURI__) {
     .catch(() => {});
 }
 
-// زر الترس في ذيل الشريط الجانبي و⌘، يفتحان نافذة الإعدادات
+// زر الترس في ذيل الشريط الجانبي يفتح نافذة الإعدادات
 for (const button of document.querySelectorAll("[data-open-settings]")) {
   button.addEventListener("click", () => invoke("open_settings").catch(() => {}));
 }
-document.addEventListener("keydown", (e) => {
-  if (e.metaKey && !e.ctrlKey && !e.altKey && e.key === ",") {
-    // لا تُفتح فوق ورقة أو تنبيه: الأسبقية لما هو مفتوح أمام الكاتب
-    if (window.NasaqWindow.isModalOpen()) return;
-    e.preventDefault();
-    invoke("open_settings").catch(() => {});
+// «جلسة جديدة ⌘N» تمحو ما لم يُحفظ، فلا تمضي بلا إذن.
+//
+// والخانة تمحوها القشرة لا البرج: الخانة مشتركة (بلا data-for) وتملكها
+// القشرة، وشَذْب ممنوع من الكتابة فيها إلا عبر الجسر. فالقشرة تفرّغها وتطلق
+// حدث الإدخال، ولا يبقى للبرج إلا تصفير ما يملكه هو
+const newSessionAlert = el("new-session-alert");
+let newSessionRun = null;
+
+function startNewSession(run) {
+  const input = el("input-text");
+  input.value = "";
+  input.dispatchEvent(new Event("input"));
+  run();
+  input.focus();
+}
+
+function confirmNewSession(run) {
+  if (!el("input-text").value.trim()) {
+    startNewSession(run);
+    return;
   }
+  newSessionRun = run;
+  window.NasaqWindow.presentModal(newSessionAlert, { initialFocus: "#new-session-cancel" });
+}
+
+function closeNewSession() {
+  newSessionRun = null;
+  window.NasaqWindow.dismissModal(newSessionAlert);
+}
+
+el("new-session-cancel").addEventListener("click", closeNewSession);
+el("new-session-confirm").addEventListener("click", () => {
+  const run = newSessionRun;
+  closeNewSession();
+  if (run) startNewSession(run);
+});
+registerEscapeCloser(() => !newSessionAlert.hidden, closeNewSession);
+
+// ⌘، مسرّع في قائمة «نَسَق» تنفّذه النواة بنفسها (app.settings) — فلا مستمع
+// لوحة مفاتيح هنا. وأوامر القشرة الثلاثة في الشريط تُسجَّل كما تُسجَّل مُغلقات
+// Escape: كلٌّ يسجّل أمره، والقشرة لا تنادي دالة برج باسمها
+window.NasaqMenu.register("file.export-backup", () => el("export-drafts-btn").click(), {
+  button: el("export-drafts-btn"),
+});
+window.NasaqMenu.register("file.import-merge", () => el("import-drafts-btn").click(), {
+  button: el("import-drafts-btn"),
+});
+// «مساعدة نَسَق» بلا وجهة بعد، فيبقى عنصرها معطّلًا حتى تُقرّر (المرحلة ٨)
+window.NasaqMenu.register("help.project", () => {
+  invoke("plugin:opener|open_url", { url: PROJECT_URL }).catch(() => {});
 });
 
 // ---------- الجسر الوحيد بين البرجين ----------
@@ -951,6 +1070,8 @@ window.NasaqShell = {
   sendToNasaq,
   flags: { shadhbEnabled: readShadhbFlag() },
   registerEscapeCloser,
+  // «جلسة جديدة»: الاستئذان من القشرة، والمسح من صاحبه
+  confirmNewSession,
   // الإعدادات كما حُمّلت مرة واحدة عند الإقلاع — أو null إن تعذّر تحميلها
   settingsReady,
   drafts: {

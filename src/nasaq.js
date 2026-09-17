@@ -549,18 +549,10 @@ async function formatText() {
 
 formatBtn.addEventListener("click", formatText);
 
-// اختصار ⌘+Enter — قرين زر «نسق» تمامًا: لا يعمل إن كان الزر مخفيًّا
-// (وضع آخر يملأ الواجهة — الإصلاح ١-أ: كان النداء ينطلق خفيًا بلا أي أثر
-// مرئي) أو معطلًا (نداء جارٍ). فحص الظهور لا يعرف الأوضاع بأسمائها —
-// نسق يحكم على زره هو فحسب
-document.addEventListener("keydown", (e) => {
-  if ((e.metaKey || e.ctrlKey) && !e.shiftKey && e.key === "Enter") {
-    if (formatBtn.offsetParent === null || formatBtn.disabled) return;
-    // ولا تحت ورقة مفتوحة: «نسّق» خلف التنويعات يسابقها على النتيجة
-    if (window.NasaqWindow.isModalOpen()) return;
-    formatText();
-  }
-});
+// ⌘↩ صار مسرّع «الفعل الرئيس» في القائمة الرابعة (المرحلة ٧-ب)، فلا مستمع
+// لوحة مفاتيح له. والشرطان القديمان لم يزولا بل انتقلا إلى السجلّ: زرّ «نسّق»
+// نفسه مصدر الحالة (مخفيًّا أو معطّلًا = أمرًا معطّلًا)، ولا ينفَّذ أمرٌ تحت ورقة
+window.NasaqMenu.register("format.primary", formatText, { button: formatBtn, owner: "nasaq" });
 
 // خريطة سابستاك اليدوية إرشاد للعرض فقط — تُجرَّد قبل النسخ فلا يصل رمز واحد
 // إلى الحافظة (خارج سابستاك النص أصلًا بلا رموز، فالتجريد بلا أثر)
@@ -1397,15 +1389,12 @@ const outputSearch = (function initOutputSearch() {
   });
   nextBtn.addEventListener("click", () => goTo(activeIndex + 1));
   prevBtn.addEventListener("click", () => goTo(activeIndex - 1));
-  // ⌘G و⇧⌘G من أي مكان والشريط مفتوح
-  // الشريط الظاهر وحده يستجيب: وهو مفتوح في نسق يبقى مخفيًا ما دامت وحدة أخرى تملأ الواجهة
+  // ⌘G و⇧⌘G صارا عنصرَي «التالي» و«السابق» في قائمة «بحث ▸» (المرحلة ٧-ب).
+  // الشريط الظاهر وحده يستجيب: وهو مفتوح في نسق يبقى مخفيًا ما دامت وحدة أخرى
+  // تملأ الواجهة — فزرّاه هما مصدر حالة العنصرين
   const visible = () => !bar.hidden && bar.offsetParent !== null;
-  document.addEventListener("keydown", (e) => {
-    if (!visible() || !e.metaKey || e.altKey || e.ctrlKey || e.code !== "KeyG") return;
-    if (window.NasaqWindow.isModalOpen()) return;
-    e.preventDefault();
-    goTo(activeIndex + (e.shiftKey ? -1 : 1));
-  });
+  window.NasaqMenu.register("edit.find.next", () => goTo(activeIndex + 1), { button: nextBtn });
+  window.NasaqMenu.register("edit.find.previous", () => goTo(activeIndex - 1), { button: prevBtn });
   registerEscapeCloser(() => visible() && !window.NasaqWindow.isModalOpen(), closeSearch);
 
   return { open: openSearch, close: closeSearch, isOpen: () => !bar.hidden, refresh: () => !bar.hidden && runSearch() };
@@ -1558,34 +1547,52 @@ function renderState() {
 // لا يعمل في وحدة أخرى، ولا والزر معطّل أو مخفي بحالته، ولا تحت ورقة مفتوحة —
 // والزر المطويّ في «المزيد» يبقى اختصاره عاملًا
 const editable = (node) => Boolean(node && node.closest && node.closest("input, textarea, [contenteditable='true']"));
-const SHORTCUTS = [
-  { keys: { meta: true, shift: true, code: "Enter" }, button: variationsBtn, run: showVariations },
-  { keys: { meta: true, alt: true, code: "Backspace" }, button: cleanBtn, run: cleanEmptyLines },
-  { keys: { meta: true, alt: true, code: "Period" }, button: splitBtn, run: splitSentences },
-  { keys: { meta: true, code: "BracketLeft" }, button: fewerBtn, run: () => adjustLines("fewer") },
-  { keys: { meta: true, code: "BracketRight" }, button: moreBtn, run: () => adjustLines("more") },
-  { keys: { meta: true, alt: true, code: "KeyR" }, button: readingLensBtn, run: openReadingLens },
-  { keys: { meta: true, shift: true, code: "KeyC" }, button: copyBtn, run: () => copyBtn.click() },
-  { keys: { meta: true, alt: true, code: "KeyC" }, button: exportBtn, run: () => exportBtn.click() },
-  { keys: { meta: true, code: "KeyS" }, button: saveBtn, run: () => saveBtn.click() },
-  { keys: { meta: true, code: "KeyF" }, button: searchBtn, run: () => outputSearch.open() },
-  // ⌘Z في حقل كتابة تراجعُ الكتابة نفسها — وخارجه تراجع النتيجة
-  { keys: { meta: true, code: "KeyZ" }, button: undoBtn, run: undoOutput, outsideFields: true },
-];
+// أوامر نَسَق في الشريط الأصلي (المرحلة ٧-ب): كل واحد بمعرّفه كما في مواصفة
+// `menu.rs`، وزرّه مصدرَ حالته — فلا يُكتب التعطيل مرتين، ولا يبقى مستمع
+// `keydown` لأمر صار له مسرّع
+for (const [id, run, button] of [
+  ["format.variations", showVariations, variationsBtn],
+  ["format.clean-empty-lines", cleanEmptyLines, cleanBtn],
+  ["format.break-after-period", splitSentences, splitBtn],
+  ["format.fewer-lines", () => adjustLines("fewer"), fewerBtn],
+  ["format.more-lines", () => adjustLines("more"), moreBtn],
+  ["format.reading-lens", openReadingLens, readingLensBtn],
+  ["edit.export-substack", () => exportBtn.click(), exportBtn],
+  ["file.save-draft", () => saveBtn.click(), saveBtn],
+  ["edit.find.open", () => outputSearch.open(), searchBtn],
+]) {
+  window.NasaqMenu.register(id, run, { button });
+}
+// «نسخ النتيجة» أمرٌ واحد باسمين كالفعل الرئيس، فيُسجَّل باسم برجه
+window.NasaqMenu.register("edit.copy-result", () => copyBtn.click(), { button: copyBtn, owner: "nasaq" });
 
+// «جلسة جديدة ⌘N»: نصٌّ فارغ وجلسة مصفّرة. الاستئذان من القشرة، والمسح هنا —
+// فهي وحدها تعرف ما تملكه من نتيجة وتقرير وتراجع
+window.NasaqMenu.register(
+  "file.new-session",
+  () =>
+    // الخانة تفرّغها القشرة — وهذا تصفير ما يملكه نَسَق: نتيجة وتقرير وتراجع
+    window.NasaqShell.confirmNewSession(() => {
+      setOutput("");
+      outputUndoStack = [];
+      lastFormatMeta = null;
+      notesBox.hidden = true;
+      showRhythmFingerprint(null);
+      syncResultTools();
+      renderState();
+    }),
+  { owner: "nasaq" }
+);
+
+// وتراجع النتيجة وحده يبقى مستمعًا: «تراجع ⌘Z» في «تحرير» عنصر نظامٍ يتراجع
+// عن الكتابة داخل الحقول، ولا معرّف في اللوحة لتراجع النتيجة خارجها
 document.addEventListener("keydown", (e) => {
+  if (!e.metaKey || e.shiftKey || e.altKey || e.ctrlKey || e.code !== "KeyZ") return;
+  if (window.NasaqWindow.isModalOpen() || editable(e.target)) return;
   // زر «نسّق» لا يُطوى أبدًا: غيابه يعني أن وحدة أخرى تملأ الواجهة
-  if (formatBtn.offsetParent === null) return;
-  if (window.NasaqWindow.isModalOpen()) return;
-  for (const s of SHORTCUTS) {
-    const k = s.keys;
-    if (e.code !== k.code || e.metaKey !== Boolean(k.meta) || e.altKey !== Boolean(k.alt) || e.shiftKey !== Boolean(k.shift) || e.ctrlKey) continue;
-    if (s.outsideFields && editable(e.target)) return;
-    if (s.button.hidden || s.button.disabled) return;
-    e.preventDefault();
-    s.run();
-    return;
-  }
+  if (formatBtn.offsetParent === null || undoBtn.hidden || undoBtn.disabled) return;
+  e.preventDefault();
+  undoOutput();
 });
 
 updateCount(inputCount, inputText.value, { withLines: false });

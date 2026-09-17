@@ -46,6 +46,7 @@
     for (const b of document.querySelectorAll('[data-command="toggle-inspector"]')) {
       b.setAttribute("aria-pressed", String(inspector));
     }
+    window.NasaqMenu.sync();
   }
 
   function togglePanel(panel) {
@@ -65,21 +66,22 @@
     if (command) togglePanel(command.dataset.command === "toggle-sidebar" ? "sidebar" : "inspector");
   });
 
-  // ⌃⌘S للشريط الجانبي و⌥⌘I للمفتّش، و⌥⌘1 و⌥⌘2 للأصل والنتيجة، كما في قائمة
-  // «عرض» في Figma — ولا تعمل تحت ورقة مفتوحة
-  document.addEventListener("keydown", (e) => {
-    if (!e.metaKey || e.shiftKey || modalOpen()) return;
-    if (e.ctrlKey && !e.altKey && e.code === "KeyS") {
-      e.preventDefault();
-      togglePanel("sidebar");
-    } else if (e.altKey && !e.ctrlKey && e.code === "KeyI") {
-      e.preventDefault();
-      togglePanel("inspector");
-    } else if (e.altKey && !e.ctrlKey && (e.code === "Digit1" || e.code === "Digit2")) {
-      e.preventDefault();
-      setView(e.code === "Digit1" ? "source" : "result");
-    }
-  });
+  // ⌃⌘S للشريط الجانبي و⌥⌘I للمفتّش، و⌥⌘1 و⌥⌘2 للأصل والنتيجة — كلها
+  // مسرّعات في قائمة «عرض» الأصلية (المرحلة ٧-ب)، فلا مستمع لوحة مفاتيح هنا.
+  // اسم العنصر يتبع الحالة كما في الماك: «إظهار» حين يكون مطويًا و«إخفاء»
+  // حين يكون ظاهرًا — واللوحة رسمت حالة واحدة منهما
+  const PANEL_ITEMS = {
+    sidebar: { id: "view.sidebar", shown: "إخفاء الشريط الجانبي", hidden: "إظهار الشريط الجانبي" },
+    inspector: { id: "view.inspector", shown: "إخفاء المفتّش", hidden: "إظهار المفتّش" },
+  };
+
+  for (const [panel, item] of Object.entries(PANEL_ITEMS)) {
+    window.NasaqMenu.register(item.id, () => togglePanel(panel), {
+      title: () => (win.dataset[panel] === "open" ? item.shown : item.hidden),
+    });
+  }
+  window.NasaqMenu.register("view.pane.source", () => setView("source"));
+  window.NasaqMenu.register("view.pane.result", () => setView("result"));
 
   // ---------- النافذة الأمامية ----------
   // التحديد في الشريط الجانبي يصير محايدًا حين تغادر النافذة المقدمة، كما في الماك
@@ -94,6 +96,7 @@
     for (const seg of content.querySelectorAll("[data-view-target]")) {
       seg.setAttribute("aria-selected", String(seg.dataset.viewTarget === view));
     }
+    window.NasaqMenu.setPane(view);
   }
 
   content.addEventListener("click", (e) => {

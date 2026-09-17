@@ -22,6 +22,53 @@ pub(crate) const PRIMARY_ACTION_ID: &str = "format.primary";
 pub(crate) const PRIMARY_TITLE_NASAQ: &str = "نسّق";
 pub(crate) const PRIMARY_TITLE_SHADHB: &str = "افحص الشذرة";
 
+/// «نسخ النتيجة» على القاعدة نفسها: أمرٌ واحد باختصار ثابت في قائمة «تحرير»،
+/// واسمه يتبع الوحدة — فلا يتكرّر المفهوم في قائمتين ولا يصطدم اختصاران
+pub(crate) const COPY_RESULT_ID: &str = "edit.copy-result";
+pub(crate) const COPY_RESULT_TITLE_NASAQ: &str = "نسخ النتيجة";
+pub(crate) const COPY_RESULT_TITLE_SHADHB: &str = "نسخ النص المشذَّب";
+
+/// القائمة الرابعة تتبدّل مع الوحدة اسمًا وعناصر — قرار المالك 2026-09-18،
+/// امتدادًا لقاعدة اللوحة في الفعل الرئيس. معرّفها ثابت فيبقى البحث عنها
+/// واحدًا، وعناصرها وحدها تُستبدل
+pub(crate) const MODULE_MENU_ID: &str = "format";
+pub(crate) const MODULE_MENU_TITLE_NASAQ: &str = "تنسيق";
+pub(crate) const MODULE_MENU_TITLE_SHADHB: &str = "شَذْب";
+
+/// عناصر القائمة الرابعة في نَسَق — كما رُسمت في اللوحة
+const MODULE_ENTRIES_NASAQ: &[Entry] = &[
+    Action { id: PRIMARY_ACTION_ID, title: PRIMARY_TITLE_NASAQ, accelerator: Some("Cmd+Enter") },
+    Action { id: "format.variations", title: "أرِني تنويعات…", accelerator: Some("Shift+Cmd+Enter") },
+    Separator,
+    Action { id: "format.clean-empty-lines", title: "حذف السطور الفارغة", accelerator: Some("Alt+Cmd+Backspace") },
+    Action { id: "format.break-after-period", title: "كسر بعد النقطة", accelerator: Some("Alt+Cmd+.") },
+    Action { id: "format.fewer-lines", title: "سطور أقل", accelerator: Some("Cmd+[") },
+    Action { id: "format.more-lines", title: "سطور أكثر", accelerator: Some("Cmd+]") },
+    Separator,
+    Action { id: "format.reading-lens", title: "عدسة القراءة", accelerator: Some("Alt+Cmd+R") },
+];
+
+/// وعناصرها في شَذْب — غير مرسومة في اللوحة، ومبنيّة على قاعدتها «كل أمر له
+/// مكان واختصار ثابت». الاختصارات الثلاثة باعتماد المالك 2026-09-18، وتُرسم
+/// في Figma في المرحلة ٨ توثيقًا
+const MODULE_ENTRIES_SHADHB: &[Entry] = &[
+    Action { id: PRIMARY_ACTION_ID, title: PRIMARY_TITLE_SHADHB, accelerator: Some("Cmd+Enter") },
+    Separator,
+    Action { id: "shadhb.cut", title: "احذف القصّة", accelerator: Some("Cmd+Backspace") },
+    Action { id: "shadhb.keep", title: "أبقِ القصّة", accelerator: Some("Cmd+K") },
+    Separator,
+    Action { id: "shadhb.send-to-nasaq", title: "أرسل إلى نَسَق", accelerator: Some("Alt+Cmd+N") },
+];
+
+/// المواصفة الجارية للقائمة الرابعة — تُبنى منها أول مرة وعند كل تبديل
+fn module_menu(shadhb: bool) -> MenuSpec {
+    MenuSpec {
+        id: MODULE_MENU_ID,
+        title: if shadhb { MODULE_MENU_TITLE_SHADHB } else { MODULE_MENU_TITLE_NASAQ },
+        entries: if shadhb { MODULE_ENTRIES_SHADHB } else { MODULE_ENTRIES_NASAQ },
+    }
+}
+
 /// الحدث الذي تسمعه الواجهة: معرّف العنصر كما هو أدناه
 pub(crate) const MENU_EVENT: &str = "menu:action";
 
@@ -122,7 +169,7 @@ pub(crate) const MENU_BAR: &[MenuSpec] = &[
             Entry::System(Paste),
             Entry::System(SelectAll),
             Separator,
-            Action { id: "edit.copy-result", title: "نسخ النتيجة", accelerator: Some("Shift+Cmd+C") },
+            Action { id: COPY_RESULT_ID, title: COPY_RESULT_TITLE_NASAQ, accelerator: Some("Shift+Cmd+C") },
             Action { id: "edit.export-substack", title: "تصدير لسابستاك", accelerator: Some("Alt+Cmd+C") },
             Separator,
             Submenu {
@@ -136,20 +183,12 @@ pub(crate) const MENU_BAR: &[MenuSpec] = &[
             },
         ],
     },
+    // القائمة الرابعة تتبدّل مع الوحدة: تُبنى هنا بوجهها النَسَقي، ويستبدل
+    // `set_active_module` اسمها وعناصرها بوجه شَذْب وبالعكس
     MenuSpec {
-        id: "format",
-        title: "تنسيق",
-        entries: &[
-            Action { id: PRIMARY_ACTION_ID, title: PRIMARY_TITLE_NASAQ, accelerator: Some("Cmd+Enter") },
-            Action { id: "format.variations", title: "أرِني تنويعات…", accelerator: Some("Shift+Cmd+Enter") },
-            Separator,
-            Action { id: "format.clean-empty-lines", title: "حذف السطور الفارغة", accelerator: Some("Alt+Cmd+Backspace") },
-            Action { id: "format.break-after-period", title: "كسر بعد النقطة", accelerator: Some("Alt+Cmd+.") },
-            Action { id: "format.fewer-lines", title: "سطور أقل", accelerator: Some("Cmd+[") },
-            Action { id: "format.more-lines", title: "سطور أكثر", accelerator: Some("Cmd+]") },
-            Separator,
-            Action { id: "format.reading-lens", title: "عدسة القراءة", accelerator: Some("Alt+Cmd+R") },
-        ],
+        id: MODULE_MENU_ID,
+        title: MODULE_MENU_TITLE_NASAQ,
+        entries: MODULE_ENTRIES_NASAQ,
     },
     MenuSpec {
         id: "view",
@@ -312,33 +351,90 @@ pub(crate) const MODULE_SHADHB: &str = "shadhb";
 const MODULE_ITEM_NASAQ: &str = "view.module.nasaq";
 const MODULE_ITEM_SHADHB: &str = "view.module.shadhb";
 
-/// اسم الفعل الرئيس يتبع الوحدة الظاهرة — والاسمان من اللوحة لا من الواجهة،
-/// فلا يُكتب نصّ تصميم في مكانين
-pub(crate) fn primary_title(module: &str) -> &'static str {
-    if module.trim() == MODULE_SHADHB {
-        PRIMARY_TITLE_SHADHB
-    } else {
-        PRIMARY_TITLE_NASAQ
-    }
-}
-
-/// تبديل الوحدة: اسم الفعل الرئيس وعلامتا ⌘1 و⌘2 في نداء واحد
+/// تبديل الوحدة في نداء واحد: القائمة الرابعة اسمًا وعناصر، واسم «نسخ
+/// النتيجة»، وعلامتا ⌘1 و⌘2. والفعل الرئيس يأتي اسمه من عناصر القائمة
+/// الجديدة نفسها، فلا يُكتب اسمه مرتين
 #[tauri::command]
 pub(crate) fn set_active_module(app: AppHandle, module: String) -> Result<(), String> {
     let shadhb = module.trim() == MODULE_SHADHB;
+    swap_module_menu(&app, shadhb)?;
     set_menu_state(
         app,
         vec![
             MenuUpdate {
-                id: PRIMARY_ACTION_ID.to_string(),
+                id: COPY_RESULT_ID.to_string(),
                 enabled: None,
                 checked: None,
-                title: Some(primary_title(&module).to_string()),
+                title: Some(copy_result_title(&module).to_string()),
             },
             checked_only(MODULE_ITEM_NASAQ, !shadhb),
             checked_only(MODULE_ITEM_SHADHB, shadhb),
         ],
     )
+}
+
+/// تُفرَّغ القائمة الرابعة وتُملأ من مواصفة الوحدة الجديدة. عناصرها تُبنى من
+/// جديد، فتبدأ معطّلة كما تبدأ أول مرة — والواجهة تفتح ما يصلح منها بعد كل
+/// تبديل، كما تفعل مع أزرارها
+fn swap_module_menu<R: Runtime>(app: &AppHandle<R>, shadhb: bool) -> Result<(), String> {
+    let spec = module_menu(shadhb);
+    let menu = app.menu().ok_or_else(|| "لا شريط قوائم في هذه النافذة.".to_string())?;
+    let items = menu.items().map_err(menu_error)?;
+    let submenu = items
+        .iter()
+        .find(|item| item.id().0 == MODULE_MENU_ID)
+        .and_then(|item| item.as_submenu())
+        .ok_or_else(|| "القائمة المتبدّلة غير موجودة.".to_string())?;
+    // التفريغ قبل الملء: بقاء عنصر قديم يعني اختصارين لفعل واحد
+    for item in submenu.items().map_err(menu_error)? {
+        submenu.remove(&item).map_err(menu_error)?;
+    }
+    submenu.set_text(spec.title).map_err(menu_error)?;
+    for entry in spec.entries {
+        append_entry(app, submenu, entry).map_err(menu_error)?;
+    }
+    Ok(())
+}
+
+/// إضافة عنصر إلى قائمة قائمة بالفعل — نظير `fill` لما بعد البناء
+fn append_entry<R: Runtime>(
+    app: &AppHandle<R>,
+    submenu: &tauri::menu::Submenu<R>,
+    entry: &'static Entry,
+) -> tauri::Result<()> {
+    match entry {
+        Separator => submenu.append(&PredefinedMenuItem::separator(app)?),
+        Action { id, title, accelerator } => {
+            let mut item = MenuItemBuilder::with_id(*id, *title).enabled(starts_enabled(id));
+            if let Some(accelerator) = accelerator {
+                item = item.accelerator(*accelerator);
+            }
+            submenu.append(&item.build(app)?)
+        }
+        Check { id, title, accelerator, checked } => {
+            let mut item = CheckMenuItemBuilder::with_id(*id, *title)
+                .checked(*checked)
+                .enabled(starts_enabled(id));
+            if let Some(accelerator) = accelerator {
+                item = item.accelerator(*accelerator);
+            }
+            submenu.append(&item.build(app)?)
+        }
+        Submenu { id, title, entries } => {
+            let nested = SubmenuBuilder::with_id(app, *id, *title);
+            submenu.append(&fill(app, nested, entries)?.build()?)
+        }
+        Entry::System(system) => submenu.append(&system_item(app, *system)?),
+    }
+}
+
+/// اسم «نسخ النتيجة» يتبع الوحدة الظاهرة، كاسم الفعل الرئيس
+pub(crate) fn copy_result_title(module: &str) -> &'static str {
+    if module.trim() == MODULE_SHADHB {
+        COPY_RESULT_TITLE_SHADHB
+    } else {
+        COPY_RESULT_TITLE_NASAQ
+    }
 }
 
 const PANE_ITEM_SOURCE: &str = "view.pane.source";
@@ -464,6 +560,14 @@ mod tests {
         found
     }
 
+    /// وأوجه القائمة المتبدّلة كلها: وجه نَسَق داخل MENU_BAR، ووجه شَذْب
+    /// خارجها — فما لا يُمشى عليه لا يُحرس
+    fn every_entry_in_every_face() -> Vec<&'static Entry> {
+        let mut found = all_entries();
+        walk(MODULE_ENTRIES_SHADHB, &mut |entry| found.push(entry));
+        found
+    }
+
     fn id_of(entry: &Entry) -> Option<&'static str> {
         match entry {
             Action { id, .. } | Check { id, .. } | Submenu { id, .. } => Some(id),
@@ -523,15 +627,40 @@ mod tests {
                 assert!(seen.insert(id), "معرّف عنصر مكرّر: {id}");
             }
         }
+        // ووجه شَذْب لا يكرّر معرّفًا إلا الفعل الرئيس، فهو العنصر نفسه
+        let mut in_shadhb = HashSet::new();
+        walk(MODULE_ENTRIES_SHADHB, &mut |entry| {
+            if let Some(id) = id_of(entry) {
+                assert!(in_shadhb.insert(id), "معرّف مكرّر في وجه شَذْب: {id}");
+                if id != PRIMARY_ACTION_ID {
+                    assert!(!seen.contains(id), "معرّف يتصادم مع الوجه الثابت: {id}");
+                }
+            }
+        });
+        assert!(in_shadhb.contains(PRIMARY_ACTION_ID), "الفعل الرئيس غائب عن وجه شَذْب");
     }
 
     #[test]
-    fn no_shortcut_is_used_twice() {
-        let mut seen = HashSet::new();
-        for entry in all_entries() {
-            if let Some(accelerator) = accelerator_of(entry) {
-                assert!(seen.insert(accelerator), "اختصار مكرّر: {accelerator}");
+    fn no_shortcut_is_used_twice_in_either_face_of_the_bar() {
+        // الشريط شريطان: وجه نَسَق ووجه شَذْب. لا تكرار داخل أيّهما، ولا
+        // يصطدم عنصر متبدّل بعنصر ثابت
+        for shadhb in [false, true] {
+            let mut seen = HashSet::new();
+            let mut check = |entries: &'static [Entry]| {
+                walk(entries, &mut |entry| {
+                    if let Some(accelerator) = accelerator_of(entry) {
+                        assert!(
+                            seen.insert(accelerator),
+                            "اختصار مكرّر في وجه {}: {accelerator}",
+                            if shadhb { "شَذْب" } else { "نَسَق" }
+                        );
+                    }
+                });
+            };
+            for spec in MENU_BAR.iter().filter(|m| m.id != MODULE_MENU_ID) {
+                check(spec.entries);
             }
+            check(module_menu(shadhb).entries);
         }
     }
 
@@ -539,7 +668,7 @@ mod tests {
     fn every_shortcut_parses_or_it_vanishes_without_a_sound() {
         // تاوري يبتلع فشل التحليل (`parse().ok()`)، فيصير العنصر بلا اختصار
         // بلا خطأ ولا سطر في سجل: يُفحص هنا بالمحلّل نفسه
-        for entry in all_entries() {
+        for entry in every_entry_in_every_face() {
             if let Some(accelerator) = accelerator_of(entry) {
                 assert!(
                     accelerator
@@ -553,7 +682,7 @@ mod tests {
 
     #[test]
     fn every_identifier_the_shell_uses_exists_in_the_board() {
-        let ids: Vec<&str> = all_entries().iter().filter_map(|e| id_of(e)).collect();
+        let ids: Vec<&str> = every_entry_in_every_face().iter().filter_map(|e| id_of(e)).collect();
         for referenced in [
             PRIMARY_ACTION_ID,
             MODULE_ITEM_NASAQ,
@@ -571,7 +700,7 @@ mod tests {
     #[test]
     fn only_what_the_shell_executes_starts_enabled() {
         // البقية تفتحها الواجهة حين تجهز، فلا يضيع فعلٌ قبل أن يوجد سامعه
-        for entry in all_entries() {
+        for entry in every_entry_in_every_face() {
             let id = match entry {
                 Action { id, .. } | Check { id, .. } => *id,
                 _ => continue,
@@ -584,6 +713,15 @@ mod tests {
         }
         assert!(starts_enabled("app.settings"), "الإعدادات تفتحها القشرة بنفسها");
         assert!(!starts_enabled(PRIMARY_ACTION_ID), "الفعل الرئيس يعمل بلا واجهة");
+        // وما تنفّذه القشرة شأن نوافذ لا شأن برج: لا أمر وحدةٍ يبدأ مفعّلًا،
+        // ولو أُدرج في القائمة سهوًا — فبلا هذا القيد يقارن الحارس قائمتين
+        // بقائمتين ويقبل أيّ إدراج
+        for handled in SHELL_HANDLED {
+            assert!(
+                handled.starts_with("app."),
+                "أمر ليس من شأن النوافذ يبدأ مفعّلًا: {handled}"
+            );
+        }
     }
 
     #[test]
@@ -602,12 +740,45 @@ mod tests {
     }
 
     #[test]
-    fn the_primary_name_follows_the_visible_module() {
-        assert_eq!(primary_title("nasaq"), PRIMARY_TITLE_NASAQ);
-        assert_eq!(primary_title(""), PRIMARY_TITLE_NASAQ);
-        assert_eq!(primary_title("  shadhb  "), PRIMARY_TITLE_SHADHB);
-        // وحدة لا يعرفها الشريط لا تُسمّي الفعل باسم برج آخر
-        assert_eq!(primary_title("nothing"), PRIMARY_TITLE_NASAQ);
+    fn the_fourth_menu_swaps_with_the_module_in_name_and_in_items() {
+        // قرار المالك 2026-09-18: القائمة الرابعة تتبدّل اسمًا وعناصر
+        let nasaq = module_menu(false);
+        let shadhb = module_menu(true);
+        assert_eq!(nasaq.id, shadhb.id, "معرّف القائمة يتبدّل فيضيع البحث عنها");
+        assert_eq!(nasaq.title, MODULE_MENU_TITLE_NASAQ);
+        assert_eq!(shadhb.title, MODULE_MENU_TITLE_SHADHB);
+        assert_ne!(nasaq.title, shadhb.title);
+        // والفعل الرئيس أول عنصر في الوجهين، باسم وحدته وباختصاره الثابت
+        for (spec, title) in [(&nasaq, PRIMARY_TITLE_NASAQ), (&shadhb, PRIMARY_TITLE_SHADHB)] {
+            match spec.entries.first().expect("قائمة فارغة") {
+                Action { id, title: name, accelerator } => {
+                    assert_eq!(*id, PRIMARY_ACTION_ID);
+                    assert_eq!(*name, title);
+                    assert_eq!(*accelerator, Some("Cmd+Enter"));
+                }
+                _ => panic!("الفعل الرئيس ليس أول عنصر"),
+            }
+        }
+        // ولا يتسرّب أمر برجٍ إلى وجه الآخر
+        let names = |entries: &'static [Entry]| {
+            let mut out = Vec::new();
+            walk(entries, &mut |e| if let Some(id) = id_of(e) { out.push(id) });
+            out
+        };
+        assert!(names(MODULE_ENTRIES_NASAQ).iter().all(|id| !id.starts_with("shadhb.")));
+        assert!(names(MODULE_ENTRIES_SHADHB)
+            .iter()
+            .all(|id| *id == PRIMARY_ACTION_ID || id.starts_with("shadhb.")));
+    }
+
+    #[test]
+    fn copy_result_is_one_command_with_two_names_like_the_primary_action() {
+        assert_eq!(copy_result_title("nasaq"), COPY_RESULT_TITLE_NASAQ);
+        assert_eq!(copy_result_title(""), COPY_RESULT_TITLE_NASAQ);
+        assert_eq!(copy_result_title("  shadhb  "), COPY_RESULT_TITLE_SHADHB);
+        // وحدة لا يعرفها الشريط لا تُسمّي الأمر باسم برج آخر
+        assert_eq!(copy_result_title("nothing"), COPY_RESULT_TITLE_NASAQ);
+        assert_ne!(COPY_RESULT_TITLE_NASAQ, COPY_RESULT_TITLE_SHADHB);
     }
 
     #[test]
