@@ -20,6 +20,11 @@ const settingsHtml = src("settings.html");
 const settingsJs = src("settings.js");
 const aboutHtml = src("about.html");
 const secondaryJs = src("secondary.js");
+// وحدات المرحلة ٦: المشترك بين النافذتين، وتدفّقا أول تشغيل والتحديث
+const providersJs = src("providers.js");
+const formsJs = src("forms.js");
+const onboardingJs = src("onboarding.js");
+const updatesJs = src("updates.js");
 
 test("ترتيب التحميل: الهيكل فالقشرة قبل نسق، وشَذْب أخيرًا، وmain.js زال", () => {
   const order = [...html.matchAll(/<script src="([^"]+)"><\/script>/g)].map((m) => m[1]);
@@ -32,6 +37,10 @@ test("ترتيب التحميل: الهيكل فالقشرة قبل نسق، و�
     "appearance.js",
     "layout.js",
     "shell.js",
+    "providers.js",
+    "forms.js",
+    "onboarding.js",
+    "updates.js",
     "nasaq.js",
     "shadhb.js",
   ]);
@@ -773,7 +782,9 @@ test("المرحلة ٥: المفتاح لا يعبر الجسر إلى صفحة
   assert.ok(!/view\.apiKey|\.apiKey\b(?!\s*:)/.test(settingsJs.replace(/apiKey: apiKeyInput\.value/g, "")), "الصفحة تقرأ المفتاح من النواة");
   // والقشرة لم تعد تقرأه أيضًا بعد زوال الطبقة المؤقتة
   assert.ok(!/\bs\.apiKey\b|settings\.apiKey/.test(shell), "القشرة ما زالت تقرأ المفتاح");
-  assert.ok(shell.includes("settings.hasApiKey"), "أول تشغيل لا يعرف أن المفتاح محفوظ");
+  // وأول تشغيل صار من شأن ورقة الترحيب لا القشرة (المرحلة ٦): تعرف أنه محفوظ ولا تقرؤه
+  assert.ok(onboardingJs.includes("view.hasApiKey"), "أول تشغيل لا يعرف أن المفتاح محفوظ");
+  assert.ok(!/view\.apiKey/.test(onboardingJs), "ورقة الترحيب تقرأ المفتاح من النواة");
 });
 
 test("المرحلة ٥: النافذتان مخفيتان حتى تعلنا جاهزيتهما", () => {
@@ -827,7 +838,7 @@ test("المرحلة ٥: المزوّدات نفسها في الواجهة وف�
   // و\s* يسمح بالإعلان على سطرين
   const constOf = (name) => new RegExp(`\\b${name}: &str =\\s*"([^"]+)"`).exec(rust)[1];
   const jsOf = (key, field) =>
-    new RegExp(`${key}: \\{[^}]*${field}: "([^"]+)"`, "s").exec(settingsJs)[1];
+    new RegExp(`${key}: \\{[^}]*${field}: "([^"]+)"`, "s").exec(providersJs)[1];
   assert.strictEqual(jsOf("claude", "baseUrl"), constOf("ANTHROPIC_DEFAULT_BASE_URL"));
   assert.strictEqual(jsOf("claude", "model"), constOf("ANTHROPIC_DEFAULT_MODEL"));
   assert.strictEqual(jsOf("gemini", "baseUrl"), constOf("DEFAULT_BASE_URL"));
@@ -843,4 +854,167 @@ test("المرحلة ٥: لوحة «حول» بنصوص التصميم ومقا�
   assert.ok(fs.existsSync(srcPath("app-icon.png")), "ملف الأيقونة غير موجود في src");
   const rust = fs.readFileSync(path.join(__dirname, "..", "src-tauri", "src", "app", "secondary.rs"), "utf8");
   assert.ok(rust.includes("ABOUT_WIDTH: f64 = 284.0") && rust.includes("ABOUT_HEIGHT: f64 = 213.0"), "مقاس «حول» ليس مقاس التصميم");
+});
+
+// ---------- حرّاس المرحلة ٦: أول تشغيل والتحديثات (Figma 255:521 و258:18771) ----------
+
+test("المرحلة ٦: لا بايت يُنزَّل قبل موافقة صريحة", () => {
+  // القاعدة الحاكمة للتدفّق كلّه. التنزيل والتثبيت وإعادة التشغيل لا تُنادى
+  // إلا من داخل install()، وinstall لا يُنادى إلا من زر «ثبّت وأعد التشغيل»
+  const install = /async function install\(\)[\s\S]*?\n  \}/.exec(updatesJs)[0];
+  for (const call of ["plugin:updater|download", "plugin:updater|install", "plugin:process|restart"]) {
+    assert.ok(install.includes(call), `${call} ليس داخل install`);
+    assert.strictEqual(
+      updatesJs.split(call).length - 1,
+      1,
+      `${call} يُنادى من أكثر من موضع`
+    );
+  }
+  assert.ok(/onConfirm: install,/.test(updatesJs), "زر الموافقة لا يقود التثبيت");
+  // والفحص التلقائي يفحص فحسب — لا اسم للتنزيل في مساره
+  const check = /async function check\(origin\)[\s\S]*?\n  \}/.exec(updatesJs)[0];
+  assert.ok(check.includes("plugin:updater|check"), "الفحص لا ينادي الفحص");
+  assert.ok(!/download|install|restart/.test(check), "مسار الفحص يذكر التنزيل");
+});
+
+test("المرحلة ٦: الحالات الثلاث المرسومة بنصوصها، ولا رابعة", () => {
+  // التصميم رسم ثلاثًا: متاح، جارٍ التنزيل، لا تحديث — والخطأ غير مرسوم
+  assert.ok(updatesJs.includes("يتوفّر نَسَق ${version}"), "عنوان «تحديث متاح» ليس نصّ التصميم");
+  assert.ok(
+    updatesJs.includes("يُعاد تشغيل نَسَق بعد التثبيت، وتبقى مسوداتك كما هي."),
+    "رسالة «تحديث متاح» ليست نصّ التصميم"
+  );
+  assert.ok(updatesJs.includes("ثبّت وأعد التشغيل"), "زر التثبيت ليس نصّ التصميم");
+  assert.ok(updatesJs.includes("جارٍ تنزيل نَسَق ${version}"), "عنوان التنزيل ليس نصّ التصميم");
+  assert.ok(updatesJs.includes("نَسَق محدَّث"), "عنوان «لا تحديث» ليس نصّ التصميم");
+  // «جاهز للتثبيت» ليس في التصميم: زرٌّ واحد يغطّي التنزيل والتثبيت
+  assert.ok(!/جاهز للتثبيت/.test(updatesJs), "حالة رابعة لم يرسمها التصميم");
+});
+
+test("المرحلة ٦: ميغابايتات التنزيل بأرقام هندية، ورقم الإصدار لاتينيّ", () => {
+  // العدد يُقرأ فيُعرَّب، والإصدار معرّف لا عدد — كما في لوحة «حول»
+  assert.ok(/formatNumber\(Math\.max\(0, Math\.round\(bytes \/ 1e6\)\)\)/.test(updatesJs), "الميغابايت بلا تعريب");
+  assert.ok(/م\.ب من \$\{mb\(total\)\} م\.ب/.test(updatesJs), "سطر التقدّم ليس نصّ التصميم");
+  assert.ok(!/toLocaleString\(|toLocaleNumber\(/.test(updatesJs), "تعريب خارج وحدة القشرة");
+});
+
+test("المرحلة ٦: أول تشغيل ورقةٌ في النافذة لا نافذةَ إعدادات", () => {
+  // كانت القشرة تفتح نافذة الإعدادات حين لا مفتاح — والتصميم ورقةٌ بخطوتين
+  assert.ok(!/hasApiKey\)\s*invoke\("open_settings"/.test(shell), "القشرة ما زالت تفتح الإعدادات عند أول تشغيل");
+  assert.ok(html.includes('id="welcome-sheet"'), "ورقة الترحيب غائبة");
+  assert.ok(/data-step="welcome"/.test(html), "الورقة لا تبدأ عند خطوة الترحيب");
+  assert.ok(onboardingJs.includes('setStep("connect")'), "لا انتقال إلى الخطوة الثانية");
+  // «لاحقًا» يُبقي التطبيق مفتوحًا: يغلق الورقة ولا يُنهي شيئًا
+  assert.ok(/el\("welcome-skip"\)\.addEventListener\("click", close\)/.test(onboardingJs), "«لاحقًا» لا يُبقي التطبيق");
+  // و«نسّق» بلا مزوّد يعيد الخطوة الثانية وحدها، لا الأولى
+  assert.ok(/requireProvider\(\)\s*\{\s*if \(hasProvider\(\)\) return true;\s*open\("connect"\);/.test(onboardingJs), "«نسّق» لا يعيد فتح الخطوة الثانية");
+  assert.ok(nasaq.includes("window.NasaqOnboarding.requireProvider()"), "نَسَق لا يسأل عن المزوّد قبل النداء");
+  // Esc: سلّم الإغلاق يفحص الأحدث تسجيلًا أولًا، فالقائمة تُسجَّل بعد الورقة
+  // لتُغلق قبلها — وإلا أغلق Esc الورقة وقائمتها معًا في ضغطة واحدة
+  const sheetCloser = onboardingJs.indexOf('registerEscapeCloser(() => opened');
+  const pickerCloser = onboardingJs.indexOf('registerEscapeCloser(() => picker.isOpen()');
+  assert.ok(sheetCloser !== -1 && pickerCloser !== -1, "مُغلقا Esc غير مسجَّلين");
+  assert.ok(sheetCloser < pickerCloser, "Esc يغلق الورقة قبل قائمتها");
+  // والخطوة الأولى بلا زر إلغاء، فلا يُغلقها Esc
+  assert.ok(/opened && sheet\.dataset\.step === "connect"/.test(onboardingJs), "Esc يغلق خطوة الترحيب التي لا إلغاء فيها");
+});
+
+test("المرحلة ٦: «تنظيف فقط» محليّ يعمل بلا مزوّد", () => {
+  // البوابة بعد المسار المحلي لا قبله: لا يحتاج شبكة ولا مفتاحًا
+  const fn = /async function formatText\(\)[\s\S]*?\n  setModelBusy\(true\);/.exec(nasaq)[0];
+  assert.ok(
+    fn.indexOf("LEVELS.CLEAN") < fn.indexOf("requireProvider"),
+    "بوّابة المزوّد قبل المسار المحلي"
+  );
+});
+
+test("المرحلة ٦: نصوص ورقة الترحيب من التصميم", () => {
+  for (const text of [
+    "مرحبًا بك في نَسَق",
+    "رتّب نصّك قبل النشر واحذف ما يزيد عنه، دون أن نكتب عنك كلمة.",
+    "نَسَق يرتّب",
+    "يوزّع الأسطر والوقفات لتُقرأ بوضوح، والكلمات كما كتبتها.",
+    "شَذْب يقترح",
+    "يدلّك على ما يمكن حذفه، وأنت من يقرّر في كل قصّة.",
+    "نصّك على جهازك",
+    "لا يُرسَل شيء إلا حين تطلب، والمسودات محفوظة محليًا.",
+    "اربط نموذجًا",
+    "يعمل نَسَق بمفتاحك من مزوّد تختاره، أو بنموذج على جهازك عبر Ollama.",
+    "يُحفظ المفتاح في سلسلة المفاتيح على جهازك، ويمكنك تغييره لاحقًا من الإعدادات.",
+    "كيف أحصل على مفتاح؟",
+  ]) {
+    assert.ok(html.includes(text), `نصّ «${text}» غائب عن ورقة الترحيب`);
+  }
+  // ثلاث ميزات لا أكثر ولا أقل، كما رُسمت
+  assert.strictEqual((html.match(/class="welcome-feature"/g) ?? []).length, 3, "عدد الميزات ليس ثلاثًا");
+});
+
+test("المرحلة ٦: المكوّن المشترك مصدرٌ واحد لا نسختان", () => {
+  // «Form Section» والمنتقي في ملفّيهما، وتحمّلهما النافذتان معًا
+  assert.ok(fs.existsSync(srcPath("forms.css")), "forms.css غير موجود");
+  for (const page of [html, settingsHtml]) {
+    assert.ok(page.includes('href="forms.css"'), "نافذة لا تحمّل forms.css");
+    assert.ok(page.includes('src="providers.js"') && page.includes('src="forms.js"'), "نافذة لا تحمّل الوحدتين المشتركتين");
+  }
+  // ولا نسخة ثانية بقيت في مكانها القديم
+  const forms = src("forms.css");
+  const secondary = src("secondary.css");
+  for (const rule of [".form-row {", ".row-picker {", ".picker-menu-item {"]) {
+    assert.ok(forms.includes(rule), `${rule} ليس في forms.css`);
+    assert.ok(!secondary.includes(rule), `${rule} ما زال في secondary.css`);
+  }
+  assert.ok(!/const PROVIDERS = \{/.test(settingsJs), "جدول المزوّدات ما زال في صفحة الإعدادات");
+  assert.ok(formsJs.includes("attachPicker"), "المنتقي ليس في forms.js");
+  // واسم القائمة picker-menu لا menu: النافذة الرئيسية لها menu خاصّتها
+  assert.ok(!/^\.menu \{/m.test(forms), "قائمة المنتقي تصطدم بقوائم النافذة الرئيسية");
+});
+
+test("المرحلة ٦: تدفّقا التطبيق لا يملكهما برج", () => {
+  // ورقة الترحيب وتنبيه التحديث عن التطبيق نفسه: بلا data-for، ولا يعرفان برجًا
+  for (const id of ["welcome-sheet", "update-alert", "welcome-picker-menu"]) {
+    assert.strictEqual(regions[id]?.owner, null, `${id} صار ملكًا لبرج`);
+  }
+  for (const file of [onboardingJs, updatesJs]) {
+    for (const banned of ['invoke("format_text"', 'invoke("generate_variation"', 'invoke("adjust_lines"', 'invoke("prune_text"']) {
+      assert.ok(!file.includes(banned), `تدفّق التطبيق ينادي ${banned}`);
+    }
+    assert.ok(!/NasaqPrune|NasaqShadhb/.test(file), "تدفّق التطبيق يلمس شَذْب");
+  }
+});
+
+test("المرحلة ٦: الفحص التلقائي يقرأ autoUpdates ولا يفاجئ", () => {
+  // العلم كان يُحفظ ولا يقرؤه أحد — وهذه قراءته
+  assert.ok(/loaded\?\.autoUpdates\) check\(AUTO\)/.test(updatesJs), "الفحص التلقائي لا يقرأ الإعداد");
+  // ولا يعرض «لا تحديث» ولا خطأً إلا لمن طلب الفحص بنفسه
+  assert.ok(/else if \(origin === MANUAL\) \{\s*showUpToDate/.test(updatesJs), "«لا تحديث» تظهر للفحص التلقائي");
+  assert.ok(/if \(origin === MANUAL\) showFailure/.test(updatesJs), "خطأ الفحص التلقائي يقاطع المستخدم");
+  // والإعدادات تُحمَّل مرة واحدة تتقاسمها القشرة والتدفّقان
+  assert.strictEqual(shell.split('invoke("load_settings")').length - 1, 1, "load_settings يُنادى أكثر من مرة في القشرة");
+  for (const file of [onboardingJs, updatesJs]) {
+    assert.ok(file.includes("NasaqShell.settingsReady"), "تدفّق لا يستعمل الإعدادات المحمَّلة");
+    assert.ok(!file.includes('invoke("load_settings")'), "تدفّق يعيد تحميل الإعدادات");
+  }
+});
+
+test("المرحلة ٦: صفحات المفاتيح مسموحة بالاسم لا بنطاق مفتوح", () => {
+  const cap = JSON.parse(
+    fs.readFileSync(path.join(__dirname, "..", "src-tauri", "capabilities", "default.json"), "utf8")
+  );
+  const opener = cap.permissions.find((p) => p && p.identifier === "opener:allow-open-url");
+  const allowed = opener.allow.map((a) => a.url);
+  // كل رابط في جدول المزوّدات له إذن صريح، ولا إذن زائد بنجمة نطاق
+  for (const m of providersJs.matchAll(/keyUrl: "([^"]+)"/g)) {
+    assert.ok(allowed.includes(m[1]), `رابط ${m[1]} بلا إذن`);
+  }
+  for (const url of allowed) {
+    assert.ok(!/^https:\/\/\*/.test(url), `إذن بنطاق مفتوح: ${url}`);
+  }
+  // والنافذتان الثانويتان لا تنزّلان ولا تثبّتان
+  for (const name of ["settings", "about"]) {
+    const other = JSON.parse(
+      fs.readFileSync(path.join(__dirname, "..", "src-tauri", "capabilities", `${name}.json`), "utf8")
+    );
+    assert.ok(!other.permissions.includes("updater:allow-download"), `${name} تملك التنزيل`);
+    assert.ok(!other.permissions.includes("updater:allow-install"), `${name} تملك التثبيت`);
+  }
 });

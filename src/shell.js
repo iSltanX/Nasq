@@ -860,9 +860,13 @@ registerEscapeCloser(() => !deleteAlert.hidden, closeDeleteAlert);
 })();
 
 // الإعدادات عند الإقلاع: المظهر منها، وترحيل اختيار قديم من مخزن المتصفح
-// مرة واحدة. وإن لم يكن هناك مفتاح محفوظ فُتحت نافذة الإعدادات عند أول تشغيل
+// مرة واحدة. والنتيجة نفسها تصل تدفّقي أول تشغيل والتحديث عبر settingsReady،
+// فلا يُنادى load_settings ثلاث مرات ولا يُبنى ترتيبٌ على ترتيب الملفات.
+// أول تشغيل بلا مزوّد لم يعد يفتح نافذة الإعدادات: ورقة الترحيب تفعل ذلك
+// (المرحلة ٦ — Figma 255:524)
+let settingsReady = Promise.resolve(null);
 if (window.__TAURI__) {
-  (async () => {
+  settingsReady = (async () => {
     const legacy = legacyAppearanceChoice();
     try {
       const settings = await invoke("load_settings");
@@ -878,9 +882,9 @@ if (window.__TAURI__) {
         renderAppearance(settings.appearance);
         forgetLegacyAppearance();
       }
-      if (!settings.hasApiKey) invoke("open_settings").catch(() => {});
+      return settings;
     } catch {
-      invoke("open_settings").catch(() => {});
+      return null;
     }
   })();
 
@@ -947,6 +951,8 @@ window.NasaqShell = {
   sendToNasaq,
   flags: { shadhbEnabled: readShadhbFlag() },
   registerEscapeCloser,
+  // الإعدادات كما حُمّلت مرة واحدة عند الإقلاع — أو null إن تعذّر تحميلها
+  settingsReady,
   drafts: {
     configureDisplay: configureDraftsDisplay,
     registerRestoreHandler,

@@ -8,49 +8,7 @@
   const appearance = window.NasaqAppearance;
   const el = (id) => document.getElementById(id);
 
-  // مزوّدات جاهزة تملأ العنوان والنموذج ولا تمسّ المفتاح. transport هي قيمة
-  // provider التي تفهمها النواة: "cloud" و"anthropic" و"ollama"
-  const PROVIDERS = {
-    gemini: {
-      label: "Gemini",
-      transport: "cloud",
-      baseUrl: "https://generativelanguage.googleapis.com/v1beta/openai/",
-      model: "gemini-2.5-flash",
-    },
-    openai: {
-      label: "OpenAI",
-      transport: "cloud",
-      baseUrl: "https://api.openai.com/v1",
-      model: "gpt-5.6-terra",
-    },
-    claude: {
-      label: "Claude",
-      transport: "anthropic",
-      baseUrl: "https://api.anthropic.com",
-      model: "claude-opus-5",
-    },
-    groq: {
-      label: "Groq",
-      transport: "cloud",
-      baseUrl: "https://api.groq.com/openai/v1",
-      model: "llama-3.3-70b-versatile",
-    },
-    openrouter: {
-      label: "OpenRouter",
-      transport: "cloud",
-      baseUrl: "https://openrouter.ai/api/v1",
-      model: "google/gemini-2.5-flash",
-    },
-    ollama: {
-      label: "‏Ollama (على جهازك)",
-      transport: "ollama",
-      baseUrl: "http://127.0.0.1:11434",
-      model: "qwen3:8b",
-    },
-  };
-  // الترتيب كما في قائمة التصميم، والفاصل قبل المحلي
-  const PROVIDER_ORDER = ["gemini", "openai", "claude", "groq", "openrouter", "ollama"];
-  const LOCAL_PROVIDER = "ollama";
+  const { PROVIDERS, presetFor, menuItems } = window.NasaqProviders;
   const KEY_MASK = "••••••••••••••••••••••••";
 
   const tabs = [...document.querySelectorAll(".tab")];
@@ -67,23 +25,8 @@
   let view = null;
   let preset = "gemini";
   let keyTouched = false;
-  let openPicker = null;
 
   // ---------- العرض ----------
-
-  // الزر المطابق لإعداد محفوظ: Claude وOllama بقيمة النقل، والسحابي بمضيف
-  // العنوان — والعنوان المخصّص لا يطابق مزوّدًا
-  function presetFor(transport, baseUrl) {
-    if (transport === "anthropic") return "claude";
-    if (transport === "ollama") return "ollama";
-    const url = String(baseUrl || "").toLowerCase();
-    return (
-      PROVIDER_ORDER.find((key) => {
-        const candidate = PROVIDERS[key];
-        return candidate.transport === "cloud" && url.includes(new URL(candidate.baseUrl).host);
-      }) ?? null
-    );
-  }
 
   function lastCheckLabel(seconds) {
     if (!seconds) return "لم يحدث بعد";
@@ -183,72 +126,11 @@
 
   // ---------- قائمة الاختيار ----------
 
-  // الإغلاق يعيد التركيز إلى زرّه إلا حين يكون سببه نقرة في مكان آخر:
-  // النقرة تعرف أين تذهب
-  function closeMenu(returnFocus = true) {
-    menu.hidden = true;
-    menu.replaceChildren();
-    if (openPicker) {
-      openPicker.setAttribute("aria-expanded", "false");
-      if (returnFocus) openPicker.focus();
-      openPicker = null;
-    }
-  }
-
-  function openMenu(picker, items, current, onPick) {
-    // النقر على زرّ قائمته مفتوحة يغلقها، كما في الماك
-    if (openPicker === picker) {
-      closeMenu();
-      return;
-    }
-    closeMenu();
-    openPicker = picker;
-    picker.setAttribute("aria-expanded", "true");
-    for (const item of items) {
-      if (item.separator) {
-        const line = document.createElement("div");
-        line.className = "menu-separator";
-        menu.append(line);
-        continue;
-      }
-      const button = document.createElement("button");
-      button.type = "button";
-      button.className = "menu-item";
-      button.setAttribute("role", "menuitemradio");
-      const active = item.value === current;
-      button.setAttribute("aria-checked", String(active));
-      if (active) button.dataset.active = "true";
-      const label = document.createElement("span");
-      label.textContent = item.label;
-      const check = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-      const use = document.createElementNS("http://www.w3.org/2000/svg", "use");
-      use.setAttribute("href", "#checkmark.16m");
-      check.append(use);
-      check.setAttribute("aria-hidden", "true");
-      button.append(label, check);
-      button.addEventListener("click", () => {
-        closeMenu();
-        onPick(item.value);
-      });
-      menu.append(button);
-    }
-    menu.hidden = false;
-    picker.setAttribute("aria-controls", menu.id);
-    const rect = picker.getBoundingClientRect();
-    const height = menu.getBoundingClientRect().height;
-    const top = Math.min(Math.max(4, rect.top - 4), window.innerHeight - height - 4);
-    menu.style.insetBlockStart = `${top}px`;
-    menu.style.insetInlineStart = `${Math.max(4, rect.left - 4)}px`;
-    menu.querySelector(".menu-item[data-active='true'], .menu-item")?.focus();
-  }
+  const picker = window.NasaqForms.attachPicker(menu);
+  const openMenu = picker.open;
 
   el("provider-picker").addEventListener("click", () => {
-    const items = PROVIDER_ORDER.flatMap((key) =>
-      key === LOCAL_PROVIDER
-        ? [{ separator: true }, { value: key, label: PROVIDERS[key].label }]
-        : [{ value: key, label: PROVIDERS[key].label }]
-    );
-    openMenu(el("provider-picker"), items, preset, (value) => {
+    openMenu(el("provider-picker"), menuItems(), preset, (value) => {
       const chosen = PROVIDERS[value];
       // تبديل المزوّد يحمل عنوانه ونموذجه معه، ولا يمسّ المفتاح
       save({ provider: chosen.transport, baseUrl: chosen.baseUrl, model: chosen.model });
@@ -263,25 +145,11 @@
     });
   });
 
-  // تنقّل القوائم كما في الماك: الأسهم بين البنود، وHome/End إلى طرفيها
-  menu.addEventListener("keydown", (e) => {
-    const items = [...menu.querySelectorAll(".menu-item")];
-    if (!items.length) return;
-    const at = items.indexOf(document.activeElement);
-    const go = { ArrowDown: at + 1, ArrowUp: at - 1, Home: 0, End: items.length - 1 }[e.key];
-    if (go === undefined) return;
-    e.preventDefault();
-    items[(go + items.length) % items.length].focus();
-  });
-
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && !menu.hidden) {
+    if (e.key === "Escape" && picker.isOpen()) {
       e.preventDefault();
-      closeMenu();
+      picker.close();
     }
-  });
-  document.addEventListener("pointerdown", (e) => {
-    if (!menu.hidden && !menu.contains(e.target) && !openPicker?.contains(e.target)) closeMenu(false);
   });
 
   // ---------- الحقول ----------

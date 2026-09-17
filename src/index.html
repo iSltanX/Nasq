@@ -6,6 +6,7 @@
   <title>نَسَق</title>
   <link rel="stylesheet" href="tokens.css" />
   <link rel="stylesheet" href="base.css" />
+  <link rel="stylesheet" href="forms.css" />
   <link rel="stylesheet" href="app.css" />
 </head>
 <body>
@@ -641,8 +642,124 @@
     </div>
   </div>
 
+  <!-- ================= على مستوى التطبيق: أول تشغيل والتحديثات =================
+       بلا data-for: البرجان لا يملكان شيئًا منها، فهي عن التطبيق نفسه -->
+
+  <!-- ورقة أول تشغيل بخطوتيها في عنصر واحد (Figma 255:524 و256:1155): عرضها
+       ٤٨٠ لا ٧٢٠، وخطوتها تُقرأ من data-step على الورقة نفسها -->
+  <div id="welcome-sheet" class="sheet sheet-narrow" data-step="welcome" role="dialog" aria-modal="true" aria-labelledby="welcome-label" hidden>
+    <header class="sheet-topbar">
+      <h2 id="welcome-topbar-title" class="sheet-title">اربط نموذجًا</h2>
+    </header>
+    <div class="sheet-body">
+      <p id="welcome-subtitle" class="sheet-subtitle">يعمل نَسَق بمفتاحك من مزوّد تختاره، أو بنموذج على جهازك عبر Ollama.</p>
+
+      <!-- الخطوة ١: الترحيب -->
+      <div class="welcome-intro" data-step-pane="welcome">
+        <div class="welcome-hero">
+          <img class="welcome-app-icon" src="app-icon.png" alt="" width="64" height="64" />
+          <h3 id="welcome-label" class="welcome-heading">مرحبًا بك في نَسَق</h3>
+          <p class="welcome-tagline">رتّب نصّك قبل النشر واحذف ما يزيد عنه، دون أن نكتب عنك كلمة.</p>
+        </div>
+        <ul class="welcome-features">
+          <li class="welcome-feature">
+            <span class="welcome-feature-icon" data-tint="nasaq" aria-hidden="true">
+              <svg><use href="#nsq.nasaq.20r" /></svg>
+            </span>
+            <span class="welcome-feature-text">
+              <span class="welcome-feature-title">نَسَق يرتّب</span>
+              <span class="welcome-feature-note">يوزّع الأسطر والوقفات لتُقرأ بوضوح، والكلمات كما كتبتها.</span>
+            </span>
+          </li>
+          <li class="welcome-feature">
+            <span class="welcome-feature-icon" data-tint="shadhb" aria-hidden="true">
+              <svg><use href="#nsq.shadhb.20r" /></svg>
+            </span>
+            <span class="welcome-feature-text">
+              <span class="welcome-feature-title">شَذْب يقترح</span>
+              <span class="welcome-feature-note">يدلّك على ما يمكن حذفه، وأنت من يقرّر في كل قصّة.</span>
+            </span>
+          </li>
+          <li class="welcome-feature">
+            <span class="welcome-feature-icon" aria-hidden="true">
+              <svg><use href="#lock.20r" /></svg>
+            </span>
+            <span class="welcome-feature-text">
+              <span class="welcome-feature-title">نصّك على جهازك</span>
+              <span class="welcome-feature-note">لا يُرسَل شيء إلا حين تطلب، والمسودات محفوظة محليًا.</span>
+            </span>
+          </li>
+        </ul>
+      </div>
+
+      <!-- الخطوة ٢: ربط النموذج — صفوفه مكوّن «Form Section» نفسه الذي في الإعدادات -->
+      <div class="welcome-connect" data-step-pane="connect">
+        <div class="form-section">
+          <div class="section-rows">
+            <div class="form-row" data-control="picker">
+              <span class="row-label" id="welcome-provider-label">المزوّد</span>
+              <span class="row-spacer"></span>
+              <button class="row-picker" type="button" id="welcome-provider" aria-labelledby="welcome-provider-label" aria-haspopup="menu" aria-expanded="false">
+                <span id="welcome-provider-value">Gemini</span>
+                <span class="picker-chevron" aria-hidden="true">
+                  <svg><use href="#chevron.up.chevron.down.16m" /></svg>
+                </span>
+              </button>
+            </div>
+            <div class="form-row" data-control="field" id="welcome-key-row">
+              <label class="row-label" for="welcome-key">مفتاح API</label>
+              <input class="row-field" id="welcome-key" type="password" dir="ltr" autocomplete="off" spellcheck="false" placeholder="الصق المفتاح هنا" />
+            </div>
+            <div class="form-row" data-control="field">
+              <label class="row-label" for="welcome-model">النموذج</label>
+              <input class="row-field" id="welcome-model" type="text" dir="ltr" autocomplete="off" spellcheck="false" />
+            </div>
+            <div class="form-row" data-control="button">
+              <span class="row-label">الاتصال</span>
+              <span class="row-spacer"></span>
+              <span class="row-status" id="welcome-connection" role="status" aria-live="polite" hidden>
+                <span id="welcome-connection-message"></span>
+                <svg aria-hidden="true"><use id="welcome-connection-icon" href="#checkmark.circle.16m" /></svg>
+              </span>
+              <button class="row-button" type="button" id="welcome-test">اختبر</button>
+            </div>
+          </div>
+          <p class="section-footer">يُحفظ المفتاح في سلسلة المفاتيح على جهازك، ويمكنك تغييره لاحقًا من الإعدادات.</p>
+        </div>
+        <button id="welcome-help" class="welcome-help" type="button">كيف أحصل على مفتاح؟</button>
+      </div>
+    </div>
+    <footer class="sheet-bottombar">
+      <button id="welcome-skip" class="button button-secondary" type="button">لاحقًا</button>
+      <button id="welcome-next" class="button button-primary" type="button">متابعة</button>
+    </footer>
+  </div>
+
+  <!-- قائمة المنتقي للورقة: خارجها لتبقى فوقها (Picker, لوحة المكوّنات) -->
+  <div class="picker-menu" id="welcome-picker-menu" role="menu" hidden></div>
+
+  <!-- تنبيه التحديث بحالاته الثلاث المرسومة (Figma 258:18774 و258:18810 و258:18835):
+       تحديث متاح، جارٍ التنزيل، لا تحديث. ولا تنزيل قبل «ثبّت وأعد التشغيل» -->
+  <div id="update-alert" class="alert alert-app" role="alertdialog" aria-modal="true" aria-labelledby="update-alert-title" aria-describedby="update-alert-message" hidden>
+    <div class="alert-body">
+      <img class="alert-app-icon" src="app-icon.png" alt="" width="64" height="64" />
+      <h2 id="update-alert-title" class="alert-title"></h2>
+      <p id="update-alert-message" class="alert-message"></p>
+      <div id="update-alert-progress" class="update-progress" hidden>
+        <div class="update-progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-labelledby="update-alert-title">
+          <div id="update-progress-fill" class="update-progress-fill"></div>
+        </div>
+        <p id="update-progress-caption" class="update-progress-caption"></p>
+      </div>
+    </div>
+    <div class="alert-buttons">
+      <button id="update-alert-cancel" class="alert-button" type="button">لاحقًا</button>
+      <button id="update-alert-confirm" class="alert-button is-default" type="button">ثبّت وأعد التشغيل</button>
+    </div>
+  </div>
+
   <!-- ترتيب التحميل عقد عزل: الوحدات النقية، فهيكل النافذة، فالقشرة المشتركة،
-       فنَسَق، وشَذْب أخيرًا حصرًا بدرعه الداخلي -->
+       فتدفّقا التطبيق (أول تشغيل وتحديث)، فنَسَق، وشَذْب أخيرًا حصرًا بدرعه الداخلي -->
   <script src="lines.js"></script>
   <script src="drafts-model.js"></script>
   <script src="fragments.js"></script>
@@ -651,6 +768,10 @@
   <script src="appearance.js"></script>
   <script src="layout.js"></script>
   <script src="shell.js"></script>
+  <script src="providers.js"></script>
+  <script src="forms.js"></script>
+  <script src="onboarding.js"></script>
+  <script src="updates.js"></script>
   <script src="nasaq.js"></script>
   <script src="shadhb.js"></script>
 </body>

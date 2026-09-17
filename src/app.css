@@ -1895,6 +1895,163 @@ textarea.empty-bidi {
   background-color: var(--status-danger-bg);
   color: var(--status-danger-fg);
 }
+/* الزر الافتراضي في تنبيهات التطبيق: ممتلئ بلون الهوية (Figma 258:18774) */
+.alert-button.is-default {
+  background-color: var(--accent-nasaq-strong);
+  color: var(--text-on-accent);
+}
+
+/* ================= أول تشغيل والتحديثات (Figma 255:521 و258:18771) =================
+   طبقتان على مستوى التطبيق لا على مستوى برج: لونهما لون الهوية ثابتًا
+   (accent-nasaq) لا لون الوحدة الظاهرة، فهما عن التطبيق نفسه وأيقونته. */
+
+/* ورقة ٤٨٠ لا ٧٢٠: مقاس مكتوب في نسخة الورقة بالتصميم لا متغيّرٌ فيه */
+.sheet-narrow {
+  inline-size: min(480px, calc(100vw - 2 * var(--space-20)));
+}
+
+/* الخطوتان في ورقة واحدة: ما لا يخصّ الخطوة الجارية لا يُرسم */
+#welcome-sheet[data-step="welcome"] :is(#welcome-subtitle, [data-step-pane="connect"], #welcome-skip),
+#welcome-sheet[data-step="connect"] :is([data-step-pane="welcome"]),
+#welcome-sheet[data-step="welcome"] .sheet-title {
+  display: none;
+}
+
+/* الترحيب: بطل ٦٤ ثم عنوان وسطر، ثم ثلاث ميزات — الفجوات ٢٨ و١٨ و١٠ و١٤ */
+.welcome-intro {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  padding-block-end: var(--space-8);
+  padding-inline: var(--space-20);
+}
+.welcome-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-10);
+  text-align: center;
+}
+.welcome-app-icon {
+  inline-size: var(--size-app-icon-md);
+  block-size: var(--size-app-icon-md);
+}
+.welcome-heading {
+  font: var(--type-heading-h2);
+  color: var(--text-primary);
+}
+.welcome-tagline {
+  font: var(--type-body-default);
+  color: var(--text-secondary);
+}
+.welcome-features {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.welcome-feature {
+  display: flex;
+  gap: var(--space-14);
+}
+/* الرمز ٢٤ داخل مربّع ٢٨: مكتبة التصميم فيها ٢٠ فحسب، والورقة تكبّره */
+.welcome-feature-icon {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 28px;
+  block-size: 28px;
+  color: var(--icon-secondary);
+}
+.welcome-feature-icon svg {
+  inline-size: 24px;
+  block-size: 24px;
+  fill: currentColor;
+}
+.welcome-feature-icon[data-tint="nasaq"] {
+  color: var(--accent-nasaq-glyph);
+}
+.welcome-feature-icon[data-tint="shadhb"] {
+  color: var(--accent-shadhb-glyph);
+}
+.welcome-feature-text {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  /* ٢ بين العنوان ١٨ والشرح ٢٠: يجعل الصفّ ٤٠ كما رُسم */
+  gap: var(--space-2);
+  min-inline-size: 0;
+}
+.welcome-feature-title {
+  font: var(--type-label-default);
+  color: var(--text-primary);
+}
+.welcome-feature-note {
+  font: var(--type-body-small);
+  color: var(--text-secondary);
+}
+
+/* ربط النموذج: القسم ثم رابط المساعدة على بُعد ١٢ */
+.welcome-connect {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+}
+.welcome-help {
+  align-self: flex-start;
+  font: var(--type-body-small);
+  color: var(--accent-nasaq-glyph);
+  text-align: start;
+}
+.welcome-help:hover {
+  text-decoration: underline;
+}
+
+/* تنبيه التطبيق: أيقونته ٦٤ في بداية العمود (يمينه) فوق العنوان */
+.alert-app .alert-body {
+  align-items: flex-start;
+}
+/* «ثبّت وأعد التشغيل» ١٠٢ في نصف صفٍّ ١١٣٫٥: إزاحته ٥ كما قِيست من الإطار،
+   لا ١٤ كإزاحة تنبيه الحذف — وسطرٌ واحد دائمًا، فالتصميم لا يلفّ زرًّا */
+.alert-app .alert-button {
+  padding-inline: var(--space-5);
+  white-space: nowrap;
+}
+.alert-app-icon {
+  inline-size: var(--size-app-icon-md);
+  block-size: var(--size-app-icon-md);
+  /* الإطار ٧٠ لأيقونة ٦٤: ٦ تحتها قبل فجوة العمود ١٠ — و٦ ليست توكنًا */
+  margin-block-end: 6px;
+}
+.alert-app .alert-title,
+.alert-app .alert-message {
+  align-self: stretch;
+}
+
+/* شريط التنزيل ٤ بزاوية كاملة، يمتلئ من جهة البداية، وتحته سطر ١١ */
+.update-progress {
+  display: flex;
+  align-self: stretch;
+  flex-direction: column;
+  gap: var(--space-10);
+}
+.update-progress-track {
+  block-size: var(--size-progress-bar);
+  border-radius: var(--radius-full);
+  background: var(--fill-control);
+  overflow: hidden;
+}
+.update-progress-fill {
+  block-size: 100%;
+  inline-size: 0;
+  border-radius: var(--radius-full);
+  background: var(--accent-nasaq-strong);
+  transition: inline-size var(--motion-duration-hover) linear;
+}
+.update-progress-caption {
+  font: var(--type-caption-footnote);
+  color: var(--text-secondary);
+}
 
 /* النافذة المنبثقة (Popover, Figma 70:356): زاوية ٢٠ وسهم ٢٥×١٠ يشير إلى وسط زرها،
    وعدسة القراءة داخلها بعرض هاتف ٣٧٥ */
