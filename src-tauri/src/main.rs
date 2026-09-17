@@ -10,10 +10,6 @@
 mod app;
 mod nasaq;
 mod shadhb;
-// أداة تسجيل تجربة شَذْب — مؤقتة، خلف مفتاح الواجهة، ومعزولة عن الأبراج
-// الثلاثة كليًا (انظر رأس الملف). تُزال بحذف mod هذا وسطري invoke_handler
-// أدناه وshadhb_trial_log.rs نفسه.
-mod shadhb_trial_log;
 mod shared;
 
 fn main() {
@@ -44,13 +40,10 @@ fn main() {
             shared::drafts::save_drafts,
             shared::drafts::export_drafts,
             shared::clipboard::copy_to_clipboard,
-            shared::dock_icon::set_dock_icon,
             nasaq::commands::format_text,
             nasaq::commands::generate_variation,
             nasaq::commands::adjust_lines,
-            shadhb::commands::prune_text,
-            shadhb_trial_log::save_shadhb_trial,
-            shadhb_trial_log::renew_shadhb_trial_log
+            shadhb::commands::prune_text
         ])
         .run(tauri::generate_context!())
         .expect("فشل تشغيل نَسَق");

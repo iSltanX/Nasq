@@ -1,0 +1,391 @@
+/* tokens.css — مولَّد آليًا من متغيرات ملف Figma «nasq-v10» وأنماطه (صفحات v11).
+   لا يُحرَّر يدويًا: يُعاد توليده من Figma حين يتغير التصميم. */
+
+:root {
+  color-scheme: light dark;
+
+  /* Appearance — فاتح | داكن */
+  --surface-window: light-dark(#ffffff, #1e1e1e);
+  --surface-content: light-dark(#ffffff, #1e1e1e);
+  --surface-elevated: light-dark(#ffffff, #2c2c2c);
+  --surface-inspector: light-dark(#ededed, #262626);
+  --surface-sidebar-solid: light-dark(#ededed, #262626);
+  --surface-popover-solid: light-dark(#ffffff, #373737);
+  --surface-scrim: light-dark(rgb(0 0 0 / 0.18), rgb(0 0 0 / 0.4));
+  --glass-toolbar: light-dark(rgb(255 255 255 / 0.72), rgb(30 30 30 / 0.7));
+  --glass-sidebar: light-dark(rgb(237 237 237 / 0.9), rgb(38 38 38 / 0.9));
+  --glass-popover: light-dark(rgb(255 255 255 / 0.96), rgb(55 55 55 / 0.98));
+  --glass-edge: light-dark(rgb(255 255 255 / 0.8), rgb(255 255 255 / 0.12));
+  --glass-scroll-edge: light-dark(rgb(255 255 255 / 0.5), rgb(30 30 30 / 0.5));
+  --glass-scroll-edge-clear: light-dark(rgb(255 255 255 / 0), rgb(30 30 30 / 0));
+  --text-primary: light-dark(rgb(0 0 0 / 0.85), rgb(255 255 255 / 0.85));
+  --text-secondary: light-dark(rgb(0 0 0 / 0.6), rgb(255 255 255 / 0.6));
+  --text-tertiary: light-dark(rgb(0 0 0 / 0.55), rgb(255 255 255 / 0.55));
+  --text-disabled: light-dark(rgb(0 0 0 / 0.25), rgb(255 255 255 / 0.25));
+  --text-on-accent: light-dark(#ffffff, #1e1e1e);
+  --icon-primary: light-dark(rgb(0 0 0 / 0.85), rgb(255 255 255 / 0.85));
+  --icon-secondary: light-dark(rgb(0 0 0 / 0.5), rgb(255 255 255 / 0.55));
+  --border-hairline: light-dark(rgb(0 0 0 / 0.08), rgb(255 255 255 / 0.1));
+  --border-default: light-dark(rgb(0 0 0 / 0.12), rgb(255 255 255 / 0.14));
+  --border-strong: light-dark(rgb(0 0 0 / 0.5), rgb(255 255 255 / 0.4));
+  --fill-hover: light-dark(rgb(0 0 0 / 0.05), rgb(255 255 255 / 0.07));
+  --fill-pressed: light-dark(rgb(0 0 0 / 0.1), rgb(255 255 255 / 0.12));
+  --fill-control: light-dark(rgb(0 0 0 / 0.06), rgb(255 255 255 / 0.08));
+  --fill-control-raised: light-dark(#ffffff, rgb(255 255 255 / 0.18));
+  --fill-field: light-dark(#ffffff, rgb(255 255 255 / 0.05));
+  --fill-disabled: light-dark(rgb(0 0 0 / 0.03), rgb(255 255 255 / 0.04));
+  --shadow-window-key: light-dark(rgb(0 0 0 / 0.16), rgb(0 0 0 / 0.45));
+  --shadow-popover: light-dark(rgb(0 0 0 / 0.1), rgb(0 0 0 / 0.3));
+  --accent-nasaq-base: light-dark(#8c7bb0, #a89ac7);
+  --accent-nasaq-strong: light-dark(#715f96, #ac9ecb);
+  --accent-nasaq-hover: light-dark(#67558b, #b5a7d5);
+  --accent-nasaq-pressed: light-dark(#5d4b80, #a092be);
+  --accent-nasaq-tint: light-dark(#f1eefa, #34323a);
+  --accent-nasaq-tint-strong: light-dark(#e8e2f8, #423e4a);
+  --accent-nasaq-glyph: light-dark(#8776aa, #9a8cb8);
+  --accent-nasaq-highlight: light-dark(rgb(140 123 176 / 0.22), rgb(168 154 199 / 0.24));
+  --accent-nasaq-glass-tint: light-dark(rgb(140 123 176 / 0), rgb(168 154 199 / 0));
+  --accent-shadhb-base: light-dark(#b09055, #c4ab78);
+  --accent-shadhb-strong: light-dark(#80642e, #c4ab78);
+  --accent-shadhb-hover: light-dark(#765a23, #ceb481);
+  --accent-shadhb-pressed: light-dark(#6b5018, #b79f6c);
+  --accent-shadhb-tint: light-dark(#f7efe1, #39352c);
+  --accent-shadhb-tint-strong: light-dark(#f1e3ca, #494335);
+  --accent-shadhb-glyph: light-dark(#98793f, #ab9360);
+  --accent-shadhb-highlight: light-dark(rgb(176 144 85 / 0.22), rgb(196 171 120 / 0.24));
+  --accent-shadhb-glass-tint: light-dark(rgb(176 144 85 / 0), rgb(196 171 120 / 0));
+  --status-success-fg: light-dark(#1c7a34, #30d158);
+  --status-success-bg: light-dark(rgb(52 199 89 / 0.12), rgb(48 209 88 / 0.16));
+  --status-success-border: light-dark(rgb(52 199 89 / 0.4), rgb(48 209 88 / 0.4));
+  --status-success-solid: light-dark(#34c759, #30d158);
+  --status-warning-fg: light-dark(#b34700, #ff9230);
+  --status-warning-bg: light-dark(rgb(255 141 40 / 0.12), rgb(255 146 48 / 0.16));
+  --status-warning-border: light-dark(rgb(255 141 40 / 0.4), rgb(255 146 48 / 0.4));
+  --status-warning-solid: light-dark(#ff8d28, #ff9230);
+  --status-danger-fg: light-dark(#d60015, #ff8e8b);
+  --status-danger-bg: light-dark(rgb(255 56 60 / 0.12), rgb(255 66 69 / 0.16));
+  --status-danger-border: light-dark(rgb(255 56 60 / 0.4), rgb(255 66 69 / 0.4));
+  --status-danger-solid: light-dark(#ff383c, #ff4245);
+  --status-info-fg: light-dark(#0065d9, #1b9bff);
+  --status-info-bg: light-dark(rgb(0 136 255 / 0.12), rgb(0 145 255 / 0.16));
+  --status-info-border: light-dark(rgb(0 136 255 / 0.4), rgb(0 145 255 / 0.4));
+  --status-info-solid: light-dark(#0088ff, #0091ff);
+  --system-window-close: #ff5f57;
+  --system-window-minimize: #febc2e;
+  --system-window-zoom: #28c840;
+  --system-window-inactive: light-dark(rgb(0 0 0 / 0.14), rgb(255 255 255 / 0.2));
+  --accent-nasaq-button: light-dark(#7b69a1, #a89ac7);
+  --accent-shadhb-button: light-dark(#916d36, #c4ab78);
+  --shadow-window-ambient: light-dark(rgb(0 0 0 / 0.07), rgb(0 0 0 / 0.2));
+  --shadow-window-contact: light-dark(rgb(0 0 0 / 0.08), rgb(0 0 0 / 0.18));
+  --shadow-popover-contact: light-dark(rgb(0 0 0 / 0.06), rgb(0 0 0 / 0.14));
+  --shadow-popover-ambient: light-dark(rgb(0 0 0 / 0.1), rgb(0 0 0 / 0.4));
+  --shadow-popover-key: light-dark(rgb(0 0 0 / 0.16), rgb(0 0 0 / 0.45));
+  --surface-sheet: light-dark(#ffffff, #1c1e1f);
+  --surface-find-bar: light-dark(#ececec, #353638);
+  --fill-form-group: light-dark(rgb(0 0 0 / 0.03), rgb(255 255 255 / 0.03));
+  --border-form-separator: light-dark(rgb(0 0 0 / 0.05), rgb(255 255 255 / 0.05));
+  --fill-tab-selected: light-dark(#f9f9f9, #373737);
+  --fill-switch-off: light-dark(rgb(0 0 0 / 0.1), rgb(255 255 255 / 0.1));
+  --accent-nasaq-focus: light-dark(rgb(140 123 176 / 0.5), rgb(168 154 199 / 0.5));
+  --accent-shadhb-focus: light-dark(rgb(176 144 85 / 0.5), rgb(196 171 120 / 0.5));
+  --fill-knob: #ffffff;
+
+  /* Material — افتراضي */
+  --material-toolbar: var(--glass-toolbar);
+  --material-sidebar: var(--glass-sidebar);
+  --material-popover: var(--glass-popover);
+  --material-edge: var(--glass-edge);
+  --material-scroll-edge: var(--glass-scroll-edge);
+  --material-scroll-edge-clear: var(--glass-scroll-edge-clear);
+
+  /* Dimensions */
+  --space-4: 4px;
+  --space-8: 8px;
+  --space-12: 12px;
+  --space-16: 16px;
+  --space-24: 24px;
+  --space-32: 32px;
+  --space-48: 48px;
+  --space-64: 64px;
+  --radius-4: 4px;
+  --radius-8: 8px;
+  --radius-12: 12px;
+  --radius-16: 16px;
+  --radius-20: 20px;
+  --radius-24: 24px;
+  --radius-full: 999px;
+  --size-control-sm: 22px;
+  --size-control-md: 28px;
+  --size-control-lg: 36px;
+  --size-icon-16: 16px;
+  --size-icon-20: 20px;
+  --size-hit-min: 24px;
+  --size-toolbar: 52px;
+  --size-statusbar: 28px;
+  --size-row: 28px;
+  --size-row-2line: 44px;
+  --layout-sidebar-min: 220px;
+  --layout-sidebar: 240px;
+  --layout-sidebar-max: 280px;
+  --layout-inspector-min: 260px;
+  --layout-inspector: 280px;
+  --layout-inspector-max: 320px;
+  --layout-content-min: 500px;
+  --layout-editor-measure: 448px;
+  --layout-window-min-width: 760px;
+  --layout-window-min-height: 560px;
+  --layout-window-width: 1280px;
+  --layout-window-height: 800px;
+  --layout-panel-inset: 8px;
+  --stroke-hairline: 1px;
+  --stroke-focus: 3px;
+  --stroke-icon-16-regular: 1.14px;
+  --stroke-icon-16-medium: 1.42px;
+  --stroke-icon-20-regular: 1.4px;
+  --stroke-icon-20-medium: 1.74px;
+  --blur-glass-toolbar: 16px;
+  --blur-glass-sidebar: 24px;
+  --blur-scroll-edge: 12px;
+  --elevation-popover-y: 8px;
+  --elevation-popover-blur: 24px;
+  --elevation-window-y: 22px;
+  --elevation-window-blur: 64px;
+  --size-traffic-light: 12px;
+  --size-progress-bar: 4px;
+  --size-skeleton-line: 12px;
+  --size-spinner-lg: 32px;
+  --size-badge: 18px;
+  --stroke-focus-gap: 2px;
+  --stroke-focus-outer: 5px;
+  --size-status-dot: 8px;
+  --radius-app-icon: 230px;
+  --size-app-icon-sm: 48px;
+  --size-app-icon-md: 64px;
+  --size-app-icon-lg: 96px;
+  --size-sheet-width: 720px;
+  --size-alert-width: 269px;
+  --size-control-regular: 24px;
+  --radius-control-regular: 6px;
+  --radius-control-small: 5px;
+  --space-2: 2px;
+  --space-14: 14px;
+  --size-sidebar-row: 32px;
+  --size-section-header: 19px;
+  --space-10: 10px;
+  --space-row-inset: 11px;
+  --space-5: 5px;
+  --space-9: 9px;
+  --space-20: 20px;
+  --radius-7: 7px;
+  --radius-26: 26px;
+  --size-menu-item: 24px;
+  --size-menu-separator: 11px;
+  --size-control-small: 20px;
+  --size-find-bar: 32px;
+  --size-form-row: 38.5px;
+  --size-form-row-button: 40px;
+  --size-titlebar: 32px;
+  --size-settings-tabbar: 56px;
+  --size-settings-tab-min: 55px;
+  --size-settings-tab: 48px;
+  --size-toggle-width: 36px;
+  --size-toggle-height: 16px;
+  --size-toggle-knob-width: 21px;
+  --size-toggle-knob-height: 13px;
+  --size-sheet-topbar: 47.5px;
+  --size-sheet-bottombar: 65px;
+  --size-alert-button: 28px;
+  --layout-about-width: 284px;
+  --layout-settings-pane: 500px;
+  --size-picker-chevron: 20px;
+
+  /* Typography */
+  --font-display: "Cairo", system-ui, sans-serif;
+  --font-text: "Almarai", system-ui, sans-serif;
+  --font-size-hero: 96px;
+  --font-size-doc-title: 40px;
+  --font-size-display: 32px;
+  --font-size-h1: 24px;
+  --font-size-h2: 20px;
+  --font-size-h3: 17px;
+  --font-size-stat: 24px;
+  --font-size-reading: 16px;
+  --font-size-body: 14px;
+  --font-size-small: 13px;
+  --font-size-label: 13px;
+  --font-size-caption: 12px;
+  --font-size-footnote: 11px;
+  --font-line-height-hero: 132px;
+  --font-line-height-doc-title: 56px;
+  --font-line-height-display: 44px;
+  --font-line-height-h1: 34px;
+  --font-line-height-h2: 28px;
+  --font-line-height-h3: 24px;
+  --font-line-height-stat: 32px;
+  --font-line-height-reading: 28px;
+  --font-line-height-reading-vocalized: 30px;
+  --font-line-height-body: 24px;
+  --font-line-height-small: 20px;
+  --font-line-height-label: 18px;
+  --font-line-height-caption: 18px;
+  --font-line-height-footnote: 16px;
+  --font-tracking-none: 0px;
+  --font-size-tiny: 10px;
+  --font-line-height-tiny: 13px;
+  --type-heading-display: 700 32px/44px var(--font-display);
+  --type-heading-h1: 700 24px/34px var(--font-display);
+  --type-heading-h2: 600 20px/28px var(--font-display);
+  --type-heading-h3: 600 17px/24px var(--font-display);
+  --type-numeric-stat: 600 24px/32px var(--font-display);
+  --type-body-reading: 400 16px/28px var(--font-text);
+  --type-body-reading-vocalized: 400 16px/30px var(--font-text);
+  --type-body-default: 400 14px/24px var(--font-text);
+  --type-body-emphasis: 700 14px/24px var(--font-text);
+  --type-body-small: 400 13px/20px var(--font-text);
+  --type-label-default: 700 13px/18px var(--font-text);
+  --type-caption-default: 400 12px/18px var(--font-text);
+  --type-caption-emphasis: 700 12px/18px var(--font-text);
+  --type-caption-footnote: 400 11px/16px var(--font-text);
+  --type-body-small-emphasis: 700 13px/20px var(--font-text);
+  --type-caption-section: 700 11px/14px var(--font-text);
+  --type-caption-small: 400 10px/13px var(--font-text);
+
+  /* Motion — افتراضي */
+  --motion-duration-hover: 150ms;
+  --motion-duration-popover: 200ms;
+  --motion-duration-module-switch: 250ms;
+  --motion-duration-panel: 300ms;
+  --motion-distance-slide: 8px;
+  --motion-crossfade-only: 0;
+  --motion-easing-standard: cubic-bezier(0.25, 0.1, 0.25, 1);
+
+  /* Effects */
+  --elevation-popover: 0px 0px 48px -4px var(--shadow-popover-ambient), 0px 8px 24px -4px var(--shadow-popover-key), 0px 2px 6px -2px var(--shadow-popover-contact);
+  --elevation-window: 0px 0px 120px -8px var(--shadow-window-ambient), 0px 22px 64px -12px var(--shadow-window-key), 0px 4px 16px -4px var(--shadow-window-contact);
+  --focus-ring: 0px 0px 0px 3px var(--module-focus-ring);
+}
+
+/* اختيار المظهر من الإعدادات يتقدّم على مظهر النظام */
+:root[data-appearance="light"] { color-scheme: light; }
+:root[data-appearance="dark"] { color-scheme: dark; }
+
+/* الوحدة: ألوان نَسَق افتراضيًا، وشَذْب حين data-module="shadhb" */
+:root {
+  --module-accent: var(--accent-nasaq-base);
+  --module-strong: var(--accent-nasaq-strong);
+  --module-hover: var(--accent-nasaq-hover);
+  --module-pressed: var(--accent-nasaq-pressed);
+  --module-tint: var(--accent-nasaq-tint);
+  --module-tint-strong: var(--accent-nasaq-tint-strong);
+  --module-glyph: var(--accent-nasaq-glyph);
+  --module-highlight: var(--accent-nasaq-highlight);
+  --module-glass-tint: var(--accent-nasaq-glass-tint);
+  --module-focus-ring: var(--accent-nasaq-focus);
+  --module-button: var(--accent-nasaq-button);
+}
+[data-module="shadhb"] {
+  --module-accent: var(--accent-shadhb-base);
+  --module-strong: var(--accent-shadhb-strong);
+  --module-hover: var(--accent-shadhb-hover);
+  --module-pressed: var(--accent-shadhb-pressed);
+  --module-tint: var(--accent-shadhb-tint);
+  --module-tint-strong: var(--accent-shadhb-tint-strong);
+  --module-glyph: var(--accent-shadhb-glyph);
+  --module-highlight: var(--accent-shadhb-highlight);
+  --module-glass-tint: var(--accent-shadhb-glass-tint);
+  --module-focus-ring: var(--accent-shadhb-focus);
+  --module-button: var(--accent-shadhb-button);
+}
+
+@media (prefers-contrast: more) {
+  :root {
+    --surface-scrim: light-dark(rgb(0 0 0 / 0.28), rgb(0 0 0 / 0.55));
+    --glass-toolbar: light-dark(rgb(255 255 255 / 0.9), rgb(30 30 30 / 0.9));
+    --glass-sidebar: light-dark(rgb(237 237 237 / 0.96), rgb(38 38 38 / 0.96));
+    --glass-popover: light-dark(rgb(255 255 255 / 0.98), rgb(55 55 55 / 0.98));
+    --glass-edge: light-dark(rgb(0 0 0 / 0.28), rgb(255 255 255 / 0.32));
+    --glass-scroll-edge: light-dark(rgb(255 255 255 / 0.8), rgb(30 30 30 / 0.8));
+    --text-primary: light-dark(#000000, #ffffff);
+    --text-secondary: light-dark(rgb(0 0 0 / 0.75), rgb(255 255 255 / 0.75));
+    --text-tertiary: light-dark(rgb(0 0 0 / 0.7), rgb(255 255 255 / 0.7));
+    --text-disabled: light-dark(rgb(0 0 0 / 0.4), rgb(255 255 255 / 0.4));
+    --text-on-accent: light-dark(#ffffff, #000000);
+    --icon-primary: light-dark(#000000, #ffffff);
+    --icon-secondary: light-dark(rgb(0 0 0 / 0.7), rgb(255 255 255 / 0.7));
+    --border-hairline: light-dark(rgb(0 0 0 / 0.2), rgb(255 255 255 / 0.25));
+    --border-default: light-dark(rgb(0 0 0 / 0.3), rgb(255 255 255 / 0.35));
+    --border-strong: light-dark(rgb(0 0 0 / 0.7), rgb(255 255 255 / 0.6));
+    --fill-hover: light-dark(rgb(0 0 0 / 0.08), rgb(255 255 255 / 0.1));
+    --fill-pressed: light-dark(rgb(0 0 0 / 0.14), rgb(255 255 255 / 0.16));
+    --fill-control: light-dark(rgb(0 0 0 / 0.1), rgb(255 255 255 / 0.12));
+    --fill-control-raised: light-dark(#ffffff, rgb(255 255 255 / 0.25));
+    --fill-field: light-dark(#ffffff, rgb(255 255 255 / 0.08));
+    --fill-disabled: light-dark(rgb(0 0 0 / 0.05), rgb(255 255 255 / 0.06));
+    --shadow-window-key: light-dark(rgb(0 0 0 / 0.2), rgb(0 0 0 / 0.5));
+    --shadow-popover: light-dark(rgb(0 0 0 / 0.14), rgb(0 0 0 / 0.36));
+    --accent-nasaq-strong: light-dark(#5c4880, #c7b9e5);
+    --accent-nasaq-hover: light-dark(#523e75, #d1c3ef);
+    --accent-nasaq-pressed: light-dark(#49356b, #baacd8);
+    --accent-nasaq-glyph: light-dark(#6f5e93, #a89ac7);
+    --accent-nasaq-highlight: light-dark(rgb(140 123 176 / 0.3), rgb(168 154 199 / 0.28));
+    --accent-shadhb-strong: light-dark(#694e15, #d5bd8c);
+    --accent-shadhb-hover: light-dark(#5f4407, #dfc795);
+    --accent-shadhb-pressed: light-dark(#543b02, #c8b080);
+    --accent-shadhb-glyph: light-dark(#7f6126, #baa16e);
+    --accent-shadhb-highlight: light-dark(rgb(176 144 85 / 0.3), rgb(196 171 120 / 0.28));
+    --status-success-fg: light-dark(#005b14, #33d35a);
+    --status-success-border: light-dark(rgb(52 199 89 / 0.7), rgb(48 209 88 / 0.7));
+    --status-success-solid: light-dark(#1c7a34, #30d158);
+    --status-warning-fg: light-dark(#932800, #ffa446);
+    --status-warning-border: light-dark(rgb(255 141 40 / 0.7), rgb(255 146 48 / 0.7));
+    --status-warning-solid: light-dark(#b34700, #ff9230);
+    --status-danger-fg: light-dark(#a30000, #ff9f96);
+    --status-danger-border: light-dark(rgb(255 56 60 / 0.7), rgb(255 66 69 / 0.7));
+    --status-danger-solid: light-dark(#d60015, #ff4245);
+    --status-info-fg: light-dark(#0044b7, #51c4ff);
+    --status-info-border: light-dark(rgb(0 136 255 / 0.7), rgb(0 145 255 / 0.7));
+    --status-info-solid: light-dark(#0065d9, #0091ff);
+    --accent-nasaq-button: light-dark(#715f96, #b0a2d0);
+    --accent-shadhb-button: light-dark(#80642e, #ccb284);
+    --shadow-window-ambient: light-dark(rgb(0 0 0 / 0.08), rgb(0 0 0 / 0.25));
+    --shadow-window-contact: light-dark(rgb(0 0 0 / 0.1), rgb(0 0 0 / 0.2));
+    --shadow-popover-contact: light-dark(rgb(0 0 0 / 0.08), rgb(0 0 0 / 0.16));
+    --shadow-popover-ambient: light-dark(rgb(0 0 0 / 0.14), rgb(0 0 0 / 0.45));
+    --shadow-popover-key: light-dark(rgb(0 0 0 / 0.2), rgb(0 0 0 / 0.5));
+    --fill-form-group: light-dark(rgb(0 0 0 / 0.05), rgb(255 255 255 / 0.06));
+    --border-form-separator: light-dark(rgb(0 0 0 / 0.12), rgb(255 255 255 / 0.14));
+    --fill-tab-selected: light-dark(#ffffff, #373737);
+    --fill-switch-off: light-dark(rgb(0 0 0 / 0.2), rgb(255 255 255 / 0.25));
+  }
+}
+
+/* تقليل الشفافية: من النظام، أو من سمة يضعها التطبيق حين لا يدعم المحرك الاستعلام */
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --material-toolbar: var(--surface-window);
+    --material-sidebar: var(--surface-sidebar-solid);
+    --material-popover: var(--surface-popover-solid);
+    --material-edge: var(--border-default);
+    --material-scroll-edge: var(--surface-window);
+    --material-scroll-edge-clear: var(--surface-window);
+  }
+}
+:root[data-reduce-transparency] {
+  --material-toolbar: var(--surface-window);
+  --material-sidebar: var(--surface-sidebar-solid);
+  --material-popover: var(--surface-popover-solid);
+  --material-edge: var(--border-default);
+  --material-scroll-edge: var(--surface-window);
+  --material-scroll-edge-clear: var(--surface-window);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-duration-popover: 150ms;
+    --motion-duration-module-switch: 150ms;
+    --motion-duration-panel: 200ms;
+    --motion-distance-slide: 0px;
+    --motion-crossfade-only: 1;
+  }
+}

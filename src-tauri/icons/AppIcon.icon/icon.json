@@ -1,0 +1,88 @@
+{
+  "fill-specializations": [
+    {
+      "value": {
+        "solid": "srgb:0.54902,0.48235,0.69020,1.00000"
+      }
+    },
+    {
+      "appearance": "dark",
+      "value": {
+        "solid": "srgb:0.10588,0.10588,0.10588,1.00000"
+      }
+    }
+  ],
+  "groups": [
+    {
+      "hidden": false,
+      "layers": [
+        {
+          "fill-specializations": [
+            {
+              "value": {
+                "solid": "srgb:0.90588,0.81176,0.61961,1.00000"
+              }
+            },
+            {
+              "appearance": "dark",
+              "value": {
+                "solid": "srgb:0.76863,0.67059,0.47059,1.00000"
+              }
+            }
+          ],
+          "glass": false,
+          "hidden": false,
+          "image-name": "cut.svg",
+          "name": "cut",
+          "position": {
+            "scale": 1,
+            "translation-in-points": [
+              0,
+              0
+            ]
+          }
+        },
+        {
+          "fill-specializations": [
+            {
+              "value": {
+                "solid": "srgb:1.00000,1.00000,1.00000,1.00000"
+              }
+            },
+            {
+              "appearance": "dark",
+              "value": {
+                "solid": "srgb:0.65882,0.60784,0.77255,1.00000"
+              }
+            }
+          ],
+          "glass": false,
+          "hidden": false,
+          "image-name": "lines.svg",
+          "name": "lines",
+          "position": {
+            "scale": 1,
+            "translation-in-points": [
+              0,
+              0
+            ]
+          }
+        }
+      ],
+      "shadow": {
+        "kind": "none",
+        "opacity": 0
+      },
+      "specular": false,
+      "translucency": {
+        "enabled": false,
+        "value": 0
+      }
+    }
+  ],
+  "supported-platforms": {
+    "squares": [
+      "macOS"
+    ]
+  }
+}

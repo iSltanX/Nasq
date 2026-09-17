@@ -19,13 +19,13 @@ tauri-plugin-process = "2"
 # دون مغادرة نافذة التطبيق. الصلاحية مقيّدة بنطاق github.com في القدرات.
 tauri-plugin-opener = "2"
 
-# أيقونة الدوك وقت التشغيل (v6.3): حزم objc2 حاضرة أصلًا في شجرة tauri
-# نفسها — الاعتماد المباشر يفعّل سمات NSApplication/NSImage/NSData فقط
+# إطار النافذة الأصلي في الماك (src/app/window.rs): حزم objc2 حاضرة أصلًا في
+# شجرة tauri نفسها — الاعتماد المباشر يفعّل سمات AppKit/Foundation المستعملة فقط
 [target.'cfg(target_os = "macos")'.dependencies]
 block2 = "0.6"
 objc2 = "0.6"
-objc2-app-kit = { version = "0.3", features = ["NSApplication", "NSAppearance", "NSButton", "NSControl", "NSImage", "NSResponder", "NSToolbar", "NSView", "NSWindow"] }
-objc2-foundation = { version = "0.3", features = ["NSArray", "NSData", "NSGeometry", "NSLocale", "NSNotification", "NSOperation", "NSString", "block2"] }
+objc2-app-kit = { version = "0.3", features = ["NSApplication", "NSAppearance", "NSButton", "NSControl", "NSResponder", "NSToolbar", "NSView", "NSWindow"] }
+objc2-foundation = { version = "0.3", features = ["NSArray", "NSGeometry", "NSLocale", "NSNotification", "NSOperation", "NSString", "block2"] }
 
 [profile.release]
 codegen-units = 1

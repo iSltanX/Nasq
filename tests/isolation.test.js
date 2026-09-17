@@ -25,9 +25,6 @@ test("ترتيب التحميل: القشرة قبل نسق، وشَذْب أخ�
     "shell.js",
     "nasaq.js",
     "shadhb.js",
-    // سجلّ تجربة شَذْب (مؤقت خلف مفتاح) — آخر الملفات دومًا؛ إزالته تعيد
-    // القائمة لثمانية عناصر كما كانت
-    "shadhb-trial-log.js",
   ]);
   assert.ok(!fs.existsSync(path.join(__dirname, "..", "src", "main.js")), "main.js ما زال موجودًا");
 });

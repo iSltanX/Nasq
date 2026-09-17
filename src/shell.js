@@ -476,15 +476,6 @@ function isDarkAppearance(choice) {
   return choice === "dark" || (choice === "auto" && systemPrefersDark());
 }
 
-// أيقونة الدوك الفعلية (داخل التطبيق فقط): أمر Rust يبدّل صورة الدوك
-// للجلسة إلى أيقونة نَسَق بنسختها المناسبة للوضع الفعّال (فاتح/داكن).
-// أيقونة الحزمة في Finder/Launchpad تبقى أيقونة البناء. في معاينة
-// المتصفح يفشل النداء بصمت فلا أثر له
-function updateDockIcon(dark) {
-  if (!window.__TAURI__) return;
-  invoke("set_dock_icon", { dark }).catch(() => {});
-}
-
 // تطبيق الحالة على الجذر والأزرار دون حفظ — يُستدعى عند البدء واتباع النظام
 function renderAppearance(choice) {
   const dark = isDarkAppearance(choice);
@@ -496,7 +487,6 @@ function renderAppearance(choice) {
   for (const mode of APPEARANCE_MODES) {
     appearanceButtons[mode].setAttribute("aria-pressed", String(mode === choice));
   }
-  updateDockIcon(dark);
 }
 
 // اختيار يدوي (من أي زر): يطبّق ويحفظ، فيثبت التطبيق على المختار

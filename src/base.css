@@ -1,0 +1,130 @@
+/* base.css — أساس مشترك لكل نوافذ التطبيق: الخطوط المحلية، وضبط الصفحة كسطح
+   تطبيق ماك لا كصفحة ويب. القيم كلها من tokens.css. */
+
+/* الأوجه الأربعة التي تستعملها الشاشات وحدها. block لأن الملفات محلية، والنافذة
+   لا تظهر إلا بعد تحميلها، فلا يُرسم نص بخط بديل ولو لإطار واحد */
+@font-face {
+  font-family: "Almarai";
+  src: url("fonts/Almarai-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
+@font-face {
+  font-family: "Almarai";
+  src: url("fonts/Almarai-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: block;
+}
+@font-face {
+  font-family: "Cairo";
+  src: url("fonts/Cairo-SemiBold.ttf") format("truetype");
+  font-weight: 600;
+  font-style: normal;
+  font-display: block;
+}
+@font-face {
+  font-family: "Cairo";
+  src: url("fonts/Cairo-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: block;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  overflow: hidden;
+  background: var(--surface-window);
+  color: var(--text-primary);
+  font: var(--type-body-default);
+  -webkit-font-smoothing: antialiased;
+  /* واجهة التطبيق لا تُحدَّد ولا تُسحب كنص صفحة، والمؤشر سهم لا يد */
+  -webkit-user-select: none;
+  user-select: none;
+  cursor: default;
+}
+
+h1, h2, h3, h4, p, ul, ol, dl, dd, figure {
+  margin: 0;
+}
+
+ul, ol {
+  padding: 0;
+  list-style: none;
+}
+
+button,
+input,
+textarea,
+select {
+  margin: 0;
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: default;
+}
+
+/* النص الذي يكتبه المستخدم أو يقرؤه يبقى قابلًا للتحديد */
+input,
+textarea,
+[contenteditable="true"],
+.selectable {
+  -webkit-user-select: text;
+  user-select: text;
+  cursor: text;
+}
+
+svg {
+  display: block;
+}
+
+/* أيقونة من icons.svg: <svg class="icon"><use href="#name.16r"/></svg> */
+.icon {
+  flex: none;
+  width: var(--size-icon-16);
+  height: var(--size-icon-16);
+  fill: currentColor;
+}
+.icon-20 {
+  width: var(--size-icon-20);
+  height: var(--size-icon-20);
+}
+
+/* حلقة التركيز لوحة المفاتيح وحدها، بلون الوحدة كما في Figma */
+:focus {
+  outline: none;
+}
+:focus-visible {
+  box-shadow: var(--focus-ring);
+}
+
+[hidden] {
+  display: none !important;
+}
+
+/* للقارئ الصوتي وحده */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

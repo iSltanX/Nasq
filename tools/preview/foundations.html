@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <title>معاينة الأساس — نَسَق • شَذْب</title>
+  <!-- أداة تطوير: تعرض التوكنز والخطوط والأيقونات للمطابقة مع Figma. لا تدخل التطبيق -->
+  <link rel="stylesheet" href="../../src/tokens.css" />
+  <link rel="stylesheet" href="../../src/base.css" />
+  <style>
+    body { overflow: auto; padding: 32px; background: #fafafa; color-scheme: light; }
+    h2 { font: var(--type-heading-h2); margin: 32px 0 12px; }
+    .modes { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .mode { padding: 16px; border-radius: 12px; background: var(--surface-window); color: var(--text-primary); }
+    .mode h3 { font: var(--type-label-default); margin-bottom: 12px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+    .sw { display: flex; gap: 8px; align-items: center; font: var(--type-caption-default); direction: ltr; }
+    .sw i { flex: none; width: 28px; height: 28px; border-radius: 6px; box-shadow: inset 0 0 0 1px var(--border-hairline); }
+    .type > div { margin-bottom: 8px; }
+    .icons { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 6px; }
+    .icons div { display: flex; gap: 8px; align-items: center; font: var(--type-caption-default); direction: ltr; color: var(--icon-primary); }
+  </style>
+</head>
+<body>
+  <div id="sprite" hidden></div>
+  <h2>الألوان</h2>
+  <div class="modes" id="colors"></div>
+  <h2>الوحدتان</h2>
+  <div class="modes" id="modules"></div>
+  <h2>الطباعة</h2>
+  <div class="modes type" id="type"></div>
+  <h2>الأيقونات</h2>
+  <div class="modes" id="icons"></div>
+  <script>
+    const COLORS = ["surface-window", "surface-inspector", "surface-sheet", "surface-find-bar", "text-primary", "text-secondary", "text-tertiary", "icon-secondary", "border-default", "fill-control", "fill-form-group", "accent-nasaq-base", "accent-nasaq-button", "accent-nasaq-tint", "accent-shadhb-base", "accent-shadhb-button", "accent-shadhb-tint", "status-success-fg", "status-warning-fg", "status-danger-fg", "status-info-fg"];
+    const MODULE = ["module-accent", "module-strong", "module-button", "module-tint", "module-glyph", "module-highlight", "module-focus-ring"];
+    const TYPE = ["heading-display", "heading-h1", "heading-h2", "heading-h3", "body-reading", "body-default", "body-emphasis", "body-small", "label-default", "caption-default", "caption-section", "caption-small"];
+    const mode = (scheme, title, inner, attrs = "") => `<div class="mode" style="color-scheme:${scheme}" ${attrs}><h3>${title}</h3>${inner}</div>`;
+    const swatches = (names) => `<div class="grid">${names.map((n) => `<div class="sw"><i style="background:var(--${n})"></i>${n}</div>`).join("")}</div>`;
+    colors.innerHTML = mode("light", "فاتح", swatches(COLORS)) + mode("dark", "داكن", swatches(COLORS));
+    modules.innerHTML = mode("light", "نَسَق", swatches(MODULE)) + mode("light", "شَذْب", swatches(MODULE), 'data-module="shadhb"');
+    const sample = TYPE.map((t) => `<div style="font:var(--type-${t})">${t} — كلماتك كما هي، بنَسَقٍ أوضح ١٢٣</div>`).join("");
+    type.innerHTML = mode("light", "فاتح", sample) + mode("dark", "داكن", sample);
+    fetch("../../src/icons.svg").then((r) => r.text()).then((svg) => {
+      sprite.innerHTML = svg;
+      const ids = [...svg.matchAll(/<symbol id="([^"]+)"/g)].map((m) => m[1]);
+      const grid = `<div class="icons">${ids.map((id) => `<div><svg class="icon ${id.includes(".20") ? "icon-20" : ""}"><use href="#${id}"/></svg>${id}</div>`).join("")}</div>`;
+      icons.innerHTML = mode("light", "فاتح", grid) + mode("dark", "داكن", grid);
+    });
+  </script>
+</body>
+</html>
