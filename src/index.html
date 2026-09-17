@@ -14,7 +14,8 @@
     شريط جانبي من حافة إلى حافة، ثم منطقة رئيسة فيها المحتوى والمفتّش، وشريط
     الأدوات فوقهما. ترتيب العناصر في المستند هو ترتيب القراءة من اليمين، أي
     عكس ترتيب Figma من اليسار. ما يخص برجًا واحدًا معلَّم بـ data-for، ويُظهره
-    data-module على الجذر وحده.
+    data-module على الجذر وحده. الأوراق والتنبيهات والنوافذ المنبثقة خارج
+    #window حتى يخمل ما تحتها وهي مفتوحة.
   -->
   <div id="sprite" hidden></div>
 
@@ -28,19 +29,22 @@
         </button>
       </div>
 
-      <!-- نَسَق: الجلسة الحالية والمسودات -->
+      <!-- نَسَق: الجلسة الحالية والمسودات (Figma 97:262) -->
       <div class="sidebar-body" data-for="nasaq">
-        <label class="search-field">
+        <div class="search-field">
           <svg class="icon" aria-hidden="true"><use href="#magnifyingglass.16r" /></svg>
           <input id="drafts-search" type="search" dir="rtl" placeholder="ابحث في المسودات" spellcheck="false" autocomplete="off" aria-label="ابحث في المسودات" />
-        </label>
+          <button id="drafts-search-clear" class="search-clear" type="button" title="مسح" aria-label="مسح البحث" hidden>
+            <svg class="icon" aria-hidden="true"><use href="#xmark.circle.fill.16r" /></svg>
+          </button>
+        </div>
         <div class="sidebar-gap" aria-hidden="true"></div>
         <div class="sidebar-row is-selected" aria-current="true">
           <svg class="icon" aria-hidden="true"><use href="#doc.text.16r" /></svg>
           <span class="row-title">الجلسة الحالية</span>
         </div>
         <div class="section-gap" aria-hidden="true"></div>
-        <h2 class="sidebar-section-header">
+        <h2 class="sidebar-section-header" id="drafts-heading">
           <span class="section-title">المسودات</span>
           <span id="drafts-count" class="count-badge" hidden></span>
         </h2>
@@ -48,13 +52,18 @@
           <p class="empty-title">لا مسودات بعد</p>
           <p class="empty-body">احفظ النتيجة من شريط الأدوات لتجد النص الأصلي وصيغه هنا.</p>
         </div>
-        <div id="drafts-list" class="drafts-list"></div>
+        <div id="drafts-list" class="drafts-list" role="tree" aria-labelledby="drafts-heading"></div>
       </div>
       <footer class="sidebar-footer" data-for="nasaq">
-        <span class="footer-note">تُحفظ المسودات على جهازك فقط</span>
-        <button class="icon-button icon-button-small" type="button" data-menu="backup-menu" title="النسخ الاحتياطي" aria-label="النسخ الاحتياطي" aria-haspopup="menu">
-          <svg class="icon icon-20" aria-hidden="true"><use href="#ellipsis.circle.16r" /></svg>
-        </button>
+        <span id="drafts-footer-note" class="footer-note">تُحفظ على جهازك فقط</span>
+        <div class="footer-actions">
+          <button class="icon-button icon-button-small" type="button" data-menu="backup-menu" data-menu-align="end" title="النسخ الاحتياطي" aria-label="النسخ الاحتياطي" aria-haspopup="menu" aria-expanded="false">
+            <svg class="icon" aria-hidden="true"><use href="#ellipsis.circle.16r" /></svg>
+          </button>
+          <button class="icon-button icon-button-small" type="button" data-open-settings title="الإعدادات ⌘،" aria-label="الإعدادات">
+            <svg class="icon" aria-hidden="true"><use href="#gearshape.16r" /></svg>
+          </button>
+        </div>
         <div class="menu-source" id="backup-menu" hidden>
           <button id="export-drafts-btn" type="button">تصدير نسخة احتياطية…</button>
           <button id="import-drafts-btn" type="button">استيراد ودمج…</button>
@@ -74,6 +83,11 @@
       <footer class="sidebar-footer sidebar-footer-note" data-for="shadhb">
         <svg class="icon footer-icon" aria-hidden="true"><use href="#scissors.16r" /></svg>
         <span class="footer-note">يقترح الحذف ولا يضيف كلمة</span>
+        <div class="footer-actions">
+          <button class="icon-button icon-button-small" type="button" data-open-settings title="الإعدادات ⌘،" aria-label="الإعدادات">
+            <svg class="icon" aria-hidden="true"><use href="#gearshape.16r" /></svg>
+          </button>
+        </div>
       </footer>
     </aside>
 
@@ -109,48 +123,49 @@
             </button>
           </div>
 
-          <!-- نَسَق -->
+          <!-- نَسَق: الأدوات معطّلة حتى توجد نتيجة (Figma 102:1715)، وآلة الحالات في nasaq.js تبدّلها -->
           <div class="toolbar-module" data-for="nasaq">
             <div class="glass-group" data-collapse="1" data-group-label="السطور">
-              <button id="undo-btn" class="toolbar-item" type="button" title="تراجع — حتى ٢٠ خطوة" aria-label="تراجع">
+              <button id="undo-btn" class="toolbar-item" type="button" title="تراجع ⌘Z — حتى ٢٠ خطوة" aria-label="تراجع" disabled>
                 <svg class="icon icon-20" aria-hidden="true"><use href="#arrow.uturn.backward.20r" /></svg>
               </button>
-              <button id="more-lines-btn" class="toolbar-item" type="button" title="سطور أكثر" aria-label="سطور أكثر">
+              <button id="more-lines-btn" class="toolbar-item" type="button" title="سطور أكثر ⌘]" aria-label="سطور أكثر" disabled>
                 <svg class="icon icon-20" aria-hidden="true"><use href="#text.badge.plus.20r" /></svg>
               </button>
-              <button id="fewer-lines-btn" class="toolbar-item" type="button" title="سطور أقل" aria-label="سطور أقل">
+              <button id="fewer-lines-btn" class="toolbar-item" type="button" title="سطور أقل ⌘[" aria-label="سطور أقل" disabled>
                 <svg class="icon icon-20" aria-hidden="true"><use href="#text.badge.minus.20r" /></svg>
               </button>
-              <button id="split-sentences-btn" class="toolbar-item" type="button" title="كسر بعد النقطة — سطر مستقل بعد كل جملة" aria-label="كسر بعد النقطة">
+              <button id="split-sentences-btn" class="toolbar-item" type="button" title="كسر بعد النقطة ⌥⌘." aria-label="كسر بعد النقطة" disabled>
                 <svg class="icon icon-20" aria-hidden="true"><use href="#return.left.20r" /></svg>
               </button>
-              <button id="clean-btn" class="toolbar-item" type="button" title="حذف السطور الفارغة" aria-label="حذف السطور الفارغة">
+              <button id="clean-btn" class="toolbar-item" type="button" title="حذف السطور الفارغة ⌥⌘⌫" aria-label="حذف السطور الفارغة" disabled>
                 <svg class="icon icon-20" aria-hidden="true"><use href="#rectangle.compress.vertical.20r" /></svg>
               </button>
             </div>
             <div class="glass-group" data-collapse="2">
-              <button id="output-search-btn" class="toolbar-item" type="button" title="بحث في النتيجة" aria-label="بحث في النتيجة" aria-expanded="false" aria-controls="output-search-bar">
+              <button id="output-search-btn" class="toolbar-item" type="button" title="بحث في النتيجة ⌘F" aria-label="بحث في النتيجة" aria-expanded="false" aria-controls="output-search-bar" disabled>
                 <svg class="icon icon-20" aria-hidden="true"><use href="#magnifyingglass.20r" /></svg>
               </button>
-              <button id="save-draft-btn" class="toolbar-item" type="button" title="حفظ في المسودات" aria-label="حفظ في المسودات">
+              <button id="save-draft-btn" class="toolbar-item" type="button" title="حفظ في المسودات ⌘S" aria-label="حفظ في المسودات" disabled>
                 <svg class="icon icon-20" aria-hidden="true"><use href="#tray.and.arrow.down.20r" /></svg>
               </button>
-              <button id="reading-lens-btn" class="toolbar-item" type="button" title="عدسة القراءة — للعرض فقط" aria-label="عدسة القراءة">
+              <button id="reading-lens-btn" class="toolbar-item" type="button" title="عدسة القراءة ⌥⌘R — للعرض فقط" aria-label="عدسة القراءة" aria-haspopup="dialog" aria-expanded="false" aria-controls="reading-lens" disabled>
                 <svg class="icon icon-20" aria-hidden="true"><use href="#iphone.20r" /></svg>
               </button>
             </div>
             <div class="glass-group" data-collapse="4" data-collapse-labels="3">
-              <button id="copy-btn" class="toolbar-item has-label" type="button" title="نسخ النتيجة" aria-label="نسخ">
+              <button id="copy-btn" class="toolbar-item has-label" type="button" title="نسخ النتيجة ⇧⌘C" aria-label="نسخ" disabled>
                 <svg class="icon label-icon" aria-hidden="true"><use href="#doc.on.doc.16m" /></svg>
                 <svg class="icon icon-20 bare-icon" aria-hidden="true"><use href="#doc.on.doc.20r" /></svg>
                 <span class="item-label">نسخ</span>
               </button>
-              <button id="export-btn" class="toolbar-item" type="button" title="تصدير لسابستاك — بكسور السطر وبلا أسطر فارغة" aria-label="تصدير لسابستاك" hidden>
+              <button id="export-btn" class="toolbar-item" type="button" title="تصدير لسابستاك ⌥⌘C — بكسور السطر وبلا أسطر فارغة" aria-label="تصدير لسابستاك" disabled>
                 <svg class="icon icon-20" aria-hidden="true"><use href="#square.and.arrow.up.20r" /></svg>
               </button>
             </div>
-            <button id="format-btn" class="glass-button" type="button" title="نسّق ⌘↩">
-              <svg class="icon" aria-hidden="true"><use href="#nsq.nasaq.16m" /></svg>
+            <button id="format-btn" class="action-button" type="button" data-style="glass" title="نسّق ⌘↩" disabled>
+              <span class="spinner spinner-16" aria-hidden="true"></span>
+              <svg class="icon action-icon" aria-hidden="true"><use href="#nsq.nasaq.16m" /></svg>
               <span>نسّق</span>
             </button>
           </div>
@@ -169,8 +184,8 @@
                 <span class="item-label">أرسل إلى نَسَق</span>
               </button>
             </div>
-            <button id="prune-btn" class="glass-button" type="button" title="فحص واحد يعيد بطاقة قراءة وقصّات مقترحة — لا يغيّر نصك حتى تقرر">
-              <svg class="icon" aria-hidden="true"><use href="#nsq.shadhb.16m" /></svg>
+            <button id="prune-btn" class="action-button" type="button" data-style="glass" title="فحص واحد يعيد بطاقة قراءة وقصّات مقترحة — لا يغيّر نصك حتى تقرر">
+              <svg class="icon action-icon" aria-hidden="true"><use href="#nsq.shadhb.16m" /></svg>
               <span>افحص الشذرة</span>
             </button>
           </div>
@@ -186,57 +201,111 @@
 
       <!-- ================= المحتوى ================= -->
       <section class="content" id="content" data-view="source" aria-label="النص">
+        <!-- شريط البحث في النتيجة: شريط ٣٢ تحت شريط الأدوات (Figma 262:7032) -->
+        <div id="output-search-bar" class="find-bar" data-for="nasaq" role="search" aria-label="بحث في النتيجة" hidden>
+          <div class="find-field">
+            <svg class="icon" aria-hidden="true"><use href="#magnifyingglass.16m" /></svg>
+            <input id="output-search-input" type="search" dir="rtl" placeholder="ابحث في النتيجة" spellcheck="false" autocomplete="off" aria-label="ابحث في النتيجة" aria-describedby="output-search-count" />
+            <span id="output-search-count" class="find-count" role="status" aria-live="polite"></span>
+            <button id="output-search-clear" class="find-clear" type="button" title="مسح" aria-label="مسح البحث" hidden>
+              <svg class="icon" aria-hidden="true"><use href="#xmark.circle.fill.16m" /></svg>
+            </button>
+          </div>
+          <div class="find-nav" role="group" aria-label="التطابقات">
+            <button id="output-search-prev" class="find-step" type="button" title="السابق ⇧⌘G" aria-label="التطابق السابق" disabled>
+              <svg class="icon find-step-back" aria-hidden="true"><use href="#chevron.forward.16m" /></svg>
+            </button>
+            <span class="find-nav-divider" aria-hidden="true"></span>
+            <button id="output-search-next" class="find-step" type="button" title="التالي ⌘G" aria-label="التطابق التالي" disabled>
+              <svg class="icon" aria-hidden="true"><use href="#chevron.forward.16m" /></svg>
+            </button>
+          </div>
+          <button id="output-search-close" class="find-done" type="button" title="Esc">تم</button>
+        </div>
+
         <div class="scroll-view" id="scroll-view">
           <div class="view-picker" role="tablist" aria-label="العرض">
-            <button class="view-segment" type="button" role="tab" data-view-target="source" aria-selected="true">
+            <button class="view-segment" type="button" role="tab" data-view-target="source" aria-selected="true" title="⌥⌘1">
               <span data-for="nasaq">الأصل</span><span data-for="shadhb">الشذرة</span>
             </button>
-            <button class="view-segment" type="button" role="tab" data-view-target="result" aria-selected="false">
+            <button class="view-segment" type="button" role="tab" data-view-target="result" aria-selected="false" title="⌥⌘2">
               <span data-for="nasaq">النتيجة</span><span data-for="shadhb">بعد التشذيب</span>
             </button>
-          </div>
-
-          <div id="error-bar" class="banner" role="alert" aria-live="assertive" hidden>
-            <svg class="icon" aria-hidden="true"><use href="#xmark.octagon.16m" /></svg>
-            <span id="error-bar-message" class="banner-message"></span>
-          </div>
-
-          <div id="output-search-bar" class="find-bar" data-for="nasaq" hidden>
-            <label class="search-field">
-              <svg class="icon" aria-hidden="true"><use href="#magnifyingglass.16r" /></svg>
-              <input id="output-search-input" type="search" dir="rtl" placeholder="ابحث في النتيجة" spellcheck="false" autocomplete="off" aria-label="ابحث في النتيجة" />
-            </label>
-            <span id="output-search-count" class="find-count" role="status" aria-live="polite"></span>
-            <button id="output-search-prev" class="icon-button icon-button-small" type="button" title="السابق ⇧↩" aria-label="التطابق السابق">
-              <svg class="icon" aria-hidden="true"><use href="#chevron.down.16m" /></svg>
-            </button>
-            <button id="output-search-next" class="icon-button icon-button-small" type="button" title="التالي ↩" aria-label="التطابق التالي">
-              <svg class="icon" aria-hidden="true"><use href="#chevron.down.16m" /></svg>
-            </button>
-            <button id="output-search-close" class="text-button" type="button" aria-label="إغلاق البحث">تم</button>
           </div>
 
           <div class="compare">
             <div class="column column-source">
               <h2 class="column-header"><span data-for="nasaq">الأصل</span><span data-for="shadhb">الشذرة</span></h2>
+              <!-- تنبيه كل وحدة فوقها حين يكون العمود واحدًا (Figma 99:521): خانة لكل برج
+                   داخل الحاوية المشتركة، فلا يعبر تنبيه برج إلى الآخر -->
+              <div id="error-bar" class="banner-stack">
+                <div id="nasaq-error-source" class="banner" data-for="nasaq" data-error-slot data-reveals-source role="alert" hidden>
+                  <svg class="icon icon-20 banner-icon" aria-hidden="true"><use href="#xmark.octagon.20r" /></svg>
+                  <div class="banner-text">
+                    <p class="banner-title" data-error-title></p>
+                    <p class="banner-message" data-error-message></p>
+                    <div class="banner-actions" data-error-actions hidden>
+                      <button class="button button-secondary" type="button" data-error-action></button>
+                    </div>
+                  </div>
+                  <button class="icon-button icon-button-small banner-close" type="button" data-error-close title="إغلاق" aria-label="إغلاق التنبيه">
+                    <svg class="icon" aria-hidden="true"><use href="#xmark.16r" /></svg>
+                  </button>
+                </div>
+                <div class="banner" data-for="shadhb" data-error-slot data-reveals-source role="alert" hidden>
+                  <svg class="icon icon-20 banner-icon" aria-hidden="true"><use href="#xmark.octagon.20r" /></svg>
+                  <div class="banner-text">
+                    <p class="banner-title" data-error-title></p>
+                    <p class="banner-message" data-error-message></p>
+                    <div class="banner-actions" data-error-actions hidden>
+                      <button class="button button-secondary" type="button" data-error-action></button>
+                    </div>
+                  </div>
+                  <button class="icon-button icon-button-small banner-close" type="button" data-error-close title="إغلاق" aria-label="إغلاق التنبيه">
+                    <svg class="icon" aria-hidden="true"><use href="#xmark.16r" /></svg>
+                  </button>
+                </div>
+              </div>
               <textarea id="input-text" class="editor" dir="rtl" rows="1" placeholder="الصق نصّك هنا أو ابدأ الكتابة مباشرة…" spellcheck="false" aria-label="النص"></textarea>
             </div>
 
             <div class="compare-divider" aria-hidden="true"></div>
 
+            <!-- نَسَق: كل حالة لها عنصرها — فارغة، أثناء التنسيق، نتيجة، خطأ -->
             <div class="column column-result" data-for="nasaq">
               <h2 class="column-header">النتيجة</h2>
-              <div id="output-text" class="result-text selectable" dir="rtl" data-reveals-result></div>
-              <div id="loading" class="loading-state" role="status" aria-live="polite" data-reveals-result hidden>
-                <span class="spinner" aria-hidden="true"></span>
-                <span>جارٍ التنسيق…</span>
+              <div id="nasaq-error" class="banner" data-error-slot role="alert" hidden>
+                <svg class="icon icon-20 banner-icon" aria-hidden="true"><use href="#xmark.octagon.20r" /></svg>
+                <div class="banner-text">
+                  <p class="banner-title" data-error-title></p>
+                  <p class="banner-message" data-error-message></p>
+                  <div class="banner-actions" data-error-actions hidden>
+                    <button class="button button-secondary" type="button" data-error-action></button>
+                  </div>
+                </div>
+                <button class="icon-button icon-button-small banner-close" type="button" data-error-close title="إغلاق" aria-label="إغلاق التنبيه">
+                  <svg class="icon" aria-hidden="true"><use href="#xmark.16r" /></svg>
+                </button>
               </div>
+              <div id="loading" class="result-progress" data-reveals-result hidden>
+                <p class="progress-row" role="status">
+                  <span class="spinner spinner-16" aria-hidden="true"></span>
+                  <span>جارٍ التنسيق…</span>
+                </p>
+                <div class="skeleton-paragraph" aria-hidden="true">
+                  <span class="skeleton-line"></span><span class="skeleton-line"></span><span class="skeleton-line"></span>
+                </div>
+                <div class="skeleton-paragraph" aria-hidden="true">
+                  <span class="skeleton-line"></span><span class="skeleton-line"></span><span class="skeleton-line"></span>
+                </div>
+              </div>
+              <div id="output-text" class="result-text selectable" dir="rtl" data-reveals-result></div>
               <div id="output-placeholder" class="empty-state">
                 <span class="empty-illustration" aria-hidden="true">
                   <svg class="icon" aria-hidden="true"><use href="#nsq.nasaq.20r" /></svg>
                 </span>
                 <p class="empty-title">ابدأ بنصّك</p>
-                <p class="empty-body">الصق نصّك أو اكتب مباشرة، ثم اضغط «نسّق» لترتيبه دون أن تتغيّر كلمة واحدة.</p>
+                <p class="empty-body">الصق نصّك أو اكتب مباشرة، ثم اضغط «نسّق» لترتيبه.</p>
                 <kbd class="shortcut" aria-label="الاختصار: الأمر مع الإدخال">
                   <svg class="icon" aria-hidden="true"><use href="#command.16r" /></svg>
                   <svg class="icon" aria-hidden="true"><use href="#return.16r" /></svg>
@@ -246,6 +315,20 @@
 
             <div class="column column-result" data-for="shadhb">
               <h2 class="column-header">بعد التشذيب</h2>
+              <!-- مؤقت حتى المرحلة ٤: تنبيه شَذْب في عموده -->
+              <div class="banner" data-error-slot role="alert" hidden>
+                <svg class="icon icon-20 banner-icon" aria-hidden="true"><use href="#xmark.octagon.20r" /></svg>
+                <div class="banner-text">
+                  <p class="banner-title" data-error-title></p>
+                  <p class="banner-message" data-error-message></p>
+                  <div class="banner-actions" data-error-actions hidden>
+                    <button class="button button-secondary" type="button" data-error-action></button>
+                  </div>
+                </div>
+                <button class="icon-button icon-button-small banner-close" type="button" data-error-close title="إغلاق" aria-label="إغلاق التنبيه">
+                  <svg class="icon" aria-hidden="true"><use href="#xmark.16r" /></svg>
+                </button>
+              </div>
               <div id="prune-preview-wrap" hidden>
                 <div id="prune-preview" class="result-text selectable" dir="rtl" data-reveals-result></div>
               </div>
@@ -265,16 +348,14 @@
         </div>
 
         <footer class="status-bar">
-          <div class="status-start">
-            <span id="toast" class="status-toast" role="status" aria-live="polite" hidden>
+          <div class="status-start" id="status-start">
+            <span id="toast" class="status-toast" role="status" aria-live="polite" data-tone="success" hidden>
               <span class="status-indicator" aria-hidden="true"></span>
               <span id="toast-message"></span>
             </span>
-            <span class="polish-status" data-for="nasaq">
+            <span id="nasaq-status" class="polish-status" data-for="nasaq" data-status="idle">
               <span class="status-indicator" aria-hidden="true"></span>
-              <span class="status-label" data-status="idle">لم يُنسَّق بعد</span>
-              <span class="status-label" data-status="working">جارٍ التنسيق…</span>
-              <span class="status-label" data-status="done">منسَّق</span>
+              <span id="nasaq-status-label" class="status-label">لم يُنسَّق بعد</span>
             </span>
             <span class="polish-status" data-for="shadhb">
               <span id="shadhb-status-dot" class="status-indicator" data-status="idle" aria-hidden="true"></span>
@@ -282,7 +363,7 @@
             </span>
           </div>
           <div class="status-counts">
-            <span id="output-count" data-for="nasaq"></span>
+            <span id="output-count" data-for="nasaq" hidden></span>
             <span id="input-count"></span>
           </div>
         </footer>
@@ -292,14 +373,15 @@
 
       <!-- ================= المفتّش ================= -->
       <aside class="inspector" id="inspector" aria-label="المفتّش">
+        <!-- نَسَق (Figma 98:509): الإعدادات، ثم المراجعة عند الشذرة، ثم التقرير -->
         <div class="inspector-body" data-for="nasaq">
-          <section class="inspector-section">
-            <button class="section-header" type="button" aria-expanded="true">
-              <svg class="icon" aria-hidden="true"><use href="#slider.horizontal.3.16r" /></svg>
+          <section class="inspector-section" id="settings-section">
+            <button class="section-header" type="button" aria-expanded="true" aria-controls="settings-content">
+              <svg class="icon section-icon is-primary" aria-hidden="true"><use href="#slider.horizontal.3.16r" /></svg>
               <span class="section-title">إعدادات التنسيق</span>
               <svg class="icon disclosure" aria-hidden="true"><use href="#chevron.down.16m" /></svg>
             </button>
-            <div class="section-content">
+            <div class="section-content" id="settings-content">
               <div class="inspector-row control">
                 <span class="row-label">نمط التنسيق</span>
                 <select id="format-style"></select>
@@ -315,48 +397,81 @@
               <label class="field-label" for="custom-directives">توجيهات إضافية (اختياري)</label>
               <textarea id="custom-directives" class="text-area" dir="rtl" rows="2" placeholder="مثال: اجعل الجملة الأخيرة في سطر مستقل" spellcheck="false"></textarea>
               <p id="intervention-hint" class="field-hint"></p>
-              <button id="variations-btn" class="button button-secondary button-small button-block" type="button" title="ثلاث تنويعات تختلف في مواضع كسر السطر" hidden>
+              <button id="variations-btn" class="button button-secondary button-block" type="button" title="أرِني تنويعات… ⇧⌘↩" aria-haspopup="dialog" hidden>
                 <svg class="icon" aria-hidden="true"><use href="#rectangle.split.3x1.16m" /></svg>
                 <span>أرِني تنويعات…</span>
               </button>
             </div>
           </section>
 
-          <section class="inspector-section">
-            <button class="section-header" type="button" aria-expanded="true">
-              <svg class="icon" aria-hidden="true"><use href="#list.bullet.16r" /></svg>
-              <span class="section-title">التقرير</span>
-              <svg class="icon disclosure" aria-hidden="true"><use href="#chevron.down.16m" /></svg>
-            </button>
-            <div class="section-content">
-              <div id="notes-box" class="stacked-row" hidden>
-                <span class="row-label">ما تغيّر</span>
-                <ul id="notes-list" class="row-value"></ul>
-              </div>
-              <div class="stacked-row">
-                <span class="row-label">بصمة الإيقاع</span>
-                <p id="rhythm-fingerprint" class="row-value" hidden></p>
-              </div>
-            </div>
-          </section>
-
           <section id="fragment-card" class="inspector-section" hidden>
-            <button class="section-header" type="button" aria-expanded="true">
-              <svg class="icon" aria-hidden="true"><use href="#nsq.approve.16r" /></svg>
+            <button class="section-header" type="button" aria-expanded="true" aria-controls="review-content">
+              <svg class="icon section-icon" aria-hidden="true"><use href="#nsq.approve.16r" /></svg>
               <span class="section-title">المراجعة: شكل المنعطف</span>
               <svg class="icon disclosure" aria-hidden="true"><use href="#chevron.down.16m" /></svg>
             </button>
-            <div class="section-content">
+            <div class="section-content" id="review-content">
               <p class="section-note">نتيجة الشذرة تحتمل شكلين عند المنعطف. اختر ما يُبرز الالتفاتة — الكلمات لا تتغيّر.</p>
-              <div class="suggestion-card">
-                <p class="card-title">مكسورة عند المنعطف</p>
+              <article id="turn-card-broken" class="suggestion-card" data-state="undecided" aria-labelledby="turn-title-broken">
+                <header class="card-header">
+                  <h3 id="turn-title-broken" class="card-title">مكسورة عند المنعطف</h3>
+                  <span id="turn-tag-broken" class="tag" data-tone="neutral">
+                    <svg class="icon" aria-hidden="true"><use href="#nsq.approve.16m" /></svg>
+                    <span class="tag-label"></span>
+                  </span>
+                </header>
                 <div id="fragment-broken" class="card-quote selectable"></div>
-                <button id="adopt-broken" class="button button-primary button-small" type="button">اعتمد هذا الشكل</button>
-              </div>
-              <div class="suggestion-card">
-                <p class="card-title">موصولة</p>
+                <div class="card-actions">
+                  <button id="adopt-broken" class="button button-primary" type="button">
+                    <svg class="icon" aria-hidden="true"><use href="#nsq.approve.16m" /></svg>
+                    <span>اعتمد المكسورة</span>
+                  </button>
+                  <button id="revert-broken" class="button button-secondary" type="button" hidden>
+                    <svg class="icon" aria-hidden="true"><use href="#arrow.uturn.backward.16m" /></svg>
+                    <span>تراجع عن القرار</span>
+                  </button>
+                </div>
+              </article>
+              <article id="turn-card-joined" class="suggestion-card" data-state="undecided" aria-labelledby="turn-title-joined">
+                <header class="card-header">
+                  <h3 id="turn-title-joined" class="card-title">موصولة</h3>
+                  <span id="turn-tag-joined" class="tag" data-tone="neutral">
+                    <svg class="icon" aria-hidden="true"><use href="#nsq.approve.16m" /></svg>
+                    <span class="tag-label"></span>
+                  </span>
+                </header>
                 <div id="fragment-joined" class="card-quote selectable"></div>
-                <button id="adopt-joined" class="button button-primary button-small" type="button">اعتمد هذا الشكل</button>
+                <div class="card-actions">
+                  <button id="adopt-joined" class="button button-primary" type="button">
+                    <svg class="icon" aria-hidden="true"><use href="#nsq.approve.16m" /></svg>
+                    <span>اعتمد الموصولة</span>
+                  </button>
+                  <button id="revert-joined" class="button button-secondary" type="button" hidden>
+                    <svg class="icon" aria-hidden="true"><use href="#arrow.uturn.backward.16m" /></svg>
+                    <span>تراجع عن القرار</span>
+                  </button>
+                </div>
+              </article>
+            </div>
+          </section>
+
+          <section id="report-section" class="inspector-section">
+            <button class="section-header" type="button" aria-expanded="false" aria-controls="report-content">
+              <svg class="icon section-icon" aria-hidden="true"><use href="#list.bullet.16r" /></svg>
+              <span class="section-title">التقرير</span>
+              <svg class="icon disclosure" aria-hidden="true"><use href="#chevron.down.16m" /></svg>
+            </button>
+            <div class="section-content" id="report-content">
+              <div id="report-skeleton" class="report-skeleton" aria-hidden="true" hidden>
+                <span class="skeleton-line"></span><span class="skeleton-line"></span><span class="skeleton-line"></span>
+              </div>
+              <div id="notes-box" class="stacked-row" hidden>
+                <span class="row-label">ما تغيّر</span>
+                <ol id="notes-list" class="row-value"></ol>
+              </div>
+              <div id="rhythm-box" class="stacked-row" hidden>
+                <span class="row-label">بصمة الإيقاع</span>
+                <p id="rhythm-fingerprint" class="row-value" hidden></p>
               </div>
             </div>
           </section>
@@ -365,7 +480,7 @@
         <div class="inspector-body" data-for="shadhb">
           <section class="inspector-section">
             <button class="section-header" type="button" aria-expanded="true">
-              <svg class="icon" aria-hidden="true"><use href="#doc.text.magnifyingglass.16r" /></svg>
+              <svg class="icon section-icon" aria-hidden="true"><use href="#doc.text.magnifyingglass.16r" /></svg>
               <span class="section-title">بطاقة القراءة</span>
               <svg class="icon disclosure" aria-hidden="true"><use href="#chevron.down.16m" /></svg>
             </button>
@@ -377,7 +492,7 @@
 
           <section class="inspector-section">
             <button class="section-header" type="button" aria-expanded="true">
-              <svg class="icon" aria-hidden="true"><use href="#checkmark.seal.16r" /></svg>
+              <svg class="icon section-icon" aria-hidden="true"><use href="#checkmark.seal.16r" /></svg>
               <span class="section-title">الضمانة</span>
               <svg class="icon disclosure" aria-hidden="true"><use href="#chevron.down.16m" /></svg>
             </button>
@@ -391,7 +506,49 @@
     </div>
   </div>
 
-  <!-- ================= مؤقت حتى المرحلة ٣ و٥ ================= -->
+  <!-- ================= فوق النافذة: ورقة وتنبيه ونافذة منبثقة لنَسَق ================= -->
+  <!-- ورقة تنويعات سابستاك في وسط النافذة (Figma 259:6142 و259:6483) -->
+  <div id="variations-sheet" class="sheet" data-for="nasaq" role="dialog" aria-modal="true" aria-labelledby="variations-title" aria-describedby="variations-subtitle" hidden>
+    <header class="sheet-topbar">
+      <h2 id="variations-title" class="sheet-title">تنويعات — مقال سابستاك</h2>
+    </header>
+    <div class="sheet-body">
+      <p id="variations-subtitle" class="sheet-subtitle">ثلاث معالجات شكلية لنفس النص؛ الكلمات والمعنى كما هي. اختر أنقاها.</p>
+      <div id="variations-grid" class="variations-grid"></div>
+    </div>
+    <footer class="sheet-bottombar">
+      <button id="regen-variations" class="button button-secondary" type="button">
+        <svg class="icon" aria-hidden="true"><use href="#arrow.clockwise.16m" /></svg>
+        <span>ولّد ثلاثًا جديدة</span>
+      </button>
+      <button id="close-variations" class="button button-secondary" type="button">إغلاق</button>
+    </footer>
+  </div>
+
+  <!-- عدسة القراءة: نافذة منبثقة من زرها في الشريط (Figma 261:6648) -->
+  <div id="reading-lens" class="popover" data-for="nasaq" role="dialog" aria-labelledby="reading-lens-title" aria-describedby="reading-lens-note" hidden>
+    <header class="lens-header">
+      <h2 id="reading-lens-title" class="lens-title">عدسة القراءة</h2>
+      <p id="reading-lens-note" class="lens-note">بعرض هاتف ٣٧٥ نقطة، للمعاينة فقط</p>
+    </header>
+    <div class="lens-phone">
+      <div id="reading-lens-text" class="lens-text selectable" dir="rtl"></div>
+    </div>
+  </div>
+
+  <!-- تأكيد الحذف: تنبيه في وسط النافذة (Figma 263:7635 و303:21344) -->
+  <div id="delete-alert" class="alert" data-for="nasaq" role="alertdialog" aria-modal="true" aria-labelledby="delete-alert-title" aria-describedby="delete-alert-message" hidden>
+    <div class="alert-body">
+      <h2 id="delete-alert-title" class="alert-title"></h2>
+      <p id="delete-alert-message" class="alert-message"></p>
+    </div>
+    <div class="alert-buttons">
+      <button id="delete-alert-cancel" class="alert-button" type="button">إلغاء</button>
+      <button id="delete-alert-confirm" class="alert-button is-destructive" type="button">حذف</button>
+    </div>
+  </div>
+
+  <!-- ================= مؤقت حتى المرحلة ٥ ================= -->
   <!-- الإعدادات: تحل محلها نافذة المرحلة ٥. الوصول إليها بـ ⌘, وعند أول تشغيل -->
   <div id="settings-overlay" class="interim-overlay" role="dialog" aria-modal="true" aria-labelledby="settings-title" hidden>
     <div class="interim-sheet">
@@ -407,7 +564,7 @@
         <button id="tab-about-btn" class="view-segment" type="button" role="tab" aria-controls="tab-about" aria-selected="false">حول</button>
       </div>
 
-      <div id="tab-general" class="sheet-body" role="tabpanel" aria-labelledby="tab-general-btn">
+      <div id="tab-general" class="sheet-body-interim" role="tabpanel" aria-labelledby="tab-general-btn">
         <div class="form-field">
           <span class="field-label">مزوّد النموذج</span>
           <div class="provider-row" role="group" aria-label="مزوّد النموذج">
@@ -442,7 +599,7 @@
         <button id="save-settings" class="button button-primary button-small" type="button">حفظ الإعدادات</button>
       </div>
 
-      <div id="tab-appearance" class="sheet-body" role="tabpanel" aria-labelledby="tab-appearance-btn" hidden>
+      <div id="tab-appearance" class="sheet-body-interim" role="tabpanel" aria-labelledby="tab-appearance-btn" hidden>
         <div class="form-field">
           <span class="field-label">المظهر</span>
           <div class="provider-row" role="group" aria-label="مظهر الواجهة">
@@ -454,7 +611,7 @@
         <p class="field-hint">«تلقائي» يتبع مظهر النظام. يُطبَّق الاختيار فورًا ويُحفَظ.</p>
       </div>
 
-      <div id="tab-about" class="sheet-body" role="tabpanel" aria-labelledby="tab-about-btn" hidden>
+      <div id="tab-about" class="sheet-body-interim" role="tabpanel" aria-labelledby="tab-about-btn" hidden>
         <p class="about-app-name">نَسَق</p>
         <p class="about-tagline field-hint"></p>
         <p class="field-hint">الإصدار <span dir="ltr">9.0.0</span></p>
@@ -473,35 +630,6 @@
         <a id="about-project-link" class="text-link" href="https://github.com/iSltanX/Nasq" target="_blank" rel="noopener noreferrer">صفحة المشروع</a>
       </div>
       <div id="settings-msg" class="field-hint settings-msg" role="status" aria-live="polite" hidden></div>
-    </div>
-  </div>
-
-  <!-- ورقة التنويعات: تكتمل في المرحلة ٣ -->
-  <div id="variations-overlay" class="interim-overlay" role="dialog" aria-modal="true" aria-labelledby="variations-title" hidden>
-    <div class="interim-sheet interim-sheet-wide">
-      <div class="sheet-head">
-        <h2 id="variations-title">تنويعات سابستاك <span id="variations-face" class="field-hint"></span></h2>
-        <button id="close-variations" class="icon-button" type="button" title="إغلاق" aria-label="إغلاق">
-          <svg class="icon" aria-hidden="true"><use href="#xmark.16r" /></svg>
-        </button>
-      </div>
-      <div id="variations-grid" class="variations-grid"></div>
-      <div class="sheet-foot">
-        <button id="regen-variations" class="button button-secondary button-small" type="button">ولّد ثلاثًا جديدة</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- عدسة القراءة: تصير نافذة منبثقة من شريط الأدوات في المرحلة ٣ -->
-  <div id="reading-lens-overlay" class="interim-overlay" role="dialog" aria-modal="true" aria-labelledby="reading-lens-title" hidden>
-    <div class="interim-sheet interim-lens">
-      <div class="sheet-head">
-        <h2 id="reading-lens-title">عدسة القراءة</h2>
-        <button id="close-reading-lens" class="icon-button" type="button" title="إغلاق" aria-label="إغلاق">
-          <svg class="icon" aria-hidden="true"><use href="#xmark.16r" /></svg>
-        </button>
-      </div>
-      <div id="reading-lens-text" class="lens-text selectable" dir="rtl"></div>
     </div>
   </div>
 

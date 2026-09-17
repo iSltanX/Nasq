@@ -17,6 +17,7 @@ const EXPORT_MARGIN = 40;
 const USED = {
   "arrow.clockwise.16m": [864, 368, 16],
   "arrow.clockwise.20r": [896, 368, 20],
+  "arrow.uturn.backward.16m": [1120, 752, 16],
   "arrow.uturn.backward.20r": [1152, 752, 20],
   "checkmark.16m": [608, 368, 16],
   "checkmark.16r": [576, 368, 16],
@@ -33,6 +34,7 @@ const USED = {
   "doc.text.16r": [64, 752, 16],
   "doc.text.magnifyingglass.16r": [576, 1008, 16],
   "ellipsis.circle.16r": [1088, 112, 16],
+  "gearshape.16r": [576, 112, 16],
   "gearshape.20r": [640, 112, 20],
   "info.circle.16r": [1088, 240, 16],
   "info.circle.20r": [1152, 240, 20],
@@ -63,6 +65,7 @@ const USED = {
   "tray.and.arrow.down.20r": [384, 752, 20],
   "xmark.16r": [1344, 112, 16],
   "xmark.circle.fill.16m": [864, 1136, 16],
+  "xmark.circle.fill.16r": [832, 1136, 16],
   "xmark.octagon.16m": [96, 368, 16],
   "xmark.octagon.20r": [128, 368, 20],
   "xmark.seal.16r": [1088, 1008, 16],

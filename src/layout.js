@@ -1,7 +1,9 @@
 // هيكل النافذة الرئيسية — ما يخص النافذة نفسها لا برجًا ولا عقدًا: حقن الأيقونات
 // وإعلان الجاهزية، وإظهار الألواح وطيّها، والعرض «الأصل | النتيجة»، وأقسام
-// المفتّش، وطيّ شريط الأدوات عند الضيق، والقوائم. لا يعرف دالة من دوال الأبراج:
-// يقرأ السمات والعناصر المعلَّمة فقط، والأبراج لا تعرفه.
+// المفتّش، وطيّ شريط الأدوات عند الضيق، والقوائم والأوراق والتنبيهات والنوافذ
+// المنبثقة داخل النافذة. لا يعرف دالة من دوال الأبراج: يقرأ السمات والعناصر
+// المعلَّمة فقط، ويعطي القشرة والأبراج واجهة عامة للنوافذ (NasaqWindow) لا
+// تحمل منطق أي منها.
 (() => {
   const root = document.documentElement;
   const win = document.getElementById("window");
@@ -14,6 +16,9 @@
   if (!root.dataset.titlebar) root.dataset.titlebar = "rtl";
 
   const px = (name) => parseFloat(getComputedStyle(root).getPropertyValue(name)) || 0;
+  const MARGIN = 8;
+  const clamp = (value, min, max) => Math.max(min, Math.min(value, max));
+  const modalOpen = () => Boolean(document.querySelector('[aria-modal="true"]:not([hidden])'));
 
   // ---------- الألواح: الشريط الجانبي والمفتّش ----------
   // التفضيل ما اختاره الكاتب، والظاهر يُشتق منه ومن العرض: إن ضاقت النافذة عن
@@ -60,18 +65,28 @@
     if (command) togglePanel(command.dataset.command === "toggle-sidebar" ? "sidebar" : "inspector");
   });
 
-  // ⌃⌘S للشريط الجانبي و⌥⌘I للمفتّش، كما في قائمة «عرض» في Figma — ولا
-  // تعمل تحت ورقة مفتوحة
+  // ⌃⌘S للشريط الجانبي و⌥⌘I للمفتّش، و⌥⌘1 و⌥⌘2 للأصل والنتيجة، كما في قائمة
+  // «عرض» في Figma — ولا تعمل تحت ورقة مفتوحة
   document.addEventListener("keydown", (e) => {
-    if (!e.metaKey || document.querySelector('[aria-modal="true"]:not([hidden])')) return;
+    if (!e.metaKey || e.shiftKey || modalOpen()) return;
     if (e.ctrlKey && !e.altKey && e.code === "KeyS") {
       e.preventDefault();
       togglePanel("sidebar");
     } else if (e.altKey && !e.ctrlKey && e.code === "KeyI") {
       e.preventDefault();
       togglePanel("inspector");
+    } else if (e.altKey && !e.ctrlKey && (e.code === "Digit1" || e.code === "Digit2")) {
+      e.preventDefault();
+      setView(e.code === "Digit1" ? "source" : "result");
     }
   });
+
+  // ---------- النافذة الأمامية ----------
+  // التحديد في الشريط الجانبي يصير محايدًا حين تغادر النافذة المقدمة، كما في الماك
+  const syncActive = () => root.toggleAttribute("data-inactive", !document.hasFocus());
+  window.addEventListener("focus", syncActive);
+  window.addEventListener("blur", syncActive);
+  syncActive();
 
   // ---------- العرض: «الأصل | النتيجة» في العمود الواحد ----------
   function setView(view) {
@@ -93,16 +108,25 @@
     content.querySelector(`[data-view-target="${next}"]`).focus();
   });
 
-  // بدء التنسيق أو ظهور نتيجة جديدة ينقل العمود الواحد إلى «النتيجة» — لا يرى
-  // الكاتب عمودًا يعمل خلف عمود آخر
+  // ظهور عنصر معلَّم ينقل العمود الواحد إلى عموده: بدء التنسيق أو نتيجة جديدة
+  // إلى «النتيجة»، وتنبيه فوق الأصل إلى «الأصل» — لا يرى الكاتب عمودًا يعمل خلف
+  // عمود آخر. العنصر المشترك (بلا data-for) يخص الوحدة الفعّالة أيًّا كانت
+  const REVEALS = [
+    ["[data-reveals-result]", "result"],
+    ["[data-reveals-source]", "source"],
+  ];
   new MutationObserver((records) => {
     for (const r of records) {
       const node = r.target.nodeType === 1 ? r.target : r.target.parentElement;
-      const target = node && node.closest("[data-reveals-result]");
-      if (!target || target.closest("[data-for]").dataset.for !== root.dataset.module) continue;
-      if (r.type === "attributes" ? !target.hidden : target.textContent.trim()) {
-        setView("result");
-        return;
+      for (const [selector, view] of REVEALS) {
+        const target = node && node.closest(selector);
+        if (!target) continue;
+        const owner = target.closest("[data-for]");
+        if (owner && owner.dataset.for !== root.dataset.module) continue;
+        if (r.type === "attributes" ? !target.hidden : target.textContent.trim()) {
+          setView(view);
+          return;
+        }
       }
     }
   }).observe(content.querySelector(".compare"), {
@@ -133,24 +157,26 @@
   }
 
   // ---------- القوائم ----------
-  // قائمة داخل النافذة بخطَّي التطبيق ومقاسات macOS 27: بنود ٢٤، سهام وEsc وReturn
+  // قائمة داخل النافذة بخطَّي التطبيق ومقاسات macOS 27: بنود ٢٤، سهام وEsc وReturn.
+  // تُفتح من زر (تحته أو فوقه إن ضاقت النافذة) أو من موضع المؤشر (قائمة سياقية)
   let menu = null;
 
   function closeMenu(restoreFocus = true) {
     if (!menu) return;
-    const { el, anchor } = menu;
+    const { el, anchor, returnFocus, onClose } = menu;
     menu = null;
     el.remove();
-    anchor.setAttribute("aria-expanded", "false");
-    if (restoreFocus) anchor.focus();
+    if (anchor) anchor.setAttribute("aria-expanded", "false");
+    if (restoreFocus && returnFocus && returnFocus.isConnected) returnFocus.focus();
+    if (onClose) onClose();
   }
 
-  // sections: [[{ label, disabled, run }], …] — بين كل قسمين فاصل
-  function openMenu(anchor, sections) {
-    closeMenu(false);
+  // sections: [[{ label, disabled, destructive, run }], …] — بين كل قسمين فاصل
+  function buildMenu(sections, label) {
     const el = document.createElement("div");
     el.className = "menu";
     el.setAttribute("role", "menu");
+    if (label) el.setAttribute("aria-label", label);
     sections.filter((s) => s.length).forEach((section, i) => {
       if (i > 0) {
         const sep = document.createElement("div");
@@ -162,6 +188,7 @@
         const b = document.createElement("button");
         b.type = "button";
         b.className = "menu-item";
+        b.classList.toggle("is-destructive", Boolean(item.destructive));
         b.setAttribute("role", "menuitem");
         b.textContent = item.label;
         b.disabled = Boolean(item.disabled);
@@ -172,23 +199,26 @@
         el.appendChild(b);
       }
     });
+    return el;
+  }
+
+  // تمييز واحد كما في قوائم الماك: يتبع المؤشر، والسهام تحرّكه. المفتوحة بلوحة
+  // المفاتيح تبدأ ببندها الأول مميّزًا، والمفتوحة بالفأرة بلا تمييز حتى يمرّ المؤشر
+  function showMenu(el, place, { anchor = null, returnFocus = null, onClose = null, keyboard = false } = {}) {
+    closeMenu(false);
+    dismissPopover(false);
     document.body.appendChild(el);
-
-    // تحت الزر ومحاذاة بدايته، ومحصورة داخل النافذة
-    const r = anchor.getBoundingClientRect();
-    const margin = 8;
-    const w = el.offsetWidth;
-    let left = r.right - w;
-    left = Math.max(margin, Math.min(left, window.innerWidth - margin - w));
-    el.style.left = left + "px";
-    el.style.top = r.bottom + 4 + "px";
-    el.style.maxBlockSize = Math.max(96, window.innerHeight - r.bottom - 4 - margin) + "px";
-
-    anchor.setAttribute("aria-expanded", "true");
-    menu = { el, anchor };
-    // قائمة بنودها كلها معطّلة تأخذ التركيز بنفسها ليعمل Esc والسهام
+    place(el);
+    if (anchor) anchor.setAttribute("aria-expanded", "true");
+    menu = { el, anchor, returnFocus: returnFocus || anchor, onClose };
+    // القائمة نفسها تأخذ التركيز حين لا بند مميّز، ليعمل Esc والسهام
     el.tabIndex = -1;
-    (el.querySelector(".menu-item:not(:disabled)") || el).focus();
+    ((keyboard && el.querySelector(".menu-item:not(:disabled)")) || el).focus();
+    el.addEventListener("mousemove", (e) => {
+      const item = e.target.closest(".menu-item:not(:disabled)");
+      if (item && document.activeElement !== item) item.focus();
+    });
+    el.addEventListener("mouseleave", () => el.focus());
 
     el.addEventListener("keydown", (e) => {
       const items = [...el.querySelectorAll(".menu-item:not(:disabled)")];
@@ -198,7 +228,8 @@
         items[(i + 1) % items.length]?.focus();
       } else if (e.key === "ArrowUp") {
         e.preventDefault();
-        items[(i - 1 + items.length) % items.length]?.focus();
+        // بلا بند مميّز (فُتحت بالفأرة) يبدأ السهم للأعلى من آخر بند
+        items[i === -1 ? items.length - 1 : (i - 1 + items.length) % items.length]?.focus();
       } else if (e.key === "Escape") {
         e.preventDefault();
         e.stopPropagation();
@@ -209,8 +240,52 @@
     });
   }
 
+  // تحت الزر أو فوقه، ومحاذاة بدايته (يمينه) أو نهايته (يساره) حين تطلب المرساة
+  // ذلك بـ align: "end" — وتبقى داخل النافذة دائمًا
+  function openMenu(anchor, sections, { align = "start", label, onClose, keyboard = false } = {}) {
+    showMenu(
+      buildMenu(sections, label),
+      (el) => {
+        const r = anchor.getBoundingClientRect();
+        const w = el.offsetWidth;
+        const h = el.offsetHeight;
+        const left = align === "end" ? r.left : r.right - w;
+        el.style.left = clamp(left, MARGIN, window.innerWidth - MARGIN - w) + "px";
+        const below = window.innerHeight - r.bottom - 4 - MARGIN;
+        const above = r.top - 4 - MARGIN;
+        if (h > below && above > below) {
+          el.style.top = Math.max(MARGIN, r.top - 4 - h) + "px";
+          el.style.maxBlockSize = above + "px";
+        } else {
+          el.style.top = r.bottom + 4 + "px";
+          el.style.maxBlockSize = Math.max(96, below) + "px";
+        }
+      },
+      { anchor, onClose, keyboard }
+    );
+  }
+
+  // قائمة سياقية: ركنها الأيمن عند المؤشر (RTL)، وتنقلب إلى فوقه أو يساره عند الحافة
+  function openMenuAt(x, y, sections, { label, returnFocus, onClose, keyboard = false } = {}) {
+    showMenu(
+      buildMenu(sections, label),
+      (el) => {
+        const w = el.offsetWidth;
+        const h = el.offsetHeight;
+        let left = x - w;
+        if (left < MARGIN) left = x;
+        let top = y;
+        if (top + h > window.innerHeight - MARGIN) top = y - h;
+        el.style.left = clamp(left, MARGIN, window.innerWidth - MARGIN - w) + "px";
+        el.style.top = clamp(top, MARGIN, window.innerHeight - MARGIN - h) + "px";
+      },
+      { returnFocus, onClose, keyboard }
+    );
+  }
+
   document.addEventListener("mousedown", (e) => {
-    if (menu && !menu.el.contains(e.target) && !menu.anchor.contains(e.target)) closeMenu(false);
+    if (menu && !menu.el.contains(e.target) && !(menu.anchor && menu.anchor.contains(e.target))) closeMenu(false);
+    if (popover && !popover.el.contains(e.target) && !popover.anchor.contains(e.target)) dismissPopover(false);
   });
   window.addEventListener("blur", () => closeMenu(false));
 
@@ -225,8 +300,121 @@
     if (!anchor) return;
     if (menu && menu.anchor === anchor) return closeMenu();
     const source = document.getElementById(anchor.dataset.menu);
-    openMenu(anchor, [proxyItems([...source.querySelectorAll("button")])]);
+    // نقرة بلا مؤشر (detail = 0) جاءت من Return أو المسافة
+    openMenu(anchor, [proxyItems([...source.querySelectorAll("button")])], { align: anchor.dataset.menuAlign, keyboard: e.detail === 0 });
   });
+
+  // ---------- الأوراق والتنبيهات: نافذة واحدة فوق النافذة ----------
+  // الورقة والتنبيه خارج #window: يصير ما تحتهما خاملًا (inert) فيبقى التركيز
+  // داخلهما، ويعود حيث كان عند الإغلاق. Esc وReturn يقررهما صاحب الورقة
+  const modals = [];
+  const focusable = (node) => node && node.isConnected && !node.disabled && node.offsetParent !== null && !node.closest("[inert]");
+
+  // fallbackFocus: عنصر أو دالة تعيده — حين يزول ما كان عليه التركيز أو يتعطّل
+  function presentModal(el, { initialFocus, fallbackFocus } = {}) {
+    if (modals.some((m) => m.el === el)) return;
+    closeMenu(false);
+    dismissPopover(false);
+    modals.push({ el, returnFocus: document.activeElement, fallbackFocus });
+    win.inert = true;
+    el.hidden = false;
+    const target = (initialFocus && el.querySelector(initialFocus)) || el.querySelector("button:not(:disabled)") || el;
+    if (target === el) el.tabIndex = -1;
+    target.focus();
+  }
+
+  function dismissModal(el) {
+    const i = modals.findIndex((m) => m.el === el);
+    if (i === -1) return;
+    const [{ returnFocus, fallbackFocus }] = modals.splice(i, 1);
+    const hadFocus = el.contains(document.activeElement);
+    el.hidden = true;
+    if (!modals.length) win.inert = false;
+    if (!hadFocus && document.activeElement !== document.body) return;
+    const fallback = typeof fallbackFocus === "function" ? fallbackFocus() : fallbackFocus;
+    const target = [returnFocus, fallback].find(focusable);
+    if (target) target.focus();
+  }
+
+  // Tab يدور داخل الورقة المفتوحة ولا يغادرها — ولو كان التركيز على عنصر خارج
+  // سلسلة Tab نفسها (عمود مركَّز بعد «أعد المحاولة» مثلًا)
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Tab" || !modals.length) return;
+    const { el } = modals[modals.length - 1];
+    const focusables = [...el.querySelectorAll("button:not(:disabled), [href], input:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex='-1'])")].filter((n) => n.offsetParent);
+    if (!focusables.length) return;
+    const first = focusables[0];
+    const last = focusables[focusables.length - 1];
+    const i = focusables.indexOf(document.activeElement);
+    if (i === -1) {
+      e.preventDefault();
+      (e.shiftKey ? last : first).focus();
+    } else if (e.shiftKey && i === 0) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && i === focusables.length - 1) {
+      e.preventDefault();
+      first.focus();
+    }
+  });
+
+  // ---------- النوافذ المنبثقة ----------
+  // تحت الزر بسهم يشير إلى وسطه (Figma 261:6648)، وتغلق بنقرة خارجها أو Esc
+  let popover = null;
+  const ARROW = 10;
+
+  function positionPopover() {
+    if (!popover) return;
+    const { el, anchor } = popover;
+    // المرساة اختفت (اتسعت النافذة فزال «المزيد» مثلًا): لا نافذة منبثقة بلا مرساة
+    if (!anchor.isConnected || anchor.offsetParent === null) return dismissPopover(false);
+    const r = anchor.getBoundingClientRect();
+    const w = el.offsetWidth;
+    const centre = r.left + r.width / 2;
+    const left = clamp(Math.round(centre - w / 2), MARGIN, window.innerWidth - MARGIN - w);
+    const top = Math.round(r.bottom + 4 + ARROW);
+    el.style.left = left + "px";
+    el.style.top = top + "px";
+    el.style.maxBlockSize = window.innerHeight - top - MARGIN + "px";
+    el.style.setProperty("--arrow-x", Math.round(centre - left) + "px");
+  }
+
+  // control: الزر الذي يملك النافذة (aria-expanded) حين تُرسَم عند مرساة أخرى، كزر
+  // «المزيد» الذي طُوي فيه
+  function presentPopover(el, anchor, { onClose, control = anchor } = {}) {
+    if (popover && popover.el === el) return dismissPopover();
+    dismissPopover(false);
+    closeMenu(false);
+    popover = { el, anchor, control, onClose, returnFocus: document.activeElement };
+    el.hidden = false;
+    positionPopover();
+    if (!popover) return;
+    control.setAttribute("aria-expanded", "true");
+    el.tabIndex = -1;
+    el.focus();
+  }
+
+  function dismissPopover(restoreFocus = true) {
+    if (!popover) return;
+    const { el, anchor, control, onClose, returnFocus } = popover;
+    popover = null;
+    el.hidden = true;
+    control.setAttribute("aria-expanded", "false");
+    if (restoreFocus && el.contains(document.activeElement)) [control, anchor, returnFocus].find(focusable)?.focus();
+    if (onClose) onClose();
+  }
+
+  window.addEventListener("resize", positionPopover);
+
+  window.NasaqWindow = {
+    openMenu,
+    openMenuAt,
+    presentModal,
+    dismissModal,
+    presentPopover,
+    dismissPopover,
+    isModalOpen: modalOpen,
+  };
 
   // ---------- شريط الأدوات: الطي عند الضيق ----------
   // تُطوى المجموعات بترتيب data-collapse وتختفي التسميات بترتيب
@@ -257,13 +445,15 @@
       if (step.attr === "data-collapsed") overflowGroup.hidden = false;
     }
     if (menu && menu.anchor === overflowButton && overflowGroup.hidden) closeMenu(false);
+    // طيٌّ أو زوال «المزيد» قد يُخفي مرساة النافذة المنبثقة: تُغلق أو تتبع موضعها الجديد
+    if (popover) positionPopover();
   }
 
-  overflowButton.addEventListener("click", () => {
+  overflowButton.addEventListener("click", (e) => {
     if (menu && menu.anchor === overflowButton) return closeMenu();
     const module = activeToolbar();
     const groups = module ? [...module.querySelectorAll("[data-collapsed]")] : [];
-    openMenu(overflowButton, groups.map((g) => proxyItems([...g.querySelectorAll("button")])));
+    openMenu(overflowButton, groups.map((g) => proxyItems([...g.querySelectorAll("button")])), { keyboard: e.detail === 0 });
   });
 
   let queued = false;
@@ -284,6 +474,8 @@
   // تلاشي الوحدة يعمل عند التبديل وحده، لا عند أول ظهور ولا عند كل رسم
   let switchTimer = null;
   function markModuleSwitch() {
+    closeMenu(false);
+    dismissPopover(false);
     if (!root.hasAttribute("data-ready")) return;
     root.removeAttribute("data-module-switching");
     void root.offsetWidth; // يعيد تشغيل الحركة إن جاء تبديل قبل انتهاء السابق
@@ -291,8 +483,8 @@
     clearTimeout(switchTimer);
     switchTimer = setTimeout(() => root.removeAttribute("data-module-switching"), 400);
   }
-  // ظهور زر أو اختفاؤه (تصدير سابستاك، الجسر إلى نَسَق) يعيد الحساب — وزر
-  // «المزيد» نفسه مستثنى لأن الحساب هو من يكتبه
+  // ظهور زر أو اختفاؤه (الجسر إلى نَسَق) يعيد الحساب — وزر «المزيد» نفسه مستثنى
+  // لأن الحساب هو من يكتبه
   new MutationObserver((records) => {
     if (records.some((r) => r.target !== overflowGroup)) scheduleLayout();
   }).observe(toolbar, { subtree: true, attributes: true, attributeFilter: ["hidden"] });

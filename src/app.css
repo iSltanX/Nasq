@@ -154,6 +154,14 @@
 .sidebar-row.is-selected .icon {
   color: var(--text-on-accent);
 }
+/* النافذة ليست في المقدمة: التحديد محايد (Sidebar Row · Selected Inactive) */
+[data-inactive] .sidebar-row.is-selected {
+  background: var(--fill-pressed);
+  color: var(--text-primary);
+}
+[data-inactive] .sidebar-row.is-selected .icon {
+  color: var(--icon-secondary);
+}
 
 .sidebar-section-header {
   display: flex;
@@ -196,6 +204,14 @@
 }
 .sidebar-footer .footer-icon {
   color: var(--module-glyph);
+}
+/* أزرار الذيل في نهايته، والترس آخرها في الوحدتين فلا يتحرك موضعه بينهما (Figma 97:207 و105:340) */
+.footer-actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--space-2);
+  margin-inline-start: auto;
 }
 .sidebar-hint {
   padding-inline: var(--space-5);
@@ -256,6 +272,18 @@
 }
 .search-field input:focus-visible {
   box-shadow: none;
+}
+/* زر المسح يسار الحقل ما دام فيه نص (Search Field · Filled) */
+.search-clear,
+.find-clear {
+  display: inline-flex;
+  flex: none;
+  border-radius: var(--radius-full);
+  color: var(--icon-secondary);
+}
+.search-clear:hover,
+.find-clear:hover {
+  color: var(--icon-primary);
 }
 
 .icon-button {
@@ -369,14 +397,23 @@ textarea.empty-bidi {
   block-size: 12px;
 }
 
+/* المؤشر الدوّار (Figma 57:68): حلقة سمكها ربع نصف القطر تقريبًا، وقوس ١٣٥° من
+   الأعلى. النبرة من متغيرين: الوحدة افتراضيًا، وفوق لون الوحدة داخل زر بارز */
 .spinner {
+  --spinner-arc: var(--module-strong);
+  --spinner-track: var(--fill-control);
   display: block;
+  flex: none;
   inline-size: var(--size-spinner-lg);
   block-size: var(--size-spinner-lg);
   border-radius: 50%;
-  background: conic-gradient(var(--module-strong) 0 25%, var(--fill-control) 0);
-  mask: radial-gradient(farthest-side, transparent calc(100% - 3px), black calc(100% - 3px));
+  background: conic-gradient(var(--spinner-arc) 0 37.5%, var(--spinner-track) 0);
+  mask: radial-gradient(farthest-side, transparent 76%, black calc(76% + 0.5px));
   animation: spin 900ms linear infinite;
+}
+.spinner-16 {
+  inline-size: var(--size-icon-16);
+  block-size: var(--size-icon-16);
 }
 @keyframes spin {
   to { transform: rotate(1turn); }
@@ -435,8 +472,7 @@ textarea.empty-bidi {
 }
 
 .glass-group,
-.module-switcher,
-.glass-button {
+.module-switcher {
   background: var(--material-toolbar);
   box-shadow: inset 0 0 0 var(--stroke-hairline) var(--material-edge), 0 0 6px -2px var(--shadow-popover-contact);
   -webkit-backdrop-filter: blur(var(--blur-glass-toolbar));
@@ -474,9 +510,11 @@ textarea.empty-bidi {
 .toolbar-item:active {
   background: var(--fill-pressed);
 }
-.toolbar-item[aria-pressed="true"],
-.toolbar-item[aria-expanded="true"] {
+/* المفعَّل وحده بلون الوحدة (Toolbar Item · Selected)؛ الزر الذي فتح نافذته أو
+   قائمته يبقى بحاله كما في إطارات Figma (261:6648 و262:7032) */
+.toolbar-item[aria-pressed="true"] {
   background: var(--module-tint);
+  box-shadow: inset 0 0 0 var(--stroke-hairline) var(--material-edge);
   color: var(--module-strong);
 }
 .toolbar-item:disabled {
@@ -505,27 +543,71 @@ textarea.empty-bidi {
   color: var(--text-disabled);
 }
 
-.glass-button {
+/* الفعل الرئيس «نسّق»: كبسولة ٣٦ — بارز بلون الوحدة حتى توجد نتيجة، ثم زجاجي
+   يفسح للأدوات، ومعطّل بلا نص، وفي حالة تحميل أثناء النداء (Figma 102:2311) */
+.action-button {
   display: inline-flex;
   flex: none;
   align-items: center;
   justify-content: center;
   gap: var(--space-8);
-  block-size: var(--size-control-md);
+  block-size: var(--size-control-lg);
   padding-inline: var(--space-14);
   border-radius: var(--radius-full);
   font: var(--type-label-default);
+}
+.action-button .spinner {
+  display: none;
+}
+.action-button[data-style="primary"] {
+  background: var(--module-strong);
+  color: var(--text-on-accent);
+}
+.action-button[data-style="primary"]:hover {
+  background: var(--module-hover);
+}
+.action-button[data-style="primary"]:active {
+  background: var(--module-pressed);
+}
+.action-button[data-style="glass"] {
+  background: var(--material-toolbar);
+  box-shadow: inset 0 0 0 var(--stroke-hairline) var(--material-edge), 0 0 6px -2px var(--shadow-popover-contact);
+  -webkit-backdrop-filter: blur(var(--blur-glass-toolbar));
+  backdrop-filter: blur(var(--blur-glass-toolbar));
   color: var(--text-primary);
 }
-.glass-button:hover {
+.action-button[data-style="glass"]:hover {
   background-image: linear-gradient(var(--fill-hover), var(--fill-hover));
 }
-.glass-button:active {
+.action-button[data-style="glass"]:active {
   background-image: linear-gradient(var(--fill-pressed), var(--fill-pressed));
 }
-.glass-button:disabled {
+/* المعطّل — أيًّا كان أسلوبه — كبسولة زجاجية خافتة بحافتها كبقية الشريط (Button ·
+   Glass · Disabled)، والتحميل مستثنى فيبقى بلون حالته */
+.action-button:disabled:not([aria-busy="true"]) {
+  background: var(--material-toolbar);
   background-image: linear-gradient(var(--fill-disabled), var(--fill-disabled));
+  box-shadow: inset 0 0 0 var(--stroke-hairline) var(--material-edge), 0 0 6px -2px var(--shadow-popover-contact);
+  -webkit-backdrop-filter: blur(var(--blur-glass-toolbar));
+  backdrop-filter: blur(var(--blur-glass-toolbar));
   color: var(--text-disabled);
+}
+/* التحميل يبقى بلون حالته لا بلون التعطيل: المؤشر مكان الأيقونة */
+.action-button[aria-busy="true"] .spinner {
+  display: block;
+}
+.action-button[aria-busy="true"] .action-icon {
+  display: none;
+}
+.action-button[data-style="primary"][aria-busy="true"] {
+  --spinner-arc: var(--text-on-accent);
+  --spinner-track: var(--fill-pressed);
+  background: var(--module-strong);
+  color: var(--text-on-accent);
+}
+.action-button[data-style="glass"][aria-busy="true"] {
+  background-image: none;
+  color: var(--text-primary);
 }
 
 /* مبدّل الوحدتين: كل مقطع يحمل هوية وحدته ولو كانت الأخرى فعّالة */
@@ -668,10 +750,28 @@ textarea.empty-bidi {
   color: var(--text-secondary);
 }
 
-/* عمود واحد: «الأصل» يعرض المحرر، وتظهر تحته حالة البداية ما دامت النتيجة فارغة */
-.content[data-view="source"] .column-result:not(:has(> .empty-state:not([hidden]))),
+/* عمود واحد: «الأصل» يعرض المحرر، وتظهر تحته حالة البداية ما دامت حالة نَسَق
+   فارغة (آلة الحالات في nasaq.js). شَذْب يشتقها من عنصره حتى المرحلة ٤ */
+.content[data-view="source"] .column-result,
 .content[data-view="result"] .column-source {
   display: none;
+}
+:root:not([data-module="shadhb"])[data-nasaq-state="empty"] .content[data-view="source"] .column-result[data-for="nasaq"] {
+  display: flex;
+}
+.content[data-view="source"] .column-result[data-for="shadhb"]:has(> .empty-state:not([hidden])) {
+  display: flex;
+}
+
+/* عمود واحد والأصل ظاهر وتحته عمود النتيجة (حالة البداية): التنبيه فوق الأصل وحده */
+@container content (max-width: 991px) {
+  .content[data-view="source"] .column-result [data-error-slot] {
+    display: none;
+  }
+}
+/* حاوية خانتَي التنبيه فوق الأصل لا تشغل مكانًا بنفسها */
+.banner-stack {
+  display: contents;
 }
 
 /* عمودان جنبًا إلى جنب حين يتسع المحتوى (وصف «نَسَق / Content»: ٩٩٢) */
@@ -700,6 +800,10 @@ textarea.empty-bidi {
     flex: none;
     inline-size: var(--stroke-hairline);
     background: var(--border-hairline);
+  }
+  /* عمودان: التنبيه في عمود النتيجة وحده (Figma 99:669) */
+  .column-source [data-error-slot] {
+    display: none;
   }
 }
 
@@ -742,8 +846,8 @@ textarea.empty-bidi {
   background-color: var(--module-highlight);
 }
 ::highlight(nsq-search-current) {
-  background-color: var(--module-accent);
-  color: var(--text-on-accent);
+  background-color: var(--module-tint-strong);
+  color: var(--text-primary);
 }
 
 .empty-state:not(.empty-state-compact) {
@@ -790,21 +894,81 @@ textarea.empty-bidi {
   color: var(--text-secondary);
 }
 
+/* التنبيه داخل العمود (Banner · Danger, Figma 71:334): أيقونة الخطر يمينًا، ثم
+   العنوان والرسالة والفعل، وزر الإغلاق يسارًا — على سطح مرتفع بخط شعري */
 .banner {
   display: flex;
   flex: none;
   align-items: flex-start;
-  gap: var(--space-8);
-  inline-size: min(var(--layout-editor-measure), 100%);
-  padding: var(--space-8) var(--space-12);
-  border-radius: var(--radius-8);
-  background: var(--status-danger-bg);
-  font: var(--type-body-small);
+  gap: var(--space-12);
+  inline-size: 100%;
+  padding: var(--space-12);
+  border-radius: var(--radius-12);
+  background: var(--surface-elevated);
+  box-shadow: inset 0 0 0 var(--stroke-hairline) var(--border-hairline);
+}
+.banner-icon {
   color: var(--status-danger-fg);
 }
-.banner .icon {
-  margin-block-start: 2px;
+.banner-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-4);
+  min-inline-size: 0;
 }
+.banner-title {
+  font: var(--type-body-emphasis);
+  color: var(--text-primary);
+}
+.banner-message {
+  font: var(--type-body-small);
+  color: var(--text-secondary);
+}
+.banner-close {
+  color: var(--icon-secondary);
+}
+
+/* أثناء التنسيق (Figma 99:592): سطر تقدّم بمؤشر ١٦، وهيكل نائب يحترم شكل الفقرات */
+.result-progress {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-16);
+}
+.progress-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  font: var(--type-body-small);
+  color: var(--text-secondary);
+}
+.skeleton-paragraph {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-16);
+  inline-size: 100%;
+}
+.skeleton-paragraph + .skeleton-paragraph {
+  margin-block-start: var(--space-32);
+}
+.skeleton-line {
+  display: block;
+  flex: none;
+  inline-size: 100%;
+  max-inline-size: 100%;
+  block-size: var(--size-skeleton-line);
+  border-radius: var(--radius-4);
+  background: var(--fill-control);
+}
+.skeleton-paragraph:first-of-type .skeleton-line:nth-child(1) { inline-size: 300px; }
+.skeleton-paragraph:first-of-type .skeleton-line:nth-child(2) { inline-size: 220px; }
+.skeleton-paragraph:first-of-type .skeleton-line:nth-child(3) { inline-size: 360px; }
+.skeleton-paragraph:last-of-type .skeleton-line:nth-child(1) { inline-size: 260px; }
+.skeleton-paragraph:last-of-type .skeleton-line:nth-child(2) { inline-size: 320px; }
+.skeleton-paragraph:last-of-type .skeleton-line:nth-child(3) { inline-size: 200px; }
 
 /* ================= شريط الحالة ================= */
 .status-bar {
@@ -830,9 +994,8 @@ textarea.empty-bidi {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-/* عدّاد النتيجة ما دامت هناك نتيجة، وإلا عدّاد الأصل */
-[data-module="nasaq"] .content:has(#output-text:not(:empty)) #input-count,
-.content:not(:has(#output-text:not(:empty))) #output-count {
+/* في نَسَق: عدّاد النتيجة ما دامت النتيجة هي المعروضة، وإلا عدّاد الأصل */
+:root:not([data-module="shadhb"]):is([data-nasaq-state="result"], [data-nasaq-state="review"]) #input-count {
   display: none;
 }
 #output-count.over-limit {
@@ -846,7 +1009,8 @@ textarea.empty-bidi {
   gap: var(--space-8);
   font: var(--type-caption-emphasis);
 }
-.status-start:has(#toast:not([hidden])) .polish-status {
+/* الرسالة العابرة تحلّ محل مؤشر الحالة لحظةً (Figma 263:7739) */
+.status-start[data-feedback] .polish-status {
   display: none;
 }
 .status-indicator {
@@ -860,24 +1024,42 @@ textarea.empty-bidi {
   color: var(--text-secondary);
 }
 
-/* حالة نَسَق مشتقة من عناصرها حتى تكتمل آلة الحالات في المرحلة ٣ */
-.polish-status[data-for="nasaq"] .status-label {
-  display: none;
-}
-.content:not(:has(#loading:not([hidden]))):not(:has(#output-text:not(:empty))) .polish-status [data-status="idle"],
-.content:has(#loading:not([hidden])) .polish-status [data-status="working"],
-.content:not(:has(#loading:not([hidden]))):has(#output-text:not(:empty)) .polish-status [data-status="done"] {
-  display: inline;
-}
-.content:has(#loading:not([hidden])) .polish-status[data-for="nasaq"] .status-indicator {
+/* حالة نَسَق من آلة الحالات (Polish Status, Figma 71:400): لم يُنسَّق بعد، جارٍ
+   التنسيق…، بانتظار اختيارك، منسَّق، تعذّر التنسيق — اللون للحالة وحدها */
+#nasaq-status[data-status="processing"] .status-indicator {
   box-shadow: inset 0 0 0 1.5px var(--module-glyph);
 }
-.content:not(:has(#loading:not([hidden]))):has(#output-text:not(:empty)) .polish-status[data-for="nasaq"] .status-indicator {
+#nasaq-status[data-status="review"] .status-indicator {
+  background: var(--module-glyph);
+  box-shadow: none;
+}
+#nasaq-status[data-status="review"] .status-label {
+  color: var(--module-strong);
+}
+#nasaq-status[data-status="result"] .status-indicator,
+.status-toast[data-tone="success"] .status-indicator {
   background: var(--status-success-solid);
   box-shadow: none;
 }
-.polish-status [data-status="done"] {
+#nasaq-status[data-status="result"] .status-label,
+.status-toast[data-tone="success"] {
   color: var(--status-success-fg);
+}
+#nasaq-status[data-status="error"] .status-indicator,
+.status-toast[data-tone="danger"] .status-indicator {
+  background: var(--status-danger-solid);
+  box-shadow: none;
+}
+#nasaq-status[data-status="error"] .status-label,
+.status-toast[data-tone="danger"] {
+  color: var(--status-danger-fg);
+}
+.status-toast[data-tone="warning"] .status-indicator {
+  background: var(--status-warning-solid);
+  box-shadow: none;
+}
+.status-toast[data-tone="warning"] {
+  color: var(--status-warning-fg);
 }
 
 #shadhb-status-dot[data-status="pending"] {
@@ -893,11 +1075,12 @@ textarea.empty-bidi {
 }
 
 .status-toast {
-  color: var(--text-primary);
+  min-inline-size: 0;
+  color: var(--text-secondary);
 }
-.status-toast .status-indicator {
-  background: var(--status-success-solid);
-  box-shadow: none;
+#toast-message {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* ================= المفتّش ================= */
@@ -922,6 +1105,9 @@ textarea.empty-bidi {
 }
 .section-header .icon {
   color: var(--icon-secondary);
+}
+.section-header .section-icon.is-primary {
+  color: var(--icon-primary);
 }
 .section-header .section-title {
   flex: 1;
@@ -954,6 +1140,10 @@ textarea.empty-bidi {
   font: var(--type-body-small);
   color: var(--text-secondary);
 }
+.inspector-row .row-label {
+  flex: none;
+  white-space: nowrap;
+}
 .field-hint {
   font: var(--type-caption-default);
   color: var(--text-tertiary);
@@ -974,9 +1164,6 @@ textarea.empty-bidi {
   flex-direction: column;
   gap: var(--space-4);
 }
-.stacked-row:has(> .row-value[hidden]) {
-  display: none;
-}
 .stacked-row .row-label {
   font: var(--type-caption-emphasis);
   color: var(--text-secondary);
@@ -986,9 +1173,24 @@ textarea.empty-bidi {
   color: var(--text-primary);
   white-space: pre-line;
 }
+/* «١. كُسرت الفقرة…» — الرقم جزء من السطر نفسه كما في Figma (98:313) */
 #notes-list {
-  padding-inline-start: 1.2em;
-  list-style: arabic-indic;
+  padding: 0;
+  list-style: arabic-indic inside;
+}
+
+/* التقرير أثناء التنسيق: هيكل نائب مكان ما تغيّر وبصمة الإيقاع (Figma 98:400) */
+.report-skeleton {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-8);
+}
+.report-skeleton .skeleton-line:last-child {
+  inline-size: 180px;
+}
+:root[data-nasaq-state="processing"] :is(#notes-box, #rhythm-box) {
+  display: none;
 }
 
 /* القائمة المنبثقة فوق الـ select (تبنيها nasaq.js) بمقاس Popup Button الصغير */
@@ -1007,6 +1209,13 @@ textarea.empty-bidi {
 .dd-btn .icon {
   color: var(--icon-secondary);
 }
+.dd-btn {
+  min-inline-size: 0;
+}
+.dd-value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .dd-btn:hover {
   background-image: linear-gradient(var(--fill-hover), var(--fill-hover));
 }
@@ -1018,6 +1227,8 @@ textarea.empty-bidi {
   color: var(--text-disabled);
 }
 
+/* بطاقة شكل المنعطف (Suggestion Card · Form): لم تُحسم بحدّ هادئ، ومحددة بلون
+   الوحدة حين تعرضها النتيجة، ومعتمدة بوسم «معتمدة» و«تراجع عن القرار» */
 .suggestion-card {
   display: flex;
   flex-direction: column;
@@ -1027,9 +1238,69 @@ textarea.empty-bidi {
   border-radius: var(--radius-12);
   box-shadow: inset 0 0 0 var(--stroke-hairline) var(--border-default);
 }
+.suggestion-card[data-state="undecided"]:hover {
+  background: var(--fill-hover);
+}
+.suggestion-card[data-state="selected"] {
+  background: var(--module-tint);
+  box-shadow: inset 0 0 0 var(--stroke-hairline) var(--module-strong);
+}
+/* العنوان يمينًا والوسم يسارًا على سطر واحد بلا فجوة ثابتة (Figma 98:364: ١٢٨ + ٦٠
+   في ١٨٨)، والعنوان وحده يتنازل عند الضيق */
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  align-self: stretch;
+}
 .suggestion-card .card-title {
+  min-inline-size: 0;
+  overflow: hidden;
   font: var(--type-label-default);
   color: var(--text-primary);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* الزر الأساسي في نهاية السطر (يسارًا) كما يصف المكوّن */
+.card-actions {
+  display: flex;
+  align-items: center;
+  align-self: stretch;
+  justify-content: flex-end;
+  gap: var(--space-8);
+}
+
+/* الوسم (Tag, Figma 57:40): اللون للحالة وحدها، والأيقونة للمعتمدة */
+.tag {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: var(--space-4);
+  block-size: var(--size-control-sm);
+  padding-inline: var(--space-8);
+  border-radius: var(--radius-full);
+  background: var(--fill-control);
+  font: var(--type-caption-emphasis);
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+.tag .icon {
+  display: none;
+}
+.tag[data-tone="module"] {
+  background: var(--module-tint);
+  color: var(--module-strong);
+}
+.tag[data-tone="module"] .icon {
+  display: block;
+}
+.tag[data-tone="success"] {
+  background: var(--status-success-bg);
+  color: var(--status-success-fg);
+}
+.tag[data-tone="danger"] {
+  background: var(--status-danger-bg);
+  color: var(--status-danger-fg);
 }
 .card-quote {
   align-self: stretch;
@@ -1046,7 +1317,7 @@ textarea.empty-bidi {
 .menu,
 .dd-popup {
   position: fixed;
-  z-index: 100;
+  z-index: 300;
   display: flex;
   flex-direction: column;
   min-inline-size: 160px;
@@ -1072,7 +1343,7 @@ textarea.empty-bidi {
   text-align: start;
   white-space: nowrap;
 }
-.menu-item:is(:hover, :focus-visible):not(:disabled),
+.menu-item:focus:not(:disabled),
 .dd-option:is(:hover, :focus-visible) {
   background: var(--module-strong);
   box-shadow: none;
@@ -1080,6 +1351,16 @@ textarea.empty-bidi {
 }
 .menu-item:disabled {
   color: var(--text-disabled);
+}
+.menu {
+  min-inline-size: 212px;
+}
+/* البند المدمّر بلون الخطر، ويصير أبيض فوق التمييز كبقية البنود (Menu Item, Figma 70:312) */
+.menu-item.is-destructive {
+  color: var(--status-danger-fg);
+}
+.menu-item.is-destructive:focus:not(:disabled) {
+  color: var(--text-on-accent);
 }
 .menu-separator {
   flex: none;
@@ -1094,100 +1375,91 @@ textarea.empty-bidi {
   visibility: visible;
 }
 
-/* ================= مؤقت: المسودات والقصّات في الشريط الجانبي =================
-   يُعاد بناؤهما صفوفًا وقوائم سياقية كما في Figma في المرحلتين ٣ و٤ */
-.drafts-list,
+/* ================= المسودات في الشريط الجانبي (Figma 97:116) =================
+   مسودة ٤٤ بسهم طي ومقتطف ونوع وعدد صيغ ووقت، وصيغها تحتها صفوفًا ٣٢ بإزاحة ٢٤
+   وشارة «± أسطر». إطار بلون الوحدة حول الصف ما دامت قائمته السياقية مفتوحة */
+.drafts-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.draft-row,
+.version-row {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--space-10);
+  padding-inline: var(--space-row-inset);
+  border-radius: var(--radius-8);
+  font: var(--type-body-small);
+  color: var(--text-primary);
+}
+.draft-row {
+  block-size: var(--size-row-2line);
+}
+.version-row {
+  block-size: var(--size-sidebar-row);
+}
+.draft-row:hover,
+.version-row:hover {
+  background: var(--fill-hover);
+}
+.draft-row[data-context-target],
+.version-row[data-context-target] {
+  box-shadow: inset 0 0 0 2px var(--module-accent);
+}
+.draft-row .row-disclosure {
+  color: var(--text-secondary);
+}
+.draft-row .row-icon,
+.version-row .row-icon {
+  color: var(--module-glyph);
+}
+.row-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-inline-size: 0;
+}
+.draft-row .row-title,
+.version-row .row-title,
+.row-subtitle {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.version-row .row-title {
+  flex: 1;
+  min-inline-size: 0;
+}
+.row-subtitle {
+  font: var(--type-caption-default);
+  color: var(--text-secondary);
+}
+.row-meta {
+  flex: none;
+  font: var(--type-caption-footnote);
+  color: var(--text-secondary);
+}
+.draft-versions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding-inline: var(--space-24);
+}
+
+/* ================= مؤقت حتى المرحلة ٤: القصّات وبطاقة القراءة لشَذْب ================= */
 .cuts-list {
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
 }
-.draft-summary,
-.type-btn,
-.version-btn {
-  display: flex;
-  align-items: center;
-  gap: var(--space-10);
-  inline-size: 100%;
-  min-block-size: var(--size-sidebar-row);
-  padding: var(--space-4) var(--space-row-inset);
-  border-radius: var(--radius-8);
-  font: var(--type-body-small);
-  color: var(--text-primary);
-  text-align: start;
-}
-.draft-summary {
-  flex-direction: column;
-  align-items: stretch;
-  gap: 0;
-  min-block-size: var(--size-row-2line);
-}
-.draft-summary:hover,
-.type-btn:hover,
-.version-btn:hover {
-  background: var(--fill-hover);
-}
-.type-btn.open,
-.version-btn.open {
-  background: var(--fill-pressed);
-  font-weight: 700;
-}
-.draft-excerpt {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.draft-meta {
-  display: flex;
-  gap: var(--space-8);
-  font: var(--type-caption-default);
-  color: var(--text-secondary);
-}
-.chip,
-.lines-badge {
-  font: var(--type-caption-default);
-  color: var(--text-secondary);
-}
-.lines-badge {
-  padding-inline: var(--space-8);
-  border-radius: var(--radius-full);
-  background: var(--fill-control);
-}
-.version-btn .draft-date {
-  margin-inline-start: auto;
-  font: var(--type-caption-footnote);
-  color: var(--text-secondary);
-}
-.draft-texts,
-.type-list,
-.version-list,
-.version-detail {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  padding-inline-start: var(--space-12);
-}
-.draft-texts h3 {
-  padding-inline: var(--space-row-inset);
-  font: var(--type-caption-emphasis);
-  color: var(--text-secondary);
-}
-.draft-text {
-  max-block-size: 120px;
-  padding: var(--space-4) var(--space-row-inset);
-  overflow-y: auto;
-  font: var(--type-caption-default);
-  color: var(--text-secondary);
-  white-space: pre-wrap;
-}
-.draft-actions,
 .cut-actions {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-4);
   padding-inline: var(--space-row-inset);
 }
-.tool-btn,
 .cut-do,
 .cut-keep {
   block-size: var(--size-control-small);
@@ -1200,10 +1472,6 @@ textarea.empty-bidi {
 .cut-do {
   background: var(--module-strong);
   color: var(--text-on-accent);
-}
-.tool-btn.danger {
-  background: var(--status-danger-bg);
-  color: var(--status-danger-fg);
 }
 
 .cut-entry {
@@ -1290,9 +1558,365 @@ textarea.empty-bidi {
   margin-block-start: 2px;
 }
 
-/* ================= مؤقت: الإعدادات والتنويعات والعدسة =================
-   الإعدادات نافذة مستقلة في المرحلة ٥، والتنويعات ورقة والعدسة نافذة منبثقة في
-   المرحلة ٣ */
+/* ================= شريط البحث في النتيجة (Figma 262:7032 و73:701) =================
+   شريط ٣٢ تحت شريط الأدوات بعرض المحتوى: الحقل يمينًا ثم السابق والتالي ثم «تم»،
+   بمقاسات عناصر macOS 27 الصغيرة (٢٠ بخط ١١)، ويدفع المحتوى تحته */
+.find-bar {
+  position: absolute;
+  inset-block-start: var(--size-toolbar);
+  inset-inline: 0;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  block-size: var(--size-find-bar);
+  padding-inline: var(--space-8);
+  background: var(--surface-find-bar);
+  box-shadow: inset 0 calc(-1 * var(--stroke-hairline)) 0 var(--border-default);
+}
+:root:not([data-module="shadhb"]) .find-bar:not([hidden]) + .scroll-view {
+  padding-block-start: calc(var(--size-toolbar) + var(--size-find-bar) + var(--space-8) + var(--space-24));
+}
+.find-field {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: var(--space-4);
+  min-inline-size: 0;
+  block-size: var(--size-control-small);
+  padding-inline: var(--space-5);
+  border-radius: var(--radius-control-small);
+  background: var(--fill-field);
+  box-shadow: inset 0 0 0 var(--stroke-hairline) var(--border-default);
+  color: var(--icon-secondary);
+}
+.find-field:focus-within {
+  box-shadow: inset 0 0 0 var(--stroke-hairline) var(--border-default), var(--focus-ring);
+}
+.find-field input {
+  flex: 1;
+  min-inline-size: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  outline: none;
+  font: var(--type-caption-footnote);
+  color: var(--text-primary);
+}
+.find-field input::placeholder {
+  color: var(--text-tertiary);
+}
+.find-field input::-webkit-search-decoration,
+.find-field input::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+}
+.find-field input:focus-visible {
+  box-shadow: none;
+}
+.find-count {
+  flex: none;
+  font: var(--type-caption-footnote);
+  color: var(--text-secondary);
+}
+.find-nav {
+  display: flex;
+  flex: none;
+  align-items: center;
+  block-size: var(--size-control-small);
+  border-radius: var(--radius-control-small);
+  background: var(--fill-control);
+}
+.find-step {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 21px;
+  block-size: 100%;
+  border-radius: var(--radius-control-small);
+  color: var(--icon-primary);
+}
+.find-step:hover:not(:disabled) {
+  background: var(--fill-hover);
+}
+.find-step:disabled {
+  color: var(--text-disabled);
+}
+.find-step-back {
+  transform: rotate(180deg);
+}
+.find-nav-divider {
+  flex: none;
+  inline-size: var(--stroke-hairline);
+  block-size: var(--space-12);
+  background: var(--border-default);
+}
+.find-done {
+  flex: none;
+  block-size: var(--size-control-small);
+  padding-inline: var(--space-10);
+  border-radius: var(--radius-control-small);
+  background: var(--fill-control);
+  font: var(--type-caption-footnote);
+  color: var(--text-primary);
+}
+.find-done:hover {
+  background-image: linear-gradient(var(--fill-hover), var(--fill-hover));
+}
+
+/* ================= فوق النافذة: الورقة والتنبيه والنافذة المنبثقة =================
+   خارج #window، وما تحت الورقة والتنبيه خامل حتى يُغلقا. لا تعتيم تحتهما كما في
+   macOS 27، والظهور تلاشٍ قصير بمدة Motion */
+@keyframes overlay-in {
+  from {
+    opacity: 0;
+    scale: 0.98;
+  }
+}
+@keyframes popover-in {
+  from {
+    opacity: 0;
+    translate: 0 calc(-1 * var(--motion-distance-slide) / 2);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  @keyframes overlay-in {
+    from { opacity: 0; }
+  }
+  @keyframes popover-in {
+    from { opacity: 0; }
+  }
+}
+
+/* الورقة (Sheet, Figma 78:615): في وسط النافذة بزاوية ١٦، شريط علوي ٤٧٫٥ وسفلي ٦٥ */
+.sheet {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  inline-size: min(var(--size-sheet-width), calc(100vw - 2 * var(--space-20)));
+  max-block-size: calc(100vh - 2 * var(--space-20));
+  overflow: hidden;
+  border-radius: var(--radius-16);
+  background: var(--surface-sheet);
+  box-shadow: inset 0 0 0 var(--stroke-hairline) var(--material-edge), var(--elevation-popover);
+  transform: translate(-50%, -50%);
+  animation: overlay-in var(--motion-duration-popover) var(--motion-easing-standard);
+}
+.sheet-topbar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  block-size: var(--size-sheet-topbar);
+  padding-inline: var(--space-20);
+}
+.sheet-title {
+  font: var(--type-label-default);
+  color: var(--text-primary);
+}
+.sheet-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+  min-block-size: 0;
+  padding: var(--space-4) var(--space-20) var(--space-20);
+  overflow-y: auto;
+}
+.sheet-subtitle {
+  font: var(--type-body-small);
+  color: var(--text-secondary);
+}
+.sheet-bottombar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-8);
+  block-size: var(--size-sheet-bottombar);
+  padding-inline: var(--space-20);
+  box-shadow: inset 0 var(--stroke-hairline) 0 var(--border-default);
+}
+
+/* أعمدة التنويعات (Variation Column, Figma 73:751): جاهز، جارٍ التوليد، تعذّر */
+.variations-grid {
+  display: flex;
+  gap: var(--space-12);
+}
+.variation {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  gap: var(--space-12);
+  min-inline-size: 0;
+  block-size: 320px;
+  padding: var(--space-16);
+  border-radius: var(--radius-12);
+  background: var(--surface-content);
+  box-shadow: inset 0 0 0 var(--stroke-hairline) var(--border-default);
+}
+.variation-header {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-8);
+}
+.variation-title {
+  font: var(--type-label-default);
+  color: var(--text-primary);
+}
+.variation-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-8);
+  min-block-size: 0;
+  overflow-y: auto;
+}
+.variation[data-state="generating"] .skeleton-line:nth-child(3) { inline-size: 140px; }
+.variation[data-state="generating"] .skeleton-line:nth-child(5) { inline-size: 100px; }
+.variation[data-state="failed"] .variation-body {
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.variation-failed-icon {
+  color: var(--status-danger-fg);
+}
+.variation-message {
+  font: var(--type-body-emphasis);
+  color: var(--text-primary);
+}
+.variation-text {
+  inline-size: 100%;
+  font: var(--type-body-small);
+  color: var(--text-primary);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.variation-adopt {
+  align-self: flex-start;
+}
+
+/* التنبيه (Alert · Destructive, Figma 263:7635): ٢٦٩ بزاوية ٢٦، فوق الوسط قليلًا،
+   «إلغاء» يمينًا و«حذف» يسارًا كبسولتين متساويتين */
+.alert {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 210;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-20);
+  inline-size: var(--size-alert-width);
+  padding: var(--space-20) var(--space-16) var(--space-16);
+  border-radius: var(--radius-26);
+  background: var(--material-popover);
+  box-shadow: inset 0 0 0 var(--stroke-hairline) var(--material-edge), var(--elevation-popover);
+  -webkit-backdrop-filter: blur(var(--radius-20));
+  backdrop-filter: blur(var(--radius-20));
+  transform: translate(-50%, calc(-50% - 40px));
+  animation: overlay-in var(--motion-duration-popover) var(--motion-easing-standard);
+}
+.alert-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-10);
+  padding-inline: var(--space-4);
+}
+.alert-title {
+  font: var(--type-label-default);
+  color: var(--text-primary);
+}
+.alert-message {
+  font: var(--type-body-small);
+  color: var(--text-primary);
+}
+.alert-buttons {
+  display: flex;
+  gap: var(--space-8);
+}
+.alert-button {
+  flex: 1 1 0;
+  block-size: var(--size-alert-button);
+  padding-inline: var(--space-14);
+  border-radius: var(--radius-full);
+  background: var(--fill-control);
+  font: var(--type-label-default);
+  color: var(--text-primary);
+}
+.alert-button:hover {
+  background-image: linear-gradient(var(--fill-hover), var(--fill-hover));
+}
+.alert-button:active {
+  background-image: linear-gradient(var(--fill-pressed), var(--fill-pressed));
+}
+.alert-button.is-destructive {
+  background-color: var(--status-danger-bg);
+  color: var(--status-danger-fg);
+}
+
+/* النافذة المنبثقة (Popover, Figma 70:356): زاوية ٢٠ وسهم ٢٥×١٠ يشير إلى وسط زرها،
+   وعدسة القراءة داخلها بعرض هاتف ٣٧٥ */
+.popover {
+  position: fixed;
+  z-index: 150;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  padding: var(--space-16);
+  border-radius: var(--radius-20);
+  background: var(--material-popover);
+  box-shadow: inset 0 0 0 var(--stroke-hairline) var(--material-edge), var(--elevation-popover);
+  -webkit-backdrop-filter: blur(var(--radius-20));
+  backdrop-filter: blur(var(--radius-20));
+  animation: popover-in var(--motion-duration-popover) var(--motion-easing-standard);
+}
+.popover::before {
+  content: "";
+  position: absolute;
+  inset-block-start: -10px;
+  left: var(--arrow-x, 50%);
+  inline-size: 25px;
+  block-size: 11px;
+  background: var(--material-popover);
+  clip-path: path("M0 11 C5 11 9.5 2.5 12.5 0 C15.5 2.5 20 11 25 11 Z");
+  transform: translateX(-50%);
+}
+.lens-header {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: 2px;
+}
+.lens-title {
+  font: var(--type-label-default);
+  color: var(--text-primary);
+}
+.lens-note {
+  font: var(--type-caption-footnote);
+  color: var(--text-secondary);
+}
+.lens-phone {
+  inline-size: 375px;
+  max-inline-size: calc(100vw - 2 * var(--space-24));
+  min-block-size: 0;
+  padding: var(--space-20) var(--space-16) var(--space-24);
+  overflow-y: auto;
+  border-radius: var(--radius-12);
+  background: var(--surface-content);
+  box-shadow: inset 0 0 0 var(--stroke-hairline) var(--border-hairline);
+}
+.lens-text {
+  font: var(--type-body-reading);
+  color: var(--text-primary);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* ================= مؤقت حتى المرحلة ٥: الإعدادات داخل النافذة ================= */
 .interim-overlay {
   position: fixed;
   inset: 0;
@@ -1315,14 +1939,7 @@ textarea.empty-bidi {
   background: var(--surface-sheet);
   box-shadow: var(--elevation-window);
 }
-.interim-sheet-wide {
-  inline-size: min(var(--size-sheet-width), 100%);
-}
-.interim-lens {
-  inline-size: 375px;
-}
-.sheet-head,
-.sheet-foot {
+.sheet-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1330,9 +1947,6 @@ textarea.empty-bidi {
 }
 .sheet-head h2 {
   font: var(--type-label-default);
-}
-.sheet-foot {
-  justify-content: center;
 }
 .interim-tabs {
   display: flex;
@@ -1342,7 +1956,7 @@ textarea.empty-bidi {
   border-radius: var(--radius-full);
   background: var(--fill-control);
 }
-.sheet-body {
+.sheet-body-interim {
   display: flex;
   flex-direction: column;
   gap: var(--space-12);
@@ -1405,69 +2019,6 @@ textarea.empty-bidi {
   block-size: 100%;
   inline-size: 0;
   background: var(--module-strong);
-}
-.variations-grid {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr auto 1fr;
-  gap: var(--space-12);
-}
-.variation-col {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-8);
-}
-.variation-num {
-  font: var(--type-caption-emphasis);
-  color: var(--text-secondary);
-}
-.variation-text,
-.lens-text {
-  font: var(--type-body-reading);
-  white-space: pre-wrap;
-}
-.variation-status {
-  font: var(--type-body-small);
-  color: var(--text-secondary);
-}
-.variation-status.error {
-  color: var(--status-danger-fg);
-}
-.variation-sep {
-  inline-size: var(--stroke-hairline);
-  background: var(--border-hairline);
-}
-.adopt-btn {
-  align-self: flex-start;
-  block-size: var(--size-control-regular);
-  padding-inline: var(--space-12);
-  border-radius: var(--radius-control-regular);
-  background: var(--module-strong);
-  font: var(--type-label-default);
-  color: var(--text-on-accent);
-}
-.find-bar {
-  display: flex;
-  flex: none;
-  align-items: center;
-  gap: var(--space-8);
-  inline-size: min(var(--layout-editor-measure), 100%);
-}
-.find-bar .search-field {
-  flex: 1;
-}
-.find-count {
-  font: var(--type-caption-default);
-  color: var(--text-secondary);
-}
-#output-search-prev .icon {
-  transform: rotate(180deg);
-}
-.text-button {
-  block-size: var(--size-control-small);
-  padding-inline: var(--space-8);
-  border-radius: var(--radius-control-small);
-  background: var(--fill-control);
-  font: var(--type-caption-emphasis);
 }
 
 /* ================= معاينة المتصفح وحدها ================= */

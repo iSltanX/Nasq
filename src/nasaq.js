@@ -1,8 +1,8 @@
 // وحدة وضع «نسق» — منطق التنسيق كاملًا: المحاور الثلاثة، التنظيف المحلي،
 // نداءات النموذج، ذاكرة الجلسة والتراجع، أدوات النتيجة، بطاقة الشذرة،
-// لوحة التنويعات، عدسة القراءة، وعدّاد المنصات. تستعمل عوام القشرة
-// (shell.js تُحمَّل قبلها) وتصل نفسها بها بالتسجيل في ذيل هذا الملف.
-// لا تعرف شيئًا عن «شَذْب» ولا تستورد منه. (انقسمت عن main.js نقلًا
+// ورقة التنويعات، عدسة القراءة، وعدّاد المنصات، وآلة حالات العرض. تستعمل
+// عوام القشرة (shell.js تُحمَّل قبلها) وتصل نفسها بها بالتسجيل في ذيل هذا
+// الملف. لا تعرف شيئًا عن «شَذْب» ولا تستورد منه. (انقسمت عن main.js نقلًا
 // حرفيًا في المرحلة 2 — v4.2)
 
 const inputText = el("input-text");
@@ -23,13 +23,15 @@ function syncCaretBidi() {
 }
 
 inputText.addEventListener("input", () => {
-  updateCount(inputCount, inputText.value);
+  // عدّاد الأصل كلمات وأحرف فقط، والأسطر للنتيجة (Figma 99:592)
+  updateCount(inputCount, inputText.value, { withLines: false });
   syncCaretBidi();
   // تعديل الكلمات نفسها (لا المسافات والأسطر — المفتاح مطبَّع) يبدأ جلسة جمع
   // جديدة: صيغ النص السابق غير المحفوظة تُفقد، فهي لنص لم يعد يُعمل عليه
   if (sessionKey && window.NasaqDrafts.draftKey(inputText.value) !== sessionKey) {
     resetSession();
   }
+  renderState();
 });
 
 syncCaretBidi();
@@ -305,11 +307,25 @@ enhanceSelectAsDropdown(el("format-style"));
 enhanceSelectAsDropdown(interventionSel);
 enhanceSelectAsDropdown(platformSel);
 
-// تلميحة سابستاك الوحيدة (لا رسالة متكررة): الفراغ في العرض راحة مراجعة،
-// وما ينجو النشر هو كسر السطر — والنوت فوق ذلك لا يدعم RTL
-const SUBSTACK_HINTS = {
-  "مقال سابستاك": "سابستاك تبتلع السطر الفارغ عند النشر — كسر السطر هو ما ينجو، والفراغ هنا للمراجعة فقط",
-  "نوت سابستاك": "النوت لا يدعم RTL (يُعرض يسارًا) ويبتلع السطر الفارغ — التنفّس بكسر السطر",
+// تلميح واحد لكل مستوى تدخل، وتحت «تنسيق منصة» لكل منصة — نصوصه كما في لوحة
+// Figma «نَسَق / Inspector · نصوص التلميحات» (303:8263). لا يَعِد التلميح بما لا
+// يضمنه العقد: «الكلمات كما هي» للمستويات التي يمنع عقدها تغيير الكلمات منعًا
+// باتًا (تنظيف، منقّط)؛ و«قراءة» يسمح عقده بالضرورة القصوى، و«إيقاعي» و«للنشر»
+// يسمحان بعناوين عند الحاجة، فلا تَعِد بها
+const LEVEL_HINTS = {
+  [LEVELS.CLEAN]: "تنظيف: مسافات وعلامات ترقيم على جهازك، بلا نموذج — الكلمات كما هي.",
+  [LEVELS.READ]: "قراءة: فقرات أقصر ووقفات أوضح لعين القارئ.",
+  [LEVELS.RHYTHM]: "إيقاعي: فراغات تتنفس بين الجمل وكسر عند المنعطف.",
+  [LEVELS.RHYTHM_DOTTED]: "منقّط: كسر عند الوقفات الحقيقية لا عند كل فاصلة — الكلمات كما هي.",
+  [LEVELS.PUBLISH]: "للنشر: فقرات مضبوطة وترقيم سليم كنسخة نهائية.",
+};
+const PLATFORM_HINTS = {
+  "مقال سابستاك": "عند النشر تبتلع سابستاك السطر الفارغ ويبقى كسر السطر.",
+  "نوت سابستاك": "يعرض النوت النص من اليسار ويبتلع السطر الفارغ، فيبقى كسر السطر.",
+  "إكس": "مقاطع قصيرة مكثّفة تناسب منشورات إكس.",
+  "ثريدز": "فقرات متوسطة القِصَر تتدرّج مقطعًا بعد مقطع.",
+  "إنستغرام": "أسطر قصيرة وفراغات أوضح، والجملة المحورية في سطر مستقل.",
+  "واتساب": "فقرات قصيرة مريحة للقراءة على الهاتف، كرسالة.",
 };
 
 function syncInterventionControls() {
@@ -318,23 +334,8 @@ function syncInterventionControls() {
   platformControl.hidden = level !== LEVELS.PLATFORM;
   // «أرِني تنويعات» لوجهة سابستاك حصرًا
   variationsBtn.hidden = !(level === LEVELS.PLATFORM && isSubstackFace(platformSel.value));
-  if (level === LEVELS.PLATFORM) {
-    interventionHint.textContent = SUBSTACK_HINTS[platformSel.value] || "";
-  } else if (level === LEVELS.CLEAN) {
-    // «تنظيف فقط» يعمل محليًا — يستحق توضيحًا لأنه يختلف عن بقية المستويات
-    interventionHint.textContent = "فوري ومحلي — لا يغيّر أي كلمة";
-  } else if (level === LEVELS.READ) {
-    // الافتراضي — يستحق تلميحًا كبقية المستويات لا فراغًا في الصف (مطابق لقاعدته في nasaq/contracts.rs)
-    interventionHint.textContent = "يقسّم الفقرات الطويلة ويضبط وقفات القراءة";
-  } else if (level === LEVELS.RHYTHM) {
-    interventionHint.textContent = "يوزّع النَّفَس والوقفات بعين كاتب";
-  } else if (level === LEVELS.RHYTHM_DOTTED) {
-    interventionHint.textContent = "يكسر عند وقفات الترقيم الحقيقية لا كل نقطة وفاصلة";
-  } else if (level === LEVELS.PUBLISH) {
-    interventionHint.textContent = "يرتّب النص كنسخة نهائية جاهزة للنشر";
-  } else {
-    interventionHint.textContent = "";
-  }
+  interventionHint.textContent =
+    level === LEVELS.PLATFORM ? PLATFORM_HINTS[platformSel.value] || "" : LEVEL_HINTS[level] || "";
 }
 
 interventionSel.addEventListener("change", syncInterventionControls);
@@ -350,7 +351,7 @@ function cleanOnly(text) {
   t = t.replace(/[​﻿]/g, "");
 
   // توحيد المسافات المتكررة (بما فيها المسافة الصلبة) داخل السطر الواحد
-  t = t.replace(/[ \t ]+/g, " ");
+  t = t.replace(/[ \t\u00A0]+/g, " ");
 
   // علامات لاتينية وسط نص عربي → مقابلها العربي
   t = t.replace(/(?<=[؀-ۿ] ?),/g, "،");
@@ -389,13 +390,13 @@ let lastFormatMeta = null;
 // ---------- علم انشغال النداءات (v6.2 — الإصلاح ٢-أ) ----------
 // نداء نموذج واحد يكتب على النتيجة في اللحظة الواحدة: «نسق» و«سطور
 // أقل/أكثر» يتشاركان القفل، فلا يتسابق مستجيبان على المخرَج ولا تختلط
-// ذاكرة الجلسة بين نداءين متوازيين
+// ذاكرة الجلسة بين نداءين متوازيين. آلة الحالات تُظهر القفل: «نسّق» في حالة
+// تحميل، والأدوات والإعدادات معطّلة، وهيكل نائب مكان النتيجة
 let modelCallActive = false;
 function setModelBusy(busy) {
   modelCallActive = busy;
-  formatBtn.disabled = busy;
-  fewerBtn.disabled = busy;
-  moreBtn.disabled = busy;
+  if (busy) closeIdentityDropdowns();
+  renderState();
 }
 
 function currentSelection() {
@@ -451,13 +452,17 @@ function recordSessionVersion(originalText, meta, formatted) {
   });
 }
 
+// آخر نداء «نسّق» تعذّر وتنبيهه ظاهر — تُخفضه القشرة حين يُغلق التنبيه
+let formatFailed = false;
+
 async function formatText() {
   if (modelCallActive) return; // نداء آخر يكتب على النتيجة الآن — لا تزاحم
   const text = inputText.value.trim();
-  clearError();
+  clearError("nasaq");
+  formatFailed = false;
 
   if (!text) {
-    showError("أدخل نصًا أولًا.");
+    showError("أدخل نصًا أولًا.", { owner: "nasaq" });
     return;
   }
 
@@ -468,12 +473,12 @@ async function formatText() {
     pushOutputUndo(); // صورة النتيجة الحالية قبل الكتابة فوقها
     const cleaned = cleanOnly(text);
     setOutput(cleaned);
-    outputPlaceholder.hidden = true;
     notesBox.hidden = true;
     showRhythmFingerprint(null);
     lastFormatMeta = { original: text, style, intervention, platform, linesAdjusted: false };
     syncResultTools();
-    showToast(cleaned === text ? "النص نظيف أصلًا." : "نُظّف النص محليًا.");
+    if (cleaned === text) showToast("النص نظيف أصلًا.", "neutral");
+    else showToast("نُظّف النص محليًا.");
     return;
   }
 
@@ -484,8 +489,6 @@ async function formatText() {
   const attempt = nextAttempt(fingerprint);
 
   setModelBusy(true);
-  loading.hidden = false;
-  outputPlaceholder.hidden = true;
 
   try {
     const result = await invoke("format_text", {
@@ -524,11 +527,18 @@ async function formatText() {
       notesBox.hidden = true;
     }
   } catch (err) {
-    showError(String(err));
-    if (!outputText.textContent) outputPlaceholder.hidden = false;
+    // التنبيه داخل عمود النتيجة يطمئن أن النص لم يتغيّر ويعرض «أعد المحاولة»
+    // (Figma 103:11832) — رسائل النواة التي تطمئن بنفسها لا تُكرَّر طمأنتها
+    const message = String(err);
+    showError(message, {
+      owner: "nasaq",
+      note: message.includes("نصّك") ? "" : "نصّك لم يتغيّر.",
+      action: { label: "أعد المحاولة", run: formatText },
+    });
+    // بعد العرض: تنبيه نسق سابق حلّ محله هذا أعلن زواله، والحالة الآن لهذا الفشل
+    formatFailed = true;
   } finally {
     setModelBusy(false);
-    loading.hidden = true;
   }
 }
 
@@ -539,8 +549,10 @@ formatBtn.addEventListener("click", formatText);
 // مرئي) أو معطلًا (نداء جارٍ). فحص الظهور لا يعرف الأوضاع بأسمائها —
 // نسق يحكم على زره هو فحسب
 document.addEventListener("keydown", (e) => {
-  if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+  if ((e.metaKey || e.ctrlKey) && !e.shiftKey && e.key === "Enter") {
     if (formatBtn.offsetParent === null || formatBtn.disabled) return;
+    // ولا تحت ورقة مفتوحة: «نسّق» خلف التنويعات يسابقها على النتيجة
+    if (window.NasaqWindow.isModalOpen()) return;
     formatText();
   }
 });
@@ -550,18 +562,46 @@ document.addEventListener("keydown", (e) => {
 copyBtn.addEventListener("click", async () => {
   const text = window.NasaqSubstackMarkers.stripSubstackMarkers(outputText.textContent);
   if (!text.trim()) {
-    showToast("لا يوجد نص منسق بعد.");
+    showToast("لا يوجد نص منسق بعد.", "neutral");
     return;
   }
   if (await copyText(text)) showToast("نُسخت النتيجة");
-  else showError("تعذّر النسخ إلى الحافظة.");
+  else showToast("تعذّر النسخ إلى الحافظة.", "danger");
+});
+
+// ونسخ تحديدٍ يمسّ النتيجة أو العدسة أو التنويعات بـ ⌘C، أو سحبه إلى خارج النافذة،
+// يمرّ بالتجريد نفسه — خريطة الرموز إرشاد للعرض فقط لا تصل الحافظة من أي طريق.
+// «يمسّ» لا «يبدأ فيها»: تحديد يمتد إليها من خارجها (⌘A) يُجرَّد كذلك، والتجريد
+// لا يغيّر نصًا بلا رموز. والمخفي منها لا يُحسب — WebKit يحسب التحديد على بنية
+// الصفحة، فلا يُجرَّد نسخُ وحدةٍ أخرى لأن نتيجة نَسَق مخفية تحته
+const MARKED_TEXT = "#output-text, #reading-lens-text, .variation-text";
+function markedSelectionText() {
+  const selection = document.getSelection();
+  if (!selection || selection.isCollapsed) return null;
+  const touches = [...document.querySelectorAll(MARKED_TEXT)].some(
+    (node) => node.offsetParent !== null && selection.containsNode(node, true)
+  );
+  return touches ? window.NasaqSubstackMarkers.stripSubstackMarkers(selection.toString()) : null;
+}
+document.addEventListener("copy", (e) => {
+  const text = markedSelectionText();
+  if (text === null || !e.clipboardData) return;
+  e.clipboardData.setData("text/plain", text);
+  e.preventDefault();
+});
+// السحب: التحديد نفسه لا عنصرٌ آخر قابل للسحب — من أي موضع فيه بدأ
+document.addEventListener("dragstart", (e) => {
+  const text = markedSelectionText();
+  if (text === null || !e.dataTransfer || !document.getSelection().containsNode(e.target, true)) return;
+  e.dataTransfer.clearData();
+  e.dataTransfer.setData("text/plain", text);
 });
 
 // ---------- أدوات على النص المنسّق ----------
 function getOutputOrWarn() {
   const text = outputText.textContent;
   if (!text.trim()) {
-    showToast("لا يوجد نص منسق بعد.");
+    showToast("لا يوجد نص منسق بعد.", "neutral");
     return null;
   }
   return text;
@@ -596,11 +636,10 @@ function pushOutputUndo() {
 function undoOutput() {
   const snap = outputUndoStack.pop();
   if (!snap) {
-    showToast("لا تعديل للتراجع عنه.");
+    showToast("لا تعديل للتراجع عنه.", "neutral");
     return;
   }
   setOutput(snap.text);
-  outputPlaceholder.hidden = true;
   lastFormatMeta = snap.meta;
   showRhythmFingerprint(snap.rhythm);
   // ما يُعرض هو ما يُحفظ: الصيغة المستعادة تكتب فوق صيغة نوعها في ذاكرة
@@ -610,7 +649,8 @@ function undoOutput() {
   showToast("استُعيدت النتيجة السابقة.");
 }
 
-el("undo-btn").addEventListener("click", undoOutput);
+const undoBtn = el("undo-btn");
+undoBtn.addEventListener("click", undoOutput);
 
 // ---------- «سطور أقل/أكثر»: عبر النموذج، وبالاحتياط المحلي عند تعذّره ----------
 // الدالتان المحليتان النقيتان في lines.js — تُنادَيان عبر window.NasaqLines
@@ -620,9 +660,9 @@ const fewerBtn = el("fewer-lines-btn");
 const moreBtn = el("more-lines-btn");
 
 function setAdjustBusy(busy) {
-  // القفل المشترك نفسه (٢-أ): تعديل الأسطر عبر النموذج يقفل «نسق» أيضًا
+  // القفل المشترك نفسه (٢-أ): تعديل الأسطر عبر النموذج يقفل «نسق» أيضًا،
+  // والهيكل النائب يظهر مكان النتيجة كما في التنسيق
   setModelBusy(busy);
-  loading.hidden = !busy;
 }
 
 // يعدّل كثافة أسطر النتيجة الحالية فقط — النص الأصلي في خانة الإدخال لا يُمسّ.
@@ -656,6 +696,7 @@ async function adjustLines(direction) {
     setOutput(adjusted);
     markAdjusted(adjusted);
     showRhythmFingerprint(null); // تعديل محلي بلا نموذج — الوصف السابق صار غير دقيق
+    renderState();
     return;
   }
 
@@ -685,7 +726,7 @@ async function adjustLines(direction) {
     setOutput(adjusted);
     showRhythmFingerprint(null); // تعديل محلي بلا نموذج — الوصف السابق صار غير دقيق
     markAdjusted(adjusted);
-    showToast("تعذّر الاتصال بالنموذج — طُبّق تعديل محلي.");
+    showToast("تعذّر الاتصال بالنموذج — طُبّق تعديل محلي.", "warning");
   } finally {
     setAdjustBusy(false);
   }
@@ -725,10 +766,12 @@ function splitSentences() {
   syncResultTools();
 }
 
+const cleanBtn = el("clean-btn");
+const splitBtn = el("split-sentences-btn");
 fewerBtn.addEventListener("click", () => adjustLines("fewer"));
 moreBtn.addEventListener("click", () => adjustLines("more"));
-el("clean-btn").addEventListener("click", cleanEmptyLines);
-el("split-sentences-btn").addEventListener("click", splitSentences);
+cleanBtn.addEventListener("click", cleanEmptyLines);
+splitBtn.addEventListener("click", splitSentences);
 
 // ---------- أدوات وجهة سابستاك على النتيجة: التصدير وبطاقة الشذرة ----------
 // تُزامَن بعد كل تغيير للنتيجة، والوجهة تُقرأ من بيانات النتيجة وقت إنتاجها
@@ -738,6 +781,10 @@ const fragmentCard = el("fragment-card");
 const fragmentBrokenBox = el("fragment-broken");
 const fragmentJoinedBox = el("fragment-joined");
 let fragmentForms = null; // صورتا المنعطف للنتيجة المعروضة الآن
+// الشكل المعتمد للنتيجة المعروضة { which، text، snapshot } — snapshot صورة التراجع التي
+// دفعها الاعتماد (أو null إن لم يدفع). يزول القرار حين تتغير النتيجة بطريق آخر أو
+// تُسحب صورته من المكدس، ولو كان الشكل المعتمد هو المعروض أصلًا فلم يتغير النص
+let turnDecision = null;
 
 // وجه سابستاك الذي أُنتجت به النتيجة المعروضة، أو null لغير سابستاك
 function metaSubstackFace() {
@@ -769,11 +816,11 @@ function syncPlatformLimitWarning() {
     // ناتج إكس قد يكون سلسلة مقاطع يفصلها الفراغ — العبرة بأطول مقطع لا المجموع
     const longest = Math.max(...text.split(/\n\s*\n+/).map((b) => b.trim().length));
     if (longest > limit) {
-      outputCount.textContent += ` — أطول مقطع (${longest.toLocaleString("ar")}) يتجاوز حدّ إكس ${limit.toLocaleString("ar")}`;
+      outputCount.textContent += ` — أطول مقطع (${arabicDigits.format(longest)}) يتجاوز حدّ إكس ${arabicDigits.format(limit)}`;
       outputCount.classList.add("over-limit");
     }
   } else if (text.length > limit) {
-    outputCount.textContent += ` — يتجاوز حدّ ${meta.platform} (${limit.toLocaleString("ar")})`;
+    outputCount.textContent += ` — يتجاوز حدّ ${meta.platform} (${arabicDigits.format(limit)})`;
     outputCount.classList.add("over-limit");
   }
 }
@@ -781,7 +828,6 @@ function syncPlatformLimitWarning() {
 function syncResultTools() {
   const face = metaSubstackFace();
   const text = outputText.textContent;
-  exportBtn.hidden = !face || !text.trim();
   syncPlatformLimitWarning();
 
   // بطاقة الشذرة: نمط شذرة على وجهة سابستاك، وفي النص منعطف تختلف به الصورتان
@@ -797,10 +843,15 @@ function syncResultTools() {
     const noteFace = face === SUBSTACK_NOTE;
     fragmentBrokenBox.classList.toggle("note-face", noteFace);
     fragmentJoinedBox.classList.toggle("note-face", noteFace);
-    fragmentCard.hidden = false;
-  } else {
-    fragmentCard.hidden = true;
   }
+  // القرار يخص نصًا بعينه: نتيجة تغيّرت بطريق آخر (تنسيق، تراجع، أسطر) تعيد السؤال
+  if (
+    turnDecision &&
+    (!fragmentForms || turnDecision.text !== text || (turnDecision.snapshot && !outputUndoStack.includes(turnDecision.snapshot)))
+  ) {
+    turnDecision = null;
+  }
+  renderState();
 }
 
 // «تصدير لسابستاك»: الكسور المفردة تصل سليمة، والأسطر الفارغة تُحذف عند
@@ -819,7 +870,7 @@ exportBtn.addEventListener("click", async () => {
   if (await copyText(exported)) {
     showToast(`نُسخ للنشر في ${face} — الكسور محفوظة، والأسطر الفارغة حُذفت كما سيُنشَر.`);
   } else {
-    showError("تعذّر النسخ إلى الحافظة.");
+    showToast("تعذّر النسخ إلى الحافظة.", "danger");
   }
 });
 
@@ -827,123 +878,226 @@ exportBtn.addEventListener("click", async () => {
 // يكتب فوق صيغة نوعه في ذاكرة الجلسة كتعديل أسطر، ونسق يُري ولا يقرر
 function adoptTurnForm(which) {
   if (!fragmentForms || !lastFormatMeta) return;
+  const topBefore = outputUndoStack[outputUndoStack.length - 1];
   pushOutputUndo();
   const chosen = which === "broken" ? fragmentForms.broken : fragmentForms.joined;
   setOutput(chosen);
   lastFormatMeta = { ...lastFormatMeta, linesAdjusted: true };
   recordSessionVersion(lastFormatMeta.original, lastFormatMeta, chosen);
+  const top = outputUndoStack[outputUndoStack.length - 1];
+  turnDecision = { which, text: chosen, snapshot: top !== topBefore ? top : null };
   syncResultTools();
   showToast(which === "broken" ? "اعتُمدت المكسورة عند المنعطف." : "اعتُمدت الموصولة.");
 }
 
 el("adopt-broken").addEventListener("click", () => adoptTurnForm("broken"));
 el("adopt-joined").addEventListener("click", () => adoptTurnForm("joined"));
+// «تراجع عن القرار»: يسحب صورة الاعتماد نفسها إن بقيت أعلى المكدس فتعود النتيجة التي
+// سبقته، وإلا يرفع القرار وحده — لا يسحب صورة أقدم لا علاقة لها بالقرار
+function revertTurnDecision() {
+  if (!turnDecision) return;
+  const { snapshot } = turnDecision;
+  turnDecision = null;
+  if (snapshot && outputUndoStack[outputUndoStack.length - 1] === snapshot) undoOutput();
+  else syncResultTools();
+}
+el("revert-broken").addEventListener("click", revertTurnDecision);
+el("revert-joined").addEventListener("click", revertTurnDecision);
 
-// ---------- لوحة تنويعات سابستاك ----------
+// ---------- ورقة تنويعات سابستاك (Figma 259:6142 و259:6483) ----------
 // ثلاث تنويعات دفعة واحدة: ثلاثة نداءات بعقد سابستاك نفسه وثلاثة أرقام
 // محاولة متتالية (بذور التنويع) — تختلف في مواضع كسر السطر وتوزيع الوقفات
-// والكلمات والمعنى كما هي. العدّاد مشترك مع زر «نسّق» فلا تتكرر الأشكال
-const variationsOverlay = el("variations-overlay");
+// والكلمات والمعنى كما هي. العدّاد مشترك مع زر «نسّق» فلا تتكرر الأشكال.
+// لكل عمود حالته (جارٍ التوليد، جاهز، تعذّر) و«أعد المحاولة» لعموده وحده
+const variationsOverlay = el("variations-sheet"); // الاسم باقٍ: حارس العزل يثبت وصلة Esc به
 const variationsGrid = el("variations-grid");
-const variationsFaceLabel = el("variations-face");
+const variationsTitle = el("variations-title");
 const regenBtn = el("regen-variations");
-const ARABIC_ORDINALS = ["١", "٢", "٣"];
+const VARIATION_TITLES = ["التنويع الأول", "التنويع الثاني", "التنويع الثالث"];
 let variationsMeta = null; // ما وُلّدت به التنويعات المعروضة
+let variationStates = [];  // لكل عمود { state: generating | ready | failed، payload }
+let variationsBatch = 0;   // دفعة جديدة تُسقط نتائج الدفعة السابقة المتأخرة
+
+const variationsGenerating = () => variationStates.some((s) => s.state === "generating");
+
+// الدفعة المعروضة وُلّدت لما في المحرر والمفتّش الآن؟
+function variationInputsCurrent() {
+  if (!variationsMeta) return false;
+  const { style, intervention, platform } = currentSelection();
+  const m = variationsMeta;
+  return (
+    m.original === inputText.value.trim() &&
+    m.style === style &&
+    m.intervention === intervention &&
+    m.platform === platform &&
+    m.directives === currentDirectives()
+  );
+}
 
 function buildVariationColumn(index, state, payload) {
-  const col = document.createElement("div");
-  col.className = "variation-col";
+  const col = document.createElement("article");
+  col.className = "variation";
+  col.dataset.state = state;
+  col.tabIndex = -1;
+  col.setAttribute("aria-labelledby", `variation-title-${index}`);
+  col.setAttribute("aria-busy", String(state === "generating"));
 
-  const num = document.createElement("div");
-  num.className = "variation-num";
-  num.textContent = ARABIC_ORDINALS[index];
-  col.appendChild(num);
+  const header = document.createElement("header");
+  header.className = "variation-header";
+  const title = document.createElement("h3");
+  title.id = `variation-title-${index}`;
+  title.className = "variation-title";
+  title.textContent = VARIATION_TITLES[index];
+  const tag = document.createElement("span");
+  tag.className = "tag";
+  tag.dataset.tone = state === "ready" ? "success" : state === "failed" ? "danger" : "neutral";
+  tag.textContent = state === "ready" ? "جاهز" : state === "failed" ? "تعذّر" : "جارٍ التوليد";
+  header.append(title, tag);
+  col.appendChild(header);
 
-  if (state === "loading" || state === "error") {
-    const s = document.createElement("div");
-    s.className = "variation-status" + (state === "error" ? " error" : "");
-    s.textContent = state === "error" ? String(payload) : "جارٍ التوليد…";
-    col.appendChild(s);
-    return col;
+  const body = document.createElement("div");
+  body.className = "variation-body";
+  if (state === "generating") {
+    body.setAttribute("aria-hidden", "true");
+    for (let i = 0; i < 5; i++) body.appendChild(document.createElement("span")).className = "skeleton-line";
+  } else if (state === "failed") {
+    body.innerHTML = '<svg class="icon icon-20 variation-failed-icon" aria-hidden="true"><use href="#xmark.octagon.20r" /></svg>';
+    const message = document.createElement("p");
+    message.className = "variation-message";
+    message.textContent = splitErrorText(payload).title || "انقطع الاتصال بالنموذج";
+    const retry = document.createElement("button");
+    retry.type = "button";
+    retry.className = "button button-secondary";
+    retry.innerHTML = '<svg class="icon" aria-hidden="true"><use href="#arrow.clockwise.16m" /></svg>';
+    retry.append("أعد المحاولة");
+    retry.addEventListener("click", () => retryVariation(index));
+    body.append(message, retry);
+  } else {
+    const t = document.createElement("div");
+    t.className = "variation-text selectable";
+    // وجه النوت LTR تقليدًا للمنصة؛ المقال RTL. أزرار الورقة وعناوينها عربية RTL دائمًا
+    t.classList.toggle("note-face", variationsMeta.platform === SUBSTACK_NOTE);
+    t.textContent = payload;
+    body.appendChild(t);
   }
+  col.appendChild(body);
 
-  const t = document.createElement("div");
-  t.className = "variation-text";
-  // وجه النوت LTR تقليدًا للمنصة؛ المقال RTL. أزرار اللوحة وأرقامها عربية RTL دائمًا
-  t.classList.toggle("note-face", variationsMeta.platform === SUBSTACK_NOTE);
-  t.textContent = payload;
-  col.appendChild(t);
-
-  const adopt = document.createElement("button");
-  adopt.type = "button";
-  adopt.className = "adopt-btn";
-  adopt.textContent = "اعتمد هذه";
-  adopt.addEventListener("click", () => adoptVariation(payload));
-  col.appendChild(adopt);
+  if (state === "ready") {
+    const adopt = document.createElement("button");
+    adopt.type = "button";
+    adopt.className = "button button-primary variation-adopt";
+    adopt.innerHTML = '<svg class="icon" aria-hidden="true"><use href="#nsq.approve.16m" /></svg>';
+    adopt.append("اعتمد هذا الشكل");
+    adopt.addEventListener("click", () => adoptVariation(payload));
+    col.appendChild(adopt);
+  }
   return col;
 }
 
-function renderVariationColumns(states) {
-  variationsGrid.innerHTML = "";
-  states.forEach((s, i) => {
-    if (i > 0) {
-      const sep = document.createElement("div");
-      sep.className = "variation-sep";
-      variationsGrid.appendChild(sep);
-    }
-    variationsGrid.appendChild(buildVariationColumn(i, s.state, s.payload));
-  });
+// الدفعة الجديدة تبني الأعمدة الثلاثة، ووصول عمود يستبدل عموده وحده — فلا يضيع
+// تركيز الكاتب أو تحديده في عمود آخر، ولا يُنقل التركيز إلا إن كان في العمود نفسه
+function renderVariationColumns(index = null) {
+  if (index === null) {
+    variationsGrid.replaceChildren(...variationStates.map((s, i) => buildVariationColumn(i, s.state, s.payload)));
+  } else {
+    const col = buildVariationColumn(index, variationStates[index].state, variationStates[index].payload);
+    const current = variationsGrid.children[index];
+    const hadFocus = current && current.contains(document.activeElement);
+    if (current) current.replaceWith(col);
+    if (hadFocus && !variationsOverlay.hidden) col.focus();
+  }
+  regenBtn.disabled = variationsGenerating();
+  renderState();
+}
+
+// «أرِني تنويعات…» (والاختصار): الورقة للمدخلات نفسها تُعرض بدفعتها كما بلغت —
+// جارية أو منتهية — بلا نداءات، فلا يتوقف ما يراه الكاتب على توقيت لا يراه.
+// التوليد من جديد لـ «ولّد ثلاثًا جديدة» وحده
+function showVariations() {
+  if (variationStates.length && variationInputsCurrent()) {
+    window.NasaqWindow.presentModal(variationsOverlay, { initialFocus: "#close-variations" });
+    return;
+  }
+  generateVariations();
 }
 
 async function generateVariations() {
   const text = inputText.value.trim();
   if (!text) {
-    showError("أدخل نصًا أولًا.");
+    showError("أدخل نصًا أولًا.", { owner: "nasaq" });
     return;
   }
-  clearError();
+  clearError("nasaq");
 
   const { style, intervention, platform } = currentSelection();
   if (!isSubstackFace(platform)) return; // الزر لا يظهر أصلًا لغير سابستاك
 
-  variationsMeta = { original: text, style, intervention, platform };
-  variationsFaceLabel.textContent =
-    platform === SUBSTACK_NOTE ? "— وجه النوت (يُعرض يسارًا)" : "— وجه المقال";
-  renderVariationColumns([{ state: "loading" }, { state: "loading" }, { state: "loading" }]);
-  variationsOverlay.hidden = false;
-  regenBtn.disabled = true;
-  variationsBtn.disabled = true;
+  // لا دفعة فوق دفعة جارية: «أرِني تنويعات…» معطّل لمدخلات غيرها حتى تنتهي (renderState)
+  if (variationsGenerating()) return;
 
-  // نداء مخصص للوحة (generate_variation لا format_text): كل شق يحمل رافعة
+  // نداء مخصص للورقة (generate_variation لا format_text): كل شق يحمل رافعة
   // كثافة كسر مختلفة بنيويًا (slot 0/1/2) فيظهر تباين حقيقي حتى على نص قصير
   // الجُمل، لا إزاحة كلمة. رقم الدفعة يتقدم بثلاث فيتنوع «ولّد ثلاثًا جديدة».
   // التوجيهات الخاصة تسري على التنويعات الثلاث كلها
   const directives = currentDirectives();
+  variationsMeta = { original: text, style, intervention, platform, directives };
+  variationsTitle.textContent = `تنويعات — ${platform === SUBSTACK_NOTE ? SUBSTACK_NOTE : SUBSTACK_ARTICLE}`;
+  variationStates = [0, 1, 2].map(() => ({ state: "generating" }));
+  const batch = ++variationsBatch;
+  // «ولّد ثلاثًا جديدة» يتعطل أثناء التوليد: لا يُترك التركيز عليه فيسقط
+  if (document.activeElement === regenBtn) el("close-variations").focus();
+  renderVariationColumns();
+  window.NasaqWindow.presentModal(variationsOverlay, { initialFocus: "#close-variations" });
+
   const fingerprint = `${style}|${intervention}|${platform}|${directives || ""}|${text}`;
   const base = nextAttempt(fingerprint);
   const calls = [0, 1, 2].map((i) =>
     invoke("generate_variation", { text, style, intervention, platform, slot: i, attempt: base + i, directives })
   );
-  const results = await Promise.allSettled(calls);
+  // الأرقام الثلاثة محجوزة فور الإطلاق: «أعد المحاولة» لعمود تعذّر قبل أن تستقر
+  // الدفعة يأخذ رقمًا بعدها لا رقمًا منها. وكل عمود يظهر حين يصل نداؤه (Figma
+  // 259:6483: جاهز وجارٍ وتعذّر معًا)
   attemptCounts.set(fingerprint, base + 2);
-
-  renderVariationColumns(
-    results.map((r) =>
-      r.status === "fulfilled"
-        ? { state: "done", payload: r.value.formattedText }
-        : { state: "error", payload: r.reason }
-    )
+  calls.forEach((call, i) =>
+    call.then(
+      (r) => ({ state: "ready", payload: r.formattedText }),
+      (err) => ({ state: "failed", payload: err })
+    ).then((next) => {
+      if (batch !== variationsBatch) return;
+      variationStates[i] = next;
+      renderVariationColumns(i);
+    })
   );
-  regenBtn.disabled = false;
-  variationsBtn.disabled = false;
 }
 
-// «اعتمد هذه»: التنويعة تدخل المخرَج الرئيس وتصبح كأي نتيجة —
+// «أعد المحاولة» لعمود واحد: النداء نفسه لشقّه برقم محاولة جديد من البصمة
+// نفسها، وبما وُلّدت به الدفعة لا بما صارت إليه القوائم
+async function retryVariation(index) {
+  if (!variationsMeta) return;
+  const { original: text, style, intervention, platform, directives } = variationsMeta;
+  const batch = variationsBatch;
+  const fingerprint = `${style}|${intervention}|${platform}|${directives || ""}|${text}`;
+  const attempt = nextAttempt(fingerprint);
+  attemptCounts.set(fingerprint, attempt);
+  variationStates[index] = { state: "generating" };
+  renderVariationColumns(index);
+  let next;
+  try {
+    const r = await invoke("generate_variation", { text, style, intervention, platform, slot: index, attempt, directives });
+    next = { state: "ready", payload: r.formattedText };
+  } catch (err) {
+    next = { state: "failed", payload: err };
+  }
+  if (batch !== variationsBatch) return;
+  variationStates[index] = next;
+  renderVariationColumns(index);
+}
+
+// «اعتمد هذا الشكل»: التنويعة تدخل المخرَج الرئيس وتصبح كأي نتيجة —
 // قابلة للحفظ والتصدير وتعديل الأسطر وبطاقة الشذرة
 function adoptVariation(text) {
   pushOutputUndo(); // النتيجة السابقة (إن كانت لهذا النص) تبقى قابلة للاستعادة
   setOutput(text);
-  outputPlaceholder.hidden = true;
   notesBox.hidden = true;
   showRhythmFingerprint(null); // التنويعات لا تحمل بصمة إيقاع — منصة لا مستوى إيقاعي
   lastFormatMeta = {
@@ -959,22 +1113,27 @@ function adoptVariation(text) {
   showToast("اعتُمدت التنويعة وصارت النتيجة الرئيسة.");
 }
 
+// الإغلاق لا يُسقط الدفعة: نداءاتها مدفوعة، وإعادة فتح الورقة للمدخلات نفسها
+// تعرضها كما بلغت. و«أرِني تنويعات…» يُحسب قبل الإغلاق ليعود التركيز إليه لا إلى body
 function closeVariations() {
-  variationsOverlay.hidden = true;
+  renderState();
+  window.NasaqWindow.dismissModal(variationsOverlay);
 }
 
-variationsBtn.addEventListener("click", generateVariations);
+variationsBtn.addEventListener("click", showVariations);
 regenBtn.addEventListener("click", generateVariations);
 el("close-variations").addEventListener("click", closeVariations);
-variationsOverlay.addEventListener("click", (e) => {
-  if (e.target === variationsOverlay) closeVariations();
-});
 
-// ---------- عدسة القراءة: معاينة عرض هاتف، للعرض فقط — لا تحرير ولا تعديل ----------
-// النص كما هو حرفيًا (بما فيه رموز خريطة سابستاك إن وُجدت) — محاكاة عامة
-// لعرض الهاتف لا تتبع منصة بعينها، وتحترم اتجاه النص الحالي (RTL/LTR)
+// تغيّر الإعدادات أو التوجيهات يعيد حساب «أرِني تنويعات…» الذي ينتظر دفعةً جارية
+// لمدخلات غيرها (تغيّر النص يعيده مستمع الإدخال نفسه)
+for (const control of [el("format-style"), interventionSel, platformSel]) control.addEventListener("change", renderState);
+directivesInput.addEventListener("input", renderState);
+
+// ---------- عدسة القراءة: نافذة منبثقة من زرها (Figma 261:6648) ----------
+// معاينة عرض هاتف ٣٧٥، للعرض فقط — لا تحرير ولا تعديل. النص كما هو حرفيًا (بما
+// فيه رموز خريطة سابستاك إن وُجدت)، وتحترم اتجاه النص الحالي (RTL/LTR)
 const readingLensBtn = el("reading-lens-btn");
-const readingLensOverlay = el("reading-lens-overlay");
+const readingLensOverlay = el("reading-lens"); // الاسم باقٍ: حارس العزل يثبت وصلة Esc به
 const readingLensText = el("reading-lens-text");
 
 function openReadingLens() {
@@ -983,27 +1142,25 @@ function openReadingLens() {
   readingLensText.textContent = text;
   // وجه النوت يُعرض يسارًا كما في المخرَج الرئيس — العدسة تعرض لا تقرر
   readingLensText.classList.toggle("note-face", metaSubstackFace() === SUBSTACK_NOTE);
-  readingLensOverlay.hidden = false;
+  // الزر قد يكون مطويًّا في «المزيد» عند الضيق — فتشير النافذة إلى «المزيد»
+  const anchor = readingLensBtn.offsetParent ? readingLensBtn : document.querySelector("[data-overflow-button]");
+  window.NasaqWindow.presentPopover(readingLensOverlay, anchor, { control: readingLensBtn });
 }
 
 function closeReadingLens() {
-  readingLensOverlay.hidden = true;
+  window.NasaqWindow.dismissPopover();
 }
 
 readingLensBtn.addEventListener("click", openReadingLens);
-el("close-reading-lens").addEventListener("click", closeReadingLens);
-readingLensOverlay.addEventListener("click", (e) => {
-  if (e.target === readingLensOverlay) closeReadingLens();
-});
 
 // استعادة صيغة: النص الخام من الأمّ، والمنسّق والمحاور الثلاثة من الصيغة —
 // لو ضغط «نسّق» بعدها لأنتج على الأساس نفسه. المسودة تبقى محفوظة
 function restoreDraft(mother, version) {
+  clearError("nasaq");
   inputText.value = mother.original || "";
   inputText.dispatchEvent(new Event("input"));
 
   setOutput(version.formatted || "");
-  outputPlaceholder.hidden = Boolean((version.formatted || "").trim());
   notesBox.hidden = true;
   showRhythmFingerprint(null); // المسودات لا تحفظ البصمة — لا وصف بلا نداء طازج
 
@@ -1030,6 +1187,7 @@ function restoreDraft(mother, version) {
   resetSession();
 
   closeDrafts();
+  renderState();
   showToast("استُعيدت المسودة.");
 }
 
@@ -1037,15 +1195,16 @@ function restoreDraft(mother, version) {
 // كلها تحت الأمّ المطابقة بالمفتاح المطبَّع (تُنشأ إن لم توجد) — النصف
 // التخزيني في القشرة (depositDraftVersions)، وهنا نصف الجلسة فقط.
 // ما حُفظ من قبل لا يُعاد إيداعه — علامة saved لكل مدخل تمنع التكرار
-el("save-draft-btn").addEventListener("click", async () => {
+const saveBtn = el("save-draft-btn");
+saveBtn.addEventListener("click", async () => {
   if (sessionVersions.size === 0) {
-    showToast("لا توجد صيغة للحفظ — نسّق النص أولًا.");
+    showToast("لا توجد صيغة للحفظ — نسّق النص أولًا.", "neutral");
     return;
   }
 
   const pending = [...sessionVersions.values()].filter((v) => !v.saved);
   if (pending.length === 0) {
-    showToast("لا جديد ليُحفظ منذ آخر حفظ.");
+    showToast("لا جديد ليُحفظ منذ آخر حفظ.", "neutral");
     return;
   }
 
@@ -1067,7 +1226,7 @@ el("save-draft-btn").addEventListener("click", async () => {
     for (const v of pending) v.saved = true;
     showToast(`حُفظت ${versionsCountLabel(pending.length)}.`);
   } catch (err) {
-    showError(String(err));
+    showError(String(err), { owner: "nasaq" });
   }
 });
 
@@ -1091,18 +1250,20 @@ const TYPE_ORDER = [
 configureDraftsDisplay({ versionTypeOf: versionType, typeOrder: TYPE_ORDER });
 registerRestoreHandler(restoreDraft);
 
-// لوحتا نسق تتقدمان لوحات القشرة في الإغلاق بالمفتاح، والعدسة قبل
-// التنويعات — التسجيل بالأحدث أولًا يجعل الفحص:
-// [العدسة، التنويعات، المسودات، الإعدادات] كسلوك v4.1 حرفيًا
-registerEscapeCloser(() => !variationsOverlay.hidden, closeVariations);
-registerEscapeCloser(() => !readingLensOverlay.hidden, closeReadingLens);
+// تنبيه نسق زال (زر الإغلاق، أو «أعد المحاولة»، أو خطأ آخر لنسق حلّ محله) — تعود
+// الحالة إلى ما تحتها. تنبيهات شَذْب لا تمسّها
+document.addEventListener("nasaq:error-cleared", (e) => {
+  if (!formatFailed || e.detail?.owner !== "nasaq") return;
+  formatFailed = false;
+  renderState();
+});
 
-// ---------- بحث في النتيجة (دالة «بحث» ضمن شريط NSQ/Toolbar الجديد) ----------
-// إضافة جديدة بحتة — لا تمسّ أي دالة قائمة. قراءة فقط من outputText، والتمييز
-// عبر CSS Custom Highlight API فلا تُدرَج عقد <mark> في الشجرة، فتبقى تراجع/
-// تنظيف الأسطر الفارغة/فصل الجمل (التي تقرأ نصّ outputText مباشرة) بمنأى تام
-// عن أي تأثير. بلا نداء نموذج ولا حفظ — عرض وتنقّل محليان فقط.
-(function initOutputSearch() {
+// ---------- بحث في النتيجة: شريط ٣٢ تحت شريط الأدوات (Figma 262:7032) ----------
+// قراءة فقط من outputText، والتمييز عبر CSS Custom Highlight API فلا تُدرَج
+// عقد <mark> في الشجرة، فتبقى تراجع/تنظيف الأسطر الفارغة/فصل الجمل (التي تقرأ
+// نصّ outputText مباشرة) بمنأى تام عن أي تأثير. بلا نداء نموذج ولا حفظ — عرض
+// وتنقّل محليان فقط. ⌘F يفتح، و⌘G / ⇧⌘G أو ↩ / ⇧↩ للتالي والسابق، وEsc أو «تم» يغلق
+const outputSearch = (function initOutputSearch() {
   const btn = el("output-search-btn");
   const bar = el("output-search-bar");
   const input = el("output-search-input");
@@ -1110,10 +1271,11 @@ registerEscapeCloser(() => !readingLensOverlay.hidden, closeReadingLens);
   const prevBtn = el("output-search-prev");
   const nextBtn = el("output-search-next");
   const closeBtn = el("output-search-close");
-  if (!btn || !bar || !input) return;
+  const clearBtn = el("output-search-clear");
 
   const supportsHighlight =
     typeof CSS !== "undefined" && "highlights" in CSS && typeof Highlight !== "undefined";
+  const reduceMotion = window.matchMedia ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
 
   let matches = [];
   let activeIndex = -1;
@@ -1155,12 +1317,15 @@ registerEscapeCloser(() => !readingLensOverlay.hidden, closeReadingLens);
     );
   }
 
+  // «١ من ٣» بأرقام هندية، و«لا تطابق» حين يخلو النص من الكلمة (Figma 73:701)
   function updateCount() {
     countEl.textContent = matches.length
-      ? `${activeIndex + 1} / ${matches.length}`
-      : input.value
-      ? "0 / 0"
+      ? `${arabicDigits.format(activeIndex + 1)} من ${arabicDigits.format(matches.length)}`
+      : input.value.trim()
+      ? "لا تطابق"
       : "";
+    prevBtn.disabled = nextBtn.disabled = matches.length === 0;
+    clearBtn.hidden = !input.value;
   }
 
   function goTo(index) {
@@ -1169,7 +1334,7 @@ registerEscapeCloser(() => !readingLensOverlay.hidden, closeReadingLens);
     const range = matches[activeIndex];
     const container = range.startContainer.parentElement;
     if (container && container.scrollIntoView) {
-      container.scrollIntoView({ block: "center", behavior: "smooth" });
+      container.scrollIntoView({ block: "center", behavior: reduceMotion && reduceMotion.matches ? "auto" : "smooth" });
     }
     renderHighlights();
     updateCount();
@@ -1183,10 +1348,13 @@ registerEscapeCloser(() => !readingLensOverlay.hidden, closeReadingLens);
   }
 
   function openSearch() {
+    if (btn.disabled) return;
     bar.hidden = false;
     btn.setAttribute("aria-expanded", "true");
     input.focus();
+    input.select();
     if (input.value) runSearch();
+    else updateCount();
   }
 
   function closeSearch() {
@@ -1195,7 +1363,7 @@ registerEscapeCloser(() => !readingLensOverlay.hidden, closeReadingLens);
     // المفاتيح إلى <body> فيضطر المستخدم لبدء التنقّل من رأس الصفحة (٢٫٤٫٣)
     // الزر قد يكون مطويًّا في «المزيد» عند الضيق فلا يقبل التركيز — فالمحرر إن
     // كان ظاهرًا
-    if (bar.contains(document.activeElement)) [btn, inputText].find((n) => n.offsetParent)?.focus();
+    if (bar.contains(document.activeElement)) [btn, inputText].find((n) => n.offsetParent && !n.disabled)?.focus();
     bar.hidden = true;
     btn.setAttribute("aria-expanded", "false");
     clearHighlights();
@@ -1206,6 +1374,11 @@ registerEscapeCloser(() => !readingLensOverlay.hidden, closeReadingLens);
 
   btn.addEventListener("click", () => (bar.hidden ? openSearch() : closeSearch()));
   closeBtn.addEventListener("click", closeSearch);
+  clearBtn.addEventListener("click", () => {
+    input.value = "";
+    runSearch();
+    input.focus();
+  });
   input.addEventListener("input", runSearch);
   input.addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
@@ -1213,11 +1386,202 @@ registerEscapeCloser(() => !readingLensOverlay.hidden, closeReadingLens);
       goTo(activeIndex + (e.shiftKey ? -1 : 1));
     } else if (e.key === "Escape") {
       e.preventDefault();
+      e.stopPropagation();
       closeSearch();
     }
   });
   nextBtn.addEventListener("click", () => goTo(activeIndex + 1));
   prevBtn.addEventListener("click", () => goTo(activeIndex - 1));
-  registerEscapeCloser(() => !bar.hidden, closeSearch);
+  // ⌘G و⇧⌘G من أي مكان والشريط مفتوح
+  // الشريط الظاهر وحده يستجيب: وهو مفتوح في نسق يبقى مخفيًا ما دامت وحدة أخرى تملأ الواجهة
+  const visible = () => !bar.hidden && bar.offsetParent !== null;
+  document.addEventListener("keydown", (e) => {
+    if (!visible() || !e.metaKey || e.altKey || e.ctrlKey || e.code !== "KeyG") return;
+    if (window.NasaqWindow.isModalOpen()) return;
+    e.preventDefault();
+    goTo(activeIndex + (e.shiftKey ? -1 : 1));
+  });
+  registerEscapeCloser(() => visible() && !window.NasaqWindow.isModalOpen(), closeSearch);
+
+  return { open: openSearch, close: closeSearch, isOpen: () => !bar.hidden, refresh: () => !bar.hidden && runSearch() };
 })();
 
+// نافذتا نسق تتقدمان شريط البحث ولوحات القشرة في الإغلاق بالمفتاح، والعدسة قبل
+// التنويعات — التسجيل بالأحدث أولًا يجعل الفحص:
+// [العدسة، التنويعات، شريط البحث، تنبيه الحذف، الإعدادات]
+registerEscapeCloser(() => !variationsOverlay.hidden, closeVariations);
+registerEscapeCloser(() => !readingLensOverlay.hidden, closeReadingLens);
+
+// النتيجة تغيّرت (تراجع، أسطر، اعتماد): شريط البحث يعيد تطابقاته على النص الجديد،
+// والعدسة المفتوحة تعرض النص الجديد بوجهه
+new MutationObserver(() => {
+  outputSearch.refresh();
+  if (!readingLensOverlay.hidden) {
+    readingLensText.textContent = outputText.textContent;
+    readingLensText.classList.toggle("note-face", metaSubstackFace() === SUBSTACK_NOTE);
+  }
+}).observe(outputText, { childList: true, characterData: true, subtree: true });
+
+// ---------- آلة حالات نَسَق (Figma 100:542) ----------
+// خمس حالات صريحة تُحسب من حالة الجلسة نفسها لا من CSS: فارغة، أثناء التنسيق،
+// نتيجة، مراجعة المنعطف، خطأ. الحالة تُكتب في data-nasaq-state على الجذر،
+// وكل ما تقرره (أزرار معطّلة، هيكل نائب، أقسام المفتّش، مؤشر الحالة) يُضبط هنا
+// صراحةً. المنطق تحتها لا يتغير: هي تعرض ما فعله فقط
+const STATUS_LABELS = {
+  empty: "لم يُنسَّق بعد",
+  processing: "جارٍ التنسيق…",
+  result: "منسَّق",
+  review: "بانتظار اختيارك",
+  error: "تعذّر التنسيق",
+};
+const nasaqStatus = el("nasaq-status");
+const nasaqStatusLabel = el("nasaq-status-label");
+const settingsHeader = document.querySelector('[aria-controls="settings-content"]');
+const reportSection = el("report-section");
+const reportHeader = document.querySelector('[aria-controls="report-content"]');
+const reportSkeleton = el("report-skeleton");
+const rhythmBox = el("rhythm-box");
+const searchBtn = el("output-search-btn");
+let renderedState = null;
+let reportHadContent = null;
+let focusBeforeBusy = null; // عنصر تعطّل وعليه التركيز حين بدأ النداء — يعود إليه بعده
+
+function nasaqState() {
+  const hasResult = Boolean(outputText.textContent.trim());
+  if (modelCallActive) return "processing";
+  if (formatFailed) return "error";
+  if (hasResult && fragmentForms && !turnDecision) return "review";
+  return hasResult ? "result" : "empty";
+}
+
+function renderState() {
+  const state = nasaqState();
+  const busy = state === "processing";
+  const hasText = Boolean(inputText.value.trim());
+  const hasResult = Boolean(outputText.textContent.trim());
+  const transition = state !== renderedState;
+  document.documentElement.dataset.nasaqState = state;
+  if (busy && transition && document.activeElement !== document.body) focusBeforeBusy = document.activeElement;
+
+  // «نسّق»: معطّل بلا نص، وتحميل أثناء النداء، وبارز حتى توجد نتيجة ثم زجاجي
+  formatBtn.disabled = busy || !hasText;
+  // بارز بلون الوحدة ما دام هناك نص بلا نتيجة، وزجاجي بحافته في غير ذلك —
+  // والمعطّل بلا نص زجاجي خافت لا مسطح غائر بين كبسولات الشريط. أثناء النداء
+  // يبقى بأسلوب لحظة إطلاقه ولو مُحي النص تحته
+  if (!busy) formatBtn.dataset.style = hasText && !hasResult ? "primary" : "glass";
+  formatBtn.setAttribute("aria-busy", String(busy));
+
+  // أدوات الشريط تعمل على نتيجة موجودة ولا تزاحم نداءً جاريًا
+  const tools = hasResult && !busy;
+  for (const b of [copyBtn, fewerBtn, moreBtn, cleanBtn, splitBtn, searchBtn, saveBtn, readingLensBtn]) {
+    b.disabled = !tools;
+  }
+  // «تصدير لسابستاك» ظاهر دائمًا كما في Figma، ويعمل لنتيجة وجهتها سابستاك وحدها:
+  // حذف الأسطر الفارغة عند التصدير يُفسد فقرات بقية المستويات والمنصات
+  exportBtn.disabled = !tools || !metaSubstackFace();
+  undoBtn.disabled = busy || outputUndoStack.length === 0;
+  variationsBtn.disabled = busy || !hasText || (variationsGenerating() && !variationInputsCurrent());
+  if (!tools) {
+    if (outputSearch.isOpen()) outputSearch.close();
+    if (!readingLensOverlay.hidden) closeReadingLens();
+  }
+  // «أعد المحاولة» لا تُنقر ونداء آخر يكتب على النتيجة
+  for (const b of document.querySelectorAll("#nasaq-error [data-error-action], #nasaq-error-source [data-error-action]")) {
+    b.disabled = busy;
+  }
+
+  // الإعدادات تُقرأ لحظة النداء — معطّلة ما دام النداء جاريًا (Figma 98:400)
+  for (const b of document.querySelectorAll("#settings-content .dd-btn")) b.disabled = busy;
+  directivesInput.disabled = busy;
+
+  // عمود النتيجة: هيكل نائب أثناء التنسيق، والنتيجة، أو حالة البداية
+  loading.hidden = !busy;
+  outputText.hidden = busy;
+  outputPlaceholder.hidden = hasResult || busy || state === "error";
+
+  // المراجعة: بطاقتا المنعطف — المحددة ما تعرضه النتيجة، والمعتمدة ما قرره الكاتب
+  fragmentCard.hidden = !fragmentForms || busy;
+  if (fragmentForms) {
+    for (const which of ["broken", "joined"]) {
+      const form = fragmentForms[which];
+      const accepted = Boolean(turnDecision && turnDecision.which === which);
+      const selected = !accepted && outputText.textContent === form;
+      el(`turn-card-${which}`).dataset.state = accepted ? "accepted" : selected ? "selected" : "undecided";
+      const tag = el(`turn-tag-${which}`);
+      tag.dataset.tone = accepted ? "module" : "neutral";
+      tag.querySelector(".tag-label").textContent = accepted
+        ? "معتمدة"
+        : countLabel(form.replace(/\n+$/, "").split("\n").length, ["سطر واحد", "سطران", "أسطر", "سطرًا", "سطر"]);
+      el(`adopt-${which}`).hidden = accepted;
+      el(`revert-${which}`).hidden = !accepted;
+      el(`revert-${which}`).disabled = busy;
+    }
+  }
+
+  // التقرير مطويّ ما دام فارغًا، ومفتوح حين يصل محتواه أو أثناء التنسيق (هيكله
+  // النائب)، ويغيب في المراجعة إن لم يكن فيه شيء (Figma 98:318). الفتح والطي عند
+  // تغيّر الحالة أو المحتوى فقط — فيبقى اختيار الكاتب اليدوي بينهما
+  const reportHasContent = !notesBox.hidden || !rhythmFingerprint.hidden;
+  rhythmBox.hidden = rhythmFingerprint.hidden;
+  reportSkeleton.hidden = !busy;
+  reportSection.hidden = state === "review" && !reportHasContent;
+  if (transition || reportHasContent !== reportHadContent) {
+    reportHeader.setAttribute("aria-expanded", String(busy || reportHasContent));
+  }
+  if (transition && (state === "review" || renderedState === "review")) {
+    settingsHeader.setAttribute("aria-expanded", String(state !== "review"));
+  }
+
+  // شريط الحالة: مؤشر الحالة، وعدّاد النتيجة ما دامت النتيجة هي المعروضة
+  nasaqStatus.dataset.status = state;
+  nasaqStatusLabel.textContent = STATUS_LABELS[state];
+  outputCount.hidden = !(state === "result" || state === "review");
+
+  // التعطيل يُسقط التركيز إلى الصفحة: بعد النداء يعود إلى حيث كان إن بقي صالحًا
+  if (!busy && renderedState === "processing") {
+    const target = focusBeforeBusy;
+    focusBeforeBusy = null;
+    if (target && target.isConnected && !target.disabled && target.offsetParent !== null && document.activeElement === document.body) target.focus();
+  }
+
+  renderedState = state;
+  reportHadContent = reportHasContent;
+}
+
+// ---------- اختصارات قوائم «تنسيق» و«تحرير» و«ملف» (Figma 265:1299) ----------
+// تعمل داخل النافذة حتى يصلها شريط القوائم في المرحلة ٦. كل اختصار قرين زره:
+// لا يعمل في وحدة أخرى، ولا والزر معطّل أو مخفي بحالته، ولا تحت ورقة مفتوحة —
+// والزر المطويّ في «المزيد» يبقى اختصاره عاملًا
+const editable = (node) => Boolean(node && node.closest && node.closest("input, textarea, [contenteditable='true']"));
+const SHORTCUTS = [
+  { keys: { meta: true, shift: true, code: "Enter" }, button: variationsBtn, run: showVariations },
+  { keys: { meta: true, alt: true, code: "Backspace" }, button: cleanBtn, run: cleanEmptyLines },
+  { keys: { meta: true, alt: true, code: "Period" }, button: splitBtn, run: splitSentences },
+  { keys: { meta: true, code: "BracketLeft" }, button: fewerBtn, run: () => adjustLines("fewer") },
+  { keys: { meta: true, code: "BracketRight" }, button: moreBtn, run: () => adjustLines("more") },
+  { keys: { meta: true, alt: true, code: "KeyR" }, button: readingLensBtn, run: openReadingLens },
+  { keys: { meta: true, shift: true, code: "KeyC" }, button: copyBtn, run: () => copyBtn.click() },
+  { keys: { meta: true, alt: true, code: "KeyC" }, button: exportBtn, run: () => exportBtn.click() },
+  { keys: { meta: true, code: "KeyS" }, button: saveBtn, run: () => saveBtn.click() },
+  { keys: { meta: true, code: "KeyF" }, button: searchBtn, run: () => outputSearch.open() },
+  // ⌘Z في حقل كتابة تراجعُ الكتابة نفسها — وخارجه تراجع النتيجة
+  { keys: { meta: true, code: "KeyZ" }, button: undoBtn, run: undoOutput, outsideFields: true },
+];
+
+document.addEventListener("keydown", (e) => {
+  // زر «نسّق» لا يُطوى أبدًا: غيابه يعني أن وحدة أخرى تملأ الواجهة
+  if (formatBtn.offsetParent === null) return;
+  if (window.NasaqWindow.isModalOpen()) return;
+  for (const s of SHORTCUTS) {
+    const k = s.keys;
+    if (e.code !== k.code || e.metaKey !== Boolean(k.meta) || e.altKey !== Boolean(k.alt) || e.shiftKey !== Boolean(k.shift) || e.ctrlKey) continue;
+    if (s.outsideFields && editable(e.target)) return;
+    if (s.button.hidden || s.button.disabled) return;
+    e.preventDefault();
+    s.run();
+    return;
+  }
+});
+
+updateCount(inputCount, inputText.value, { withLines: false });
+renderState();
