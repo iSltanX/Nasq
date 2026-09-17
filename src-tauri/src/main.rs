@@ -6,6 +6,8 @@
 // - nasaq (وshadhb حين يُبنى) يستوردان من shared حصرًا — لا استيراد متبادل
 //   بين البرجين أبدًا، ولا ثابت نصي مشترك بينهما ولو تطابق حرفيًا.
 // - كل ما يغيّر سلوك النموذج في وضعٍ ما يعيش داخل وحدة وضعه وحده.
+// قشرة التطبيق: النوافذ وإطارها الأصلي — لا تعرف برجًا ولا عقدًا
+mod app;
 mod nasaq;
 mod shadhb;
 // أداة تسجيل تجربة شَذْب — مؤقتة، خلف مفتاح الواجهة، ومعزولة عن الأبراج
@@ -15,6 +17,7 @@ mod shadhb_trial_log;
 mod shared;
 
 fn main() {
+    app::window::mark_launch();
     tauri::Builder::default()
         // نظام التحديث التلقائي (v8.2.0): المحدّث مُسجَّل الآن بعد اكتمال
         // plugins.updater.pubkey والنقطة في tauri.conf.json. process لازمٌ
@@ -26,7 +29,14 @@ fn main() {
         // فتح الروابط الخارجية في المتصفح الافتراضي (رابط «صفحة المشروع»)
         // عبر أمر plugin:opener|open_url — الصلاحية مقيّدة بنطاق github.com
         .plugin(tauri_plugin_opener::init())
+        // النافذة الرئيسية تُنشأ هنا لا في tauri.conf: مخفية بلون مظهر النظام
+        // حتى تعلن الواجهة اكتمال أول رسم
+        .setup(|app| {
+            crate::app::window::create_main_window(app)?;
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
+            app::window::main_window_ready,
             shared::settings::load_settings,
             shared::settings::save_settings,
             shared::llm::test_ollama_connection,

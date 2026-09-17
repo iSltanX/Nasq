@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <title>نَسَق</title>
+  <!-- تجربة إطار النافذة (المرحلة 0) — مؤقتة وتُحذف بعد حسم الإطار -->
+  <link rel="stylesheet" href="spike-chrome.css" />
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="sidebar-top" data-tauri-drag-region="deep"></div>
+    <div class="row selected">الجلسة الحالية</div>
+    <div class="row">مسودة تجريبية</div>
+  </aside>
+  <div class="main">
+    <section class="content">
+      <p class="text">كتبتُ كثيرًا عن الطريق<br />ثم توقفت<br />لأن الطريق كان يكتبني.</p>
+      <p id="log" class="log" aria-live="polite">—</p>
+    </section>
+    <aside class="inspector"></aside>
+    <header class="toolbar" data-tauri-drag-region="deep">
+      <div class="switcher">
+        <button type="button" class="on">نَسَق</button>
+        <button type="button">شَذْب</button>
+      </div>
+      <div class="spacer"></div>
+      <div class="group">
+        <button type="button">١</button>
+        <button type="button">٢</button>
+        <button type="button">٣</button>
+      </div>
+      <button type="button" class="primary">نسّق</button>
+      <div class="group"><button type="button">▣</button></div>
+    </header>
+  </div>
+  <script src="spike-chrome.js"></script>
+</body>
+</html>

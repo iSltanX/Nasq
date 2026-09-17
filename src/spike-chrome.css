@@ -1,0 +1,77 @@
+/* تجربة إطار النافذة (المرحلة 0) — مؤقتة */
+@font-face { font-family: "Almarai"; src: url("fonts/Almarai-Regular.ttf") format("truetype"); font-weight: 400; font-display: block; }
+@font-face { font-family: "Almarai"; src: url("fonts/Almarai-Bold.ttf") format("truetype"); font-weight: 700; font-display: block; }
+
+:root {
+  color-scheme: light dark;
+  --window: #ffffff;
+  --panel: #ededed;
+  --text: rgb(0 0 0 / 0.85);
+  --glass: rgb(255 255 255 / 0.72);
+  --edge: rgb(0 0 0 / 0.12);
+  --accent: #7c69b8;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --window: #1e1e1e;
+    --panel: #262626;
+    --text: rgb(255 255 255 / 0.85);
+    --glass: rgb(30 30 30 / 0.7);
+    --edge: rgb(255 255 255 / 0.12);
+  }
+}
+
+html, body { height: 100%; margin: 0; }
+body {
+  display: flex;
+  overflow: hidden;
+  background: var(--window);
+  color: var(--text);
+  font: 13px/18px "Almarai", system-ui;
+  -webkit-user-select: none;
+  user-select: none;
+  cursor: default;
+}
+
+.sidebar { width: 256px; flex: none; background: var(--panel); }
+.sidebar-top { height: 52px; }
+.row { height: 32px; margin: 0 10px; padding: 0 11px; display: flex; align-items: center; border-radius: 8px; }
+.row.selected { background: var(--accent); color: #fff; font-weight: 700; }
+
+.main { flex: 1; min-width: 0; position: relative; display: flex; }
+.content { flex: 1; min-width: 0; padding: 72px 48px 0; }
+.text { font-size: 16px; line-height: 28px; margin: 0; }
+.log { margin-top: 24px; opacity: 0.6; }
+.inspector { width: 270px; flex: none; background: var(--panel); }
+
+.toolbar {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 52px;
+  padding: 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.spacer { flex: 1; align-self: stretch; }
+.group, .switcher {
+  display: flex;
+  height: 36px;
+  padding: 0 1px;
+  border-radius: 18px;
+  background: var(--glass);
+  box-shadow: 0 0 0 0.5px var(--edge), 0 1px 4px rgb(0 0 0 / 0.08);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+}
+button {
+  font: inherit;
+  color: inherit;
+  border: 0;
+  background: transparent;
+}
+.group button { width: 36px; height: 36px; border-radius: 18px; }
+.group button:active { background: rgb(0 0 0 / 0.1); }
+.switcher button { height: 28px; margin: 4px 3px; padding: 0 14px; border-radius: 14px; }
+.switcher button.on { background: var(--accent); color: #fff; font-weight: 700; }
+.primary { height: 28px; padding: 0 16px; border-radius: 14px; background: var(--accent); color: #fff; font-weight: 700; }
