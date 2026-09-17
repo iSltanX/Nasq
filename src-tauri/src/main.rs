@@ -15,6 +15,10 @@ mod shared;
 fn main() {
     app::window::mark_launch();
     tauri::Builder::default()
+        // شريط القوائم الأصلي من لوحة التصميم: يُبنى من مواصفته وحدها،
+        // ويبثّ معرّف العنصر لتنفّذه الوحدة الظاهرة بمنطقها
+        .menu(app::menu::build)
+        .on_menu_event(app::menu::on_event)
         // نظام التحديث التلقائي (v8.2.0): المحدّث مُسجَّل الآن بعد اكتمال
         // plugins.updater.pubkey والنقطة في tauri.conf.json. process لازمٌ
         // لإعادة التشغيل الآمنة بعد التثبيت (plugin:process|restart)،
@@ -36,6 +40,9 @@ fn main() {
             app::secondary::open_settings,
             app::secondary::secondary_window_ready,
             app::secondary::settings_pane_resized,
+            app::menu::set_menu_state,
+            app::menu::set_active_module,
+            app::menu::set_active_pane,
             shared::settings::load_settings,
             shared::settings::save_settings,
             shared::llm::test_ollama_connection,

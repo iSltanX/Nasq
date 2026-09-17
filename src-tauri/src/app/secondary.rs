@@ -54,6 +54,13 @@ fn initial_settings_height() -> f64 {
 /// نافذة واحدة لكل نوع: الموجودة تُرفع وتُركَّز، ولا تُفتح ثانية
 #[tauri::command]
 pub(crate) fn open_settings(app: tauri::AppHandle) -> Result<(), String> {
+    open_settings_handle(&app)
+}
+
+/// المنطق نفسه بمقبض عام — يناديه أمرُ الواجهة وعنصرُ القائمة معًا
+pub(crate) fn open_settings_handle<R: tauri::Runtime>(
+    app: &tauri::AppHandle<R>,
+) -> Result<(), String> {
     if let Some(window) = app.get_webview_window(SETTINGS_LABEL) {
         let _ = window.show();
         let _ = window.unminimize();
@@ -63,7 +70,7 @@ pub(crate) fn open_settings(app: tauri::AppHandle) -> Result<(), String> {
     let background = if system_prefers_dark() { WINDOW_DARK } else { WINDOW_LIGHT };
     let titlebar = if titlebar_is_rtl() { "rtl" } else { "ltr" };
 
-    WebviewWindowBuilder::new(&app, SETTINGS_LABEL, WebviewUrl::App(SETTINGS_PAGE.into()))
+    WebviewWindowBuilder::new(app, SETTINGS_LABEL, WebviewUrl::App(SETTINGS_PAGE.into()))
         .initialization_script(format!(
             "document.documentElement.dataset.titlebar = \"{titlebar}\";"
         ))

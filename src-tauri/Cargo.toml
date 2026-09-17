@@ -30,6 +30,11 @@ objc2-foundation = { version = "0.3", features = ["NSArray", "NSGeometry", "NSLo
 # أصلًا في الشجرة، والاعتماد المباشر يفتح واجهة SecItem للكلمات العامة
 security-framework = "3"
 
+# محلّل الاختصارات نفسه الذي يستعمله تاوري — للاختبار وحده: تاوري يبتلع فشل
+# التحليل بصمت، فيُفحص هنا قبل أن يختفي اختصار بلا أثر
+[dev-dependencies]
+muda = "0.19"
+
 [profile.release]
 codegen-units = 1
 lto = true
