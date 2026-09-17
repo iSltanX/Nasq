@@ -100,10 +100,16 @@ test("الأيقونات: معرّفات فريدة، ولكل رمز viewBox، 
 
 test("الأيقونات: كل رمز يشير إليه الهيكل أو الأبراج موجود في icons.svg", () => {
   const ids = new Set([...icons.matchAll(/<symbol id="([^"]+)"/g)].map((m) => m[1]));
+  // اسم الرمز في السمة مكتوبًا، أو قيمةً نصية تُركَّب في وقت التشغيل (خرائط
+  // الحالات) — الشكل نفسه: kebab بنقاط فمقاس ١٦ أو ٢٠ فوزن r أو m
+  const NAME_RE = /["'`]#?([a-z][a-z0-9.]*\.\d\d[rm])["'`]/g;
   for (const file of ["index.html", "nasaq.js", "shadhb.js", "shell.js", "layout.js"]) {
     const code = fs.readFileSync(srcPath(file), "utf8");
     for (const m of code.matchAll(/<use href="#([^"]+)"/g)) {
       assert.ok(ids.has(m[1]), `${file} يشير إلى رمز غائب: ${m[1]}`);
+    }
+    for (const m of code.matchAll(NAME_RE)) {
+      assert.ok(ids.has(m[1]), `${file} يركّب رمزًا غائبًا: ${m[1]}`);
     }
   }
 });

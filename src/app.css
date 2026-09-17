@@ -218,9 +218,6 @@
   font: var(--type-caption-default);
   color: var(--text-secondary);
 }
-.sidebar-body:has(.cuts-list > *) .sidebar-hint {
-  display: none;
-}
 
 .empty-state-compact {
   display: flex;
@@ -750,8 +747,8 @@ textarea.empty-bidi {
   color: var(--text-secondary);
 }
 
-/* عمود واحد: «الأصل» يعرض المحرر، وتظهر تحته حالة البداية ما دامت حالة نَسَق
-   فارغة (آلة الحالات في nasaq.js). شَذْب يشتقها من عنصره حتى المرحلة ٤ */
+/* عمود واحد: «الأصل» يعرض المحرر، وتظهر تحته حالة البداية ما دامت الوحدة في
+   حالتها الأولى — كل برج بآلة حالاته (Figma 99:557 و108:410) */
 .content[data-view="source"] .column-result,
 .content[data-view="result"] .column-source {
   display: none;
@@ -759,7 +756,7 @@ textarea.empty-bidi {
 :root:not([data-module="shadhb"])[data-nasaq-state="empty"] .content[data-view="source"] .column-result[data-for="nasaq"] {
   display: flex;
 }
-.content[data-view="source"] .column-result[data-for="shadhb"]:has(> .empty-state:not([hidden])) {
+:root[data-module="shadhb"]:is([data-shadhb-state="before"], [data-shadhb-state="ready"]) .content[data-view="source"] .column-result[data-for="shadhb"] {
   display: flex;
 }
 
@@ -801,8 +798,9 @@ textarea.empty-bidi {
     inline-size: var(--stroke-hairline);
     background: var(--border-hairline);
   }
-  /* عمودان: التنبيه في عمود النتيجة وحده (Figma 99:669) */
-  .column-source [data-error-slot] {
+  /* عمودان: التنبيه والملاحظة في عمود النتيجة وحده (Figma 99:669 و108:748) */
+  .column-source [data-error-slot],
+  #no-cuts-source {
     display: none;
   }
 }
@@ -880,16 +878,6 @@ textarea.empty-bidi {
 }
 .empty-state:not(.empty-state-compact) .empty-body {
   max-inline-size: 400px;
-  font: var(--type-body-small);
-  color: var(--text-secondary);
-}
-
-.loading-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-12);
-  padding: var(--space-24);
   font: var(--type-body-small);
   color: var(--text-secondary);
 }
@@ -1062,16 +1050,37 @@ textarea.empty-bidi {
   color: var(--status-warning-fg);
 }
 
-#shadhb-status-dot[data-status="pending"] {
+/* حالة شَذْب من آلة الحالات (Polish Status, Figma 71:400): لم يُفحص بعد، جارٍ
+   الفحص…، بانتظار قرارك، حُسمت كل القصّات، لا قصّات مقترحة، تعذّر التحقق */
+#shadhb-status[data-status="checking"] .status-indicator {
+  box-shadow: inset 0 0 0 1.5px var(--module-glyph);
+}
+#shadhb-status[data-status="review"] .status-indicator {
   background: var(--module-glyph);
   box-shadow: none;
 }
-#shadhb-status-badge[data-status="pending"] {
+#shadhb-status[data-status="review"] .status-label {
   color: var(--module-strong);
 }
-#shadhb-status-dot[data-status="clear"] {
+#shadhb-status[data-status="polished"] .status-indicator,
+#outcome-status .status-indicator {
   background: var(--status-success-solid);
   box-shadow: none;
+}
+#shadhb-status[data-status="polished"] .status-label,
+#outcome-status {
+  color: var(--status-success-fg);
+}
+#shadhb-status[data-status="error"] .status-indicator {
+  background: var(--status-danger-solid);
+  box-shadow: none;
+}
+#shadhb-status[data-status="error"] .status-label {
+  color: var(--status-danger-fg);
+}
+/* عدّاد شَذْب مستقل عن عدّاد نَسَق: كلمات الشذرة وحدها (Figma 108:712) */
+:root[data-module="shadhb"] #input-count {
+  display: none;
 }
 
 .status-toast {
@@ -1154,9 +1163,6 @@ textarea.empty-bidi {
 .section-note {
   font: var(--type-body-small);
   color: var(--text-secondary);
-}
-.section-content:has(> :is(#reading-card, #covenant-bar):not([hidden])) .when-empty {
-  display: none;
 }
 
 .stacked-row {
@@ -1297,6 +1303,10 @@ textarea.empty-bidi {
 .tag[data-tone="success"] {
   background: var(--status-success-bg);
   color: var(--status-success-fg);
+}
+.tag[data-tone="warning"] {
+  background: var(--status-warning-bg);
+  color: var(--status-warning-fg);
 }
 .tag[data-tone="danger"] {
   background: var(--status-danger-bg);
@@ -1448,106 +1458,129 @@ textarea.empty-bidi {
   padding-inline: var(--space-24);
 }
 
-/* ================= مؤقت حتى المرحلة ٤: القصّات وبطاقة القراءة لشَذْب ================= */
+/* ================= شَذْب (Figma 51:9) ================= */
+/* الشريط الجانبي: صفّ القصّة ٤٤pt بسطرين، ورمز قرارها في بدايته (Sidebar Row،
+   Figma 66:300 و105:525): منقّطة لم تُحسم، مقص للمحذوفة، صح للمُبقاة. المحددة
+   بتعبئة لون الوحدة ونص أبيض عريض كبقية صفوف الشريط */
 .cuts-list {
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
 }
-.cut-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-4);
-  padding-inline: var(--space-row-inset);
+.cut-row {
+  block-size: var(--size-row-2line);
 }
-.cut-do,
-.cut-keep {
-  block-size: var(--size-control-small);
-  padding-inline: var(--space-8);
-  border-radius: var(--radius-control-small);
-  background: var(--fill-control);
-  font: var(--type-caption-emphasis);
-  color: var(--text-primary);
+.cut-row .row-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-.cut-do {
-  background: var(--module-strong);
-  color: var(--text-on-accent);
-}
-
-.cut-entry {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: var(--space-4) 0 var(--space-8);
-  border-radius: var(--radius-8);
-}
-.cut-index-row {
-  display: none;
-}
-.cut-quote {
-  padding-inline: var(--space-row-inset);
-  font: var(--type-body-small);
-  color: var(--text-primary);
-}
-.cut-meta,
-.cut-effect {
-  padding-inline: var(--space-row-inset);
-  font: var(--type-caption-default);
+.cut-row[data-status="cut"] .row-title {
   color: var(--text-secondary);
-}
-.cut-entry:is(.cut, .kept, .stale) .cut-quote {
-  color: var(--text-secondary);
-}
-.cut-entry.cut .cut-quote {
   text-decoration: line-through;
 }
-.cut-chip {
-  font: var(--type-caption-emphasis);
-  color: var(--text-secondary);
+/* قصّة تعذّرت: الصف معطّل كما رُسم (Sidebar Row · Cut · Disabled, Figma 66:290) */
+.cut-row[data-status="stale"] {
+  color: var(--text-disabled);
 }
-.cuts-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-4);
-  padding: var(--space-12);
-  text-align: center;
-  color: var(--icon-secondary);
+.cut-row[data-status="stale"] :is(.icon, .row-subtitle) {
+  color: var(--text-disabled);
 }
-.cuts-empty-main {
-  font: var(--type-label-default);
+.cut-row:not([data-status="stale"]):hover {
+  background: var(--fill-hover);
+}
+.cut-row.is-selected .row-subtitle {
+  color: var(--text-on-accent);
+}
+[data-inactive] .cut-row.is-selected .row-subtitle {
   color: var(--text-primary);
 }
-.cuts-empty-detail,
-.dropped-note {
-  padding-inline: var(--space-row-inset);
-  font: var(--type-caption-default);
+
+/* علامات القصّ داخل الشذرة (Figma 108:711): الخانة وطبقة العلامات في موضع واحد،
+   والطبقة فوقها فلا يحجب تحديدُ الخانة حروفَها. نصّ الخانة يصير شفافًا ومؤشره
+   ظاهر، فتبقى الشذرة قابلة للتحرير كما هي قبل الفحص */
+.editor-stack {
+  position: relative;
+  inline-size: 100%;
+}
+.marked-text {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  font: var(--type-body-reading);
+  color: var(--text-primary);
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+:root[data-module="shadhb"][data-shadhb-marks] #input-text {
+  color: transparent;
+  caret-color: var(--text-primary);
+}
+/* أثناء الفحص: النص معتم قليلًا ومقروء (Figma 108:687) */
+:root[data-module="shadhb"][data-shadhb-state="checking"] #input-text {
   color: var(--text-secondary);
 }
+.mark-pending,
+.mark-selected {
+  text-decoration-thickness: 2px;
+  text-underline-offset: 2px;
+}
+.mark-pending {
+  text-decoration: underline dotted var(--module-accent);
+}
+.mark-selected {
+  color: var(--module-strong);
+  text-decoration: underline solid var(--module-strong);
+}
+.mark-cut {
+  color: var(--text-tertiary);
+  text-decoration: line-through;
+}
 
-.reading-card {
+/* بطاقة القراءة: صفوف مركومة (Inspector Row · Stacked)، وهيكلها النائب أربعة
+   أسطر أثناء الفحص (Figma 107:276) */
+.reading-card,
+.reading-card-skeleton {
   display: flex;
   flex-direction: column;
   gap: var(--space-8);
 }
-.card-row {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
+.reading-card-skeleton .skeleton-line:nth-child(2) { inline-size: 200px; }
+.reading-card-skeleton .skeleton-line:nth-child(4) { inline-size: 160px; }
+
+/* بطاقة القصّة المحددة (Suggestion Card · Cut, Figma 73:641): الاقتباس الحرفي
+   مُبرَز بلون الوحدة، ثم السبب والعدد والأمان، ثم الأثر المتوقع برمز معلومات */
+#cut-card .card-quote {
+  background: var(--module-highlight);
+  box-shadow: none;
+  font: var(--type-body-default);
 }
-.card-label {
-  font: var(--type-caption-emphasis);
+#cut-card-tag .icon:not([hidden]) {
+  display: block;
+}
+.card-meta {
+  align-self: stretch;
+  font: var(--type-caption-default);
   color: var(--text-secondary);
 }
-.card-value {
-  font: var(--type-body-small);
-  color: var(--text-primary);
+.card-effect {
+  display: flex;
+  align-self: stretch;
+  gap: var(--space-4);
+  font: var(--type-caption-default);
+  color: var(--text-secondary);
 }
+.card-effect .icon {
+  flex: none;
+  color: var(--icon-secondary);
+}
+
+/* الضمانة: الحكم بخط عريض ورمز الخاتم في بدايته (Figma 107:425 و107:499) */
 .covenant-bar {
   display: flex;
   align-items: flex-start;
   gap: var(--space-8);
-  font: var(--type-body-small-emphasis);
+  font: var(--type-body-emphasis);
   color: var(--status-success-fg);
 }
 .covenant-bar.fail {
@@ -1556,6 +1589,11 @@ textarea.empty-bidi {
 .covenant-bar-icon {
   flex: none;
   margin-block-start: 2px;
+}
+
+/* ملاحظة «لا قصّات» (Banner · Info, Figma 200:17546): رمز محايد بلا إغلاق ولا فعل */
+.banner-icon.is-info {
+  color: var(--icon-secondary);
 }
 
 /* ================= شريط البحث في النتيجة (Figma 262:7032 و73:701) =================
