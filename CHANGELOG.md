@@ -316,14 +316,13 @@ Major: إعادة بناء Product UI الكاملة اعتمادًا على ت�
 
 ## الأيقونة
 
-مصادر الهوية كلها في `nasaq-brand/` (انظر `nasaq-brand/README.md`) — شعارات
-SVG تكيفية (`currentColor`) وأيقونات macOS جاهزة بأربعة تصاميم × وضعين:
+المصدر `src-tauri/icons/AppIcon.icon` (Icon Composer)، وطبقتاه
+`Assets/lines.svg` و`Assets/cut.svg`.
 
-- **أيقونة الحزمة** (Finder/التطبيقات): ملفات `src-tauri/icons` منسوخة من
-  `nasaq-brand/icons/macos/AppIcon-Lines-Light` (iconset + icns) — تُحدَّث
-  بنسخ المقاسات المقابلة وإعادة البناء.
-- **أيقونات الدوك وقت التشغيل**: `src-tauri/icons/dock/*.png` (الثماني)
-  منسوخة من `icon_512x512@2x.png` في iconset كل تصميم/وضع، وتُضمَّن في
-  الثنائي عبر `include_bytes` في `src-tauri/src/shared/dock_icon.rs`.
-- إعادة بناء `.icns` بعد تعديل iconset:
-  `iconutil -c icns AppIcon-Lines-Light.iconset`
+- **البناء:** `tools/icon/build-app-icon.sh` يشغّل `xcrun actool` فينتج
+  `Assets.car` و`icon.icns` و`icon.png` في `src-tauri/icons`.
+- **الربط:** `Info.plist` يضبط `CFBundleIconName`، و`bundle.macOS.files`
+  في `tauri.conf.json` يضيف `Resources/Assets.car`. يرسم النظام الوجه
+  الداكن من `Assets.car`.
+- لا تبديل لأيقونة الدوك وقت التشغيل؛ أُزيل في المرحلة ١ من إعادة بناء
+  الواجهة (`a524028`).
