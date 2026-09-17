@@ -34,32 +34,47 @@
 
     const AR = (n) => Number(n).toLocaleString("ar");
 
-    // أيقونة معلومات محايدة صغيرة — تُستعمل في حالتي فراغ القصّات
+    // أيقونة معلومات محايدة صغيرة من رموز التطبيق — تُستعمل في حالتي فراغ القصّات
     function mkInfoIcon() {
       const span = document.createElement("span");
       span.className = "cuts-empty-icon";
       span.setAttribute("aria-hidden", "true");
-      span.innerHTML =
-        '<svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6.2" /><line x1="8" y1="7.3" x2="8" y2="11" /><circle cx="8" cy="4.8" r="0.75" fill="currentColor" stroke="none" /></svg>';
+      span.innerHTML = '<svg class="icon"><use href="#info.circle.16r" /></svg>';
       return span;
     }
 
-    // ---------- التبديل بين الوضعين ----------
-    // data-mode على الجذر يقود CSS وحده: لوحة شَذْب محل لوحة النتيجة وأدوات
-    // نسق تغيب — حالة نسق نفسها لا تُمس بالتبديل، والعودة تجدها كما كانت
+    // ---------- التبديل بين الوحدتين ----------
+    // data-module على الجذر يقود CSS وحده: مناطق شَذْب محل مناطق نسق بألوانها —
+    // حالة نسق نفسها لا تُمس بالتبديل، والعودة تجدها كما كانت. آخر وحدة تُحفظ
+    // فيفتح التطبيق عليها (مبدّل الوحدات في Figma)
+    const MODULE_KEY = "nasaq-module";
+
     function setMode(mode) {
       const shadhb = mode === "shadhb";
-      if (shadhb) {
-        document.documentElement.setAttribute("data-mode", "shadhb");
-      } else {
-        document.documentElement.removeAttribute("data-mode");
-      }
+      document.documentElement.setAttribute("data-module", shadhb ? "shadhb" : "nasaq");
       nasaqBtn.classList.toggle("active", !shadhb);
       shadhbBtn.classList.toggle("active", shadhb);
+      nasaqBtn.setAttribute("aria-checked", String(!shadhb));
+      shadhbBtn.setAttribute("aria-checked", String(shadhb));
+      try {
+        localStorage.setItem(MODULE_KEY, shadhb ? "shadhb" : "nasaq");
+      } catch {
+        // تعذّر الحفظ لا يمنع التبديل في الجلسة الحالية
+      }
     }
 
     nasaqBtn.addEventListener("click", () => setMode("nasaq"));
     shadhbBtn.addEventListener("click", () => setMode("shadhb"));
+    // ⌘1 نَسَق و⌘2 شَذْب
+    document.addEventListener("keydown", (e) => {
+      if (!e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return;
+      // لا تبديل تحت ورقة مفتوحة تخص الوحدة الحالية
+      if (document.querySelector('[aria-modal="true"]:not([hidden])')) return;
+      if (e.code === "Digit1" || e.code === "Digit2") {
+        e.preventDefault();
+        setMode(e.code === "Digit2" ? "shadhb" : "nasaq");
+      }
+    });
     modeSwitch.hidden = false; // المفتاح مفعَّل — المبدّل يظهر الآن فقط
 
     // ---------- حالة الفحص — مستقلة تمامًا عن حالة نسق ----------
@@ -75,8 +90,8 @@
     }
 
     // ---------- بطاقة القراءة: وصف يسبق المقص ----------
-    // عنوان «قراءة شَذْب» (مرجع Figma — node 20:7) يسمّي البطاقة قبل بنودها —
-    // إضافة عرض بحتة، readingCard نفسها من الفحص كما هي بلا مساس
+    // قسم «بطاقة القراءة» في المفتّش يسمّيها، فالبنود وحدها هنا —
+    // readingCard نفسها من الفحص كما هي بلا مساس
     function renderCard() {
       cardBox.innerHTML = "";
       const rows = [
@@ -90,10 +105,6 @@
         cardBox.hidden = true;
         return;
       }
-      const title = document.createElement("h3");
-      title.className = "reading-card-title";
-      title.textContent = "قراءة شَذْب";
-      cardBox.appendChild(title);
       for (const [label, value] of present) {
         const row = document.createElement("div");
         row.className = "card-row";
@@ -223,8 +234,8 @@
       icon.className = "covenant-bar-icon";
       icon.setAttribute("aria-hidden", "true");
       icon.innerHTML = check.ok
-        ? '<svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><polyline points="3.5 8.5 6.5 11.5 12.5 4.5" /></svg>'
-        : '<svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><line x1="4.5" y1="4.5" x2="11.5" y2="11.5" /><line x1="11.5" y1="4.5" x2="4.5" y2="11.5" /></svg>';
+        ? '<svg class="icon"><use href="#checkmark.seal.16r" /></svg>'
+        : '<svg class="icon"><use href="#xmark.seal.16r" /></svg>';
       const text = document.createElement("span");
       text.textContent = check.ok
         ? `تحقق آلي: لم تُضف كلمة — كل الناتج من نصّك · ${wordsLabel(removed)}`
@@ -242,15 +253,15 @@
       return n <= 10 ? `${AR(n)} قصّات مقترحة` : `${AR(n)} قصّة مقترحة`;
     }
 
-    // ---------- مؤشّر الحالة في رأس اللوحة (مرجع Figma — node 20:7) ----------
-    // نقطة وشارة تعكسان حالة state حيًّا — idle قبل أي فحص، pending وفيها
+    // ---------- مؤشّر الحالة في شريط الحالة ----------
+    // نقطة وتسمية تعكسان حالة state حيًّا — idle قبل أي فحص، pending وفيها
     // قصّات (العدد الكلي كما اقترحه الفحص، لا يتناقص بالقرار)، وclear حين
     // لم يتغيّر شيء (لا اقتراحات، سواء لعدم وجودها أو لإسقاط التحقق لها كلها)
     function renderStatusBadge() {
       if (!state) {
         statusDot.dataset.status = "idle";
         statusBadge.dataset.status = "idle";
-        statusBadge.textContent = "مقصّ لا قلم";
+        statusBadge.textContent = "لم يُفحص بعد";
         return;
       }
       const n = state.cuts.length;
@@ -282,6 +293,8 @@
       const anyCutApplied = state.cuts.some((c) => c.status === "cut");
       previewBox.textContent = anyCutApplied ? state.currentText : "";
       previewWrap.hidden = !anyCutApplied;
+      // النسخ للنص المشذَّب وحده: لا يُتاح قبل حذف فعلي كما كان داخل المعاينة
+      copyPrunedBtn.disabled = !anyCutApplied;
       renderCovenant();
     }
 
@@ -369,6 +382,13 @@
     // واجهة تشخيص واختبار: تسمح بفحص خط القصّ محليًا (معاينة المتصفح)
     // بنتيجة مصنوعة دون نداء النموذج — لا يستعملها التطبيق نفسه
     window.NasaqShadhb = { presentResult, setMode };
+
+    // آخر وحدة تُستعاد بعد اكتمال الوصل كله: فشلٌ قبل هذا السطر يُبقي نسق فعّالًا
+    try {
+      if (localStorage.getItem(MODULE_KEY) === "shadhb") setMode("shadhb");
+    } catch {
+      // التخزين محجوب: يبدأ التطبيق على نسق
+    }
   } catch (err) {
     // درع العزل الأمامي: تعطّل شَذْب يُسجَّل ويُعزَل — نسق يواصل عمله كاملًا
     console.error("تعطّل وضع شَذْب وعُزل بأمان:", err);

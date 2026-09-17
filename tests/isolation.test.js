@@ -1,20 +1,22 @@
-// اختبارات حارسة للعزل الأمامي (المرحلة 2) — يعمل بـ: npm test
+// اختبارات حارسة للعزل الأمامي — يعمل بـ: npm test
 // تفحص نصوص المصدر نفسها: ترتيب التحميل، حدود الملكية بين القشرة والوضع،
-// خمود هيكل شَذْب، واكتمال دوال نسق بعد انقسام main.js — فأي انزلاق
-// مستقبلي في قواعد العزل يفشل هنا قبل أن يصل الواجهة
+// خمود هيكل شَذْب، واكتمال دوال نسق بعد انقسام main.js، ومناطق كل برج في
+// هيكل النافذة — فأي انزلاق مستقبلي في قواعد العزل يفشل هنا قبل أن يصل الواجهة
 const test = require("node:test");
 const assert = require("node:assert");
 const fs = require("node:fs");
 const path = require("node:path");
 
-const src = (name) => fs.readFileSync(path.join(__dirname, "..", "src", name), "utf8");
+const srcPath = (name) => path.join(__dirname, "..", "src", name);
+const src = (name) => fs.readFileSync(srcPath(name), "utf8");
 const html = src("index.html");
+const layout = src("layout.js");
 const shell = src("shell.js");
 const nasaq = src("nasaq.js");
 const shadhb = src("shadhb.js");
-const css = src("styles.css");
+const css = src("app.css");
 
-test("ترتيب التحميل: القشرة قبل نسق، وشَذْب أخيرًا، وmain.js زال", () => {
+test("ترتيب التحميل: الهيكل فالقشرة قبل نسق، وشَذْب أخيرًا، وmain.js زال", () => {
   const order = [...html.matchAll(/<script src="([^"]+)"><\/script>/g)].map((m) => m[1]);
   assert.deepStrictEqual(order, [
     "lines.js",
@@ -22,11 +24,12 @@ test("ترتيب التحميل: القشرة قبل نسق، وشَذْب أخ�
     "fragments.js",
     "substack-markers.js",
     "prune.js",
+    "layout.js",
     "shell.js",
     "nasaq.js",
     "shadhb.js",
   ]);
-  assert.ok(!fs.existsSync(path.join(__dirname, "..", "src", "main.js")), "main.js ما زال موجودًا");
+  assert.ok(!fs.existsSync(srcPath("main.js")), "main.js ما زال موجودًا");
 });
 
 test("القشرة لا تعرف نداءات نسق النموذجية ولا تنادي دوال الوضع باسمها", () => {
@@ -150,9 +153,8 @@ test("نسق يسجّل وصلاته الأربع لدى القشرة", () => {
   assert.ok(nasaq.includes("registerEscapeCloser(() => !readingLensOverlay.hidden, closeReadingLens)"));
 });
 
-// ---------- حرّاس صقل الواجهة (المرحلة 5 — v5.1) ----------
-// عرضٌ فقط: تثبيت الصياغات والمواضع الجديدة كي لا تنزلق، وبنفس أسلوب
-// فحص نصوص المصدر المتبع أعلاه
+// ---------- حرّاس صياغات شَذْب (v5.1) ----------
+// منطق العرض في shadhb.js: حالتا الفراغ وشرط «بعد التشذيب» — باقية كما هي
 
 test("v5.1: حالتا فراغ القصّات صريحتان والصياغة القديمة الموهِمة زالت", () => {
   assert.ok(shadhb.includes("لم يبقَ اقتراح حذف صالح بعد التحقق."), "حالة الإسقاط الكامل غائبة");
@@ -163,28 +165,100 @@ test("v5.1: حالتا فراغ القصّات صريحتان والصياغة �
   assert.ok(/droppedCuts > 0/.test(shadhb), "التمييز بعدّاد الإسقاط غائب");
 });
 
-test("v5.1: «بعد التشذيب» مشروط بحذف فعلي وعنوانه ينسب النص لصاحبه", () => {
+test("v5.1: «بعد التشذيب» مشروط بحذف فعلي", () => {
   assert.ok(/status === "cut"/.test(shadhb), "شرط الحذف الفعلي غائب من shadhb.js");
-  assert.ok(html.includes("بعد التشذيب — من نصّك فقط"), "عنوان المعاينة الجديد غائب من الهيكل");
 });
 
-test("v5.1: شريط الفحص في لوحة الإدخال خلف data-mode — لا أثر له خارج شَذْب", () => {
-  assert.ok(/<div id="shadhb-inspect-bar"/.test(html), "شريط الفحص غائب من الهيكل");
-  // الزر داخل لوحة الإدخال (بين خانة النص ولوحة نتائج نسق) لا في لوحة النتائج
-  const inputPane = html.slice(html.indexOf('id="input-text"'), html.indexOf('id="nasaq-output-pane"'));
-  assert.ok(inputPane.includes('id="prune-btn"'), "زر الفحص ليس في لوحة الإدخال");
-  // مخفي افتراضيًا في CSS ولا يُظهره إلا data-mode — فبإطفاء المفتاح لا أثر له
-  assert.ok(/\.shadhb-inspect-bar\s*\{\s*display:\s*none;?\s*\}/.test(css), "الشريط ليس مخفيًا افتراضيًا");
-  assert.ok(css.includes('[data-mode="shadhb"] .shadhb-inspect-bar'), "إظهار الشريط ليس بقيادة data-mode");
+// ---------- حرّاس هيكل النافذة (المرحلة 2 — Figma nasq-v10) ----------
+// محلّل وسوم صغير: لكل معرّف سلسلة أسلافه، فيُعرف في أي منطقة من النافذة
+// يقع وأي برج يملكه (data-for)
+const VOID = new Set(["meta", "link", "input", "br", "img", "hr", "use", "path"]);
+function regionsById(markup) {
+  const stack = [];
+  const out = {};
+  const clean = markup.replace(/<!--[\s\S]*?-->/g, "");
+  for (const m of clean.matchAll(/<(\/?)([a-zA-Z0-9-]+)([^>]*?)(\/?)>/g)) {
+    const [, closing, tag, attrs, selfClosing] = m;
+    const name = tag.toLowerCase();
+    if (closing) {
+      const i = stack.map((n) => n.name).lastIndexOf(name);
+      if (i !== -1) stack.length = i;
+      continue;
+    }
+    const attr = (a) => (new RegExp(`\\s${a}="([^"]*)"`).exec(attrs) || [])[1];
+    const node = { name, id: attr("id"), cls: attr("class") || "", dataFor: attr("data-for") };
+    if (node.id) {
+      const chain = [...stack, node];
+      out[node.id] = {
+        owner: [...chain].reverse().find((n) => n.dataFor)?.dataFor ?? null,
+        within: chain.map((n) => n.id).filter(Boolean),
+        classes: chain.map((n) => n.cls).join(" "),
+      };
+    }
+    if (!selfClosing && !VOID.has(name)) stack.push(node);
+  }
+  return out;
+}
+const regions = regionsById(html);
+
+test("الهيكل: كل برج في مناطقه، وCSS لا يُظهر منطقة برج إلا في وحدته", () => {
+  assert.ok(/<html[^>]*\sdata-module="nasaq"/.test(html), "الجذر لا يبدأ على نسق");
+  const owners = new Set([...html.matchAll(/data-for="([^"]+)"/g)].map((m) => m[1]));
+  assert.deepStrictEqual([...owners].sort(), ["nasaq", "shadhb"]);
+  assert.ok(
+    /:root:not\(\[data-module="shadhb"\]\) \[data-for="shadhb"\],\s*\[data-module="shadhb"\] \[data-for="nasaq"\]\s*\{\s*display:\s*none !important;/.test(css),
+    "إخفاء منطقة البرج الآخر ليس بقيادة data-module"
+  );
+  for (const id of ["format-btn", "copy-btn", "undo-btn", "save-draft-btn", "output-text", "output-placeholder", "drafts-list", "notes-box", "fragment-card", "output-search-bar"]) {
+    assert.strictEqual(regions[id]?.owner, "nasaq", `${id} ليس في منطقة نسق`);
+  }
+  for (const id of ["prune-btn", "send-to-nasaq-btn", "copy-pruned-btn", "cuts-list", "reading-card", "covenant-bar", "prune-preview", "shadhb-placeholder", "shadhb-status-badge"]) {
+    assert.strictEqual(regions[id]?.owner, "shadhb", `${id} ليس في منطقة شَذْب`);
+  }
+  // المشترك وحده بلا مالك: خانة النص والمبدّل والرسائل
+  for (const id of ["input-text", "mode-switch", "error-bar", "toast", "input-count"]) {
+    assert.strictEqual(regions[id]?.owner, null, `${id} صار ملكًا لبرج`);
+  }
 });
 
-test("v5.1: تذييل النتائج ثابت خارج جسد التمرير وفيه الضمانة والجسر", () => {
-  const pane = html.slice(html.indexOf('id="shadhb-pane"'));
-  const bodyStart = pane.indexOf('class="shadhb-body"');
-  const footerStart = pane.indexOf('class="shadhb-footer"');
-  assert.ok(bodyStart !== -1 && footerStart > bodyStart, "التذييل غائب أو قبل جسد التمرير");
-  const body = pane.slice(bodyStart, footerStart);
-  const footer = pane.slice(footerStart);
-  assert.ok(!body.includes('id="covenant-bar"') && footer.includes('id="covenant-bar"'), "الضمانة ليست في التذييل الثابت");
-  assert.ok(!body.includes('id="send-to-nasaq-btn"') && footer.includes('id="send-to-nasaq-btn"'), "زر الجسر ليس في التذييل الثابت");
+test("الهيكل: فعل شَذْب وجسره في شريط الأدوات، والضمانة في المفتّش — خارج منطقة التمرير", () => {
+  for (const id of ["prune-btn", "send-to-nasaq-btn"]) {
+    assert.ok(regions[id].within.includes("toolbar"), `${id} ليس في شريط الأدوات`);
+  }
+  assert.ok(regions["covenant-bar"].within.includes("inspector"), "الضمانة ليست في المفتّش");
+  for (const id of ["prune-btn", "send-to-nasaq-btn", "covenant-bar"]) {
+    assert.ok(!regions[id].within.includes("scroll-view"), `${id} داخل منطقة التمرير`);
+  }
+  assert.ok(regions["prune-preview"].classes.includes("column-result"), "«بعد التشذيب» ليس عمود النتيجة");
+  assert.ok(/<h2 class="column-header">بعد التشذيب<\/h2>/.test(html), "عنوان عمود «بعد التشذيب» غائب");
+});
+
+test("الهيكل: data-module يكتبه شَذْب وحده، والهيكل لا يعرف برجًا ولا ينادي النواة إلا للجاهزية", () => {
+  const writesModule = /setAttribute\("data-module"|dataset\.module\s*=/;
+  assert.ok(writesModule.test(shadhb), "شَذْب لا يبدّل الوحدة");
+  for (const [name, code] of [["layout.js", layout], ["shell.js", shell], ["nasaq.js", nasaq]]) {
+    assert.ok(!writesModule.test(code), `${name} يكتب data-module`);
+  }
+  assert.ok(!/formatText|prune_text|format_text|NasaqShell|NasaqShadhb|NasaqPrune|registerEscapeCloser/.test(layout), "الهيكل يعرف دواخل برج أو قشرة");
+  const calls = [...layout.matchAll(/invoke\("([^"]+)"/g)].map((m) => m[1]);
+  assert.deepStrictEqual(calls, ["main_window_ready"]);
+  // لا إعلان عام يزاحم القشرة أو نسق في النطاق المشترك
+  assert.ok(/^\(\(\) => \{/m.test(layout) && !/^(?:const|let|var|function)\s/m.test(layout), "الهيكل خارج غلافه");
+});
+
+test("لا أثر للهوية القديمة: لا عبارات ولا ملفات ولا ألوان مثبتة", () => {
+  for (const phrase of ["البوابة الأخيرة قبل النشر", "لا نكتب عنك أبدًا", "من أعمال سلطان"]) {
+    for (const [name, code] of [["index.html", html], ["shell.js", shell], ["nasaq.js", nasaq], ["shadhb.js", shadhb]]) {
+      assert.ok(!code.includes(phrase), `«${phrase}» في ${name}`);
+    }
+  }
+  for (const gone of ["styles.css", "spike-chrome.html", "spike-chrome.css", "spike-chrome.js"]) {
+    assert.ok(!fs.existsSync(srcPath(gone)), `${gone} ما زال موجودًا`);
+    assert.ok(!html.includes(gone), `index.html يشير إلى ${gone}`);
+  }
+  assert.ok(!/#[0-9a-f]{3,8}\b|rgba?\(/i.test(css.replace(/\/\*[\s\S]*?\*\//g, "")), "لون مثبت في app.css بدل التوكنز");
+  // لا ترسم الواجهة أيقونات بيدها: كلها من icons.svg
+  for (const [name, code] of [["index.html", html], ["shadhb.js", shadhb], ["nasaq.js", nasaq]]) {
+    assert.ok(!/<path|<polyline|<circle|<line /.test(code), `رسم يدوي في ${name}`);
+  }
 });

@@ -18,14 +18,42 @@ const errorBarMessage = el("error-bar-message");
 const toast = el("toast");
 const toastMessage = el("toast-message");
 
-// ---------- عدّاد الأحرف ----------
-// عدّ نقاط الترميز لا وحدات UTF-16 (الإصلاح ١-د): الإيموجي الواحد محرف
+// ---------- عدّاد شريط الحالة ----------
+// «٢٠ كلمة، ١٠٤ أحرف — ٧ أسطر» بأرقام هندية كما في شريط الحالة في Figma.
+// الأحرف تُعدّ نقاط ترميز لا وحدات UTF-16 (الإصلاح ١-د): الإيموجي الواحد محرف
 // واحد في العرض. عدّادات حدود المنصات في nasaq.js لها منطقها المستقل
 // (عدّ إكس هناك بوحدات UTF-16 عمدًا لأنه يطابق وزن المنصة) — لا يمسّها هذا
-function updateCount(node, text) {
-  const n = [...text].length;
-  node.textContent = n ? `${n} حرف` : "";
+// «ar» وحده قد يعطي أرقامًا لاتينية بحسب ICU، فالنظام الهندي صريح هنا
+const arabicDigits = new Intl.NumberFormat("ar-u-nu-arab");
+
+// تمييز العدد بآخر رتبتين: ٣–١٠ جمع (٧ أسطر، ١٠٤ أحرف)، و١١–٩٩ مفرد منصوب
+// (٢٠ كلمة، ٥٨ حرفًا)، وما سواهما مفرد (١٠٠ سطر)
+function countLabel(n, [one, two, few, many, single]) {
+  if (n === 1) return one;
+  if (n === 2) return two;
+  const num = arabicDigits.format(n);
+  const tail = n % 100;
+  if (tail >= 3 && tail <= 10) return `${num} ${few}`;
+  if (tail >= 11) return `${num} ${many}`;
+  return `${num} ${single}`;
 }
+
+function updateCount(node, text) {
+  const words = text.split(/\s+/).filter(Boolean).length;
+  if (!words) {
+    node.textContent = `${arabicDigits.format(0)} كلمة`;
+    return;
+  }
+  const chars = [...text].length;
+  const lines = text.replace(/\n+$/, "").split("\n").length;
+  node.textContent =
+    `${countLabel(words, ["كلمة واحدة", "كلمتان", "كلمات", "كلمة", "كلمة"])}، ` +
+    `${countLabel(chars, ["حرف واحد", "حرفان", "أحرف", "حرفًا", "حرف"])} — ` +
+    countLabel(lines, ["سطر واحد", "سطران", "أسطر", "سطرًا", "سطر"]);
+}
+
+// العدّاد يبدأ على «٠ كلمة» قبل أي كتابة، كما في الحالة الفارغة
+updateCount(el("input-count"), el("input-text").value);
 
 // ---------- عرض الخطأ ----------
 function showError(msg) {
@@ -153,10 +181,12 @@ function showSettingsMsg(text, isError) {
   settingsMsg.hidden = false;
 }
 
+// الإعدادات مؤقتة في النافذة الرئيسية حتى تحل محلها نافذة المرحلة ٥، فيعود
+// التركيز عند الإغلاق إلى ما كان عليه قبل الفتح — لا يسقط إلى <body> (٢٫٤٫٣)
+let settingsReturnFocus = null;
+
 function closeSettings() {
-  // إعادة التركيز لزر الفتح — الإخفاء بلا نقل تركيز يُسقطه إلى <body>
-  // (٢٫٤٫٣ ترتيب التركيز)؛ نفس الحارس المطبَّق على شريط البحث في nasaq.js
-  if (overlay.contains(document.activeElement)) el("settings-btn").focus();
+  if (overlay.contains(document.activeElement)) settingsReturnFocus?.focus();
   overlay.hidden = true;
   settingsMsg.hidden = true;
 }
@@ -177,11 +207,19 @@ async function openSettings() {
   selectProvider(provider, presetFor(provider, baseUrlInput.value));
   settingsMsg.hidden = true;
   switchTab("general");
+  if (overlay.hidden) settingsReturnFocus = document.activeElement;
   overlay.hidden = false;
   if (!apiKeyInput.value) apiKeyInput.focus();
 }
 
-el("settings-btn").addEventListener("click", openSettings);
+// ⌘, اختصار الإعدادات المعتاد في الماك
+document.addEventListener("keydown", (e) => {
+  if (e.metaKey && !e.ctrlKey && !e.altKey && e.key === ",") {
+    e.preventDefault();
+    // مفتوحة أصلًا: لا تُعاد قراءتها فتضيع تعديلات لم تُحفظ
+    if (overlay.hidden) openSettings();
+  }
+});
 
 // الإغلاق: يغلق فقط، بلا حفظ وبلا مسح قيم
 el("close-settings").addEventListener("click", closeSettings);
@@ -430,8 +468,8 @@ if (aboutProjectLink) {
 // ---------- المظهر: فاتح / داكن / تلقائي ----------
 // خيار واحد محفوظ بثلاث قيم فقط. «تلقائي» (وهو الافتراضي عند غياب أي
 // اختيار) يتبع مظهر النظام حيًّا؛ «فاتح»/«داكن» يثبّتان يدويًا ويوقفان
-// اتباع النظام. data-appearance="dark" على الجذر يقود اللوحة الليلية،
-// وغيابه نهار — بالقرار نفسه الذي رسمه سكربت الرأس المبكر فلا وميض.
+// اتباع النظام. data-appearance على الجذر يثبّت color-scheme في tokens.css،
+// وغيابه يترك light-dark() يتبع النظام. النافذة مخفية حتى أول رسم فلا وميض.
 const APPEARANCE_KEY = "nasaq-appearance-choice";
 const APPEARANCE_MODES = ["light", "dark", "auto"];
 
@@ -478,11 +516,10 @@ function isDarkAppearance(choice) {
 
 // تطبيق الحالة على الجذر والأزرار دون حفظ — يُستدعى عند البدء واتباع النظام
 function renderAppearance(choice) {
-  const dark = isDarkAppearance(choice);
-  if (dark) {
-    document.documentElement.setAttribute("data-appearance", "dark");
-  } else {
+  if (choice === "auto") {
     document.documentElement.removeAttribute("data-appearance");
+  } else {
+    document.documentElement.setAttribute("data-appearance", isDarkAppearance(choice) ? "dark" : "light");
   }
   for (const mode of APPEARANCE_MODES) {
     appearanceButtons[mode].setAttribute("aria-pressed", String(mode === choice));
@@ -513,46 +550,43 @@ if (systemDarkQuery) {
   else if (systemDarkQuery.addListener) systemDarkQuery.addListener(followSystem);
 }
 
-// البدء: يُحترم المحفوظ (أو «تلقائي») تطبيقًا بلا حفظ، وبالقرار نفسه الذي
-// رسمه سكربت الرأس المبكر فلا وميض ولا اختلاف بين البدء والحالة النهائية
+// البدء: يُحترم المحفوظ (أو «تلقائي») تطبيقًا بلا حفظ، قبل أن تظهر النافذة
 renderAppearance(savedAppearanceChoice());
 
 // ---------- هوية البرج الفعّال (خريطة واحدة مُلزمة) ----------
-// data-mode على الجذر (يضبطه برج شَذْب وحده عند التبديل) هو مصدر الحقيقة
-// الوحيد، والقشرة تراقبه فتبدّل الاسم والعبارة وعنوان المستند معًا — مع
-// العلامة والألوان اللتين يبدّلهما CSS من السمة نفسها — فلا شروط متفرقة
-// يمكن أن تتفكك ولا رأس مختلط الهوية. عبارة شَذْب من ملفات الهوية المرجعية
-// (زوج الأدوار في IdentitySection)، لا اختراع هنا
+// data-module على الجذر (يضبطه برج شَذْب وحده عند التبديل) هو مصدر الحقيقة
+// الوحيد: CSS يبدّل منه الألوان والمناطق المعلَّمة بـ data-for، والقشرة تبدّل
+// منه ما لا يبلغه CSS — عنوان المستند، وعنصر المحرر النائب، وهوية «حول» —
+// فلا شروط متفرقة يمكن أن تتفكك. العبارتان من شعار التطبيق في Figma
 const PRODUCT_IDENTITY = {
   nasaq: {
     name: "نَسَق",
-    statement: "البوابة الأخيرة قبل النشر",
+    statement: "كلماتك كما هي، بنَسَقٍ أوضح",
     documentTitle: "نَسَق",
-    actionLabel: "نسق",
+    actionLabel: "نسّق",
+    editorPlaceholder: "الصق نصّك هنا أو ابدأ الكتابة مباشرة…",
   },
   shadhb: {
     name: "شَذْب",
     statement: "وظيفة تنقية الشذرات داخل نَسَق",
     documentTitle: "شَذْب — نَسَق",
     actionLabel: "افحص الشذرة",
+    editorPlaceholder: "الصق الشذرة هنا أو اكتبها مباشرة…",
   },
 };
 
-const productNameEl = document.querySelector(".app-title");
-const productStatementEl = document.querySelector(".app-subtitle");
 const aboutNameEl = document.querySelector(".about-app-name");
 const aboutStatementEl = document.querySelector(".about-tagline");
 const settingsPrivacyHintEl = el("settings-privacy-hint");
 
 function activeProduct() {
-  return document.documentElement.getAttribute("data-mode") === "shadhb" ? "shadhb" : "nasaq";
+  return document.documentElement.getAttribute("data-module") === "shadhb" ? "shadhb" : "nasaq";
 }
 
 function renderProductIdentity() {
   const identity = PRODUCT_IDENTITY[activeProduct()];
-  productNameEl.textContent = identity.name;
-  productStatementEl.textContent = identity.statement;
-  // هوية «حول» تتبع البرج نفسه كوحدة: الاسم والعبارة (والعلامة عبر CSS)
+  el("input-text").placeholder = identity.editorPlaceholder;
+  // هوية «حول» تتبع البرج نفسه كوحدة: الاسم والعبارة
   aboutNameEl.textContent = identity.name;
   aboutStatementEl.textContent = identity.statement;
   settingsPrivacyHintEl.textContent =
@@ -564,7 +598,7 @@ function renderProductIdentity() {
 // المراقبة على السمة نفسها لا على من يضبطها — فلا استيراد متبادل بين البرجين
 new MutationObserver(renderProductIdentity).observe(document.documentElement, {
   attributes: true,
-  attributeFilter: ["data-mode"],
+  attributeFilter: ["data-module"],
 });
 renderProductIdentity();
 
@@ -573,7 +607,6 @@ renderProductIdentity();
 const DRAFTS_KEY = "nasaq-drafts";
 const DRAFTS_MAX = 100; // سقف هادئ يمنع تضخم الملف — الأقدم يخرج أولًا
 
-const draftsOverlay = el("drafts-overlay");
 const draftsList = el("drafts-list");
 const draftsEmpty = el("drafts-empty");
 const draftsCountBadge = el("drafts-count");
@@ -922,8 +955,11 @@ function renderDrafts() {
   draftsList.innerHTML = "";
   // البحث ترشيح للعرض فقط (v4.1) — القائمة المخزنة والشارة لا تتأثران
   const visible = window.NasaqDrafts.filterMothers(drafts, draftsSearch.value);
-  draftsEmpty.textContent =
-    drafts.length === 0 ? "لا توجد مسودات محفوظة بعد." : "لا مسودة تطابق البحث.";
+  const none = drafts.length === 0;
+  draftsEmpty.querySelector(".empty-title").textContent = none ? "لا مسودات بعد" : "لا مسودة تطابق البحث";
+  draftsEmpty.querySelector(".empty-body").textContent = none
+    ? "احفظ النتيجة من شريط الأدوات لتجد النص الأصلي وصيغه هنا."
+    : "";
   draftsEmpty.hidden = visible.length > 0;
   for (const m of visible) {
     draftsList.appendChild(buildMotherCard(m));
@@ -970,19 +1006,11 @@ async function depositDraftVersions(key, original, newVersions) {
   renderDrafts();
 }
 
-// فتح لوحة المسودات وإغلاقها — الفتح يبدأ ببحث فارغ (عرض كامل)
-function openDrafts() {
-  expandedMotherKey = null;
-  expandedTypeName = null;
-  openVersionId = null;
-  draftsSearch.value = "";
-  renderDrafts();
-  draftsOverlay.hidden = false;
-}
-
+// المسودات تعيش في الشريط الجانبي فلا لوحة تُغلق: بعد استعادة صيغة يُطوى
+// تفصيلها المفتوح، ويبقى التركيز في الشريط حيث نقر الكاتب
 function closeDrafts() {
-  if (draftsOverlay.contains(document.activeElement)) el("drafts-btn").focus();
-  draftsOverlay.hidden = true;
+  openVersionId = null;
+  renderDrafts();
 }
 
 // ---------- النسخة الاحتياطية: تصدير واستيراد المسودات (v4.1) ----------
@@ -1071,17 +1099,9 @@ importDraftsInput.addEventListener("change", async () => {
   }
 });
 
-el("drafts-btn").addEventListener("click", openDrafts);
-el("close-drafts").addEventListener("click", closeDrafts);
-draftsOverlay.addEventListener("click", (e) => {
-  if (e.target === draftsOverlay) closeDrafts();
-});
-
 // ---------- Escape يغلق اللوحة المفتوحة: سجل مُغلقات بالأولوية ----------
 // كل ضغطة تغلق لوحة واحدة. التسجيل بـ unshift: الأحدث تسجيلًا يُفحص أولًا،
-// فالوضع (يُحمَّل بعد القشرة) تتقدم لوحاته لوحات القشرة. ترتيب تسجيل
-// القشرة هنا مقصود: الإعدادات ثم المسودات ← فيصير الفحص النهائي
-// [لوحات الوضع…، المسودات، الإعدادات] كسلوك v4.1 حرفيًا
+// فالوضع (يُحمَّل بعد القشرة) تتقدم لوحاته لوحات القشرة: [لوحات الوضع…، الإعدادات]
 const escapeClosers = [];
 function registerEscapeCloser(isOpen, close) {
   escapeClosers.unshift({ isOpen, close });
@@ -1096,12 +1116,11 @@ document.addEventListener("keydown", (e) => {
   }
 });
 registerEscapeCloser(() => !overlay.hidden, closeSettings);
-registerEscapeCloser(() => !draftsOverlay.hidden, closeDrafts);
 
-// تحميل المسودات المحفوظة عند فتح التطبيق
+// تحميل المسودات المحفوظة عند فتح التطبيق — تُعرض في الشريط الجانبي فورًا
 (async () => {
   drafts = await loadDraftsFromStore();
-  updateDraftsBadge();
+  renderDrafts();
 })();
 
 // إن لم يكن هناك مفتاح محفوظ، افتح الإعدادات عند أول تشغيل (داخل التطبيق فقط)

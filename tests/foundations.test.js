@@ -97,3 +97,13 @@ test("الأيقونات: معرّفات فريدة، ولكل رمز viewBox، 
     }
   }
 });
+
+test("الأيقونات: كل رمز يشير إليه الهيكل أو الأبراج موجود في icons.svg", () => {
+  const ids = new Set([...icons.matchAll(/<symbol id="([^"]+)"/g)].map((m) => m[1]));
+  for (const file of ["index.html", "nasaq.js", "shadhb.js", "shell.js", "layout.js"]) {
+    const code = fs.readFileSync(srcPath(file), "utf8");
+    for (const m of code.matchAll(/<use href="#([^"]+)"/g)) {
+      assert.ok(ids.has(m[1]), `${file} يشير إلى رمز غائب: ${m[1]}`);
+    }
+  }
+});

@@ -126,10 +126,10 @@
   --size-row: 28px;
   --size-row-2line: 44px;
   --layout-sidebar-min: 220px;
-  --layout-sidebar: 240px;
+  --layout-sidebar: 256px;
   --layout-sidebar-max: 280px;
   --layout-inspector-min: 260px;
-  --layout-inspector: 280px;
+  --layout-inspector: 270px;
   --layout-inspector-max: 320px;
   --layout-content-min: 500px;
   --layout-editor-measure: 448px;
