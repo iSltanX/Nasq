@@ -1633,15 +1633,15 @@ textarea.empty-bidi { unicode-bidi: isolate; }
 .key-row { display: flex; align-items: center; gap: var(--sp-8); }
 .key-row input { flex: 1; }
 
-.provider-row { display: flex; gap: var(--sp-8); flex-wrap: wrap; }
+/* ستة مزوّدات في شبكة من ثلاثة أعمدة (صفّان متساويان) — الالتفاف الحر
+   كان سيترك أربعة أزرار فوق واثنين ممطوطين تحتها */
+.provider-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-8); }
 
 .provider-btn {
-  flex: 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   height: var(--ctl-md);
-  min-width: 110px;
   background: transparent;
   color: var(--text-dim);
   border: 1px solid var(--border-subtle);
@@ -1656,6 +1656,12 @@ textarea.empty-bidi { unicode-bidi: isolate; }
 }
 
 .provider-btn:hover { color: var(--text); border-color: var(--border); }
+/* بعد :hover عمدًا — المختار يبقى مضاءً تحت المؤشر (مفردات بطاقات المظهر نفسها) */
+.provider-btn[aria-pressed="true"] {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
 
 .test-row { display: flex; align-items: center; gap: var(--sp-10); flex-wrap: wrap; }
 

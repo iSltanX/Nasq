@@ -77,36 +77,74 @@ const settingsMsg = el("settings-msg");
 const ollamaTestRow = el("ollama-test-row");
 const ollamaTestBtn = el("ollama-test-btn");
 
-// مزوّدات جاهزة — تملأ Base URL وModel Name فقط، ولا تمسّ المفتاح
+// مزوّدات جاهزة — تملأ Base URL وModel Name فقط، ولا تمسّ المفتاح.
+// transport قيمة provider التي تُحفظ ويفهمها النقل: "cloud" (متوافق مع
+// OpenAI)، "anthropic" (واجهة Messages الأصلية لـ Claude)، "ollama" (محلي)
 const PROVIDERS = {
   gemini: {
     baseUrl: "https://generativelanguage.googleapis.com/v1beta/openai/",
     model: "gemini-2.5-flash",
+    transport: "cloud",
+  },
+  openai: {
+    baseUrl: "https://api.openai.com/v1",
+    model: "gpt-5.6-terra",
+    transport: "cloud",
+  },
+  claude: {
+    baseUrl: "https://api.anthropic.com",
+    model: "claude-opus-5",
+    transport: "anthropic",
   },
   groq: {
     baseUrl: "https://api.groq.com/openai/v1",
     model: "llama-3.3-70b-versatile",
+    transport: "cloud",
   },
   openrouter: {
     baseUrl: "https://openrouter.ai/api/v1",
     model: "google/gemini-2.5-flash",
+    transport: "cloud",
   },
   ollama: {
     baseUrl: "http://127.0.0.1:11434",
     model: "qwen3:8b",
+    transport: "ollama",
   },
 };
 
 const DEFAULTS = PROVIDERS.gemini;
+const providerButtons = document.querySelectorAll(".provider-btn");
 
-// المزوّد المختار حاليًا في لوحة الإعدادات — "ollama" أو "cloud" (أي مزوّد
-// سحابي متوافق مع OpenAI). يقود إظهار/إخفاء حقل API Key وزر اختبار الاتصال
+// المزوّد المختار حاليًا في لوحة الإعدادات: selectedProvider قيمة النقل
+// ("cloud" أو "anthropic" أو "ollama") وتقود إظهار/إخفاء حقل API Key وزر
+// اختبار الاتصال؛ وselectedPreset مفتاح الزر المضاء في PROVIDERS (أو null
+// لعنوان مخصّص)، ومنه تُملأ الحقول الفارغة عند الحفظ
 let selectedProvider = "cloud";
+let selectedPreset = "gemini";
 
-function applyProviderUI(provider) {
+// الزر المطابق لإعداد محفوظ: Claude وOllama بقيمة النقل نفسها، والسحابي
+// بمضيف Base URL — والعنوان المخصّص لا يضيء زرًا
+function presetFor(provider, baseUrl) {
+  if (provider === "anthropic") return "claude";
+  if (provider === "ollama") return "ollama";
+  const url = String(baseUrl || "").toLowerCase();
+  return (
+    Object.keys(PROVIDERS).find(
+      (key) => PROVIDERS[key].transport === "cloud" && url.includes(new URL(PROVIDERS[key].baseUrl).host)
+    ) ?? null
+  );
+}
+
+function selectProvider(provider, preset) {
+  selectedProvider = provider;
+  selectedPreset = preset;
   const isOllama = provider === "ollama";
   apiKeyField.hidden = isOllama;
   ollamaTestRow.hidden = !isOllama;
+  for (const btn of providerButtons) {
+    btn.setAttribute("aria-pressed", String(btn.dataset.provider === preset));
+  }
 }
 
 function showSettingsMsg(text, isError) {
@@ -135,8 +173,8 @@ async function openSettings() {
   modelInput.value = s.model || DEFAULTS.model;
   apiKeyInput.type = "password";
   el("toggle-key").textContent = "إظهار";
-  selectedProvider = s.provider === "ollama" ? "ollama" : "cloud";
-  applyProviderUI(selectedProvider);
+  const provider = s.provider === "ollama" || s.provider === "anthropic" ? s.provider : "cloud";
+  selectProvider(provider, presetFor(provider, baseUrlInput.value));
   settingsMsg.hidden = true;
   switchTab("general");
   overlay.hidden = false;
@@ -153,14 +191,13 @@ overlay.addEventListener("click", (e) => {
 });
 
 // أزرار المزوّدات
-for (const btn of document.querySelectorAll(".provider-btn")) {
+for (const btn of providerButtons) {
   btn.addEventListener("click", () => {
     const p = PROVIDERS[btn.dataset.provider];
     if (!p) return;
     baseUrlInput.value = p.baseUrl;
     modelInput.value = p.model;
-    selectedProvider = btn.dataset.provider === "ollama" ? "ollama" : "cloud";
-    applyProviderUI(selectedProvider);
+    selectProvider(p.transport, btn.dataset.provider);
     settingsMsg.hidden = true;
   });
 }
@@ -178,7 +215,9 @@ el("save-settings").addEventListener("click", async () => {
     return;
   }
 
-  const providerDefaults = selectedProvider === "ollama" ? PROVIDERS.ollama : DEFAULTS;
+  // الحقل الفارغ يُملأ من الزر المختار — فلا يسقط إعداد OpenAI أو Claude إلى
+  // قيم Gemini بصمت؛ وGemini يبقى لعنوان سحابي مخصّص فقط كما كان
+  const providerDefaults = PROVIDERS[selectedPreset] ?? DEFAULTS;
   const baseUrl = baseUrlInput.value.trim() || providerDefaults.baseUrl;
   const model = modelInput.value.trim() || providerDefaults.model;
   baseUrlInput.value = baseUrl;

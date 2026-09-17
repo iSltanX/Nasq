@@ -407,11 +407,14 @@
       <div id="tab-general" class="tab-body" role="tabpanel" aria-labelledby="tab-general-btn">
         <div class="field-block">
           <span class="field-label">مزوّد النموذج</span>
-          <div class="provider-row">
-            <button type="button" class="provider-btn" data-provider="gemini">Gemini</button>
-            <button type="button" class="provider-btn" data-provider="groq">Groq</button>
-            <button type="button" class="provider-btn" data-provider="openrouter">OpenRouter</button>
-            <button type="button" class="provider-btn" data-provider="ollama">Ollama المحلي</button>
+          <!-- الزر المختار بـaria-pressed على نمط بطاقات المظهر -->
+          <div class="provider-row" role="group" aria-label="مزوّد النموذج">
+            <button type="button" class="provider-btn" data-provider="gemini" aria-pressed="false">Gemini</button>
+            <button type="button" class="provider-btn" data-provider="openai" aria-pressed="false">OpenAI</button>
+            <button type="button" class="provider-btn" data-provider="claude" aria-pressed="false">Claude</button>
+            <button type="button" class="provider-btn" data-provider="groq" aria-pressed="false">Groq</button>
+            <button type="button" class="provider-btn" data-provider="openrouter" aria-pressed="false">OpenRouter</button>
+            <button type="button" class="provider-btn" data-provider="ollama" aria-pressed="false">Ollama المحلي</button>
           </div>
         </div>
         <label id="api-key-field" class="field-block">

@@ -1,10 +1,36 @@
-// نقل خام إلى المزود (OpenAI-compatible) — طبقة لا تعرف عقدًا ولا prompt:
-// تستلم رسائل جاهزة وحرارة وسقف توكنات وتعيد نص الاستجابة كما ورد.
-// قرار التكلفة الوحيد هنا بنيوي لا سلوكي: تعطيل تفكير Gemini في كل محاولة
-// (انظر build_request_body). (نُقل من main.rs حرفيًا في تحصين v4.1)
+// نقل خام إلى المزود (OpenAI-compatible، مع فرعين أصليين لـ Ollama وClaude) —
+// طبقة لا تعرف عقدًا ولا prompt: تستلم رسائل جاهزة وحرارة وسقف توكنات وتعيد
+// نص الاستجابة كما ورد. قرار التكلفة الوحيد هنا بنيوي لا سلوكي: تعطيل تفكير
+// Gemini في كل محاولة (انظر build_request_body). (نُقل من main.rs حرفيًا في
+// تحصين v4.1)
+use reqwest::header::{HeaderMap, HeaderValue, CONTENT_TYPE};
 use serde_json::{json, Value};
 
-use super::settings::{Settings, PROVIDER_OLLAMA};
+use super::settings::{Settings, OPENAI_API_HOST, PROVIDER_ANTHROPIC, PROVIDER_OLLAMA};
+
+// رسائل يتقاسمها المساران السحابيان (المتوافق مع OpenAI وClaude) — نص واحد
+// لكل حالة حتى لا تنجرف صياغة أحدهما عن الآخر
+const ERR_NO_API_KEY: &str = "لا يوجد مفتاح API — أضفه من لوحة الإعدادات أولًا.";
+const ERR_CLIENT_INIT: &str = "تعذّر تهيئة الاتصال.";
+const ERR_TIMEOUT: &str = "انتهت مهلة الاتصال — حاول مرة أخرى.";
+const ERR_CONNECT: &str = "فشل الاتصال بالخدمة — تحقق من الإنترنت ومن Base URL.";
+const ERR_BAD_KEY: &str = "المفتاح غير صحيح أو غير مفعّل — راجع لوحة الإعدادات.";
+const ERR_NO_CREDIT: &str = "نفد رصيد المزوّد — اشحن الحساب ثم أعد المحاولة.";
+const ERR_MODEL_UNAVAILABLE: &str = "النموذج غير متاح — تحقق من اسم النموذج في الإعدادات.";
+const ERR_RATE_LIMITED: &str = "تجاوزت حد الاستخدام مؤقتًا — انتظر قليلًا ثم أعد المحاولة.";
+const ERR_SERVER: &str = "الخدمة تواجه خللًا مؤقتًا — أعد المحاولة بعد قليل.";
+const ERR_UNREADABLE: &str = "تعذّرت قراءة استجابة الخدمة.";
+const ERR_EMPTY_RESULT: &str = "أعاد النموذج نتيجة فارغة — أعد المحاولة.";
+const ERR_TOO_LONG: &str =
+    "النص أطول من حد المعالجة — قسّمه إلى أجزاء أقصر ونسّق كل جزء على حدة.";
+
+fn request_failed(code: u16) -> String {
+    format!("فشل الطلب (رمز {}). تحقق من الإعدادات وأعد المحاولة.", code)
+}
+
+fn transport_error(e: &reqwest::Error) -> String {
+    if e.is_timeout() { ERR_TIMEOUT } else { ERR_CONNECT }.to_string()
+}
 
 /// يستخرج JSON من ناتج النموذج بحذر: يزيل أسوار الكود ثم يبحث عن أول كائن JSON.
 pub(crate) fn extract_json(content: &str) -> Option<Value> {
@@ -79,6 +105,82 @@ pub(crate) fn build_request_body(
     body
 }
 
+// هامش توكنات التفكير: حين يفكر النموذج فعلًا تُحسب توكنات تفكيره من سقف
+// المخرج نفسه، فيُضاف إليه هامش بحدّ أعلى صلب — ولا يُنقص سقفَ البرج أبدًا
+const THINKING_HEADROOM_TOKENS: u64 = 4096;
+const THINKING_HEADROOM_CAP: u64 = 20_000;
+
+fn thinking_headroom(max_tokens: u64) -> u64 {
+    let padded = max_tokens
+        .saturating_add(THINKING_HEADROOM_TOKENS)
+        .min(THINKING_HEADROOM_CAP);
+    padded.max(max_tokens)
+}
+
+/// أدنى reasoning_effort تقبله عائلة نموذج OpenAI استدلالي، أو None لنموذج غير
+/// استدلالي. المرجع وثائق OpenAI الرسمية (developers.openai.com، 2026-09):
+/// gpt-5 وgpt-5-mini وgpt-5-nano تبدأ من minimal؛ gpt-5.1 حتى gpt-5.6 تبدأ من
+/// none؛ gpt-6-astra تبدأ من low (none يعيد 400)؛ وسلسلة o تبدأ من low. وما بعد
+/// gpt-6 غير موثّق بعد فيأخذ low — القيمة التي تقبلها كل عائلة استدلالية
+/// موثّقة. أسماء ChatGPT (chat-latest) بلا توكنات استدلال في وثائقها.
+fn openai_reasoning_floor(model: &str) -> Option<&'static str> {
+    let id = model.trim().to_ascii_lowercase();
+    if id.contains("chat") {
+        return None;
+    }
+    if ["o1", "o3", "o4"].iter().any(|prefix| id.starts_with(prefix)) {
+        return Some("low");
+    }
+    let rest = id.strip_prefix("gpt-")?;
+    let digits = rest.chars().take_while(char::is_ascii_digit).count();
+    let major: u32 = rest[..digits].parse().ok()?;
+    match major {
+        0..=4 => None,
+        5 if rest[digits..].starts_with('.') => Some("none"),
+        5 => Some("minimal"),
+        _ => Some("low"),
+    }
+}
+
+/// جسم Chat Completions لـ OpenAI المباشر (api.openai.com) — دالة صرفة كنظيرتها
+/// build_request_body التي تبقى لبقية المزوّدات بلا تغيير. max_completion_tokens
+/// بدل max_tokens المهمَل (غير المتوافق مع سلسلة o) لكل نموذج. العائلات
+/// الاستدلالية لا تُرسل لها temperature (ترفضها gpt-6 وgpt-5 الأصلية وسلسلة o،
+/// ولا تقبلها gpt-5.x إلا مع none)، وميزانية التفكير تُترجم إلى reasoning_effort:
+/// صفر ← أدنى قيمة تقبلها العائلة، وما فوقه ← low، ومع أي تفكير فعلي هامش في
+/// السقف. غير الاستدلالية تأخذ temperature البرج بلا reasoning_effort. وكما في
+/// build_request_body لا يُسقط جسم الإعادة إلا response_format — فلا تشغّل
+/// إعادة المحاولة تفكير medium الافتراضي بصمت.
+pub(crate) fn build_openai_body(
+    model: &str,
+    messages: &Value,
+    max_tokens: u64,
+    temperature: f64,
+    include_response_format: bool,
+    thinking_budget: u64,
+) -> Value {
+    let mut body = json!({ "model": model, "messages": messages });
+    match openai_reasoning_floor(model) {
+        Some(floor) => {
+            let effort = if thinking_budget == 0 { floor } else { "low" };
+            body["reasoning_effort"] = json!(effort);
+            body["max_completion_tokens"] = json!(if effort == "none" {
+                max_tokens
+            } else {
+                thinking_headroom(max_tokens)
+            });
+        }
+        None => {
+            body["temperature"] = json!(temperature);
+            body["max_completion_tokens"] = json!(max_tokens);
+        }
+    }
+    if include_response_format {
+        body["response_format"] = json!({ "type": "json_object" });
+    }
+    body
+}
+
 pub(crate) async fn call_api(
     client: &reqwest::Client,
     url: &str,
@@ -91,13 +193,7 @@ pub(crate) async fn call_api(
         .json(body)
         .send()
         .await
-        .map_err(|e| {
-            if e.is_timeout() {
-                "انتهت مهلة الاتصال — حاول مرة أخرى.".to_string()
-            } else {
-                "فشل الاتصال بالخدمة — تحقق من الإنترنت ومن Base URL.".to_string()
-            }
-        })
+        .map_err(|e| transport_error(&e))
 }
 
 /// يرسل الرسائل إلى المزود ويعيد نص المحتوى الخام — نقل مشترك بين الوضعين،
@@ -116,9 +212,16 @@ pub(crate) async fn request_completion(
         return request_completion_ollama(settings, messages, thinking_budget).await;
     }
 
+    // Claude: واجهة Messages الأصلية (مصادقة وجسم واستجابة مختلفة الشكل) — فرع
+    // مبكر منفصل كفرع Ollama لا يمسّ المسار السحابي أدناه. لا تُمرَّر إليه
+    // الحرارة عمدًا: نماذج Claude الحديثة ترفض معاملات أخذ العينات بـ400
+    if settings.provider.trim() == PROVIDER_ANTHROPIC {
+        return request_completion_anthropic(settings, messages, max_tokens, thinking_budget).await;
+    }
+
     let api_key = settings.api_key.trim();
     if api_key.is_empty() {
-        return Err("لا يوجد مفتاح API — أضفه من لوحة الإعدادات أولًا.".to_string());
+        return Err(ERR_NO_API_KEY.to_string());
     }
 
     let url = format!(
@@ -129,59 +232,71 @@ pub(crate) async fn request_completion(
     let client = reqwest::Client::builder()
         .timeout(std::time::Duration::from_secs(120))
         .build()
-        .map_err(|_| "تعذّر تهيئة الاتصال.".to_string())?;
+        .map_err(|_| ERR_CLIENT_INIT.to_string())?;
 
     // حقل ضبط التفكير يُرسل بصيغة المزود المطابق حصرًا حتى لا يكسر البقية
     let base_lower = settings.base_url.to_lowercase();
     let is_gemini = base_lower.contains("generativelanguage.googleapis.com");
     let is_openrouter = base_lower.contains("openrouter.ai");
+    // OpenAI المباشر له جسمه (build_openai_body)، وبقية المزوّدات على جسمها القائم
+    let is_openai = base_lower.contains(OPENAI_API_HOST);
+    let body_for = |include_response_format: bool| {
+        if is_openai {
+            build_openai_body(
+                &settings.model,
+                messages,
+                max_tokens,
+                temperature,
+                include_response_format,
+                thinking_budget,
+            )
+        } else {
+            build_request_body(
+                &settings.model,
+                messages,
+                max_tokens,
+                temperature,
+                include_response_format,
+                is_gemini,
+                is_openrouter,
+                thinking_budget,
+            )
+        }
+    };
 
-    let first_body = build_request_body(
-        &settings.model,
-        messages,
-        max_tokens,
-        temperature,
-        true,
-        is_gemini,
-        is_openrouter,
-        thinking_budget,
-    );
-    let mut response = call_api(&client, &url, api_key, &first_body).await?;
+    let mut response = call_api(&client, &url, api_key, &body_for(true)).await?;
 
-    // إن رفض المزود response_format (400 أو 422) نعيد المحاولة دونه —
-    // ضبط التفكير يبقى في جسم الإعادة (انظر build_request_body)
+    // إن رفض المزود response_format (400 أو 422) نعيد المحاولة مرة واحدة دونه —
+    // ضبط التفكير يبقى في جسم الإعادة (انظر build_request_body وbuild_openai_body)،
+    // والجسم الأول لا يحمل أصلًا معاملًا يرفضه نموذج OpenAI فتفشل الإعادة عليه
     let first_status = response.status().as_u16();
     if first_status == 400 || first_status == 422 {
-        let plain_body = build_request_body(
-            &settings.model,
-            messages,
-            max_tokens,
-            temperature,
-            false,
-            is_gemini,
-            is_openrouter,
-            thinking_budget,
-        );
-        response = call_api(&client, &url, api_key, &plain_body).await?;
+        response = call_api(&client, &url, api_key, &body_for(false)).await?;
     }
 
     let status = response.status();
     if !status.is_success() {
         return Err(match status.as_u16() {
-            401 | 403 => "المفتاح غير صحيح أو غير مفعّل — راجع لوحة الإعدادات.".to_string(),
+            401 | 403 => ERR_BAD_KEY.to_string(),
             // نفاد الرصيد له اسمه الصريح (الإصلاح ٢-ج) — كان يسقط في الذراع العام
-            402 => "نفد رصيد المزوّد — اشحن الحساب ثم أعد المحاولة.".to_string(),
-            404 => "النموذج غير متاح — تحقق من اسم النموذج في الإعدادات.".to_string(),
-            429 => "تجاوزت حد الاستخدام مؤقتًا — انتظر قليلًا ثم أعد المحاولة.".to_string(),
-            500..=599 => "الخدمة تواجه خللًا مؤقتًا — أعد المحاولة بعد قليل.".to_string(),
-            code => format!("فشل الطلب (رمز {}). تحقق من الإعدادات وأعد المحاولة.", code),
+            402 => ERR_NO_CREDIT.to_string(),
+            404 => ERR_MODEL_UNAVAILABLE.to_string(),
+            429 => ERR_RATE_LIMITED.to_string(),
+            500..=599 => ERR_SERVER.to_string(),
+            code => request_failed(code),
         });
     }
 
     let payload: Value = response
         .json()
         .await
-        .map_err(|_| "تعذّرت قراءة استجابة الخدمة.".to_string())?;
+        .map_err(|_| ERR_UNREADABLE.to_string())?;
+
+    // ناتج مقطوع بسبب بلوغ سقف التوكنات → رسالة واضحة بدل «ناتج غير صالح».
+    // يُفحص قبل الفراغ: نموذج استدلالي قد يستنفد السقف تفكيرًا فلا يبقى نص ظاهر
+    if payload["choices"][0]["finish_reason"].as_str() == Some("length") {
+        return Err(ERR_TOO_LONG.to_string());
+    }
 
     let content = payload["choices"][0]["message"]["content"]
         .as_str()
@@ -190,15 +305,257 @@ pub(crate) async fn request_completion(
         .to_string();
 
     if content.is_empty() {
-        return Err("أعاد النموذج نتيجة فارغة — أعد المحاولة.".to_string());
-    }
-
-    // ناتج مقطوع بسبب بلوغ سقف التوكنات → رسالة واضحة بدل «ناتج غير صالح»
-    if payload["choices"][0]["finish_reason"].as_str() == Some("length") {
-        return Err("النص أطول من حد المعالجة — قسّمه إلى أجزاء أقصر ونسّق كل جزء على حدة.".to_string());
+        return Err(ERR_EMPTY_RESULT.to_string());
     }
 
     Ok(content)
+}
+
+// ---------- Claude (Anthropic Messages API) ----------
+
+const ANTHROPIC_VERSION: &str = "2023-06-01";
+const ANTHROPIC_FALLBACK_BETA: &str = "server-side-fallback-2026-07-01";
+const CLAUDE_TIMEOUT_SECS: u64 = 180;
+
+// نماذج Claude التي تقبل output_config.effort — بادئات صريحة، وغيرها (مثل
+// claude-haiku-4-5) لا يُرسل له effort ولا thinking إطلاقًا
+const CLAUDE_EFFORT_MODEL_PREFIXES: [&str; 8] = [
+    "claude-opus-5",
+    "claude-opus-4-8",
+    "claude-opus-4-7",
+    "claude-opus-4-6",
+    "claude-sonnet-5",
+    "claude-sonnet-4-6",
+    "claude-fable-",
+    "claude-mythos-",
+];
+
+const ERR_CLAUDE_REFUSAL: &str =
+    "اعتذر النموذج عن معالجة هذا النص — جرّب نموذجًا آخر أو عدّل النص ثم أعد المحاولة.";
+const ERR_KEY_FORBIDDEN: &str =
+    "المفتاح لا يملك صلاحية هذا النموذج أو الطلب — راجع صلاحيات حسابك لدى المزوّد.";
+const ERR_OVERLOADED: &str = "الخدمة مزدحمة الآن — أعد المحاولة بعد قليل.";
+
+fn claude_supports_effort(model: &str) -> bool {
+    CLAUDE_EFFORT_MODEL_PREFIXES
+        .iter()
+        .any(|prefix| model.starts_with(prefix))
+}
+
+/// ميزانية التفكير التي يقررها البرج بمفردات effort: صفر ← low (أدنى تفكير
+/// تكيفي، لا تعطيل)، وحتى 2048 ← medium، وما فوقها ← high
+fn claude_effort(thinking_budget: u64) -> &'static str {
+    match thinking_budget {
+        0 => "low",
+        1..=2048 => "medium",
+        _ => "high",
+    }
+}
+
+/// الاحتياط عند الرفض (fallbacks: "default") مفعَّل افتراضيًا حيث توصي به
+/// Anthropic: Opus 5 وFable 5.1
+fn claude_uses_refusal_fallback(model: &str) -> bool {
+    model.starts_with("claude-opus-5") || model.starts_with("claude-fable-5-1")
+}
+
+/// {base_url}/v1/messages — ويُقبل عنوان مُنهًى بـ/v1 دون تكرارها
+fn anthropic_messages_url(base_url: &str) -> String {
+    let base = base_url.trim().trim_end_matches('/');
+    if base.ends_with("/v1") {
+        format!("{}/messages", base)
+    } else {
+        format!("{}/v1/messages", base)
+    }
+}
+
+/// رسائل الوضع بصيغة Messages API: محتوى كل رسالة system (نصًا، كما تبنيه
+/// الأبراج) يُجمع في الحقل العلوي system، وتبقى user/assistant بترتيبها في
+/// messages. وأي assistant في الذيل يُسقط: الملء المسبق (prefill) مرفوض بـ400
+/// في نماذج Claude الحديثة.
+fn split_anthropic_messages(messages: &Value) -> (String, Vec<Value>) {
+    let mut system = Vec::new();
+    let mut turns = Vec::new();
+    for message in messages.as_array().into_iter().flatten() {
+        match message["role"].as_str() {
+            Some("system") => {
+                if let Some(text) = message["content"].as_str() {
+                    system.push(text);
+                }
+            }
+            Some(role @ ("user" | "assistant")) => {
+                turns.push(json!({ "role": role, "content": message["content"] }));
+            }
+            _ => {}
+        }
+    }
+    while turns.last().is_some_and(|turn| turn["role"] == "assistant") {
+        turns.pop();
+    }
+    (system.join("\n\n"), turns)
+}
+
+/// جسم POST /v1/messages — دالة صرفة قابلة للاختبار بمعزل عن الشبكة. لا
+/// temperature ولا top_p ولا top_k ولا budget_tokens (400 على Opus 5 وأخواته)،
+/// ولا thinking إطلاقًا: Opus 5 يفكر تكيفيًا افتراضيًا، وتعطيله صراحةً قد يسرّب
+/// وسومًا داخلية إلى النص فيفسد JSON الذي ينتظره البرج. ميزانية التفكير تُترجم
+/// إلى output_config.effort للنماذج التي تقبله فقط، مع هامش في max_tokens لأن
+/// توكنات التفكير تُحسب منه. with_fallback يضيف fallbacks (وترويسته في
+/// anthropic_headers).
+pub(crate) fn build_anthropic_body(
+    model: &str,
+    messages: &Value,
+    max_tokens: u64,
+    thinking_budget: u64,
+    with_fallback: bool,
+) -> Value {
+    let (system, turns) = split_anthropic_messages(messages);
+    let supports_effort = claude_supports_effort(model);
+    let mut body = json!({
+        "model": model,
+        "max_tokens": if supports_effort { thinking_headroom(max_tokens) } else { max_tokens },
+        "messages": turns,
+    });
+    if !system.is_empty() {
+        body["system"] = json!(system);
+    }
+    if supports_effort {
+        body["output_config"] = json!({ "effort": claude_effort(thinking_budget) });
+    }
+    if with_fallback {
+        body["fallbacks"] = json!("default");
+    }
+    body
+}
+
+/// ترويسات طلب Claude: المفتاح في x-api-key (لا Bearer) ومعلَّم حساسًا كما
+/// تفعل bearer_auth، وترويسة beta الاحتياط ترافق حقل fallbacks حصرًا
+fn anthropic_headers(api_key: &str, with_fallback: bool) -> Result<HeaderMap, String> {
+    let mut key = HeaderValue::from_str(api_key).map_err(|_| ERR_BAD_KEY.to_string())?;
+    key.set_sensitive(true);
+    let mut headers = HeaderMap::new();
+    headers.insert("x-api-key", key);
+    headers.insert("anthropic-version", HeaderValue::from_static(ANTHROPIC_VERSION));
+    headers.insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
+    if with_fallback {
+        headers.insert("anthropic-beta", HeaderValue::from_static(ANTHROPIC_FALLBACK_BETA));
+    }
+    Ok(headers)
+}
+
+fn anthropic_error_text(payload: &Value) -> String {
+    payload["error"]["message"]
+        .as_str()
+        .unwrap_or("")
+        .to_lowercase()
+}
+
+/// 400 سببه الاحتياط نفسه (ترويسة beta أو حقل fallbacks غير متاحين للحساب أو
+/// النموذج) — يُعاد الطلب مرة واحدة بدونهما معًا
+fn anthropic_fallback_rejected(status: u16, payload: &Value) -> bool {
+    let text = anthropic_error_text(payload);
+    status == 400 && (text.contains("anthropic-beta") || text.contains("fallbacks"))
+}
+
+/// رسالة الخطأ بحسب الحالة — جسم خطأ Anthropic {"type":"error","error":{type,message}}
+fn anthropic_error_message(status: u16, payload: &Value) -> String {
+    match status {
+        401 => ERR_BAD_KEY,
+        403 => ERR_KEY_FORBIDDEN,
+        402 => ERR_NO_CREDIT,
+        // نفاد الرصيد قد يصل 400 برسالة «credit balance is too low»
+        400 if anthropic_error_text(payload).contains("credit balance") => ERR_NO_CREDIT,
+        404 => ERR_MODEL_UNAVAILABLE,
+        413 => ERR_TOO_LONG,
+        429 => ERR_RATE_LIMITED,
+        529 => ERR_OVERLOADED,
+        500..=599 => ERR_SERVER,
+        code => return request_failed(code),
+    }
+    .to_string()
+}
+
+/// قراءة استجابة Messages — دالة صرفة. stop_reason أولًا: refusal خطأ صريح (لا
+/// نص جزئي يُعامل ناتجًا)، وmax_tokens رسالة الطول نفسها؛ ثم يُجمع نص كل كتلة
+/// text بترتيبها وتُتجاوز thinking وfallback وأي نوع آخر
+fn parse_anthropic_response(payload: &Value) -> Result<String, String> {
+    match payload["stop_reason"].as_str() {
+        Some("refusal") => return Err(ERR_CLAUDE_REFUSAL.to_string()),
+        Some("max_tokens") => return Err(ERR_TOO_LONG.to_string()),
+        _ => {}
+    }
+    let text: String = payload["content"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .filter(|block| block["type"] == "text")
+        .filter_map(|block| block["text"].as_str())
+        .collect();
+    let text = text.trim();
+    if text.is_empty() {
+        return Err(ERR_EMPTY_RESULT.to_string());
+    }
+    Ok(text.to_string())
+}
+
+async fn send_anthropic(
+    client: &reqwest::Client,
+    url: &str,
+    headers: HeaderMap,
+    body: &Value,
+) -> Result<(u16, Value), String> {
+    // الترويسات قبل json(): فلا تتكرر content-type
+    let response = client
+        .post(url)
+        .headers(headers)
+        .json(body)
+        .send()
+        .await
+        .map_err(|e| transport_error(&e))?;
+    let status = response.status().as_u16();
+    // جسم خطأ غير JSON (وكيل أو بوابة) لا يمنع رسالة الحالة
+    match response.json::<Value>().await {
+        Ok(payload) => Ok((status, payload)),
+        Err(_) if !(200..300).contains(&status) => Ok((status, Value::Null)),
+        Err(_) => Err(ERR_UNREADABLE.to_string()),
+    }
+}
+
+/// نقل Claude عبر واجهة Messages الأصلية. محاولة واحدة، وإعادة وحيدة بلا
+/// الاحتياط إن رفضه الحساب؛ لا streaming ولا تحويل لمزوّد آخر عند الفشل
+async fn request_completion_anthropic(
+    settings: &Settings,
+    messages: &Value,
+    max_tokens: u64,
+    thinking_budget: u64,
+) -> Result<String, String> {
+    let api_key = settings.api_key.trim();
+    if api_key.is_empty() {
+        return Err(ERR_NO_API_KEY.to_string());
+    }
+    let model = settings.model.trim();
+    let url = anthropic_messages_url(&settings.base_url);
+
+    // التفكير التكيفي أبطأ من نداء بلا تفكير — مهلة أوسع من المسار المتوافق
+    let client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(CLAUDE_TIMEOUT_SECS))
+        .build()
+        .map_err(|_| ERR_CLIENT_INIT.to_string())?;
+
+    let with_fallback = claude_uses_refusal_fallback(model);
+    let body = build_anthropic_body(model, messages, max_tokens, thinking_budget, with_fallback);
+    let (mut status, mut payload) =
+        send_anthropic(&client, &url, anthropic_headers(api_key, with_fallback)?, &body).await?;
+
+    if with_fallback && anthropic_fallback_rejected(status, &payload) {
+        let plain = build_anthropic_body(model, messages, max_tokens, thinking_budget, false);
+        (status, payload) =
+            send_anthropic(&client, &url, anthropic_headers(api_key, false)?, &plain).await?;
+    }
+
+    if !(200..300).contains(&status) {
+        return Err(anthropic_error_message(status, &payload));
+    }
+    parse_anthropic_response(&payload)
 }
 
 /// جسم طلب /api/chat لـ Ollama — دالة صرفة قابلة للاختبار بمعزل عن الشبكة،
@@ -486,5 +843,294 @@ mod tests {
         // وسوم مختلفة فعلًا ليست تطابقًا
         assert!(!ollama_model_matches("qwen3:8b", "qwen3:14b"));
         assert!(!ollama_model_matches("qwen3", "llama3"));
+    }
+
+    // ---------- Claude (Anthropic Messages API) ----------
+
+    fn tower_messages() -> Value {
+        json!([
+            { "role": "system", "content": "عقد البرج" },
+            { "role": "user", "content": "النص" }
+        ])
+    }
+
+    #[test]
+    fn anthropic_body_moves_system_to_top_level_and_keeps_turns_in_order() {
+        let body = build_anthropic_body("claude-opus-5", &tower_messages(), 2000, 0, false);
+        assert_eq!(body["system"], "عقد البرج");
+        assert_eq!(body["messages"], json!([{ "role": "user", "content": "النص" }]));
+        // أكثر من رسالة system تُجمع بترتيبها، ولا يبقى دور system داخل messages
+        let many = json!([
+            { "role": "system", "content": "أ" },
+            { "role": "user", "content": "١" },
+            { "role": "system", "content": "ب" },
+            { "role": "assistant", "content": "٢" },
+            { "role": "user", "content": "٣" }
+        ]);
+        let body = build_anthropic_body("claude-opus-5", &many, 2000, 0, false);
+        assert_eq!(body["system"], "أ\n\nب");
+        let roles: Vec<&str> = body["messages"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|m| m["role"].as_str().unwrap())
+            .collect();
+        assert_eq!(roles, ["user", "assistant", "user"]);
+        // بلا رسالة system لا يُرسل الحقل فارغًا
+        let bare = build_anthropic_body("claude-opus-5", &json!([{ "role": "user", "content": "ن" }]), 2000, 0, false);
+        assert!(bare.get("system").is_none());
+    }
+
+    #[test]
+    fn anthropic_body_never_sends_prefill() {
+        let with_prefill = json!([
+            { "role": "system", "content": "s" },
+            { "role": "user", "content": "u" },
+            { "role": "assistant", "content": "{" }
+        ]);
+        let body = build_anthropic_body("claude-opus-5", &with_prefill, 2000, 0, false);
+        assert_eq!(body["messages"], json!([{ "role": "user", "content": "u" }]));
+    }
+
+    #[test]
+    fn anthropic_body_never_sends_sampling_budget_or_thinking_fields() {
+        // الشكل مقفول: هذه الحقول وحدها ممكنة، أيًّا كان النموذج والميزانية
+        let allowed = ["fallbacks", "max_tokens", "messages", "model", "output_config", "system"];
+        for model in ["claude-opus-5", "claude-sonnet-4-6", "claude-haiku-4-5", "claude-fable-5-1"] {
+            for budget in [0u64, 1024, 8192] {
+                for with_fallback in [true, false] {
+                    let body = build_anthropic_body(model, &tower_messages(), 6144, budget, with_fallback);
+                    for key in body.as_object().unwrap().keys() {
+                        assert!(allowed.contains(&key.as_str()), "حقل غير مسموح {key} لـ {model}");
+                    }
+                    let raw = body.to_string();
+                    for banned in ["temperature", "top_p", "top_k", "budget_tokens", "thinking"] {
+                        assert!(!raw.contains(banned), "{banned} تسرب إلى جسم {model}");
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn anthropic_effort_follows_thinking_budget_and_is_gated_by_model() {
+        let effort = |model: &str, budget: u64| {
+            build_anthropic_body(model, &tower_messages(), 2000, budget, false)["output_config"]["effort"].clone()
+        };
+        // نسق (صفر) ← low، شَذْب (1024) ← medium، وما فوق 2048 ← high
+        assert_eq!(effort("claude-opus-5", 0), "low");
+        assert_eq!(effort("claude-opus-5", 1024), "medium");
+        assert_eq!(effort("claude-opus-5", 2048), "medium");
+        assert_eq!(effort("claude-opus-5", 2049), "high");
+        for model in [
+            "claude-opus-4-8",
+            "claude-opus-4-7",
+            "claude-opus-4-6",
+            "claude-sonnet-5",
+            "claude-sonnet-4-6",
+            "claude-fable-5-1",
+            "claude-mythos-5-1",
+        ] {
+            assert_eq!(effort(model, 1024), "medium", "{model} يقبل effort");
+        }
+        for model in ["claude-haiku-4-5", "claude-sonnet-4-5", "claude-opus-4-5"] {
+            let body = build_anthropic_body(model, &tower_messages(), 2000, 1024, false);
+            assert!(body.get("output_config").is_none(), "{model} لا يُرسل له effort");
+        }
+    }
+
+    #[test]
+    fn anthropic_headroom_is_added_only_with_effort_and_capped() {
+        let max = |model: &str, tokens: u64| build_anthropic_body(model, &tower_messages(), tokens, 0, false)["max_tokens"].clone();
+        assert_eq!(max("claude-opus-5", 1200), 5296);
+        assert_eq!(max("claude-opus-5", 6144), 10240);
+        // سقف نسق الأعلى (16384) يُقصّ عند الحد الصلب
+        assert_eq!(max("claude-opus-5", 16384), 20000);
+        // نموذج بلا effort لا تفكير له هنا — السقف كما قرره البرج
+        assert_eq!(max("claude-haiku-4-5", 1200), 1200);
+        // الهامش لا يُنقص سقفًا أعلى من الحد أبدًا
+        assert_eq!(thinking_headroom(30000), 30000);
+    }
+
+    #[test]
+    fn anthropic_refusal_fallback_is_gated_in_body_and_headers() {
+        assert!(claude_uses_refusal_fallback("claude-opus-5"));
+        assert!(claude_uses_refusal_fallback("claude-fable-5-1"));
+        for model in ["claude-sonnet-5", "claude-opus-4-8", "claude-fable-5", "claude-haiku-4-5"] {
+            assert!(!claude_uses_refusal_fallback(model), "{model} بلا احتياط");
+        }
+        let with = build_anthropic_body("claude-opus-5", &tower_messages(), 2000, 0, true);
+        assert_eq!(with["fallbacks"], "default");
+        let without = build_anthropic_body("claude-opus-5", &tower_messages(), 2000, 0, false);
+        assert!(without.get("fallbacks").is_none());
+
+        let headers = anthropic_headers("sk-ant-test", true).unwrap();
+        assert_eq!(headers["x-api-key"], "sk-ant-test");
+        assert!(headers["x-api-key"].is_sensitive());
+        assert_eq!(headers["anthropic-version"], "2023-06-01");
+        assert_eq!(headers["anthropic-beta"], "server-side-fallback-2026-07-01");
+        assert_eq!(headers[CONTENT_TYPE], "application/json");
+        // لا Bearer إطلاقًا — المصادقة في x-api-key وحدها
+        assert!(headers.get("authorization").is_none());
+        let plain = anthropic_headers("sk-ant-test", false).unwrap();
+        assert!(plain.get("anthropic-beta").is_none());
+        // مفتاح لا يصلح ترويسةً (سطر جديد ملصوق داخله) يُرفض برسالة المفتاح لا
+        // بفشل اتصال غامض
+        assert_eq!(anthropic_headers("sk-ant\nbroken", false).unwrap_err(), ERR_BAD_KEY);
+    }
+
+    #[test]
+    fn anthropic_fallback_rejection_is_detected_only_on_its_own_400() {
+        let error = |message: &str| json!({ "type": "error", "error": { "type": "invalid_request_error", "message": message } });
+        assert!(anthropic_fallback_rejected(
+            400,
+            &error("Unexpected value(s) `server-side-fallback-2026-07-01` for the `anthropic-beta` header.")
+        ));
+        assert!(anthropic_fallback_rejected(400, &error("fallbacks: Extra inputs are not permitted")));
+        assert!(!anthropic_fallback_rejected(400, &error("messages: roles must alternate")));
+        assert!(!anthropic_fallback_rejected(401, &error("anthropic-beta")));
+        assert!(!anthropic_fallback_rejected(400, &Value::Null));
+    }
+
+    #[test]
+    fn anthropic_response_joins_text_blocks_and_skips_thinking_and_fallback() {
+        let payload = json!({
+            "stop_reason": "end_turn",
+            "content": [
+                { "type": "thinking", "thinking": "", "signature": "x" },
+                { "type": "fallback", "from": { "model": "claude-opus-5" }, "to": { "model": "claude-opus-4-8" } },
+                { "type": "text", "text": "{\"lines\": " },
+                { "type": "text", "text": "[\"سطر\"]}" }
+            ]
+        });
+        let text = parse_anthropic_response(&payload).unwrap();
+        assert_eq!(text, "{\"lines\": [\"سطر\"]}");
+        assert!(extract_json(&text).is_some());
+    }
+
+    #[test]
+    fn anthropic_refusal_max_tokens_and_empty_results_are_clear_errors() {
+        // الرفض يسبق أي نص جزئي — لا يُعامل ما قبله ناتجًا
+        let refusal = json!({ "stop_reason": "refusal", "content": [{ "type": "text", "text": "{\"partial\"" }] });
+        assert_eq!(parse_anthropic_response(&refusal).unwrap_err(), ERR_CLAUDE_REFUSAL);
+        let cut = json!({ "stop_reason": "max_tokens", "content": [{ "type": "text", "text": "{\"lines\": [" }] });
+        assert_eq!(parse_anthropic_response(&cut).unwrap_err(), ERR_TOO_LONG);
+        let only_thinking = json!({ "stop_reason": "end_turn", "content": [{ "type": "thinking", "thinking": "" }] });
+        assert_eq!(parse_anthropic_response(&only_thinking).unwrap_err(), ERR_EMPTY_RESULT);
+        assert_eq!(parse_anthropic_response(&json!({ "stop_reason": "refusal", "content": [] })).unwrap_err(), ERR_CLAUDE_REFUSAL);
+    }
+
+    #[test]
+    fn anthropic_errors_map_by_status() {
+        let error = |kind: &str, message: &str| json!({ "type": "error", "error": { "type": kind, "message": message } });
+        assert_eq!(anthropic_error_message(401, &error("authentication_error", "invalid x-api-key")), ERR_BAD_KEY);
+        assert_eq!(anthropic_error_message(403, &error("permission_error", "not allowed")), ERR_KEY_FORBIDDEN);
+        assert_eq!(anthropic_error_message(402, &error("billing_error", "billing")), ERR_NO_CREDIT);
+        assert_eq!(
+            anthropic_error_message(
+                400,
+                &error("invalid_request_error", "Your credit balance is too low to access the Anthropic API.")
+            ),
+            ERR_NO_CREDIT
+        );
+        assert_eq!(
+            anthropic_error_message(400, &error("invalid_request_error", "max_tokens: too large")),
+            request_failed(400)
+        );
+        assert_eq!(anthropic_error_message(404, &error("not_found_error", "model: x")), ERR_MODEL_UNAVAILABLE);
+        assert_eq!(anthropic_error_message(413, &Value::Null), ERR_TOO_LONG);
+        assert_eq!(anthropic_error_message(429, &error("rate_limit_error", "slow down")), ERR_RATE_LIMITED);
+        assert_eq!(anthropic_error_message(529, &error("overloaded_error", "Overloaded")), ERR_OVERLOADED);
+        assert_eq!(anthropic_error_message(500, &error("api_error", "oops")), ERR_SERVER);
+        assert_eq!(anthropic_error_message(503, &Value::Null), ERR_SERVER);
+    }
+
+    #[test]
+    fn anthropic_messages_url_appends_v1_exactly_once() {
+        assert_eq!(anthropic_messages_url("https://api.anthropic.com"), "https://api.anthropic.com/v1/messages");
+        assert_eq!(anthropic_messages_url(" https://api.anthropic.com/ "), "https://api.anthropic.com/v1/messages");
+        assert_eq!(anthropic_messages_url("https://api.anthropic.com/v1/"), "https://api.anthropic.com/v1/messages");
+    }
+
+    // ---------- OpenAI المباشر (Chat Completions) ----------
+
+    #[test]
+    fn openai_reasoning_floor_follows_documented_families() {
+        for model in ["gpt-5", "gpt-5-mini", "gpt-5-nano", "gpt-5-2025-08-07"] {
+            assert_eq!(openai_reasoning_floor(model), Some("minimal"), "{model}");
+        }
+        for model in ["gpt-5.1", "gpt-5.2", "gpt-5.4-mini", "gpt-5.5", "gpt-5.6-terra", "gpt-5.6-luna", "GPT-5.6-Sol"] {
+            assert_eq!(openai_reasoning_floor(model), Some("none"), "{model}");
+        }
+        for model in ["gpt-6-astra", "o1", "o3", "o3-mini", "o4-mini"] {
+            assert_eq!(openai_reasoning_floor(model), Some("low"), "{model}");
+        }
+        for model in ["gpt-4.1", "gpt-4.1-mini", "gpt-4o", "gpt-4o-mini", "gpt-5-chat-latest", "gpt-5.1-chat-latest", "chatgpt-4o-latest", "gpt-oss-120b"] {
+            assert_eq!(openai_reasoning_floor(model), None, "{model}");
+        }
+    }
+
+    #[test]
+    fn openai_reasoning_body_uses_completion_cap_and_effort_without_temperature() {
+        let messages = tower_messages();
+        // نسق على النموذج الافتراضي: none بلا هامش (لا توكنات تفكير)
+        let nasaq = build_openai_body("gpt-5.6-terra", &messages, 1500, 0.85, true, 0);
+        assert_eq!(nasaq["reasoning_effort"], "none");
+        assert_eq!(nasaq["max_completion_tokens"], 1500);
+        assert_eq!(nasaq["response_format"]["type"], "json_object");
+        assert_eq!(nasaq["messages"], messages);
+        // شَذْب: low مع هامش للتفكير لأنه يُحسب من السقف نفسه
+        let shadhb = build_openai_body("gpt-5.6-terra", &messages, 1200, 0.3, true, 1024);
+        assert_eq!(shadhb["reasoning_effort"], "low");
+        assert_eq!(shadhb["max_completion_tokens"], 5296);
+        // أدنى قيمة العائلة لميزانية صفر، والهامش متى كانت فوق none
+        let gpt5 = build_openai_body("gpt-5-mini", &messages, 1500, 0.85, true, 0);
+        assert_eq!(gpt5["reasoning_effort"], "minimal");
+        assert_eq!(gpt5["max_completion_tokens"], 5596);
+        assert_eq!(build_openai_body("gpt-6-astra", &messages, 1500, 0.85, true, 0)["reasoning_effort"], "low");
+        assert_eq!(build_openai_body("o4-mini", &messages, 1500, 0.85, true, 0)["reasoning_effort"], "low");
+        for model in ["gpt-5.6-terra", "gpt-5-mini", "gpt-6-astra", "o3"] {
+            for budget in [0u64, 1024] {
+                let body = build_openai_body(model, &messages, 1500, 0.92, true, budget);
+                assert!(body.get("temperature").is_none(), "temperature لـ {model}");
+                assert!(body.get("max_tokens").is_none(), "max_tokens المهمَل لـ {model}");
+            }
+        }
+    }
+
+    #[test]
+    fn openai_non_reasoning_body_keeps_temperature_without_effort() {
+        let body = build_openai_body("gpt-4.1", &tower_messages(), 2000, 0.85, true, 1024);
+        assert_eq!(body["temperature"], 0.85);
+        assert_eq!(body["max_completion_tokens"], 2000);
+        assert!(body.get("reasoning_effort").is_none());
+        assert!(body.get("max_tokens").is_none());
+        assert_eq!(body["response_format"]["type"], "json_object");
+    }
+
+    #[test]
+    fn openai_retry_body_drops_only_response_format() {
+        // الإعادة بعد 400/422 تُسقط response_format وحده — reasoning_effort باقٍ
+        // فلا يعمل medium الافتراضي بصمت، ولا يدخل الإعادةَ معامل لم يكن في الأولى
+        for (model, budget) in [("gpt-5.6-terra", 0u64), ("gpt-5.6-terra", 1024), ("gpt-4o", 0)] {
+            let first = build_openai_body(model, &tower_messages(), 1500, 0.85, true, budget);
+            let retry = build_openai_body(model, &tower_messages(), 1500, 0.85, false, budget);
+            assert!(retry.get("response_format").is_none());
+            let mut expected = first.clone();
+            expected.as_object_mut().unwrap().remove("response_format");
+            assert_eq!(retry, expected, "جسم الإعادة لـ {model}");
+        }
+    }
+
+    #[test]
+    fn openai_detection_is_by_base_url_host() {
+        assert!("https://api.openai.com/v1".contains(OPENAI_API_HOST));
+        for other in [
+            "https://generativelanguage.googleapis.com/v1beta/openai/",
+            "https://api.groq.com/openai/v1",
+            "https://openrouter.ai/api/v1",
+        ] {
+            assert!(!other.to_lowercase().contains(OPENAI_API_HOST), "{other}");
+        }
     }
 }
