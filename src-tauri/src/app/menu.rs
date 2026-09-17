@@ -258,14 +258,20 @@ fn system_item<R: Runtime>(
 }
 
 /// ما تنفّذه القشرة بنفسها — شأن نوافذ لا شأن برج
-const SHELL_HANDLED: &[&str] = &["app.settings"];
+const SHELL_HANDLED: &[&str] = &["app.settings", "app.about"];
 
 fn handled_here<R: Runtime>(app: &AppHandle<R>, id: &str) -> bool {
-    if id == "app.settings" {
-        let _ = super::secondary::open_settings_handle(app);
-        return true;
+    match id {
+        "app.settings" => {
+            let _ = super::secondary::open_settings_handle(app);
+            true
+        }
+        "app.about" => {
+            let _ = super::secondary::open_about_handle(app);
+            true
+        }
+        _ => false,
     }
-    false
 }
 
 /// حدث القائمة لا يُخزَّن لمستمع يلتحق متأخرًا: عنصرٌ يُنقر قبل أن توجد

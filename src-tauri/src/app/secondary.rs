@@ -19,9 +19,16 @@ use tauri::{LogicalSize, Manager, TitleBarStyle, WebviewUrl, WebviewWindowBuilde
 use super::window::{system_prefers_dark, titlebar_is_rtl, WINDOW_DARK, WINDOW_LIGHT};
 
 pub(crate) const SETTINGS_LABEL: &str = "settings";
+pub(crate) const ABOUT_LABEL: &str = "about";
 
 /// صفحة الإعدادات تأتي مع واجهة المرحلة ٥؛ الخدمة هنا جاهزة لها
 const SETTINGS_PAGE: &str = "settings.html";
+
+/// صفحة «حول» تأتي مع واجهة المرحلة ٥ كذلك
+const ABOUT_PAGE: &str = "about.html";
+/// لوحة «حول» في الماك مقيسة: ٢٨٤×٢١٢، بزر إغلاق وحده
+const ABOUT_WIDTH: f64 = 284.0;
+const ABOUT_HEIGHT: f64 = 212.0;
 
 const SETTINGS_WIDTH: f64 = 500.0;
 /// صفّ العنوان ٣٢ + شريط التبويبات ٥٦
@@ -61,21 +68,74 @@ pub(crate) fn open_settings(app: tauri::AppHandle) -> Result<(), String> {
 pub(crate) fn open_settings_handle<R: tauri::Runtime>(
     app: &tauri::AppHandle<R>,
 ) -> Result<(), String> {
-    if let Some(window) = app.get_webview_window(SETTINGS_LABEL) {
+    open_or_focus(
+        app,
+        Secondary {
+            label: SETTINGS_LABEL,
+            page: SETTINGS_PAGE,
+            title: "الإعدادات",
+            width: SETTINGS_WIDTH,
+            height: initial_settings_height(),
+            name: "الإعدادات",
+        },
+    )
+}
+
+/// «حول» — نافذة صغيرة بمقاس لوحة الماك المقيس، تفتحها القائمة مباشرة
+#[tauri::command]
+pub(crate) fn open_about(app: tauri::AppHandle) -> Result<(), String> {
+    open_about_handle(&app)
+}
+
+pub(crate) fn open_about_handle<R: tauri::Runtime>(
+    app: &tauri::AppHandle<R>,
+) -> Result<(), String> {
+    open_or_focus(
+        app,
+        Secondary {
+            label: ABOUT_LABEL,
+            page: ABOUT_PAGE,
+            title: "حول نَسَق",
+            width: ABOUT_WIDTH,
+            height: ABOUT_HEIGHT,
+            name: "حول",
+        },
+    )
+}
+
+struct Secondary {
+    label: &'static str,
+    page: &'static str,
+    title: &'static str,
+    width: f64,
+    height: f64,
+    /// اسمها في رسالة الخطأ
+    name: &'static str,
+}
+
+/// نافذة واحدة لكل نوع، بهيئة المرحلة ٠ نفسها: مخفية حتى تعلن الصفحة
+/// جاهزيتها فلا إطار فارغ، وبلا تحجيم ولا تصغير ولا تكبير كنوافذ النظام
+fn open_or_focus<R: tauri::Runtime>(
+    app: &tauri::AppHandle<R>,
+    spec: Secondary,
+) -> Result<(), String> {
+    if let Some(window) = app.get_webview_window(spec.label) {
         let _ = window.show();
         let _ = window.unminimize();
-        return window.set_focus().map_err(|_| "تعذّر إظهار نافذة الإعدادات.".to_string());
+        return window
+            .set_focus()
+            .map_err(|_| format!("تعذّر إظهار نافذة {}.", spec.name));
     }
 
     let background = if system_prefers_dark() { WINDOW_DARK } else { WINDOW_LIGHT };
     let titlebar = if titlebar_is_rtl() { "rtl" } else { "ltr" };
 
-    WebviewWindowBuilder::new(app, SETTINGS_LABEL, WebviewUrl::App(SETTINGS_PAGE.into()))
+    WebviewWindowBuilder::new(app, spec.label, WebviewUrl::App(spec.page.into()))
         .initialization_script(format!(
             "document.documentElement.dataset.titlebar = \"{titlebar}\";"
         ))
-        .title("الإعدادات")
-        .inner_size(SETTINGS_WIDTH, initial_settings_height())
+        .title(spec.title)
+        .inner_size(spec.width, spec.height)
         .resizable(false)
         .minimizable(false)
         .maximizable(false)
@@ -85,7 +145,7 @@ pub(crate) fn open_settings_handle<R: tauri::Runtime>(
         .background_color(background)
         .center()
         .build()
-        .map_err(|_| "تعذّر فتح نافذة الإعدادات.".to_string())?;
+        .map_err(|_| format!("تعذّر فتح نافذة {}.", spec.name))?;
 
     Ok(())
 }
@@ -201,6 +261,13 @@ mod tests {
     fn a_short_screen_never_pushes_the_window_below_the_shortest_pane() {
         // شاشة ٢٠٠pt: أربعة أخماسها أقصر من أقصر نافذة مرسومة، فالأرضية تغلب
         assert_eq!(settings_height(SETTINGS_INITIAL_PANE, 200.0), 273.0);
+    }
+
+    #[test]
+    fn the_about_panel_keeps_the_measured_size_of_the_system_one() {
+        assert_eq!((ABOUT_WIDTH, ABOUT_HEIGHT), (284.0, 212.0));
+        // أصغر من أقصر نافذة إعدادات: لوحة لا نافذة عمل
+        assert!(ABOUT_HEIGHT < settings_height(SETTINGS_MIN_PANE, ROOMY_SCREEN));
     }
 
     #[test]

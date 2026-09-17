@@ -38,6 +38,7 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             app::window::main_window_ready,
             app::secondary::open_settings,
+            app::secondary::open_about,
             app::secondary::secondary_window_ready,
             app::secondary::settings_pane_resized,
             app::menu::set_menu_state,
@@ -51,6 +52,7 @@ fn main() {
             shared::drafts::save_drafts,
             shared::drafts::export_drafts,
             shared::clipboard::copy_to_clipboard,
+            shared::clipboard::read_from_clipboard,
             nasaq::commands::format_text,
             nasaq::commands::generate_variation,
             nasaq::commands::adjust_lines,
