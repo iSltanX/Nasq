@@ -8,8 +8,6 @@
   /* المفتّش ٣٦٠ ويتنازل حتى حدّه الأدنى ليبقى للمحتوى حدّه (اعتماد المالك، المرحلة ٩) */
   --inspector-width: clamp(var(--layout-inspector-min), calc(100vw - var(--layout-content-min)), var(--layout-inspector));
   /* إشارات النافذة: ثلاث بعرض ٦٠، على بعد ١٩ من الحافة، وأول عنصر بعدها على ١٧ */
-  /* مسار التمرير: مقبض ٦ بحشوة ٣ من كل جانب — مقاس مقبض الماك الرفيع */
-  --scroller-width: 12px;
   /* موضع حالة البداية اللاصقة: يُقاس من داخل حشوة منطقة التمرير لا من حافتها
      (قيس في WebKit وChromium)، فهو عنوان العمود والفراغ بعده — فتلصق حيث تبدأ */
   --placeholder-pin: calc(var(--font-line-height-caption) + var(--space-16));
@@ -728,26 +726,10 @@ textarea.empty-bidi {
 .inspector {
   overflow-y: scroll;
 }
-.scroll-view::-webkit-scrollbar,
-.inspector::-webkit-scrollbar {
-  width: var(--scroller-width);
-}
 .scroll-view::-webkit-scrollbar-track,
 .inspector::-webkit-scrollbar-track {
   margin-top: var(--size-toolbar);
   margin-bottom: var(--space-8);
-  background: transparent;
-}
-.scroll-view::-webkit-scrollbar-thumb,
-.inspector::-webkit-scrollbar-thumb {
-  min-height: 40px;
-  border: 3px solid transparent;
-  border-radius: var(--radius-full);
-  background: var(--scroller-knob) padding-box;
-}
-.scroll-view::-webkit-scrollbar-thumb:hover,
-.inspector::-webkit-scrollbar-thumb:hover {
-  background: var(--scroller-knob-hover) padding-box;
 }
 
 .scroll-edge {
@@ -1500,10 +1482,25 @@ textarea.empty-bidi {
 /* ================= المسودات في الشريط الجانبي (Figma 97:116) =================
    مسودة ٤٤ بسهم طي ومقتطف ونوع وعدد صيغ ووقت، وصيغها تحتها صفوفًا ٣٢ بإزاحة ٢٤
    وشارة «± أسطر». إطار بلون الوحدة حول الصف ما دامت قائمته السياقية مفتوحة */
+/* البحث و«الجلسة الحالية» ثابتان والمسودات وحدها تتمرّر، فلا يمتد المقبض
+   بجوارهما. المسار في حشوة الشريط الجانبي لا من عرض الصفوف: عرضه ١٠ بقدر
+   الحشوة والمقبض ٦ كغيره، ومحجوز دائمًا فلا تقفز الصفوف حين تطول القائمة */
+.sidebar-body[data-for="nasaq"] {
+  overflow: hidden;
+}
 .drafts-list {
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
+  min-block-size: 0;
+  margin-inline-end: calc(-1 * var(--space-10));
+  overflow-y: scroll;
+}
+.drafts-list::-webkit-scrollbar {
+  width: var(--space-10);
+}
+.drafts-list::-webkit-scrollbar-thumb {
+  border-width: 2px;
 }
 .draft-row,
 .version-row {
