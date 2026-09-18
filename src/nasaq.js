@@ -746,6 +746,50 @@ function cleanEmptyLines() {
   syncResultTools();
 }
 
+// [إضافة سطور فارغة] (المرحلة ٩، مواصفة المالك): محلي حتمي بلا نموذج — سطر
+// فارغ واحد بين كل سطرين (window.NasaqLines.addBlankLinesLocal). يعمل على
+// النص الحالي: النتيجة إن كانت لهذا النص، وإلا الأصل. على النتيجة يدخل مكدس
+// تراجعها كأخواته؛ وعلى الأصل يُدرج إدراجًا أصليًا فيتراجع عنه ⌘Z الحقل نفسه
+function addBlankLines() {
+  const resultIsCurrent =
+    Boolean(outputText.textContent.trim()) &&
+    Boolean(lastFormatMeta) &&
+    window.NasaqDrafts.draftKey(lastFormatMeta.original) === window.NasaqDrafts.draftKey(inputText.value);
+
+  if (resultIsCurrent) {
+    const text = outputText.textContent;
+    const out = window.NasaqLines.addBlankLinesLocal(text);
+    if (out === text) {
+      showToast("بين الأسطر سطر فارغ أصلًا.", "neutral");
+      return;
+    }
+    pushOutputUndo();
+    setOutput(out);
+    showRhythmFingerprint(null); // تعديل محلي بلا نموذج — الوصف السابق صار غير دقيق
+    lastFormatMeta = { ...lastFormatMeta, linesAdjusted: true };
+    recordSessionVersion(lastFormatMeta.original, lastFormatMeta, out);
+    syncResultTools();
+    return;
+  }
+
+  const text = inputText.value;
+  if (!text.trim()) return;
+  const out = window.NasaqLines.addBlankLinesLocal(text);
+  if (out === text) {
+    showToast("بين الأسطر سطر فارغ أصلًا.", "neutral");
+    return;
+  }
+  // تحديد الكل ثم إدراجٌ عبر محرّر WebKit: يدخل سجلّ تراجع الحقل ويطلق
+  // حدث input كالكتابة تمامًا — تعيين value مباشرة يمحو ذلك السجلّ
+  inputText.focus();
+  inputText.setSelectionRange(0, text.length);
+  if (!document.execCommand("insertText", false, out)) {
+    inputText.value = out;
+    inputText.dispatchEvent(new Event("input"));
+  }
+  inputText.setSelectionRange(0, 0);
+}
+
 // [فصل الجمل]: محلي حتمي بلا نموذج (window.NasaqLines.splitSentencesLocal في
 // lines.js) — يكسر بعد كل جملة، يتجاهل النقطة العشرية (3.14). يُسجَّل في
 // ذاكرة الجلسة بوسم «± أسطر» كتعديل أسطر، فيصبح قابلًا للحفظ كمسودة فورًا
@@ -764,10 +808,12 @@ function splitSentences() {
 }
 
 const cleanBtn = el("clean-btn");
+const addBlankBtn = el("add-blank-lines-btn");
 const splitBtn = el("split-sentences-btn");
 fewerBtn.addEventListener("click", () => adjustLines("fewer"));
 moreBtn.addEventListener("click", () => adjustLines("more"));
 cleanBtn.addEventListener("click", cleanEmptyLines);
+addBlankBtn.addEventListener("click", addBlankLines);
 splitBtn.addEventListener("click", splitSentences);
 
 // ---------- أدوات وجهة سابستاك على النتيجة: التصدير وبطاقة الشذرة ----------
@@ -1473,6 +1519,8 @@ function renderState() {
   // «تصدير لسابستاك» ظاهر دائمًا كما في Figma، ويعمل لنتيجة وجهتها سابستاك وحدها:
   // حذف الأسطر الفارغة عند التصدير يُفسد فقرات بقية المستويات والمنصات
   exportBtn.disabled = !tools || !metaSubstackFace();
+  // «إضافة سطور فارغة» تعمل على الأصل قبل أي نتيجة (مواصفة المالك) — فيكفيها نصّ
+  addBlankBtn.disabled = busy || !(hasText || hasResult);
   undoBtn.disabled = busy || outputUndoStack.length === 0;
   variationsBtn.disabled = busy || !hasText || (variationsGenerating() && !variationInputsCurrent());
   if (!tools) {
@@ -1553,6 +1601,7 @@ const editable = (node) => Boolean(node && node.closest && node.closest("input, 
 for (const [id, run, button] of [
   ["format.variations", showVariations, variationsBtn],
   ["format.clean-empty-lines", cleanEmptyLines, cleanBtn],
+  ["format.add-blank-lines", addBlankLines, addBlankBtn],
   ["format.break-after-period", splitSentences, splitBtn],
   ["format.fewer-lines", () => adjustLines("fewer"), fewerBtn],
   ["format.more-lines", () => adjustLines("more"), moreBtn],

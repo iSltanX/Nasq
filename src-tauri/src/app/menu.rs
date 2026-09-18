@@ -41,6 +41,7 @@ const MODULE_ENTRIES_NASAQ: &[Entry] = &[
     Action { id: "format.variations", title: "أرِني تنويعات…", accelerator: Some("Shift+Cmd+Enter") },
     Separator,
     Action { id: "format.clean-empty-lines", title: "حذف السطور الفارغة", accelerator: Some("Alt+Cmd+Backspace") },
+    Action { id: "format.add-blank-lines", title: "إضافة سطور فارغة", accelerator: Some("Alt+Cmd+Enter") },
     Action { id: "format.break-after-period", title: "كسر بعد النقطة", accelerator: Some("Alt+Cmd+.") },
     Action { id: "format.fewer-lines", title: "سطور أقل", accelerator: Some("Cmd+[") },
     Action { id: "format.more-lines", title: "سطور أكثر", accelerator: Some("Cmd+]") },
@@ -597,7 +598,7 @@ mod tests {
             ("app", 8, 4),
             ("file", 5, 2),
             ("edit", 9, 3),
-            ("format", 7, 2),
+            ("format", 8, 2), // المرحلة ٩: «إضافة سطور فارغة» (Figma 343:22143)
             ("view", 7, 3),
             ("window", 3, 1),
             ("help", 1, 0), // المرحلة ٨: حُذفت «مساعدة نَسَق» من اللوحة ومن الشريط معًا

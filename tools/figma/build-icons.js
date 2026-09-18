@@ -51,6 +51,7 @@ const USED = {
   "nsq.shadhb.16m": [352, 1136, 16],
   "nsq.shadhb.20r": [384, 1136, 20],
   "rectangle.compress.vertical.20r": [1408, 752, 20],
+  "rectangle.expand.vertical.20r": [640, 1264, 20],
   "rectangle.split.3x1.16m": [864, 752, 16],
   "return.16r": [1344, 1136, 16],
   "return.left.20r": [128, 880, 20],

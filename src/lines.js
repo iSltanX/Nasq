@@ -108,7 +108,18 @@ function splitSentencesLocal(text) {
   return out;
 }
 
-const NasaqLines = { fewerLinesLocal, moreLinesLocal, splitSentencesLocal };
+// [إضافة سطور فارغة]: سطرٌ فارغ واحد بين كل سطرين نصّيين، والفارغ القائم يبقى
+// واحدًا — فتكرار الضغط لا يضاعف شيئًا. لا تتغيّر كلمة ولا ترتيب: الأسطر
+// النصية كما هي، والسطر المكوّن من مسافات وحدها يُعدّ فارغًا
+function addBlankLinesLocal(text) {
+  return String(text || "")
+    .replace(/\r\n?/g, "\n")
+    .split("\n")
+    .filter((line) => line.trim())
+    .join("\n\n");
+}
+
+const NasaqLines = { fewerLinesLocal, moreLinesLocal, splitSentencesLocal, addBlankLinesLocal };
 
 if (typeof module !== "undefined" && module.exports) module.exports = NasaqLines;
 if (typeof window !== "undefined") window.NasaqLines = NasaqLines;

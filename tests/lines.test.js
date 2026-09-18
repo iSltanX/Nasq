@@ -1,7 +1,7 @@
 // اختبار الاحتياط المحلي لزرّي «سطور أقل/أكثر» — يعمل بـ: node --test tests/
 const test = require("node:test");
 const assert = require("node:assert");
-const { fewerLinesLocal, moreLinesLocal, splitSentencesLocal } = require("../src/lines.js");
+const { fewerLinesLocal, moreLinesLocal, splitSentencesLocal, addBlankLinesLocal } = require("../src/lines.js");
 
 // الكلمات لا تتغير مهما تغيّر توزيع الأسطر — هذا عقد الأداة كلها
 function words(text) {
@@ -104,4 +104,29 @@ test("فصل الجمل: لا يغيّر الكلمات ولا الترقيم م
   const punct = (s) => (s.match(/[،؛؟!….]/g) || []).join("");
   assert.strictEqual(punct(out), punct(input));
   assert.strictEqual(out.split("\n").length, 3);
+});
+
+// «إضافة سطور فارغة» — مواصفة المالك (المرحلة ٩) بمثاله نفسه
+test("إضافة سطور فارغة: سطر فارغ بين كل سطرين، بمثال المالك", () => {
+  const before = "لم أنبّهها.\nزحف الضوء نحو حافّة الطاولة،\nوغطاء القلم بقي حيث تركته.";
+  const after = "لم أنبّهها.\n\nزحف الضوء نحو حافّة الطاولة،\n\nوغطاء القلم بقي حيث تركته.";
+  assert.strictEqual(addBlankLinesLocal(before), after);
+});
+
+test("إضافة سطور فارغة: الفارغ القائم يبقى واحدًا، والتكرار لا يضاعف", () => {
+  const mixed = "أ\n\nب\nج\n\n\n\nد";
+  const once = addBlankLinesLocal(mixed);
+  assert.strictEqual(once, "أ\n\nب\n\nج\n\nد");
+  assert.strictEqual(addBlankLinesLocal(once), once, "الضغطة الثانية غيّرت النص");
+  // سطر المسافات وحدها فارغ، ولا فراغ في الطرفين
+  assert.strictEqual(addBlankLinesLocal("\n  \nأ\n \t \nب\n\n"), "أ\n\nب");
+});
+
+test("إضافة سطور فارغة: لا كلمة ولا ترتيب يتغيّر، ولا يُمسّ نصّ السطر", () => {
+  const input = "  سطرٌ بمسافة في أوله\r\nوآخر بعلامات: ١٬٥ … «اقتباس»؟!";
+  const out = addBlankLinesLocal(input);
+  assert.strictEqual(words(out), words(input));
+  assert.strictEqual(out, "  سطرٌ بمسافة في أوله\n\nوآخر بعلامات: ١٬٥ … «اقتباس»؟!");
+  assert.strictEqual(addBlankLinesLocal(""), "");
+  assert.strictEqual(addBlankLinesLocal("سطر واحد"), "سطر واحد");
 });
