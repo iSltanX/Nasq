@@ -90,6 +90,8 @@
   --accent-nasaq-focus: light-dark(rgb(140 123 176 / 0.5), rgb(168 154 199 / 0.5));
   --accent-shadhb-focus: light-dark(rgb(176 144 85 / 0.5), rgb(196 171 120 / 0.5));
   --fill-knob: #ffffff;
+  --scroller-knob: light-dark(rgb(0 0 0 / 0.25), rgb(255 255 255 / 0.25));
+  --scroller-knob-hover: light-dark(rgb(0 0 0 / 0.5), rgb(255 255 255 / 0.4));
 
   /* Material — افتراضي */
   --material-toolbar: var(--glass-toolbar);
@@ -126,11 +128,11 @@
   --size-row: 28px;
   --size-row-2line: 44px;
   --layout-sidebar-min: 220px;
-  --layout-sidebar: 256px;
+  --layout-sidebar: 240px;
   --layout-sidebar-max: 280px;
   --layout-inspector-min: 260px;
-  --layout-inspector: 270px;
-  --layout-inspector-max: 320px;
+  --layout-inspector: 360px;
+  --layout-inspector-max: 360px;
   --layout-content-min: 500px;
   --layout-editor-measure: 448px;
   --layout-window-min-width: 760px;
@@ -357,6 +359,8 @@
     --border-form-separator: light-dark(rgb(0 0 0 / 0.12), rgb(255 255 255 / 0.14));
     --fill-tab-selected: light-dark(#ffffff, #373737);
     --fill-switch-off: light-dark(rgb(0 0 0 / 0.2), rgb(255 255 255 / 0.25));
+    --scroller-knob: light-dark(rgb(0 0 0 / 0.4), rgb(255 255 255 / 0.4));
+    --scroller-knob-hover: light-dark(rgb(0 0 0 / 0.7), rgb(255 255 255 / 0.6));
   }
 }
 
