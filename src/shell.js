@@ -637,6 +637,26 @@ draftsList.addEventListener("contextmenu", (e) => {
 //
 // واللصق يمرّ بالنواة لا بـWebKit: قراءة الحافظة من الويب-فيو تستدعي مطالبة
 // إذن في الماك عند كل لصق، وقوائم السياق تحتاجها بلا مطالبة.
+// كتابةٌ في حقلٍ عبر محرّر الصفحة: تدخل سجلّ تراجعه فيعود عنها ⌘Z، وتعيين value
+// يمحو ذلك السجلّ (فحص m4-04). والمحرّر يُدرج النص سطرًا سطرًا بحدث input لكل
+// سطر (في Chromium: ١٤٧١ حدثًا لـ٥٥ ألف حرف، ٢٫٤ ث) — فتُكتم الأحداث الوسيطة
+// ويُطلق حدثٌ واحد بعد تمام الكتابة، كما يطلقه اللصق نفسه. يعيد false إن رفض
+// المحرّر، فيكتب المنادي value احتياطًا
+function editThroughPage(field, command, text) {
+  const mute = (e) => {
+    if (e.target === field) e.stopImmediatePropagation();
+  };
+  window.addEventListener("input", mute, true);
+  let done = false;
+  try {
+    done = document.execCommand(command, false, text);
+  } finally {
+    window.removeEventListener("input", mute, true);
+  }
+  if (done) field.dispatchEvent(new Event("input"));
+  return done;
+}
+
 async function pasteFromCore(field) {
   let text;
   try {
@@ -646,13 +666,18 @@ async function pasteFromCore(field) {
     return;
   }
   if (!text) return;
+  // الإدراج عبر محرّر الصفحة يدخل سجلّ تراجع الحقل ويطلق حدث input كاللصق نفسه،
+  // وتعيين value يمحو ذلك السجلّ فلا يُتراجع عن اللصق بـ⌘Z (فحص m4-04)
   const start = field.selectionStart ?? field.value.length;
   const end = field.selectionEnd ?? start;
-  field.value = field.value.slice(0, start) + text + field.value.slice(end);
-  const caret = start + text.length;
-  field.setSelectionRange(caret, caret);
-  field.dispatchEvent(new Event("input"));
   field.focus();
+  field.setSelectionRange(start, end);
+  if (!editThroughPage(field, "insertText", text)) {
+    field.value = field.value.slice(0, start) + text + field.value.slice(end);
+    const caret = start + text.length;
+    field.setSelectionRange(caret, caret);
+    field.dispatchEvent(new Event("input"));
+  }
 }
 
 function selectionIn(node) {
@@ -676,12 +701,17 @@ document.addEventListener("contextmenu", (e) => {
   if (field) {
     sections.push([
       { label: "قص", disabled: !picked, run: () => {
+        // الحذف عبر المحرّر كاللصق أعلاه: يبقى ⌘Z (فحص m4-04)
         const start = field.selectionStart;
-        field.value = field.value.slice(0, start) + field.value.slice(field.selectionEnd);
-        field.setSelectionRange(start, start);
-        field.dispatchEvent(new Event("input"));
-        copyText(picked);
+        const end = field.selectionEnd;
         field.focus();
+        field.setSelectionRange(start, end);
+        if (!editThroughPage(field, "delete")) {
+          field.value = field.value.slice(0, start) + field.value.slice(end);
+          field.setSelectionRange(start, start);
+          field.dispatchEvent(new Event("input"));
+        }
+        copyText(picked);
       } },
       { label: "نسخ", disabled: !picked, run: () => copyText(picked) },
       { label: "لصق", run: () => pasteFromCore(field) },
@@ -1087,13 +1117,12 @@ registerEscapeCloser(() => !newSessionAlert.hidden, closeNewSession);
 
 // ⌘، مسرّع في قائمة «نَسَق» تنفّذه النواة بنفسها (app.settings) — فلا مستمع
 // لوحة مفاتيح هنا. وأوامر القشرة الثلاثة في الشريط تُسجَّل كما تُسجَّل مُغلقات
-// Escape: كلٌّ يسجّل أمره، والقشرة لا تنادي دالة برج باسمها
-window.NasaqMenu.register("file.export-backup", () => el("export-drafts-btn").click(), {
-  button: el("export-drafts-btn"),
-});
-window.NasaqMenu.register("file.import-merge", () => el("import-drafts-btn").click(), {
-  button: el("import-drafts-btn"),
-});
+// Escape: كلٌّ يسجّل أمره، والقشرة لا تنادي دالة برج باسمها.
+// وزرّا النسخ الاحتياطي في مصدر قائمة مخفيٍّ أبدًا (#backup-menu)، فلا يصلحان مصدرًا
+// لحالة الأمر: كانا يُطفئان العنصرين في كل حال (فحص m4-01). المسودات في شريط نَسَق،
+// ورسائل الاستيراد في خانتي نَسَق — فالأمران لنَسَق، ومتاحان فيه دائمًا كزرّيهما
+window.NasaqMenu.register("file.export-backup", () => el("export-drafts-btn").click(), { owner: "nasaq" });
+window.NasaqMenu.register("file.import-merge", () => el("import-drafts-btn").click(), { owner: "nasaq" });
 // «مساعدة نَسَق» بلا وجهة بعد، فيبقى عنصرها معطّلًا حتى تُقرّر (المرحلة ٨)
 window.NasaqMenu.register("help.project", () => {
   invoke("plugin:opener|open_url", { url: window.NasaqLinks.PROJECT_URL }).catch(() => {});
@@ -1105,9 +1134,14 @@ window.NasaqMenu.register("help.project", () => {
 // كل عبور آخر بين الوضعين ممنوع — من لم يمرّ من هنا فهو خرق للعزل
 function sendToNasaq(text) {
   const input = el("input-text");
-  input.value = String(text || "");
-  input.dispatchEvent(new Event("input"));
+  // النص المشذَّب يحلّ محلّ الشذرة كلها بلا سؤال، فالإدراج عبر المحرّر: ⌘Z يعيد
+  // الشذرة كما كانت (فحص m4-08). وحدث الإدخال نفسه يُطلق كما يطلقه اللصق
   input.focus();
+  input.setSelectionRange(0, input.value.length);
+  if (!editThroughPage(input, "insertText", String(text || ""))) {
+    input.value = String(text || "");
+    input.dispatchEvent(new Event("input"));
+  }
 }
 
 // مفتاح شَذْب: صمّام أمان للبرج لا وعدٌ بواجهة سابقة —

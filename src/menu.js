@@ -65,9 +65,13 @@
   function sync() {
     // قبل الجاهزية لا يُنادى شيء: الألواح تُطبَّق قبل أن تُحمَّل القشرة
     if (!ready) return;
+    // تحت ورقة أو تنبيه لا يُنفَّذ أمر (المستمع أدناه)، فلا يُعرض مفعّلًا: عنصرٌ
+    // مفعّل لا يفعل شيئًا حين يُختار (فحص m4-02). وفتح الورقة وإغلاقها تبدّلٌ في
+    // `hidden` يلتقطه المراقب، فتعود العناصر بإغلاقها
+    const blocked = modalOpen();
     const updates = [...commands.keys()].map((id) => {
       const entry = entryFor(id);
-      const update = { id, enabled: usable(entry) };
+      const update = { id, enabled: !blocked && usable(entry) };
       // الاسم يمرّ في المسار نفسه، فلا تحتاج حالةٌ تتبع اسمًا مسارًا ثانيًا
       if (entry?.title) update.title = entry.title();
       return update;

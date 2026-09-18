@@ -756,6 +756,11 @@ function cleanEmptyLines() {
 
   setOutput(out.join("\n"));
   showRhythmFingerprint(null); // تعديل محلي بلا نموذج — الوصف السابق صار غير دقيق
+  // ما يُعرض هو ما يُحفظ، كأخواتها: كان «حفظ» يودع النتيجة قبل الحذف (فحص m4-05)
+  if (lastFormatMeta) {
+    lastFormatMeta = { ...lastFormatMeta, linesAdjusted: true };
+    recordSessionVersion(lastFormatMeta.original, lastFormatMeta, out.join("\n"));
+  }
   syncResultTools();
 }
 
@@ -793,10 +798,11 @@ function addBlankLines() {
     return;
   }
   // تحديد الكل ثم إدراجٌ عبر محرّر WebKit: يدخل سجلّ تراجع الحقل ويطلق
-  // حدث input كالكتابة تمامًا — تعيين value مباشرة يمحو ذلك السجلّ
+  // حدث input كالكتابة تمامًا — تعيين value مباشرة يمحو ذلك السجلّ. وبدالة
+  // القشرة حدثٌ واحد لا حدثٌ لكل سطر (فحص m4-09)
   inputText.focus();
   inputText.setSelectionRange(0, text.length);
-  if (!document.execCommand("insertText", false, out)) {
+  if (!editThroughPage(inputText, "insertText", out)) {
     inputText.value = out;
     inputText.dispatchEvent(new Event("input"));
   }

@@ -39,10 +39,22 @@
       if (prefs.last === "sidebar") inspector = false;
       else sidebar = false;
     }
+    // لوحٌ يُطوى والتركيز فيه يُسقطه إلى الصفحة (inert)، فيبدأ Tab من رأسها. في
+    // الماك ينتقل التركيز إلى المحتوى: أول ما يقبله في العمود الظاهر (فحص m4-07)
+    const leaving = [["sidebar", sidebar], ["inspector", inspector]].some(
+      ([id, open]) => !open && document.getElementById(id).contains(document.activeElement)
+    );
     win.dataset.sidebar = sidebar ? "open" : "hidden";
     win.dataset.inspector = inspector ? "open" : "hidden";
     document.getElementById("sidebar").inert = !sidebar;
     document.getElementById("inspector").inert = !inspector;
+    if (leaving) {
+      const usable = (n) => !n.disabled && n.offsetParent !== null && !n.closest("[inert]");
+      const target =
+        [...content.querySelectorAll("textarea")].find(usable) ||
+        [...content.querySelectorAll("button, [tabindex='0']")].find(usable);
+      target?.focus();
+    }
     for (const b of document.querySelectorAll('[data-command="toggle-inspector"]')) {
       b.setAttribute("aria-pressed", String(inspector));
     }

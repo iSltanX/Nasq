@@ -547,6 +547,11 @@ textarea.empty-bidi {
   box-shadow: inset 0 0 0 var(--stroke-hairline) var(--material-edge);
   color: var(--module-strong);
 }
+/* ظلُّ الحالة أعلى أولويةً من حلقة التركيز في base.css فيمحوها: تُجمع الحلقة معه
+   (فحص m4-03) — وكذا في الزجاجي والجزء المحدد أدناه */
+.toolbar-item[aria-pressed="true"]:focus-visible {
+  box-shadow: var(--focus-ring), inset 0 0 0 var(--stroke-hairline) var(--material-edge);
+}
 .toolbar-item:disabled {
   background: none;
   color: var(--text-disabled);
@@ -611,6 +616,9 @@ textarea.empty-bidi {
 }
 .action-button[data-style="glass"]:active {
   background-image: linear-gradient(var(--fill-pressed), var(--fill-pressed));
+}
+.action-button[data-style="glass"]:focus-visible {
+  box-shadow: var(--focus-ring), inset 0 0 0 var(--stroke-hairline) var(--material-edge), 0 0 6px -2px var(--shadow-popover-contact);
 }
 /* المعطّل — أيًّا كان أسلوبه — كبسولة زجاجية خافتة بحافتها كبقية الشريط (Button ·
    Glass · Disabled)، والتحميل مستثنى فيبقى بلون حالته */
@@ -757,6 +765,10 @@ textarea.empty-bidi {
   background: var(--fill-control-raised);
   box-shadow: inset 0 0 0 var(--stroke-hairline) var(--border-hairline);
   color: var(--text-primary);
+}
+.view-segment[aria-selected="true"]:focus-visible,
+.view-segment.active:focus-visible {
+  box-shadow: var(--focus-ring), inset 0 0 0 var(--stroke-hairline) var(--border-hairline);
 }
 
 .compare {

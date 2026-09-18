@@ -252,7 +252,9 @@
       row.dataset.cut = String(index);
       row.setAttribute("role", "option");
       row.setAttribute("aria-selected", String(index === selected));
-      row.tabIndex = index === selected ? 0 : -1;
+      // صفٌّ واحد يقبل Tab دائمًا: المحدد، وإلا الأول — بعد حسم كل القصّات لا تحديد،
+      // وكانت القائمة لا تُبلغ بلوحة المفاتيح (فحص m4-06)
+      row.tabIndex = index === (selected >= 0 ? selected : 0) ? 0 : -1;
       if (index === selected) row.classList.add("is-selected");
       if (cut.status === "stale") row.setAttribute("aria-disabled", "true");
 
@@ -589,8 +591,21 @@
       renderState();
     }
 
-    applyBtn.addEventListener("click", () => applyCutAt(selected));
-    keepBtn.addEventListener("click", () => keepCutAt(selected));
+    // القرار يعيد بناء الصفوف ويُخفي أزرار البطاقة حين لا يبقى ما يُحسم، فيسقط
+    // التركيز إلى الصفحة إن كان على صفٍّ أو زرٍّ منها (⌘⌫ و⌘K من الشريط، أو Return).
+    // يعود إلى الصفّ الذي يقبل Tab في القائمة كما يبقى في قائمة الماك (فحص m4-06)
+    function decide(apply) {
+      const hadFocus = cutsList.contains(document.activeElement) || cutActions.contains(document.activeElement);
+      apply(selected);
+      // المخفيّ يبقى «مركَّزًا» حتى الإطار التالي، فالسؤال: هل ما زال معروضًا؟
+      const lost = !document.activeElement || document.activeElement === document.body || document.activeElement.offsetParent === null;
+      if (hadFocus && lost) {
+        cutsList.querySelector('[tabindex="0"]')?.focus();
+      }
+    }
+
+    applyBtn.addEventListener("click", () => decide(applyCutAt));
+    keepBtn.addEventListener("click", () => decide(keepCutAt));
 
     // ---------- الفحص: النداء الوحيد للنموذج في هذا البرج ----------
     function presentResult(original, result) {
@@ -701,8 +716,12 @@
       }
       // الشهادة شرط عبور لا عرضًا فقط
       if (!covenantCheck().ok) return;
-      shell.sendToNasaq(state.currentText);
+      // نَسَق يستقبل النص خامًا جديدًا فيُعرض عموده «الأصل»، قبل الكتابة: في العمود
+      // الواحد كان العرض يبقى على «النتيجة» فيرى الكاتب حالة البداية الفارغة ونصّه
+      // مخفيٌّ، والخانة المخفية لا تقبل تركيزًا فلا يُتراجع عن الإرسال (فحص m4-08)
       setMode("nasaq");
+      window.NasaqWindow.showView("source");
+      shell.sendToNasaq(state.currentText);
       shell.showToast("انتقل النص المشذَّب إلى نَسَق — جلسة جديدة.", "success");
     });
 
