@@ -220,7 +220,6 @@ pub(crate) const MENU_BAR: &[MenuSpec] = &[
         id: "help",
         title: "مساعدة",
         entries: &[
-            Action { id: "help.guide", title: "مساعدة نَسَق", accelerator: None },
             Action { id: "help.project", title: "صفحة المشروع", accelerator: None },
         ],
     },
@@ -601,7 +600,7 @@ mod tests {
             ("format", 7, 2),
             ("view", 7, 3),
             ("window", 3, 1),
-            ("help", 2, 0),
+            ("help", 1, 0), // المرحلة ٨: حُذفت «مساعدة نَسَق» من اللوحة ومن الشريط معًا
         ];
         for (id, items, separators) in drawn {
             let spec = MENU_BAR.iter().find(|m| m.id == id).expect(id);

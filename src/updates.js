@@ -75,7 +75,7 @@
 
   registerEscapeCloser(() => open, () => cancelEl.click());
 
-  // ---------- الحالات الثلاث ----------
+  // ---------- الحالات الخمس: ثلاث مرسومة في ٢٥٨:١٨٧٧١ واثنتان في المرحلة ٨ ----------
 
   function showAvailable(version, current) {
     show({
@@ -96,9 +96,27 @@
     });
   }
 
-  // غير مرسومة: هيئة «لا تحديث» نفسها برسالة السبب
-  function showFailure(message) {
-    show({ title: "تعذّر التحديث", message, confirm: "حسنًا", onConfirm: close });
+  // حالتا الفشل مرسومتان في المرحلة ٨ (Figma 325:1489 و325:1509): هيئة «لا
+  // تحديث» نفسها، ولكلٍّ رسالتها بالعربية. سبب الخطأ التقني لا يُعرض — يُطبع
+  // في سجلّ الويب-فيو وحده للتشخيص
+  function showCheckFailure(reason) {
+    console.warn("تعذّر التحقق من التحديثات:", reason);
+    show({
+      title: "تعذّر التحقق من التحديثات",
+      message: "تأكّد من اتصالك بالإنترنت ثم أعد المحاولة. يبقى نَسَق على إصداره الحالي.",
+      confirm: "حسنًا",
+      onConfirm: close,
+    });
+  }
+
+  function showDownloadFailure(reason) {
+    console.warn("تعذّر تنزيل التحديث:", reason);
+    show({
+      title: "تعذّر تنزيل التحديث",
+      message: "لم يكتمل التنزيل ولم يُثبَّت منه شيء. مسوداتك كما هي، ويمكنك المحاولة لاحقًا.",
+      confirm: "حسنًا",
+      onConfirm: close,
+    });
   }
 
   function showDownloading(done, total) {
@@ -150,7 +168,7 @@
       // التثبيت تمّ: إعادة التشغيل هي الخطوة الرابعة في التدفّق المرسوم
       await invoke("plugin:process|restart", {});
     } catch (error) {
-      if (!cancelled) showFailure(String(error?.message ?? error));
+      if (!cancelled) showDownloadFailure(String(error?.message ?? error));
     } finally {
       busy = false;
     }
@@ -172,7 +190,7 @@
       }
     } catch (error) {
       // الفحص التلقائي لا يقاطع أحدًا بخبر فشلٍ لم يطلبه
-      if (origin === MANUAL) showFailure(String(error?.message ?? error));
+      if (origin === MANUAL) showCheckFailure(String(error?.message ?? error));
     } finally {
       busy = false;
     }

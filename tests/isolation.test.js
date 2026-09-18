@@ -1024,7 +1024,18 @@ test("المرحلة ٦: الفحص التلقائي يقرأ autoUpdates ولا
   assert.ok(/loaded\?\.autoUpdates\) check\(AUTO\)/.test(updatesJs), "الفحص التلقائي لا يقرأ الإعداد");
   // ولا يعرض «لا تحديث» ولا خطأً إلا لمن طلب الفحص بنفسه
   assert.ok(/else if \(origin === MANUAL\) \{\s*showUpToDate/.test(updatesJs), "«لا تحديث» تظهر للفحص التلقائي");
-  assert.ok(/if \(origin === MANUAL\) showFailure/.test(updatesJs), "خطأ الفحص التلقائي يقاطع المستخدم");
+  assert.ok(/if \(origin === MANUAL\) showCheckFailure/.test(updatesJs), "خطأ الفحص التلقائي يقاطع المستخدم");
+  // والمرحلة ٨: لكلّ فشلٍ تنبيهه المرسوم — فشل الفحص غير فشل التنزيل
+  assert.ok(/if \(!cancelled\) showDownloadFailure/.test(updatesJs), "فشل التنزيل يستعمل تنبيه الفحص");
+  // ونصّ الخطأ التقني لا يُعرض للقارئ: يُمرَّر إلى السجلّ، والرسالة مكتوبة بالعربية
+  for (const fn of ["showCheckFailure", "showDownloadFailure"]) {
+    const at = updatesJs.indexOf(`function ${fn}(`);
+    assert.ok(at !== -1, `${fn} غائبة`);
+    const body = updatesJs.slice(at, updatesJs.indexOf("\n  }", at));
+    assert.ok(/console\.warn\(/.test(body), `${fn} تبتلع السبب بلا سجلّ`);
+    assert.ok(!/message:\s*(reason|message)\b/.test(body), `${fn} تعرض نصّ الخطأ التقني`);
+    assert.ok(/message:\s*"[^"]*[\u0600-\u06FF]/.test(body), `${fn} بلا رسالة عربية مكتوبة`);
+  }
   // والإعدادات تُحمَّل مرة واحدة تتقاسمها القشرة والتدفّقان
   assert.strictEqual(shell.split('invoke("load_settings")').length - 1, 1, "load_settings يُنادى أكثر من مرة في القشرة");
   for (const file of [onboardingJs, updatesJs]) {
@@ -1080,11 +1091,11 @@ test("المرحلة ٧-ب: كل معرّف في الواجهة موجود في 
   for (const id of ui) {
     assert.ok(inSpec.has(id), `الواجهة تسجّل معرّفًا لا وجود له في الشريط: ${id}`);
   }
-  // وما في الشريط ولم تسجّله الواجهة: إما تنفّذه القشرة في Rust، وإما فجوة معلومة
+  // وما في الشريط ولم تسجّله الواجهة: تنفّذه القشرة في Rust، ولا ثالث لهما
   const SHELL_SIDE = ["app.settings", "app.about"];
-  const KNOWN_GAP = ["help.guide"]; // «مساعدة نَسَق» بلا وجهة بعد (المرحلة ٨)
+  // لا فجوة معلومة بعد المرحلة ٨: «مساعدة نَسَق» حُذفت من الشريط بدل أن تبقى معطّلة
   for (const id of inSpec) {
-    if (SHELL_SIDE.includes(id) || KNOWN_GAP.includes(id)) continue;
+    if (SHELL_SIDE.includes(id)) continue;
     assert.ok(ui.has(id), `أمرٌ في الشريط بلا تسجيل في الواجهة: ${id}`);
   }
 });

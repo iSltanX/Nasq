@@ -83,6 +83,21 @@ test("الخطوط: أربعة أوجه فقط، وملفاتها موجودة،
   }
 });
 
+// المرحلة ٨: الاتجاه المعاكس — لا ملف خط يُشحن بلا وجه يحمّله. كانت ثلاثة ملفات
+// (‏Almarai-ExtraBold وCairo-Medium وCairo-Regular) تدخل الحزمة بلا @font-face
+test("الخطوط: لا ملف خط في الحزمة بلا وجه يحمّله", () => {
+  const loaded = new Set(
+    [...base.matchAll(/url\("fonts\/([^"]+)"\)/g)].map((m) => m[1])
+  );
+  const onDisk = fs
+    .readdirSync(srcPath("fonts"))
+    .filter((f) => /\.(ttf|otf|woff2?)$/i.test(f));
+  for (const file of onDisk) {
+    assert.ok(loaded.has(file), `ملف خط يُشحن بلا @font-face: ${file}`);
+  }
+  assert.strictEqual(onDisk.length, loaded.size, "عدد ملفات الخطوط لا يطابق عدد الأوجه");
+});
+
 test("الأيقونات: معرّفات فريدة، ولكل رمز viewBox، ولا لون مثبّت", () => {
   const ids = [...icons.matchAll(/<symbol id="([^"]+)"/g)].map((m) => m[1]);
   assert.ok(ids.length >= 50, "عدد الأيقونات أقل من المتوقع");
