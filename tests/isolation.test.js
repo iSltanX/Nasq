@@ -162,12 +162,19 @@ test("اكتمال القشرة: البنية المشتركة والوصلات 
 });
 
 test("عزل أبراج النواة: لا استيراد متبادل ولا تسرب ثوابت ولا عقد في الأساس", () => {
-  const rust = (name) => fs.readFileSync(path.join(__dirname, "..", "src-tauri", "src", name), "utf8");
-  const nasaqRs = ["nasaq/mod.rs", "nasaq/contracts.rs", "nasaq/commands.rs", "nasaq/tests.rs"].map(rust).join("\n");
+  // كل ملف في المجلد لا قائمةٌ مكتوبة باليد: ملفٌّ جديد لا يفلت من الحارس
+  // (فحص m2: secrets.rs كان خارج القائمة، فمرّت عبارة عقدٍ زُرعت فيه)
+  const rustDir = (dir) => {
+    const root = path.join(__dirname, "..", "src-tauri", "src", dir);
+    const files = fs.readdirSync(root).filter((name) => name.endsWith(".rs"));
+    assert.ok(files.includes("mod.rs"), `${dir}/ بلا mod.rs — هل تغيّر المسار؟`);
+    return files.map((name) => fs.readFileSync(path.join(root, name), "utf8")).join("\n");
+  };
+  const nasaqRs = rustDir("nasaq");
   assert.ok(!/shadhb|PRUNE_/.test(nasaqRs), "برج نسق يشير إلى برج التشذيب");
-  const shadhbRs = ["shadhb/mod.rs", "shadhb/contracts.rs", "shadhb/verify.rs", "shadhb/commands.rs"].map(rust).join("\n");
+  const shadhbRs = rustDir("shadhb");
   assert.ok(!/nasaq::|CREATIVE_TEMPERATURE|VARIATIONS_|FORMAT_THINKING_BUDGET/.test(shadhbRs), "برج التشذيب يستهلك ثوابت نسق");
-  const sharedRs = ["shared/mod.rs", "shared/llm.rs", "shared/settings.rs", "shared/drafts.rs", "shared/clipboard.rs"].map(rust).join("\n");
+  const sharedRs = rustDir("shared");
   assert.ok(!/أنت «|قواعد القصّ|نمط التنسيق:/.test(sharedRs), "عقد تسرب إلى الأساس المشترك");
 });
 
@@ -1385,4 +1392,63 @@ test("المرحلة ٩: لا .hidden على رمز SVG — السمة تُبد�
     const bad = code.match(/(?:\.icon"\)|Icon)\s*\.hidden\s*=/g) || [];
     assert.strictEqual(bad.length, 0, `${name}: ${bad.join(" | ")}`);
   }
+});
+
+// ---------- فحص m2: الحفظ والتزامن ----------
+// دوال القشرة تُستخرج وتُشغَّل في سياقٍ معزول كما في cutMetaText أعلاه
+
+const m2Fn = (code, name) => {
+  const body = new RegExp(`async function ${name}\\([^)]*\\) \\{[\\s\\S]*?\\n\\}`).exec(code);
+  assert.ok(body, `${name} غائبة من shell.js`);
+  return body[0];
+};
+
+test("فحص m2: قراءةٌ فشلت عند الإقلاع لا يُكتب فوقها — m1-01", async () => {
+  const vm = require("node:vm");
+  const calls = [];
+  const ctx = {
+    insideTauri: true, draftsUnread: false, drafts: [], DRAFTS_KEY: "nasaq-drafts",
+    invoke: async (cmd) => { calls.push(cmd); if (cmd === "load_drafts") throw "تعذّرت قراءة المسودات."; },
+    window: { NasaqDrafts: require("../src/drafts-model.js") },
+    out: null,
+  };
+  vm.runInNewContext(`${m2Fn(shell, "loadDraftsFromStore")}\n${m2Fn(shell, "persistDrafts")}\nout = loadDraftsFromStore();`, ctx);
+  await ctx.out;
+  assert.strictEqual(ctx.draftsUnread, true, "القراءة الفاشلة لم تُعلَّم");
+  vm.runInNewContext("out = persistDrafts();", ctx);
+  await assert.rejects(ctx.out, (e) => String(e).includes("لم يُكتب فوقها"), "حُفظ فوق مسوداتٍ لم تُقرأ");
+  assert.deepStrictEqual(calls, ["load_drafts"], `وصل أمر حفظ إلى النواة: ${calls.join("، ")}`);
+});
+
+test("فحص m2: حذف صيغةٍ يفشل حفظه يعيد العرض إلى ما على القرص", async () => {
+  const vm = require("node:vm");
+  const ctx = {
+    drafts: [{ key: "أ", original: "أ", versions: [{ id: 1 }, { id: 2 }] }],
+    expandedDrafts: new Set(["أ"]), focusedRowKey: null,
+    persistDrafts: async () => { throw "تعذّر حفظ المسودات محليًا."; },
+    renderDrafts: () => {}, showToast: () => {}, out: null,
+  };
+  vm.runInNewContext(`${m2Fn(shell, "deleteVersion")}\nout = deleteVersion(drafts[0], drafts[0].versions[0]).then(() => drafts);`, ctx);
+  const after = JSON.parse(JSON.stringify(await ctx.out));
+  assert.strictEqual(after[0].versions.length, 2, "العرض يخالف القرص بعد حذفٍ فشل حفظه");
+});
+
+test("فحص m2: الاستيراد يسمّي الملف الذي لا مسودة فيه", () => {
+  assert.ok(/if \(mothers\.length === 0\) \{\s*showError\("ملف النسخة لا يحوي مسودات/.test(shell),
+    "ملفٌّ بلا مسودات يُعلَن «لا جديد»");
+});
+
+test("فحص m2: الورقة ونافذة الإعدادات تتبعان ما يُحفظ في غيرهما", () => {
+  const follows = /listen\("settings:changed", \(event\) => \{\s*if \(!event\.payload\) return;\s*view = event\.payload;\s*render\(\);/;
+  assert.ok(follows.test(onboardingJs), "ورقة الترحيب لا تتبع نافذة الإعدادات");
+  assert.ok(follows.test(settingsJs), "نافذة الإعدادات لا تتبع ورقة الترحيب");
+  // والرسم لا يكتب في الحقل تحت مؤشر صاحبه، ولا يمحو نتيجة «تحقّق الآن»
+  for (const [name, code, fields] of [["settings.js", settingsJs, ["baseUrlInput", "modelInput"]], ["onboarding.js", onboardingJs, ["modelInput"]]]) {
+    for (const field of fields) {
+      assert.ok(new RegExp(`if \\(document\\.activeElement !== ${field}\\) ${field}\\.value = `).test(code),
+        `${name}: الرسم يكتب في ${field} تحت المؤشر`);
+    }
+  }
+  assert.ok(/textContent = checkMessage \?\? lastCheckLabel\(view\.lastUpdateCheck\)/.test(settingsJs),
+    "الرسم يمحو نتيجة «تحقّق الآن» بوقت آخر تحقق");
 });

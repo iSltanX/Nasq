@@ -34,6 +34,9 @@
   // المعروض في الحقل مفتاحٌ جاء من السلسلة بزر العين، لا شيء كتبه صاحبه
   let revealedFromStore = false;
   let footerTimer = null;
+  // ما جاء به «تحقّق الآن» يبقى في خانته: حفظُ وقت التحقق يعيد الرسم، والرسم
+  // لا يمحو النتيجة بوقتٍ (فحص m2)
+  let checkMessage = null;
 
   // ---------- العرض ----------
 
@@ -52,8 +55,11 @@
     preset = presetFor(view.provider, view.baseUrl);
     providerValue.textContent = preset ? PROVIDERS[preset].label : "مخصّص";
 
-    baseUrlInput.value = view.baseUrl;
-    modelInput.value = view.model;
+    // الحقل الذي يكتب فيه صاحبه لا يُعاد كتابته تحت المؤشر: ما استقرّ في النواة —
+    // ومنه القيمة الافتراضية لحقلٍ فرغ — يظهر حين يغادره، فلا يُلصق ما يكتبه
+    // بعد السكتة بقيمةٍ ملأتها النواة (فحص m2)
+    if (document.activeElement !== baseUrlInput) baseUrlInput.value = view.baseUrl;
+    if (document.activeElement !== modelInput) modelInput.value = view.model;
 
     // المزوّد المحلي بلا مفتاح: صفّه يختفي كما يختفي اختبار المفتاح
     const local = view.provider === "ollama";
@@ -69,7 +75,7 @@
     appearanceValue.textContent = appearance.LABELS[appearance.apply(view.appearance)];
 
     el("auto-updates").setAttribute("aria-checked", String(view.autoUpdates));
-    el("update-message").textContent = lastCheckLabel(view.lastUpdateCheck);
+    el("update-message").textContent = checkMessage ?? lastCheckLabel(view.lastUpdateCheck);
     el("update-status").hidden = false;
   }
 
@@ -311,16 +317,18 @@
   el("check-updates").addEventListener("click", async () => {
     const button = el("check-updates");
     button.disabled = true;
-    el("update-message").textContent = "جارٍ التحقق…";
+    const show = (message) => {
+      checkMessage = message;
+      el("update-message").textContent = message;
+    };
+    show("جارٍ التحقق…");
     try {
       const meta = await invoke("plugin:updater|check", {});
       // لا تنزيل هنا: قدرات هذه النافذة لا تملك إلا التحقق
-      el("update-message").textContent = meta?.available
-        ? `يتوفر إصدار ${meta.version}`
-        : "أنت على أحدث إصدار";
+      show(meta?.available ? `يتوفر إصدار ${meta.version}` : "أنت على أحدث إصدار");
       save({ lastUpdateCheck: Math.floor(Date.now() / 1000) });
     } catch {
-      el("update-message").textContent = "تعذّر التحقق من التحديثات";
+      show("تعذّر التحقق من التحديثات");
     }
     button.disabled = false;
   });
@@ -331,6 +339,17 @@
     .then((loadedView) => {
       view = loadedView;
       render();
+    })
+    .catch(() => {});
+
+  // ما تحفظه نافذةٌ أخرى (ورقة الترحيب في الرئيسية) يصل حدثًا من النواة، فلا
+  // تعرض هذه النافذة مزوّدًا قديمًا يُبنى عليه حفظٌ تالٍ (فحص m2)
+  window.__TAURI__?.event
+    ?.listen("settings:changed", (event) => {
+      if (!event.payload) return;
+      view = event.payload;
+      render();
+      measure();
     })
     .catch(() => {});
 

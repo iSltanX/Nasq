@@ -31,15 +31,18 @@ function sortVersions(versions) {
 // مفتاحها. يُعاد { mothers, changed } — changed يقرر الكتابة الواحدة بعد الترحيل.
 function migrateDrafts(list) {
   if (!Array.isArray(list)) return { mothers: [], changed: true };
+  const hasText = (value) => typeof value === "string" && value.trim() !== "";
 
   const mothers = [];
   const byKey = new Map();
   let changed = false;
 
-  const motherFor = (key, original, createdAt) => {
+  // حقول الأمّ التي لا يعرفها هذا الإصدار (صيغةٌ أحدث) تبقى كما هي، فلا يمحوها
+  // أول حفظٍ بعد الترحيل (فحص m2)
+  const motherFor = (key, original, createdAt, fields) => {
     let m = byKey.get(key);
     if (!m) {
-      m = { key, original, createdAt, versions: [] };
+      m = { ...fields, key, original, createdAt, versions: [] };
       byKey.set(key, m);
       mothers.push(m);
     }
@@ -59,13 +62,15 @@ function migrateDrafts(list) {
       const original = item.original || "";
       const key = typeof item.key === "string" && item.key ? item.key : draftKey(original);
       if (byKey.has(key) || key !== item.key) changed = true;
-      const m = motherFor(key, original, item.createdAt || new Date().toISOString());
+      const m = motherFor(key, original, item.createdAt || new Date().toISOString(), item);
       for (const v of item.versions) {
         if (v && typeof v === "object") m.versions.push(v);
       }
     } else {
-      // مسودة مسطّحة قديمة → صيغة تحت أمّها
+      // مسودة مسطّحة قديمة → صيغة تحت أمّها. وكائنٌ بلا نصٍّ أصلي ولا منسّق
+      // ليس مسودة (ملفٌّ آخر اختير للاستيراد) فيُتخطى (فحص m2)
       changed = true;
+      if (!hasText(item.original) && !hasText(item.formatted)) continue;
       const original = item.original || "";
       const m = motherFor(draftKey(original), original, item.createdAt || new Date().toISOString());
       m.versions.push({

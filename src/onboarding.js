@@ -38,7 +38,8 @@
     if (!view) return;
     preset = presetFor(view.provider, view.baseUrl);
     providerValue.textContent = preset ? PROVIDERS[preset].label : "مخصّص";
-    modelInput.value = view.model;
+    // الحقل الذي يكتب فيه صاحبه لا يُعاد كتابته تحت المؤشر (فحص m2)
+    if (document.activeElement !== modelInput) modelInput.value = view.model;
 
     const local = view.provider === "ollama";
     el("welcome-key-row").hidden = local;
@@ -180,6 +181,16 @@
     // أول تشغيل: لا مزوّد عامل بعد، فالورقة من أولها
     if (!hasProvider()) open("welcome");
   });
+
+  // ما يُحفظ في نافذة الإعدادات يصل هنا حدثًا من النواة: الورقة تتبعه، فلا
+  // تمنع التنسيق عمّن أضاف مفتاحه هناك أو اختار مزوّدًا محليًا (فحص m2)
+  window.__TAURI__?.event
+    ?.listen("settings:changed", (event) => {
+      if (!event.payload) return;
+      view = event.payload;
+      render();
+    })
+    .catch(() => {});
 
   window.NasaqOnboarding = {
     hasProvider,

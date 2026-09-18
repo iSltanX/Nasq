@@ -274,18 +274,25 @@ let drafts = [];
 const expandedDrafts = new Set();
 let focusedRowKey = null;
 
+// قراءةٌ فشلت عند الإقلاع تعني أن القائمة الفارغة المعروضة ليست ما على القرص،
+// فلا يُكتب فوقه بها (فحص m2، m1-01). والنواة تُنحّي ما لا يُقرأ وتعيد قائمة
+// فارغة، فلا يبقى هذا إلا حين تتعذّر التنحية نفسها
+let draftsUnread = false;
+
 async function loadDraftsFromStore() {
   let raw = [];
   if (insideTauri) {
     try {
       raw = await invoke("load_drafts");
     } catch {
+      draftsUnread = true;
       raw = [];
     }
   } else {
     try {
       raw = JSON.parse(localStorage.getItem(DRAFTS_KEY)) || [];
     } catch {
+      draftsUnread = true;
       raw = [];
     }
   }
@@ -305,6 +312,9 @@ async function loadDraftsFromStore() {
 }
 
 async function persistDrafts() {
+  if (draftsUnread) {
+    throw "تعذّرت قراءة المسودات عند فتح التطبيق — لم يُكتب فوقها شيء. أعد فتح التطبيق.";
+  }
   if (insideTauri) {
     await invoke("save_drafts", { drafts });
   } else {
@@ -751,8 +761,10 @@ el("delete-alert-confirm").addEventListener("click", async () => {
 });
 
 // حذف صيغة: تُزال من أمّها فقط، وإن فرغت الأمّ من كل صيغها حُذفت كاملة.
-// الأرقام لا تُخزَّن فتُعاد بلا فجوات تلقائيًا في العرض التالي
+// الأرقام لا تُخزَّن فتُعاد بلا فجوات تلقائيًا في العرض التالي. ولقطة تراجع كما
+// في حذف المسودة: فشل الكتابة يعيد العرض إلى ما على القرص (فحص m2)
 async function deleteVersion(mother, version) {
+  const snapshot = JSON.stringify(drafts);
   mother.versions = mother.versions.filter((v) => v.id !== version.id);
   if (mother.versions.length === 0) {
     drafts = drafts.filter((m) => m.key !== mother.key);
@@ -762,6 +774,7 @@ async function deleteVersion(mother, version) {
   try {
     await persistDrafts();
   } catch {
+    drafts = JSON.parse(snapshot);
     renderDrafts();
     showToast("تعذّر تحديث ملف المسودات.", "danger");
     return;
@@ -875,6 +888,12 @@ importDraftsInput.addEventListener("change", async () => {
   }
 
   const { mothers } = window.NasaqDrafts.migrateDrafts(raw);
+  // ملفٌّ لا مسودة فيه — كائن، أو قائمة فارغة، أو JSON من ملفٍّ آخر — ليس «لا
+  // جديد»: الرسالة تقول ما هو (فحص m2)
+  if (mothers.length === 0) {
+    showError("ملف النسخة لا يحوي مسودات — لم يتغير شيء في مسوداتك.", { owner: "nasaq" });
+    return;
+  }
   const merged = window.NasaqDrafts.mergeImportedDrafts(drafts, mothers);
   if (merged.added === 0) {
     showToast("لا جديد في النسخة — كل ما فيها محفوظ أصلًا.", "neutral");

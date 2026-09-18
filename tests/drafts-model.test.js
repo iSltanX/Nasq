@@ -135,3 +135,35 @@ test("ترتيب الصيغ: الأقدم أولًا (منه يُشتقّ تنس
   const afterDelete = sortVersions(versions.filter((v) => v.id !== 2));
   assert.deepStrictEqual(afterDelete.map((v) => v.id), [1, 3]);
 });
+
+// ---------- فحص m2: الاستيراد والدمج في أطرافهما ----------
+
+test("صيغة أحدث: حقلٌ لا يعرفه هذا الإصدار في الأمّ يبقى بعد الترحيل والدمج", () => {
+  // إصدارٌ لاحق قد يضيف إلى الأمّ حقلًا؛ هذا الإصدار لا يفهمه لكنه لا يمحوه
+  // حين يحفظ القائمة بعد أي تعديل
+  const newer = [
+    { key: "نص", original: "نص", createdAt: "2026-07-01T10:00:00Z", pinned: true, versions: [{ id: 1, createdAt: "2026-07-01T10:00:00Z", formatted: "أ", tone: "هادئ" }] },
+  ];
+  const { mothers } = migrateDrafts(newer);
+  assert.strictEqual(mothers[0].pinned, true, "حقل الأمّ الأحدث مُحي بالترحيل");
+  assert.strictEqual(mothers[0].versions[0].tone, "هادئ", "حقل الصيغة الأحدث مُحي بالترحيل");
+  const merged = mergeImportedDrafts([], mothers);
+  assert.strictEqual(merged.mothers[0].pinned, true, "حقل الأمّ الأحدث مُحي بالدمج");
+});
+
+test("ملفٌّ لا صلة له: كائناتٌ بلا نصٍّ لا تصير مسوداتٍ فارغة", () => {
+  // «استيراد ودمج» يقبل أي JSON يختاره الكاتب؛ مصفوفة كائنات من ملفٍّ آخر
+  // ليست مسودات قديمة بلا نص
+  const { mothers } = migrateDrafts([{ name: "حزمة", version: "1.0.0" }, {}]);
+  assert.strictEqual(mothers.length, 0, `استُورد ما ليس مسودة: ${JSON.stringify(mothers)}`);
+  // والمسودة القديمة المسطّحة بنصٍّ أصلي وحده تبقى
+  assert.strictEqual(migrateDrafts([{ id: 7, original: "نص قديم" }]).mothers.length, 1);
+});
+
+test("ملفٌّ ليس قائمة: لا أمّهات منه، والترحيل يعلن التغيير", () => {
+  for (const raw of [{ drafts: [] }, "نص", 42, null]) {
+    const { mothers, changed } = migrateDrafts(raw);
+    assert.strictEqual(mothers.length, 0);
+    assert.strictEqual(changed, true);
+  }
+});

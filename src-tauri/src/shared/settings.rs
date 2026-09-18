@@ -8,6 +8,7 @@ use std::path::{Path, PathBuf};
 use tauri::{Emitter, Manager};
 
 use super::secrets::{Keychain, SecretStore, ACCOUNT_API_KEY};
+use super::storage::{set_aside, write_private};
 
 pub(crate) const DEFAULT_BASE_URL: &str =
     "https://generativelanguage.googleapis.com/v1beta/openai/";
@@ -158,16 +159,12 @@ fn read_settings_file(path: &Path) -> Result<Settings, String> {
         .map_err(|_| "ملف الإعدادات تالف — افتح الإعدادات واحفظها من جديد.".to_string())
 }
 
+/// الملف قد يحوي مفتاح API في مسار التراجع — لصاحب الجهاز وحده، ولا يكون ناقصًا
+/// على القرص في أي لحظة
 fn write_settings_file(path: &Path, settings: &Settings) -> Result<(), String> {
     let raw = serde_json::to_string_pretty(settings)
         .map_err(|_| "تعذّر تجهيز الإعدادات للحفظ.".to_string())?;
-    fs::write(path, raw).map_err(|_| "تعذّر حفظ الإعدادات محليًا.".to_string())?;
-    // الملف قد يحوي مفتاح API في مسار التراجع — قراءة وكتابة لصاحب الجهاز فقط
-    {
-        use std::os::unix::fs::PermissionsExt;
-        let _ = fs::set_permissions(path, fs::Permissions::from_mode(0o600));
-    }
-    Ok(())
+    write_private(path, raw.as_bytes()).map_err(|_| "تعذّر حفظ الإعدادات محليًا.".to_string())
 }
 
 /// يُفرَّغ حقل المفتاح بعد ترحيله، على **أحدث** نسخة من الملف لا على اللقطة
@@ -255,7 +252,16 @@ fn save_patch_with(
     patch: SettingsPatch,
 ) -> Result<Settings, String> {
     let _guard = SETTINGS_LOCK.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
-    let current = read_settings_with(store, path)?;
+    let current = match read_settings_with(store, path) {
+        Ok(settings) => settings,
+        // ملفٌّ تالف أو لا يُقرأ لا يمنع الحفظ الذي تطلبه رسالته («احفظها من
+        // جديد»): يُنحّى جانبًا فلا يُمحى، ويبدأ الحفظ من القيم الافتراضية،
+        // والمفتاح في الخزنة لا يمسّه شيء (فحص m2)
+        Err(_) => {
+            set_aside(path).map_err(|_| "تعذّر حفظ الإعدادات محليًا.".to_string())?;
+            read_settings_with(store, path)?
+        }
+    };
     save_settings_with(store, path, apply_patch(current, patch))
 }
 
@@ -682,6 +688,81 @@ mod tests {
         blank_key_in_file(&path, "sk-legacy");
 
         assert_eq!(key_on_disk(&path), "sk-other", "مُحي مفتاح ليس هو الذي رُحِّل");
+    }
+
+    fn survives_beside(path: &Path, bytes: &[u8]) -> bool {
+        fs::read_dir(path.parent().unwrap())
+            .unwrap()
+            .flatten()
+            .any(|entry| fs::read(entry.path()).map(|found| found == bytes).unwrap_or(false))
+    }
+
+    #[test]
+    fn a_damaged_settings_file_can_be_saved_over_as_its_message_asks() {
+        // «ملف الإعدادات تالف — افتح الإعدادات واحفظها من جديد»: الحفظ الذي تطلبه
+        // الرسالة يجب أن يمرّ، والتالف يُنحّى ولا يُمحى
+        for (name, damaged) in [
+            ("cut-json", b"{\n  \"apiKey\": \"\",\n  \"baseUrl\": \"https://api.anthro".to_vec()),
+            // البتر وسط الجيم: ١٤ بايتًا قبل «نموذج» وأربعة أحرف منها ونصف حرف
+            ("cut-letter", "{\n  \"model\": \"نموذج".as_bytes()[..23].to_vec()),
+        ] {
+            if name == "cut-letter" {
+                assert!(std::str::from_utf8(&damaged).is_err(), "البتر لم يقع وسط حرف");
+            }
+            let path = temp_settings(name);
+            fs::write(&path, &damaged).unwrap();
+            let store = MemoryStore::new();
+            assert!(read_settings_with(&store, &path).is_err(), "{name}: الملف التالف قُرئ");
+
+            let saved = save_patch_with(
+                &store,
+                &path,
+                SettingsPatch { model: Some("m".to_string()), ..SettingsPatch::default() },
+            );
+
+            assert!(saved.is_ok(), "{name}: الحفظ الذي تطلبه الرسالة فشل: {:?}", saved.err());
+            assert_eq!(read_settings_file(&path).ok().map(|s| s.model).as_deref(), Some("m"));
+            assert!(survives_beside(&path, &damaged), "{name}: مُحي التالف بلا نسخة");
+        }
+    }
+
+    #[test]
+    fn the_settings_file_is_never_incomplete_during_a_save() {
+        use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
+        use std::sync::Arc;
+
+        let path = temp_settings("never-incomplete");
+        // حقلٌ طويل يمدّ زمن الكتابة فيراها القارئ، والطولان متساويان
+        let a = Settings { model: "أ".repeat(300_000), ..Settings::default() };
+        let b = Settings { model: "ب".repeat(300_000), ..Settings::default() };
+        let complete = serde_json::to_string_pretty(&a).unwrap().len();
+        write_settings_file(&path, &a).unwrap();
+
+        let done = Arc::new(AtomicBool::new(false));
+        let reads = Arc::new(AtomicUsize::new(0));
+        let incomplete = Arc::new(AtomicUsize::new(0));
+        let reader = {
+            let (path, done, reads, incomplete) = (path.clone(), done.clone(), reads.clone(), incomplete.clone());
+            std::thread::spawn(move || {
+                while !done.load(Ordering::Relaxed) {
+                    if let Ok(bytes) = fs::read(&path) {
+                        reads.fetch_add(1, Ordering::Relaxed);
+                        if bytes.len() != complete {
+                            incomplete.fetch_add(1, Ordering::Relaxed);
+                        }
+                    }
+                }
+            })
+        };
+        for round in 0..150 {
+            write_settings_file(&path, if round % 2 == 0 { &b } else { &a }).unwrap();
+        }
+        done.store(true, Ordering::Relaxed);
+        reader.join().unwrap();
+
+        let (reads, incomplete) = (reads.load(Ordering::Relaxed), incomplete.load(Ordering::Relaxed));
+        assert!(reads > 0, "القارئ لم يقرأ شيئًا");
+        assert_eq!(incomplete, 0, "{incomplete} من {reads} قراءة وجدت الإعدادات ناقصة أثناء الحفظ");
     }
 
     #[test]
