@@ -78,6 +78,13 @@ function moreLinesLocal(text) {
 // نفس المدخل يعيد نفس المخرج دائمًا، وتطبيقه مرتين لا يغيّر الناتج)
 const DIGIT_RE = /[0-9٠-٩]/;
 const SENTENCE_END_RE = /[.؟!…]/;
+const CLOSERS = "»›”’\"')]}";
+const STRAIGHT_QUOTES = "\"'";
+const opensNext = (text, k) => {
+  if (!STRAIGHT_QUOTES.includes(text[k])) return false;
+  const after = text[k + 1];
+  return after !== undefined && !/\s/.test(after) && !CLOSERS.includes(after) && !SENTENCE_END_RE.test(after);
+};
 
 function splitSentencesLocal(text) {
   let out = "";
@@ -98,8 +105,22 @@ function splitSentencesLocal(text) {
       // علامة يليها ختمٌ آخر مباشرةً («؟!») — الكسر بعد آخر الركب لا بينه
       const endsRun = Boolean(rawNext) && SENTENCE_END_RE.test(rawNext);
       if (!isDecimal && !isDotRun && !endsRun) {
-        if (next !== undefined && next !== "\n") out += "\n";
-        i = j;
+        // علامة إغلاقٍ تلي الختم مباشرةً تبقى معه في سطره: «انتهى.» ثم،
+        // لا «انتهى.⏎» — فلا يبدأ سطرٌ بقوسٍ أو علامة تنصيص يتيمة (فحص m3)
+        // والتنصيص المستقيم (" و') لا اتجاه له: هو إغلاقٌ إن تلاه فراغٌ أو
+        // نهايةٌ أو إغلاقٌ آخر أو ختم، وإلا فهو فتحُ الجملة التالية فيبقى لها
+        let k = i + 1;
+        while (k < text.length && CLOSERS.includes(text[k]) && !opensNext(text, k)) out += text[k++];
+        // ختمٌ بعد الإغلاق («حقًّا؟»!) يبقى في السطر نفسه، والكسر بعده
+        if (SENTENCE_END_RE.test(text[k] || "")) {
+          i = k;
+          continue;
+        }
+        let m = k;
+        while (text[m] === " ") m++;
+        // والسطر القائم بـ \r\n سطرٌ قائم، فلا يُضاف قبله كسرٌ ثانٍ
+        if (text[m] !== undefined && text[m] !== "\n" && text[m] !== "\r") out += "\n";
+        i = m;
         continue;
       }
     }

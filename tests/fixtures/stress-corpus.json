@@ -1,0 +1,22 @@
+{
+  "empty": "",
+  "spacesOnly": "   \t   \t  ",
+  "newlinesOnly": "\n\n\n\n\n",
+  "singleLetter": "أ",
+  "composedEmoji": "عائلة 👨‍👩‍👧‍👦 وعلم 🇸🇦 وإصبع 👍🏽 ورقم 1️⃣ في جملة تتجاوز الأربعين حرفًا لاختبار القص عند الحد",
+  "mixedDigitsAndLangs": "This نص is mixed مع 123 و٣٤٥ و٦٧٨ digits together",
+  "fullDiacriticsAndTatweel": "الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ ثُـــمَّ مَشَـــى",
+  "crlf": "سطر أول\r\nسطر ثانٍ\r\nسطر ثالث",
+  "loneCR": "سطر أول\rسطر ثانٍ\rسطر ثالث",
+  "rtlLtrMarksAndJoiners": "كلمة‏معلمة ‎word‎ نص؜مختلط وكلمة‌بزوجن‌جيم وكلمة‍بزوجي‍جيم",
+  "nbspAsSpaces": "كلمة أولى وثانية وثالثة",
+  "quoteThenClosingPunct1": "قال: «انتهى.» ثم مضى",
+  "quoteThenClosingPunct2": "(انتهى.) ثم",
+  "latinEllipsis": "انتظر... ثم اكمل السير",
+  "unicodeEllipsis": "انتظر… ثم اكمل السير",
+  "decimalLatin": "السعر 3.14 ريال فقط",
+  "decimalArabicIndic": "السعر ٣٫١٤ ريال فقط",
+  "loneSurrogate": "نص فيه نصف رمز \ud83d يتيم عمدًا",
+  "closerThenTerminator": "سأل: «حقًّا؟»! فسكت، ثم قال: (نعم.)؟ وانصرف.",
+  "straightQuotesMixed": "قال: \"تمّ.\" ثم قال: بدأ. وكتب \"جملة.\" \"وأخرى.\""
+}

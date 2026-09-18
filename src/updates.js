@@ -33,6 +33,9 @@
   let rid = null;        // مقبض التحديث من الفحص، حيًّا بين العرض والتنزيل
   let version = "";
   let cancelled = false;
+  // «ابحث عن تحديثات» طُلب وفحصٌ آخر أو تنزيلٌ مُلغى جارٍ: يجري حين ينتهي، فلا
+  // يُبتلع الطلب بلا جواب (فحص m3)
+  let pendingManual = false;
 
   // الميغابايتات بأرقام هندية كبقية ما يُعرض، ورقم الإصدار لاتينيّ فهو معرّف
   const mb = (bytes) =>
@@ -165,18 +168,34 @@
       // تُهمل ولا يُثبَّت منها شيء
       if (cancelled) return;
       await invoke("plugin:updater|install", { updateRid: rid, bytesRid });
-      // التثبيت تمّ: إعادة التشغيل هي الخطوة الرابعة في التدفّق المرسوم
+      // التثبيت تمّ: إعادة التشغيل هي الخطوة الرابعة في التدفّق المرسوم. و«إلغاء»
+      // أثناء التثبيت لا يوقفه، لكنه يمنع إعادة التشغيل: لا يُغلق نَسَق على نصٍّ
+      // لم يُحفظ بعد أن قال الكاتب «إلغاء» (فحص m3). والنسخة الجديدة تعمل عند
+      // الفتح التالي
+      if (cancelled) return;
       await invoke("plugin:process|restart", {});
     } catch (error) {
       if (!cancelled) showDownloadFailure(String(error?.message ?? error));
     } finally {
-      busy = false;
+      // تنزيلٌ لم يُلغَ تنبيهُه الظاهر بتقدّمه جوابُ كل طلبٍ جاء أثناءه: لا فحص بعده
+      if (!cancelled) pendingManual = false;
+      settle();
     }
+  }
+
+  function settle() {
+    busy = false;
+    if (!pendingManual) return;
+    pendingManual = false;
+    check(MANUAL);
   }
 
   // الفحص وحده — لا ينزّل بايتًا. origin يقرّر ما يُعرض حين لا تحديث
   async function check(origin) {
-    if (busy) return;
+    if (busy) {
+      if (origin === MANUAL) pendingManual = true;
+      return;
+    }
     busy = true;
     try {
       const meta = await invoke("plugin:updater|check", {});
@@ -192,7 +211,7 @@
       // الفحص التلقائي لا يقاطع أحدًا بخبر فشلٍ لم يطلبه
       if (origin === MANUAL) showCheckFailure(String(error?.message ?? error));
     } finally {
-      busy = false;
+      settle();
     }
   }
 

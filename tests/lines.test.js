@@ -130,3 +130,28 @@ test("إضافة سطور فارغة: لا كلمة ولا ترتيب يتغيّ
   assert.strictEqual(addBlankLinesLocal(""), "");
   assert.strictEqual(addBlankLinesLocal("سطر واحد"), "سطر واحد");
 });
+
+// فحص m3: كان الكسر يقع بين الختم وعلامة الإغلاق بعده، فيبدأ السطر التالي بـ «»» أو «)» يتيمة
+test("فصل الجمل: علامة الإغلاق بعد الختم تبقى في سطره، والناتج حتمي", () => {
+  const cases = [
+    ["قال: «انتهى.» ثم مضى", "قال: «انتهى.»\nثم مضى"],
+    ["(انتهى.) ثم", "(انتهى.)\nثم"],
+    ["سأل: «أحقًّا؟!» فسكت", "سأل: «أحقًّا؟!»\nفسكت"],
+    ["قال \"تمّ.\" وخرج", "قال \"تمّ.\"\nوخرج"],
+    ["انتهى.»", "انتهى.»"],
+    // من المراجعة المستقلة: ختمٌ بعد الإغلاق، وتنصيصٌ مستقيم يفتح التالية، وCRLF
+    ["سأل: «حقًّا؟»! فسكت", "سأل: «حقًّا؟»!\nفسكت"],
+    ["قال: 'تمّ.' ثم", "قال: 'تمّ.'\nثم"],
+    ["انتهى.\r\nالتالي.", "انتهى.\r\nالتالي."],
+  ];
+  for (const [input, expected] of cases) {
+    const out = splitSentencesLocal(input);
+    assert.strictEqual(out, expected);
+    assert.strictEqual(splitSentencesLocal(out), out, "الضغطة الثانية غيّرت النص");
+    assert.strictEqual(words(out), words(input));
+  }
+  // جملتان بلا فراغٍ بينهما: التنصيص المستقيم الثاني يفتح الثانية فيبقى لها
+  const glued = splitSentencesLocal("مرحبا.\"\"وداعا.");
+  assert.strictEqual(glued, "مرحبا.\"\n\"وداعا.");
+  assert.strictEqual(splitSentencesLocal(glued), glued);
+});

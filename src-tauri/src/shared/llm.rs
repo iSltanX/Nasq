@@ -27,6 +27,10 @@ const ERR_UNREADABLE: &str = "تعذّرت قراءة استجابة الخدم�
 const ERR_EMPTY_RESULT: &str = "أعاد النموذج نتيجة فارغة — أعد المحاولة.";
 const ERR_TOO_LONG: &str =
     "النص أطول من حد المعالجة — قسّمه إلى أجزاء أقصر ونسّق كل جزء على حدة.";
+// رفضٌ صريح من النموذج: إعادة المحاولة بالنص نفسه تُرفض مجددًا، فلا تُقال
+// «أعد المحاولة» وحدها كما في النتيجة الفارغة (فحص m3: مسار OpenAI كان يقرؤه فراغًا)
+const ERR_REFUSAL: &str =
+    "اعتذر النموذج عن معالجة هذا النص — جرّب نموذجًا آخر أو عدّل النص ثم أعد المحاولة.";
 
 /// «لا مفتاح» أم «لم أصل إليه» — الفرق يقرّره ما أعادته الإعدادات لا الحقل وحده
 fn missing_key_message(settings: &Settings) -> &'static str {
@@ -339,6 +343,9 @@ async fn request_completion_detailed(
             // نفاد الرصيد له اسمه الصريح (الإصلاح ٢-ج) — كان يسقط في الذراع العام
             402 => ERR_NO_CREDIT.to_string(),
             404 => ERR_MODEL_UNAVAILABLE.to_string(),
+            // مهلةٌ أو طولٌ من المزوّد نفسه، برسالتيهما لا بـ«تحقق من الإعدادات» (فحص m3)
+            408 => ERR_TIMEOUT.to_string(),
+            413 => ERR_TOO_LONG.to_string(),
             429 => ERR_RATE_LIMITED.to_string(),
             500..=599 => ERR_SERVER.to_string(),
             code => request_failed(code),
@@ -356,6 +363,12 @@ async fn request_completion_detailed(
     // يُفحص قبل الفراغ: نموذج استدلالي قد يستنفد السقف تفكيرًا فلا يبقى نص ظاهر
     if payload["choices"][0]["finish_reason"].as_str() == Some("length") {
         return Err(ERR_TOO_LONG.to_string().into());
+    }
+
+    // رفض النموذج يصل في حقل refusal ومحتواه فارغ — يُسمّى رفضًا لا نتيجةً فارغة
+    let refusal = payload["choices"][0]["message"]["refusal"].as_str().unwrap_or("").trim();
+    if !refusal.is_empty() {
+        return Err(ERR_REFUSAL.to_string().into());
     }
 
     let content = payload["choices"][0]["message"]["content"]
@@ -390,8 +403,6 @@ const CLAUDE_EFFORT_MODEL_PREFIXES: [&str; 8] = [
     "claude-mythos-",
 ];
 
-const ERR_CLAUDE_REFUSAL: &str =
-    "اعتذر النموذج عن معالجة هذا النص — جرّب نموذجًا آخر أو عدّل النص ثم أعد المحاولة.";
 const ERR_KEY_FORBIDDEN: &str =
     "المفتاح لا يملك صلاحية هذا النموذج أو الطلب — راجع صلاحيات حسابك لدى المزوّد.";
 const ERR_OVERLOADED: &str = "الخدمة مزدحمة الآن — أعد المحاولة بعد قليل.";
@@ -539,7 +550,7 @@ fn anthropic_error_message(status: u16, payload: &Value) -> String {
 /// text بترتيبها وتُتجاوز thinking وfallback وأي نوع آخر
 fn parse_anthropic_response(payload: &Value) -> Result<String, String> {
     match payload["stop_reason"].as_str() {
-        Some("refusal") => return Err(ERR_CLAUDE_REFUSAL.to_string()),
+        Some("refusal") => return Err(ERR_REFUSAL.to_string()),
         Some("max_tokens") => return Err(ERR_TOO_LONG.to_string()),
         _ => {}
     }
@@ -688,6 +699,9 @@ async fn request_completion_ollama(
     if !status.is_success() {
         return Err(match status.as_u16() {
             404 => "النموذج المحدد غير موجود.".to_string(),
+            // عطلٌ في الخادم المحلي (نفاد ذاكرة، أو تحميلٌ فشل) ليس خطأً في الإعدادات
+            429 => ERR_RATE_LIMITED.to_string(),
+            500..=599 => ERR_SERVER.to_string(),
             code => format!("فشل الطلب (رمز {}). تحقق من الإعدادات وأعد المحاولة.", code),
         });
     }
@@ -696,6 +710,12 @@ async fn request_completion_ollama(
         .json()
         .await
         .map_err(|_| "استجابة Ollama غير صالحة.".to_string())?;
+
+    // ناتجٌ قطعه الطول ليس نجاحًا: نصٌّ جزئي يصل البرج فيُقرأ ناتجًا غير صالح أو
+    // ناقصًا — والمساران الآخران يسمّيانه (finish_reason وstop_reason) (فحص m3)
+    if payload["done_reason"].as_str() == Some("length") {
+        return Err(ERR_TOO_LONG.to_string());
+    }
 
     let content = payload["message"]["content"]
         .as_str()
@@ -1354,12 +1374,12 @@ mod tests {
     fn anthropic_refusal_max_tokens_and_empty_results_are_clear_errors() {
         // الرفض يسبق أي نص جزئي — لا يُعامل ما قبله ناتجًا
         let refusal = json!({ "stop_reason": "refusal", "content": [{ "type": "text", "text": "{\"partial\"" }] });
-        assert_eq!(parse_anthropic_response(&refusal).unwrap_err(), ERR_CLAUDE_REFUSAL);
+        assert_eq!(parse_anthropic_response(&refusal).unwrap_err(), ERR_REFUSAL);
         let cut = json!({ "stop_reason": "max_tokens", "content": [{ "type": "text", "text": "{\"lines\": [" }] });
         assert_eq!(parse_anthropic_response(&cut).unwrap_err(), ERR_TOO_LONG);
         let only_thinking = json!({ "stop_reason": "end_turn", "content": [{ "type": "thinking", "thinking": "" }] });
         assert_eq!(parse_anthropic_response(&only_thinking).unwrap_err(), ERR_EMPTY_RESULT);
-        assert_eq!(parse_anthropic_response(&json!({ "stop_reason": "refusal", "content": [] })).unwrap_err(), ERR_CLAUDE_REFUSAL);
+        assert_eq!(parse_anthropic_response(&json!({ "stop_reason": "refusal", "content": [] })).unwrap_err(), ERR_REFUSAL);
     }
 
     #[test]
@@ -1812,5 +1832,641 @@ mod tests {
 
         assert!(!report.connected);
         assert!(!report.message.contains("المفتاح"), "اتُّهم المفتاح بعطل شبكة: {}", report.message);
+    }
+
+    // ---------- m3: قسوة النقل — كل مسار أمام كل فشل مزوّد ----------
+    //
+    // اختبارات هذا القسم تُثبّت السلوك الحالي حرفيًا (رسالة عربية بعينها لكل
+    // حالة) عبر خوادم وهمية محلية — لا شبكة حقيقية ولا مهلات بطيئة. حين
+    // تكشف حالة رسالة مضلِّلة أو عامة رغم وجود رسالة أوضح لها، التعليق يقول
+    // ذلك صراحة لكنّ التأكيد نفسه يبقى على السلوك القائم اليوم.
+
+    fn anthropic_settings(base_url: &str, model: &str) -> Settings {
+        Settings {
+            api_key: "sk-ant-test".to_string(),
+            base_url: base_url.to_string(),
+            model: model.to_string(),
+            provider: PROVIDER_ANTHROPIC.to_string(),
+            ..Settings::default()
+        }
+    }
+
+    fn ollama_settings(base_url: &str, model: &str) -> Settings {
+        Settings {
+            base_url: base_url.to_string(),
+            model: model.to_string(),
+            provider: PROVIDER_OLLAMA.to_string(),
+            ..Settings::default()
+        }
+    }
+
+    /// خادم يقرأ الترويسات فقط، يعلن Content-Length أكبر من الجسم الفعلي
+    /// المُرسَل، ثم يقفل المقبس — يحاكي ردًّا انقطع في المنتصف
+    fn stub_truncated(status: &str, announced_len: usize, actual_body: &'static str) -> String {
+        use std::io::{Read, Write};
+        use std::net::TcpListener;
+
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let port = listener.local_addr().unwrap().port();
+        let status = status.to_string();
+
+        std::thread::spawn(move || {
+            let Ok((mut stream, _)) = listener.accept() else { return };
+            let mut request = Vec::new();
+            let mut buffer = [0u8; 1024];
+            while let Ok(read) = stream.read(&mut buffer) {
+                if read == 0 {
+                    break;
+                }
+                request.extend_from_slice(&buffer[..read]);
+                if request.windows(4).any(|w| w == b"\r\n\r\n") {
+                    break;
+                }
+            }
+            let response = format!(
+                "HTTP/1.1 {}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
+                status, announced_len, actual_body
+            );
+            let _ = stream.write_all(response.as_bytes());
+            let _ = stream.flush();
+            // يُقفل المقبس هنا فعليًا (نهاية النطاق) دون إرسال بقية الطول المعلن
+        });
+
+        format!("http://127.0.0.1:{port}")
+    }
+
+    /// خادم يقبل الاتصال، يقرأ بعض الطلب، ثم يقفل المقبس بلا أي رد إطلاقًا —
+    /// يحاكي خدمة سقطت أثناء المعالجة، لا عنوانًا ميتًا لم يستجب قط
+    fn stub_close_without_reply() -> String {
+        use std::io::Read;
+        use std::net::TcpListener;
+
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let port = listener.local_addr().unwrap().port();
+
+        std::thread::spawn(move || {
+            let Ok((mut stream, _)) = listener.accept() else { return };
+            let mut buffer = [0u8; 1024];
+            let _ = stream.read(&mut buffer);
+            drop(stream);
+        });
+
+        format!("http://127.0.0.1:{port}")
+    }
+
+    /// منفذ لا يستمع عليه أحد — يحاكي رفض الاتصال (nothing listening)
+    fn dead_port_url() -> String {
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let port = listener.local_addr().unwrap().port();
+        drop(listener);
+        format!("http://127.0.0.1:{port}")
+    }
+
+    // ===== المسار المتوافق مع OpenAI (request_completion_detailed) =====
+
+    #[test]
+    fn openai_compat_html_200_is_unreadable() {
+        let (base, _r) = stub_once("200 OK", "<html><body>captive portal</body></html>");
+        let err = futures_lite_block_on(request_completion_detailed(
+            &cloud_settings(&base, "gpt-5.6-terra"),
+            &json!([]),
+            100,
+            0.0,
+            0,
+        ))
+        .unwrap_err();
+        assert_eq!(err.message, ERR_UNREADABLE);
+    }
+
+    #[test]
+    fn openai_compat_empty_200_body_is_unreadable() {
+        let (base, _r) = stub_once("200 OK", "");
+        let err = futures_lite_block_on(request_completion_detailed(
+            &cloud_settings(&base, "gpt-5.6-terra"),
+            &json!([]),
+            100,
+            0.0,
+            0,
+        ))
+        .unwrap_err();
+        assert_eq!(err.message, ERR_UNREADABLE);
+    }
+
+    #[test]
+    fn openai_compat_wrong_shaped_json_yields_empty_result() {
+        for body in ["{}", r#"{"choices":[]}"#, r#"{"content":[]}"#, r#"{"message":{}}"#] {
+            let (base, _r) = stub_once("200 OK", body);
+            let err = futures_lite_block_on(request_completion_detailed(
+                &cloud_settings(&base, "gpt-5.6-terra"),
+                &json!([]),
+                100,
+                0.0,
+                0,
+            ))
+            .unwrap_err();
+            assert_eq!(err.message, ERR_EMPTY_RESULT, "جسم {body}");
+        }
+    }
+
+    #[test]
+    fn openai_compat_truncated_body_is_unreadable() {
+        let base = stub_truncated("200 OK", 500, r#"{"choices":[{"message":{"content":"ناقص"#);
+        let err = futures_lite_block_on(request_completion_detailed(
+            &cloud_settings(&base, "gpt-5.6-terra"),
+            &json!([]),
+            100,
+            0.0,
+            0,
+        ))
+        .unwrap_err();
+        assert_eq!(err.message, ERR_UNREADABLE);
+    }
+
+    #[test]
+    fn openai_compat_connection_closed_without_reply_is_connect_error() {
+        let base = stub_close_without_reply();
+        let err = futures_lite_block_on(request_completion_detailed(
+            &cloud_settings(&base, "gpt-5.6-terra"),
+            &json!([]),
+            100,
+            0.0,
+            0,
+        ))
+        .unwrap_err();
+        assert_eq!(err.message, ERR_CONNECT);
+    }
+
+    #[test]
+    fn openai_compat_nothing_listening_is_connect_error() {
+        let base = dead_port_url();
+        let err = futures_lite_block_on(request_completion_detailed(
+            &cloud_settings(&base, "gpt-5.6-terra"),
+            &json!([]),
+            100,
+            0.0,
+            0,
+        ))
+        .unwrap_err();
+        assert_eq!(err.message, ERR_CONNECT);
+    }
+
+    #[test]
+    fn openai_compat_400_and_422_always_retry_and_second_reply_wins() {
+        // أول محاولة 400 (أيًّا كان سببه) تُعاد بلا response_format — والرسالة
+        // النهائية تصدر من الرد الثاني وحده، مهما كان الأول
+        let (base, _r) = stub_seq(vec![
+            ("400 Bad Request", r#"{"error":{"message":"response_format not supported"}}"#),
+            ("500 Internal Server Error", r#"{"error":{"message":"boom"}}"#),
+        ]);
+        let err = futures_lite_block_on(request_completion_detailed(
+            &cloud_settings(&base, "gpt-5.6-terra"),
+            &json!([]),
+            100,
+            0.0,
+            0,
+        ))
+        .unwrap_err();
+        assert_eq!(err.message, ERR_SERVER, "الرد الثاني كان يجب أن يفوز");
+
+        // و422 تسلك المسار نفسه — إعادة غير مشروطة بسبب الرفض
+        let (base, _r) = stub_seq(vec![
+            ("422 Unprocessable Entity", r#"{"error":{"message":"unprocessable"}}"#),
+            ("401 Unauthorized", r#"{"error":{"message":"bad key"}}"#),
+        ]);
+        let err = futures_lite_block_on(request_completion_detailed(
+            &cloud_settings(&base, "gpt-5.6-terra"),
+            &json!([]),
+            100,
+            0.0,
+            0,
+        ))
+        .unwrap_err();
+        assert_eq!(err.message, ERR_BAD_KEY, "الرد الثاني كان يجب أن يفوز");
+    }
+
+    #[test]
+    fn openai_compat_status_codes_map_regardless_of_error_body_shape() {
+        // ٤٠٠ و٤٢٢ يعاد الطلب معهما دومًا (مُختبَر أعلاه) — البقية طلب واحد
+        let cases: [(&str, &str); 9] = [
+            ("401 Unauthorized", ERR_BAD_KEY),
+            ("402 Payment Required", ERR_NO_CREDIT),
+            ("403 Forbidden", ERR_BAD_KEY),
+            ("404 Not Found", ERR_MODEL_UNAVAILABLE),
+            ("429 Too Many Requests", ERR_RATE_LIMITED),
+            ("500 Internal Server Error", ERR_SERVER),
+            ("502 Bad Gateway", ERR_SERVER),
+            ("503 Service Unavailable", ERR_SERVER),
+            ("529 Overloaded", ERR_SERVER),
+        ];
+        for (status, expected) in cases {
+            for body in [r#"{"error":{"message":"boom"}}"#, "<html>bad gateway</html>"] {
+                let (base, _r) = stub_once(status, body);
+                let err = futures_lite_block_on(request_completion_detailed(
+                    &cloud_settings(&base, "gpt-5.6-terra"),
+                    &json!([]),
+                    100,
+                    0.0,
+                    0,
+                ))
+                .unwrap_err();
+                assert_eq!(err.message, expected, "status={status} body={body}");
+            }
+        }
+
+        // فحص m3: ٤٠٨ مهلةٌ و٤١٣ طول كمسار Claude، لا «فشل الطلب (رمز N)»
+        for (status, expected) in [("408 Request Timeout", ERR_TIMEOUT), ("413 Payload Too Large", ERR_TOO_LONG)] {
+            let (base, _r) = stub_once(status, r#"{"error":{"message":"boom"}}"#);
+            let err = futures_lite_block_on(request_completion_detailed(
+                &cloud_settings(&base, "gpt-5.6-terra"),
+                &json!([]),
+                100,
+                0.0,
+                0,
+            ))
+            .unwrap_err();
+            assert_eq!(err.message, expected, "status={status}");
+        }
+    }
+
+    #[test]
+    fn openai_compat_finish_reason_length_is_too_long() {
+        let (base, _r) = stub_once(
+            "200 OK",
+            r#"{"choices":[{"finish_reason":"length","message":{"content":"جزء"}}]}"#,
+        );
+        let err = futures_lite_block_on(request_completion_detailed(
+            &cloud_settings(&base, "gpt-5.6-terra"),
+            &json!([]),
+            100,
+            0.0,
+            0,
+        ))
+        .unwrap_err();
+        assert_eq!(err.message, ERR_TOO_LONG);
+    }
+
+    // فحص m3: رفضٌ صريح في message.refusal كان يُقرأ نتيجةً فارغة («أعد المحاولة»)،
+    // وإعادة المحاولة بالنص نفسه تُرفض مجددًا
+    #[test]
+    fn openai_compat_refusal_field_reads_as_a_refusal() {
+        let (base, _r) = stub_once(
+            "200 OK",
+            r#"{"choices":[{"finish_reason":"stop","message":{"refusal":"لا يمكنني المساعدة في هذا","content":null}}]}"#,
+        );
+        let err = futures_lite_block_on(request_completion_detailed(
+            &cloud_settings(&base, "gpt-5.6-terra"),
+            &json!([]),
+            100,
+            0.0,
+            0,
+        ))
+        .unwrap_err();
+        assert_eq!(err.message, ERR_REFUSAL);
+    }
+
+    // ===== المسار الأصلي لـ Claude (request_completion_anthropic) =====
+
+    #[test]
+    fn anthropic_html_200_is_unreadable() {
+        let (base, _r) = stub_once("200 OK", "<html><body>captive portal</body></html>");
+        let err = futures_lite_block_on(request_completion_anthropic(
+            &anthropic_settings(&base, "claude-sonnet-5"),
+            &json!([]),
+            100,
+            0,
+        ))
+        .unwrap_err();
+        assert_eq!(err, ERR_UNREADABLE);
+    }
+
+    #[test]
+    fn anthropic_empty_200_body_is_unreadable() {
+        let (base, _r) = stub_once("200 OK", "");
+        let err = futures_lite_block_on(request_completion_anthropic(
+            &anthropic_settings(&base, "claude-sonnet-5"),
+            &json!([]),
+            100,
+            0,
+        ))
+        .unwrap_err();
+        assert_eq!(err, ERR_UNREADABLE);
+    }
+
+    #[test]
+    fn anthropic_wrong_shaped_json_yields_empty_result() {
+        for body in ["{}", r#"{"content":[]}"#, r#"{"message":{}}"#] {
+            let (base, _r) = stub_once("200 OK", body);
+            let err = futures_lite_block_on(request_completion_anthropic(
+                &anthropic_settings(&base, "claude-sonnet-5"),
+                &json!([]),
+                100,
+                0,
+            ))
+            .unwrap_err();
+            assert_eq!(err, ERR_EMPTY_RESULT, "جسم {body}");
+        }
+    }
+
+    #[test]
+    fn anthropic_truncated_body_is_unreadable() {
+        let base = stub_truncated("200 OK", 500, r#"{"content":[{"type":"text","text":"نا"#);
+        let err = futures_lite_block_on(request_completion_anthropic(
+            &anthropic_settings(&base, "claude-sonnet-5"),
+            &json!([]),
+            100,
+            0,
+        ))
+        .unwrap_err();
+        assert_eq!(err, ERR_UNREADABLE);
+    }
+
+    #[test]
+    fn anthropic_connection_closed_without_reply_is_connect_error() {
+        let base = stub_close_without_reply();
+        let err = futures_lite_block_on(request_completion_anthropic(
+            &anthropic_settings(&base, "claude-sonnet-5"),
+            &json!([]),
+            100,
+            0,
+        ))
+        .unwrap_err();
+        assert_eq!(err, ERR_CONNECT);
+    }
+
+    #[test]
+    fn anthropic_nothing_listening_is_connect_error() {
+        let base = dead_port_url();
+        let err = futures_lite_block_on(request_completion_anthropic(
+            &anthropic_settings(&base, "claude-sonnet-5"),
+            &json!([]),
+            100,
+            0,
+        ))
+        .unwrap_err();
+        assert_eq!(err, ERR_CONNECT);
+    }
+
+    #[test]
+    fn anthropic_status_codes_map_regardless_of_error_body_shape() {
+        // claude-sonnet-5 بلا احتياط رفض (with_fallback=false) — طلب واحد
+        // دومًا هنا، فلا تختلط نتيجة هذا الاختبار بمنطق إعادة المحاولة
+        let cases: [(&str, &str); 10] = [
+            ("401 Unauthorized", ERR_BAD_KEY),
+            ("402 Payment Required", ERR_NO_CREDIT),
+            ("403 Forbidden", ERR_KEY_FORBIDDEN),
+            ("404 Not Found", ERR_MODEL_UNAVAILABLE),
+            ("413 Payload Too Large", ERR_TOO_LONG),
+            ("429 Too Many Requests", ERR_RATE_LIMITED),
+            ("500 Internal Server Error", ERR_SERVER),
+            ("502 Bad Gateway", ERR_SERVER),
+            ("503 Service Unavailable", ERR_SERVER),
+            ("529 Overloaded", ERR_OVERLOADED),
+        ];
+        for (status, expected) in cases {
+            for body in [r#"{"error":{"message":"boom"}}"#, "<html>bad gateway</html>"] {
+                let (base, _r) = stub_once(status, body);
+                let err = futures_lite_block_on(request_completion_anthropic(
+                    &anthropic_settings(&base, "claude-sonnet-5"),
+                    &json!([]),
+                    100,
+                    0,
+                ))
+                .unwrap_err();
+                assert_eq!(err, expected, "status={status} body={body}");
+            }
+        }
+
+        // ٤٠٠ و٤٢٢ هنا بلا رسالة خاصة (لا سبب احتياط، ولا نموذج يحمله أصلًا)
+        for status in ["400 Bad Request", "422 Unprocessable Entity"] {
+            let code: u16 = status[..3].parse().unwrap();
+            for body in [r#"{"error":{"message":"messages: roles must alternate"}}"#, "<html>bad gateway</html>"] {
+                let (base, _r) = stub_once(status, body);
+                let err = futures_lite_block_on(request_completion_anthropic(
+                    &anthropic_settings(&base, "claude-sonnet-5"),
+                    &json!([]),
+                    100,
+                    0,
+                ))
+                .unwrap_err();
+                assert_eq!(err, request_failed(code), "status={status} body={body}");
+            }
+        }
+    }
+
+    #[test]
+    fn anthropic_non_fallback_400_is_a_single_request_not_retried() {
+        // claude-opus-5 يحمل احتياطًا (with_fallback=true)، لكن سبب الرفض هنا
+        // لا علاقة له بالاحتياط — stub_once يخدم اتصالًا واحدًا فقط، فلو أعاد
+        // الكود الطلب خطأً لَفشِل الاختبار (لا مستمع للاتصال الثاني)
+        let (base, _r) = stub_once("400 Bad Request", r#"{"error":{"message":"messages: roles must alternate"}}"#);
+        let err = futures_lite_block_on(request_completion_anthropic(
+            &anthropic_settings(&base, "claude-opus-5"),
+            &json!([]),
+            100,
+            0,
+        ))
+        .unwrap_err();
+        assert_eq!(err, request_failed(400));
+    }
+
+    #[test]
+    fn anthropic_fallback_rejection_retries_and_second_reply_wins() {
+        // claude-opus-5 يحمل احتياطًا افتراضيًا — الحساب يرفض ترويسة/حقل
+        // الاحتياط بـ400 صريح السبب، فتُعاد المحاولة بلا احتياط. الرسالة
+        // النهائية تصدر من الرد الثاني وحده
+        let (base, _r) = stub_seq(vec![
+            (
+                "400 Bad Request",
+                r#"{"error":{"message":"Unexpected value(s) `server-side-fallback-2026-07-01` for the `anthropic-beta` header."}}"#,
+            ),
+            ("529 Overloaded", r#"{"error":{"message":"Overloaded"}}"#),
+        ]);
+        let err = futures_lite_block_on(request_completion_anthropic(
+            &anthropic_settings(&base, "claude-opus-5"),
+            &json!([]),
+            100,
+            0,
+        ))
+        .unwrap_err();
+        assert_eq!(err, ERR_OVERLOADED, "الرد الثاني كان يجب أن يفوز");
+    }
+
+    #[test]
+    fn anthropic_refusal_and_max_tokens_end_to_end() {
+        let (base, _r) = stub_once(
+            "200 OK",
+            r#"{"stop_reason":"refusal","content":[{"type":"text","text":"{\"partial\""}]}"#,
+        );
+        let err = futures_lite_block_on(request_completion_anthropic(
+            &anthropic_settings(&base, "claude-sonnet-5"),
+            &json!([]),
+            100,
+            0,
+        ))
+        .unwrap_err();
+        assert_eq!(err, ERR_REFUSAL);
+
+        let (base, _r) = stub_once(
+            "200 OK",
+            r#"{"stop_reason":"max_tokens","content":[{"type":"text","text":"{\"lines\": ["}]}"#,
+        );
+        let err = futures_lite_block_on(request_completion_anthropic(
+            &anthropic_settings(&base, "claude-sonnet-5"),
+            &json!([]),
+            100,
+            0,
+        ))
+        .unwrap_err();
+        assert_eq!(err, ERR_TOO_LONG);
+    }
+
+    // ===== مسار Ollama المحلي (request_completion_ollama) =====
+
+    #[test]
+    fn ollama_missing_base_url_or_model_stops_before_any_request() {
+        let err = futures_lite_block_on(request_completion_ollama(
+            &ollama_settings("", "qwen3:8b"),
+            &json!([]),
+            0,
+        ))
+        .unwrap_err();
+        assert_eq!(err, "عنوان خادم Ollama غير مضبوط — أضفه من لوحة الإعدادات.");
+
+        let err = futures_lite_block_on(request_completion_ollama(
+            &ollama_settings("http://localhost:11434", ""),
+            &json!([]),
+            0,
+        ))
+        .unwrap_err();
+        assert_eq!(err, "اسم نموذج Ollama غير مضبوط — أضفه من لوحة الإعدادات.");
+    }
+
+    #[test]
+    fn ollama_html_200_is_invalid_response() {
+        let (base, _r) = stub_once("200 OK", "<html><body>captive portal</body></html>");
+        let err = futures_lite_block_on(request_completion_ollama(
+            &ollama_settings(&base, "qwen3:8b"),
+            &json!([]),
+            0,
+        ))
+        .unwrap_err();
+        assert_eq!(err, "استجابة Ollama غير صالحة.");
+    }
+
+    #[test]
+    fn ollama_empty_200_body_is_invalid_response() {
+        let (base, _r) = stub_once("200 OK", "");
+        let err = futures_lite_block_on(request_completion_ollama(
+            &ollama_settings(&base, "qwen3:8b"),
+            &json!([]),
+            0,
+        ))
+        .unwrap_err();
+        assert_eq!(err, "استجابة Ollama غير صالحة.");
+    }
+
+    #[test]
+    fn ollama_wrong_shaped_json_yields_empty_result() {
+        for body in ["{}", r#"{"message":{}}"#] {
+            let (base, _r) = stub_once("200 OK", body);
+            let err = futures_lite_block_on(request_completion_ollama(
+                &ollama_settings(&base, "qwen3:8b"),
+                &json!([]),
+                0,
+            ))
+            .unwrap_err();
+            assert_eq!(err, "أعاد النموذج نتيجة فارغة — أعد المحاولة.", "جسم {body}");
+        }
+    }
+
+    #[test]
+    fn ollama_truncated_body_is_invalid_response() {
+        let base = stub_truncated("200 OK", 500, r#"{"message":{"content":"نا"#);
+        let err = futures_lite_block_on(request_completion_ollama(
+            &ollama_settings(&base, "qwen3:8b"),
+            &json!([]),
+            0,
+        ))
+        .unwrap_err();
+        assert_eq!(err, "استجابة Ollama غير صالحة.");
+    }
+
+    #[test]
+    fn ollama_connection_closed_without_reply_has_its_own_message() {
+        let base = stub_close_without_reply();
+        let err = futures_lite_block_on(request_completion_ollama(
+            &ollama_settings(&base, "qwen3:8b"),
+            &json!([]),
+            0,
+        ))
+        .unwrap_err();
+        // لا مهلة ولا رفض اتصال (وصل ثم انقطع) — فالرسالة ليست «Ollama غير
+        // مشغّل» رغم أن السبب الفعلي هو انهيار الخدمة أثناء المعالجة؛ ذراع
+        // عامة أقل دقة من ذراع منفذ مرفوض
+        assert_eq!(err, "تعذر الاتصال بالعنوان المحلي.");
+    }
+
+    #[test]
+    fn ollama_nothing_listening_says_ollama_is_down() {
+        let base = dead_port_url();
+        let err = futures_lite_block_on(request_completion_ollama(
+            &ollama_settings(&base, "qwen3:8b"),
+            &json!([]),
+            0,
+        ))
+        .unwrap_err();
+        assert_eq!(err, "Ollama غير مشغّل على هذا الجهاز.");
+    }
+
+    #[test]
+    fn ollama_model_not_found_status_has_its_own_message() {
+        let (base, _r) = stub_once("404 Not Found", r#"{"error":"model not found"}"#);
+        let err = futures_lite_block_on(request_completion_ollama(
+            &ollama_settings(&base, "qwen3:8b"),
+            &json!([]),
+            0,
+        ))
+        .unwrap_err();
+        assert_eq!(err, "النموذج المحدد غير موجود.");
+    }
+
+    // فحص m3: ٤٢٩ و٥xx في Ollama كانت «تحقق من الإعدادات» — والعطل في الخادم لا في الإعدادات
+    #[test]
+    fn ollama_busy_and_server_errors_are_named_like_the_other_paths() {
+        for (status, expected) in [
+            ("429 Too Many Requests", ERR_RATE_LIMITED),
+            ("500 Internal Server Error", ERR_SERVER),
+            ("503 Service Unavailable", ERR_SERVER),
+        ] {
+            let (base, _r) = stub_once(status, r#"{"error":"boom"}"#);
+            let err = futures_lite_block_on(request_completion_ollama(
+                &ollama_settings(&base, "qwen3:8b"),
+                &json!([]),
+                0,
+            ))
+            .unwrap_err();
+            assert_eq!(err, expected, "status={status}");
+        }
+        // وما سواها باقٍ على الذراع العامة
+        let (base, _r) = stub_once("418 I'm a teapot", r#"{"error":"boom"}"#);
+        let err = futures_lite_block_on(request_completion_ollama(&ollama_settings(&base, "qwen3:8b"), &json!([]), 0))
+            .unwrap_err();
+        assert_eq!(err, request_failed(418));
+    }
+
+    // فحص m3: ناتجٌ قطعه الطول كان يُقبل نجاحًا بنصّه الجزئي، خلافًا للمسارين الآخرين
+    #[test]
+    fn ollama_length_truncation_is_too_long_like_the_other_paths() {
+        let (base, _r) = stub_once(
+            "200 OK",
+            r#"{"model":"qwen3:8b","done":true,"done_reason":"length","message":{"role":"assistant","content":"جزء من النص فقط"}}"#,
+        );
+        let err = futures_lite_block_on(request_completion_ollama(
+            &ollama_settings(&base, "qwen3:8b"),
+            &json!([]),
+            0,
+        ))
+        .unwrap_err();
+        assert_eq!(err, ERR_TOO_LONG);
     }
 }
