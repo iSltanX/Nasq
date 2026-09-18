@@ -77,6 +77,10 @@
                 spellcheck="false"
                 placeholder="الصق المفتاح هنا"
               />
+              <!-- زر العين (Figma 248:6427 و348:22148): يُظهر المفتاح المحفوظ بطلب صريح -->
+              <button class="row-reveal" type="button" id="reveal-key" aria-pressed="false" aria-controls="api-key" title="إظهار المفتاح" aria-label="إظهار المفتاح" hidden>
+                <svg class="icon" aria-hidden="true"><use id="reveal-key-icon" href="#eye.16r"></use></svg>
+              </button>
             </div>
             <div class="form-row" data-control="field">
               <label class="row-label" for="model-name">النموذج</label>
@@ -90,8 +94,9 @@
               />
             </div>
           </div>
-          <p class="section-footer">
-            يُحفظ المفتاح في سلسلة المفاتيح على جهازك، ولا يُرسَل نصّك إلا حين تطلب التنسيق أو الفحص.
+          <p class="section-footer" id="key-footer" aria-live="polite">
+            <svg class="icon" aria-hidden="true" hidden><use href="#checkmark.circle.16m"></use></svg>
+            <span id="key-footer-text">يُحفظ المفتاح في سلسلة المفاتيح على جهازك، ولا يُرسَل نصّك إلا حين تطلب التنسيق أو الفحص.</span>
           </p>
         </div>
 

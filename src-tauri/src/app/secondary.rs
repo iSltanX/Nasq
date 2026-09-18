@@ -216,9 +216,44 @@ mod macos {
     }
 }
 
+/// زر العين في حقل المفتاح (المرحلة ٩، طلب المالك): يُظهر المفتاح المحفوظ بطلب
+/// صريح. أول أمرٍ يُخرج السرّ من سلسلة المفاتيح إلى واجهة، فلا يجيب إلا نافذة
+/// الإعدادات بالاسم — ولا شيء في صلاحيات Tauri يقصر أوامر التطبيق على نافذة
+#[tauri::command]
+pub(crate) fn reveal_api_key(window: tauri::WebviewWindow) -> Result<String, String> {
+    if !may_reveal_key(window.label()) {
+        return Err(ERR_REVEAL_FORBIDDEN.to_string());
+    }
+    let settings = crate::shared::settings::read_settings(window.app_handle())?;
+    if settings.key_unavailable {
+        return Err(ERR_REVEAL_LOCKED.to_string());
+    }
+    let key = settings.api_key.trim();
+    if key.is_empty() {
+        return Err(ERR_REVEAL_NONE.to_string());
+    }
+    Ok(key.to_string())
+}
+
+const ERR_REVEAL_FORBIDDEN: &str = "إظهار المفتاح من نافذة الإعدادات وحدها.";
+const ERR_REVEAL_LOCKED: &str = "تعذّر الوصول إلى المفتاح في سلسلة المفاتيح.";
+const ERR_REVEAL_NONE: &str = "لا مفتاح محفوظ بعد.";
+
+fn may_reveal_key(label: &str) -> bool {
+    label == SETTINGS_LABEL
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn only_the_settings_window_may_reveal_the_key() {
+        assert!(may_reveal_key(SETTINGS_LABEL));
+        for other in ["main", ABOUT_LABEL, "", "Settings", "settings "] {
+            assert!(!may_reveal_key(other), "نافذة «{other}» تُظهر المفتاح");
+        }
+    }
 
     const ROOMY_SCREEN: f64 = 1000.0;
 

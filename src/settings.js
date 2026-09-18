@@ -2,7 +2,8 @@
 //
 // المفتاح لا يعبر الجسر إلى هنا: النواة تحفظه في سلسلة المفاتيح، وتخبر
 // الصفحة أنه محفوظ فحسب. فالحقل يبدأ فارغًا بقناع مكان النص، ولا يُرسل منه
-// شيء إلا ما يكتبه صاحبه — وإفراغه بعد كتابةٍ محوٌ مقصود.
+// شيء إلا ما يكتبه صاحبه — وإفراغه بعد كتابةٍ محوٌ مقصود. والاستثناء الوحيد
+// زر العين: يطلب المفتاح بطلب صريح، ويُخفيه ما إن تغيب النافذة (المرحلة ٩).
 (() => {
   const { invoke, announceReady, reportPaneHeight } = window.NasaqSecondary;
   const appearance = window.NasaqAppearance;
@@ -17,6 +18,11 @@
   const menu = el("picker-menu");
 
   const apiKeyInput = el("api-key");
+  const revealBtn = el("reveal-key");
+  const keyFooter = el("key-footer");
+  const keyFooterText = el("key-footer-text");
+  const KEY_FOOTER_NOTE = keyFooterText.textContent.trim();
+  const SAVED_FLASH_MS = 3000;
   const modelInput = el("model-name");
   const baseUrlInput = el("base-url");
   const providerValue = el("provider-value");
@@ -25,6 +31,9 @@
   let view = null;
   let preset = "gemini";
   let keyTouched = false;
+  // المعروض في الحقل مفتاحٌ جاء من السلسلة بزر العين، لا شيء كتبه صاحبه
+  let revealedFromStore = false;
+  let footerTimer = null;
 
   // ---------- العرض ----------
 
@@ -54,6 +63,8 @@
       : view.hasApiKey
         ? KEY_MASK
         : "الصق المفتاح هنا";
+
+    syncReveal();
 
     appearanceValue.textContent = appearance.LABELS[appearance.apply(view.appearance)];
 
@@ -152,19 +163,104 @@
     }
   });
 
+  // ---------- زر العين وتأكيد الحفظ (المرحلة ٩، طلب المالك) ----------
+  // المالك كتب مفتاحه فرغ الحقل ولم يدرِ أنه حُفظ؛ ثم طلب أن يرى أيّ مفتاح
+  // محفوظ. فالحفظ يُعلَن في سطر الملاحظة ثلاث ثوانٍ، والعين تُظهر المفتاح
+
+  function flashKeyFooter(message) {
+    clearTimeout(footerTimer);
+    keyFooter.dataset.tone = "success";
+    // رمز SVG: hidden سمةٌ لا خاصية عليه، فتُبدَّل السمة نفسها
+    keyFooter.querySelector(".icon").toggleAttribute("hidden", false);
+    keyFooterText.textContent = message;
+    footerTimer = setTimeout(() => {
+      delete keyFooter.dataset.tone;
+      keyFooter.querySelector(".icon").toggleAttribute("hidden", true);
+      keyFooterText.textContent = KEY_FOOTER_NOTE;
+      measure();
+    }, SAVED_FLASH_MS);
+    measure();
+  }
+
+  const shown = () => apiKeyInput.type === "text";
+
+  function syncReveal() {
+    const local = view && view.provider === "ollama";
+    revealBtn.hidden = local || !(view?.hasApiKey || apiKeyInput.value);
+    revealBtn.setAttribute("aria-pressed", String(shown()));
+    const label = shown() ? "إخفاء المفتاح" : "إظهار المفتاح";
+    revealBtn.title = label;
+    revealBtn.setAttribute("aria-label", label);
+    el("reveal-key-icon").setAttribute("href", shown() ? "#eye.slash.16r" : "#eye.16r");
+  }
+
+  // الإخفاء يعيد القناع: ما جاء من السلسلة ولم يُمسّ لا يبقى في الحقل
+  function hideKey() {
+    if (!shown()) return;
+    apiKeyInput.type = "password";
+    if (revealedFromStore) {
+      apiKeyInput.value = "";
+      revealedFromStore = false;
+    }
+    syncReveal();
+  }
+
+  revealBtn.addEventListener("click", async () => {
+    if (shown()) {
+      hideKey();
+      return;
+    }
+    // مفتاحٌ مكتوب لم يُحفظ بعد يُظهره الحقل نفسه، بلا سؤال للنواة
+    if (!apiKeyInput.value) {
+      let stored = "";
+      try {
+        stored = await invoke("reveal_api_key");
+      } catch (error) {
+        showConnection(String(error), "danger");
+        return;
+      }
+      // ردٌّ فارغ لا يُظهر حقلًا فارغًا كأنه المفتاح
+      if (typeof stored !== "string" || !stored) return;
+      apiKeyInput.value = stored;
+      revealedFromStore = true;
+    }
+    apiKeyInput.type = "text";
+    syncReveal();
+  });
+
+  // لا يبقى المفتاح ظاهرًا في نافذة غابت عن النظر
+  window.addEventListener("blur", hideKey);
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) hideKey();
+  });
+
   // ---------- الحقول ----------
 
   // إفراغه بعد كتابة محوٌ مقصود، وما دام لم يُمسّ فلا يُرسل منه شيء
-  const saveKey = debounce(() => save({ apiKey: apiKeyInput.value }), TYPING_PAUSE);
+  // حفظ المفتاح يُعلَن في سطر الملاحظة بما كُتب في الحقل نفسه
+  async function saveKeyNow() {
+    const typed = apiKeyInput.value;
+    const ok = await save({ apiKey: typed });
+    if (ok) flashKeyFooter(typed.trim() ? "حُفظ المفتاح في سلسلة المفاتيح." : "حُذف المفتاح من سلسلة المفاتيح.");
+    return ok;
+  }
+  const saveKey = debounce(saveKeyNow, TYPING_PAUSE);
   apiKeyInput.addEventListener("input", () => {
     keyTouched = true;
+    // تعديل المفتاح الظاهر يجعله مفتاحًا جديدًا يكتبه صاحبه
+    revealedFromStore = false;
     saveKey();
+    syncReveal();
   });
   apiKeyInput.addEventListener("blur", async () => {
     if (!keyTouched) return;
     keyTouched = false;
     // القيمة لا تُمحى من الحقل إلا بعد أن يستقرّ حفظها فعلًا
-    if (await save({ apiKey: apiKeyInput.value })) apiKeyInput.value = "";
+    if (await saveKeyNow()) {
+      apiKeyInput.value = "";
+      apiKeyInput.type = "password";
+      syncReveal();
+    }
   });
 
   const saveModel = debounce(() => save({ model: modelInput.value.trim() }), TYPING_PAUSE);

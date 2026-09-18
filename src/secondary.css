@@ -193,3 +193,57 @@ body[data-window="about"] {
   outline: none;
   box-shadow: var(--focus-ring);
 }
+
+/* ================= حقل المفتاح (المرحلة ٩) ================= */
+/* زر العين في طرف الحقل (Figma 248:6427 و348:22148): أيقونة ١٦ ثانوية بمساحة
+   لمس ٢٤، وتشتدّ حين يكون المفتاح ظاهرًا */
+.row-reveal {
+  appearance: none;
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  inline-size: var(--size-hit-min);
+  block-size: var(--size-hit-min);
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-control-small);
+  background: none;
+  color: var(--icon-secondary);
+}
+.row-reveal[hidden] {
+  display: none;
+}
+.row-reveal:hover {
+  background: var(--fill-hover);
+  color: var(--icon-primary);
+}
+.row-reveal[aria-pressed="true"] {
+  color: var(--icon-primary);
+}
+.row-reveal:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+.row-reveal .icon {
+  inline-size: var(--size-icon-16);
+  block-size: var(--size-icon-16);
+}
+
+/* سطر الملاحظة يعلن الحفظ ثلاث ثوانٍ بلون النجاح ورمزه، ثم يعود */
+#key-footer {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+}
+#key-footer[data-tone="success"] {
+  color: var(--status-success-fg);
+}
+#key-footer .icon {
+  flex: none;
+  inline-size: var(--size-icon-16);
+  block-size: var(--size-icon-16);
+}
+#key-footer .icon[hidden] {
+  display: none;
+}

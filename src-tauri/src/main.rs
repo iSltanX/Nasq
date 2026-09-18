@@ -41,6 +41,7 @@ fn main() {
             app::secondary::open_about,
             app::secondary::secondary_window_ready,
             app::secondary::settings_pane_resized,
+            app::secondary::reveal_api_key,
             app::menu::set_menu_state,
             app::menu::set_active_module,
             app::menu::set_active_pane,

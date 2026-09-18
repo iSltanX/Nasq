@@ -34,6 +34,8 @@ const USED = {
   "doc.text.16r": [64, 752, 16],
   "doc.text.magnifyingglass.16r": [576, 1008, 16],
   "ellipsis.circle.16r": [1088, 112, 16],
+  "eye.16r": [832, 496, 16],
+  "eye.slash.16r": [1088, 496, 16],
   "gearshape.16r": [576, 112, 16],
   "gearshape.20r": [640, 112, 20],
   "info.circle.16r": [1088, 240, 16],

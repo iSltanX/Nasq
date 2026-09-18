@@ -818,10 +818,21 @@ test("المرحلة ٥: نافذة الإعدادات كما رُسمت — ت�
   assert.ok(settingsHtml.includes("لا يُنزَّل أي تحديث قبل موافقتك."), "تذييل التحديثات ليس نصّ التصميم");
 });
 
-test("المرحلة ٥: المفتاح لا يعبر الجسر إلى صفحة الإعدادات", () => {
-  // الصفحة تعرف أنه محفوظ فحسب، ولا تقرأ قيمته من النواة أبدًا
+test("المرحلة ٥: المفتاح لا يعبر الجسر إلى صفحة الإعدادات — إلا بزر العين (المرحلة ٩)", () => {
+  // الصفحة تعرف أنه محفوظ فحسب، ولا تقرأ قيمته من عرض الإعدادات أبدًا
   assert.ok(settingsJs.includes("view.hasApiKey"), "الحقل المقنّع لا يتبع علم الحفظ");
-  assert.ok(!/view\.apiKey|\.apiKey\b(?!\s*:)/.test(settingsJs.replace(/apiKey: apiKeyInput\.value/g, "")), "الصفحة تقرأ المفتاح من النواة");
+  assert.ok(!/view\.apiKey|\.apiKey\b(?!\s*:)/.test(settingsJs), "الصفحة تقرأ المفتاح من النواة");
+  // المرحلة ٩ (طلب المالك): الطريق الوحيد للمفتاح إلى الصفحة زر العين — نداءٌ
+  // واحد لـ reveal_api_key داخل مستمع نقرته، ولا يناديه أحدٌ غيره
+  const reveals = settingsJs.match(/invoke\("reveal_api_key"\)/g) || [];
+  assert.strictEqual(reveals.length, 1, "reveal_api_key يُنادى من غير زر العين");
+  const handler = /revealBtn\.addEventListener\("click", async \(\) => \{[\s\S]*?\n  \}\);/.exec(settingsJs);
+  assert.ok(handler && handler[0].includes('invoke("reveal_api_key")'), "المفتاح يُطلب خارج نقرة العين");
+  for (const [name, code] of [["shell.js", shell], ["onboarding.js", onboardingJs], ["nasaq.js", nasaq], ["shadhb.js", shadhb], ["about.js", aboutJs], ["index.html", html]]) {
+    assert.ok(!code.includes("reveal_api_key"), `${name} يطلب المفتاح`);
+  }
+  // ويختفي ما إن تغيب النافذة
+  assert.ok(/window\.addEventListener\("blur", hideKey\)/.test(settingsJs), "المفتاح يبقى ظاهرًا في نافذة غائبة");
   // والقشرة لم تعد تقرأه أيضًا بعد زوال الطبقة المؤقتة
   assert.ok(!/\bs\.apiKey\b|settings\.apiKey/.test(shell), "القشرة ما زالت تقرأ المفتاح");
   // وأول تشغيل صار من شأن ورقة الترحيب لا القشرة (المرحلة ٦): تعرف أنه محفوظ ولا تقرؤه
@@ -870,7 +881,8 @@ test("المرحلة ٥: ما يُكتب يُحفظ بعد سكتة لا عند 
   }
   assert.ok(settingsJs.includes("function debounce("), "لا سكتة بين الكتابة والحفظ");
   // والمفتاح لا يُمحى من الحقل إلا بعد أن يستقرّ حفظه
-  assert.ok(/if \(await save\(\{ apiKey: apiKeyInput\.value \}\)\) apiKeyInput\.value = "";/.test(settingsJs), "الحقل يُفرَّغ قبل أن ينجح الحفظ");
+  assert.ok(/if \(await saveKeyNow\(\)\) \{\s*apiKeyInput\.value = "";/.test(settingsJs), "الحقل يُفرَّغ قبل أن ينجح الحفظ");
+  assert.ok(/const ok = await save\(\{ apiKey: typed \}\);/.test(settingsJs), "saveKeyNow لا يحفظ ما كُتب");
 });
 
 test("المرحلة ٥: المزوّدات نفسها في الواجهة وفي النواة", () => {
@@ -1363,4 +1375,14 @@ test("المرحلة ٩: سطر القصّة بلا «.،»", () => {
     "بلا سبب، 1 كلمات، آمنة",
     "هل هذا ضروري؟، 3 كلمات، آمنة",
   ]);
+});
+
+// المرحلة ٩: hidden خاصيةٌ في عناصر HTML وحدها؛ على رمز SVG لا تضع السمة،
+// فيبقى ظاهرًا — «تعذّرت» ورثت رمز ما قبلها، وتأكيد حفظ المفتاح بلا علامته
+test("المرحلة ٩: لا .hidden على رمز SVG — السمة تُبدَّل بنفسها", () => {
+  for (const [name, code] of [["shadhb.js", shadhb], ["settings.js", settingsJs], ["nasaq.js", nasaq], ["shell.js", shell]]) {
+    // متغيّرٌ أُخذ بـ querySelector(".icon") أو سُمّي Icon ثم وُضعت عليه .hidden
+    const bad = code.match(/(?:\.icon"\)|Icon)\s*\.hidden\s*=/g) || [];
+    assert.strictEqual(bad.length, 0, `${name}: ${bad.join(" | ")}`);
+  }
 });

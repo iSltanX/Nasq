@@ -286,7 +286,8 @@
       cutTitle.textContent = `القصّة ${AR(selected + 1)} من ${AR(state.cuts.length)}`;
       cutTag.dataset.tone = tag.tone;
       const tagIcon = cutTag.querySelector(".icon");
-      tagIcon.hidden = !tag.icon;
+      // رمز SVG: hidden سمةٌ لا خاصية عليه — كانت «تعذّرت» ترث رمز الحالة قبلها
+      tagIcon.toggleAttribute("hidden", !tag.icon);
       if (tag.icon) tagIcon.querySelector("use").setAttribute("href", `#${tag.icon}`);
       cutTag.querySelector(".tag-label").textContent = tag.label;
       cutQuote.textContent = quoted(cut.quote);
