@@ -66,7 +66,7 @@
   flex: none;
   inline-size: var(--inspector-width);
   padding: var(--size-toolbar) var(--space-16) var(--space-16);
-  padding-inline-end: calc(var(--space-16) - var(--scroller-width));
+  overflow-y: auto;
   background: var(--material-sidebar);
 }
 
@@ -715,21 +715,6 @@ textarea.empty-bidi {
   min-block-size: 0;
   padding: calc(var(--size-toolbar) + var(--space-8) + var(--space-24)) var(--space-32) var(--space-32);
   overflow-y: auto;
-}
-
-/* شريطا التمرير في المحتوى والمفتّش (المرحلة ٩): كلاهما يمتدّ تحت شريط الأدوات
-   لتمرّ الكتابة تحت زجاجه، فكان مقبض التمرير يصعد بجوار أزراره. المسار يبدأ
-   تحت الشريط، ومكانه محجوز دائمًا (scroll بمسار شفاف) فلا يقفز المحتوى حين
-   يطول النص في إعداد «أشرطة التمرير دائمًا». المقبض بدرجتَي مقبض النظام من
-   توكنَي scroller/knob في Figma */
-.scroll-view,
-.inspector {
-  overflow-y: scroll;
-}
-.scroll-view::-webkit-scrollbar-track,
-.inspector::-webkit-scrollbar-track {
-  margin-top: var(--size-toolbar);
-  margin-bottom: var(--space-8);
 }
 
 .scroll-edge {
@@ -1482,9 +1467,7 @@ textarea.empty-bidi {
 /* ================= المسودات في الشريط الجانبي (Figma 97:116) =================
    مسودة ٤٤ بسهم طي ومقتطف ونوع وعدد صيغ ووقت، وصيغها تحتها صفوفًا ٣٢ بإزاحة ٢٤
    وشارة «± أسطر». إطار بلون الوحدة حول الصف ما دامت قائمته السياقية مفتوحة */
-/* البحث و«الجلسة الحالية» ثابتان والمسودات وحدها تتمرّر، فلا يمتد المقبض
-   بجوارهما. المسار في حشوة الشريط الجانبي لا من عرض الصفوف: عرضه ١٠ بقدر
-   الحشوة والمقبض ٦ كغيره، ومحجوز دائمًا فلا تقفز الصفوف حين تطول القائمة */
+/* البحث و«الجلسة الحالية» ثابتان والمسودات وحدها تتمرّر */
 .sidebar-body[data-for="nasaq"] {
   overflow: hidden;
 }
@@ -1493,14 +1476,7 @@ textarea.empty-bidi {
   flex-direction: column;
   gap: var(--space-4);
   min-block-size: 0;
-  margin-inline-end: calc(-1 * var(--space-10));
-  overflow-y: scroll;
-}
-.drafts-list::-webkit-scrollbar {
-  width: var(--space-10);
-}
-.drafts-list::-webkit-scrollbar-thumb {
-  border-width: 2px;
+  overflow-y: auto;
 }
 .draft-row,
 .version-row {

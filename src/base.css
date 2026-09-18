@@ -115,29 +115,14 @@ svg {
   box-shadow: var(--focus-ring);
 }
 
-/* شريط التمرير في كل نوافذ التطبيق: مقبض الماك الرفيع ٦ بحشوة ٣ من كل جانب،
-   بدرجتَي توكنَي scroller/knob في Figma، ومساره شفاف. بدونه يرسم WebKit شريط
-   النظام العريض القديم كلما كانت الفأرة موصولة أو «أشرطة التمرير دائمًا» */
-:root {
-  --scroller-width: 12px;
+/* أشرطة التمرير مخفية في كل نوافذ التطبيق (قرار المالك): التمرير باقٍ بالعجلة
+   ولوحة اللمس والمفاتيح، ولا يرسم WebKit شريط النظام العريض القديم حين تكون
+   الفأرة موصولة، ولا يحجز له مكانًا يقصّ من عرض المحتوى */
+* {
+  scrollbar-width: none;
 }
 ::-webkit-scrollbar {
-  width: var(--scroller-width);
-  height: var(--scroller-width);
-}
-::-webkit-scrollbar-track,
-::-webkit-scrollbar-corner {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  min-width: 40px;
-  min-height: 40px;
-  border: 3px solid transparent;
-  border-radius: var(--radius-full);
-  background: var(--scroller-knob) padding-box;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: var(--scroller-knob-hover) padding-box;
+  display: none;
 }
 
 [hidden] {
