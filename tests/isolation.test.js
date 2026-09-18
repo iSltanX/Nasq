@@ -1036,6 +1036,43 @@ test("المرحلة ٨: الصفّ العمودي يردّ افتراضات ا�
   assert.ok(!/overflow:\s*hidden/.test(stacked), "الصفّ العمودي يقصّ نصّه");
 });
 
+// المرحلة ٨: تمريرة الوصول — ما يراه VoiceOver
+test("المرحلة ٨: حاوية الرموز مخفيّة عن قارئ الشاشة في كل نافذة", () => {
+  // ٥٥ رمزًا في <div id="sprite">: تعريفات لا محتوى. كانت مخفيّة في صفحة
+  // الإعدادات وظاهرة في النافذة الرئيسية
+  for (const [name, page] of [["index.html", html], ["settings.html", settingsHtml]]) {
+    const at = page.indexOf('id="sprite"');
+    assert.ok(at !== -1, `${name}: حاوية الرموز غائبة`);
+    const tag = page.slice(page.lastIndexOf("<", at), page.indexOf(">", at) + 1);
+    assert.ok(/\bhidden\b/.test(tag), `${name}: حاوية الرموز بلا hidden`);
+    assert.ok(/aria-hidden="true"/.test(tag), `${name}: حاوية الرموز تظهر لقارئ الشاشة`);
+  }
+});
+
+test("المرحلة ٨: كل نافذة حوار لها دور واسم، ولغة المستند عربية بالاتجاه", () => {
+  for (const [name, page] of [["index.html", html], ["settings.html", settingsHtml]]) {
+    assert.ok(/<html[^>]*\blang="ar"/.test(page), `${name}: لغة المستند ليست ar`);
+    assert.ok(/<html[^>]*\bdir="rtl"/.test(page), `${name}: اتجاه المستند ليس rtl`);
+  }
+  // كل حوار له اسم. والحاجزُ منه وحده (ورقة أو تنبيه) يعلن aria-modal؛
+  // والنافذة المنبثقة (عدسة القراءة) لا تحجز فلا تعلنه — وهي في التصميم
+  // «نافذة منبثقة من شريط الأدوات» لا ورقة
+  let dialogs = 0;
+  for (const m of html.matchAll(/<div\b([^>]*\brole="(?:dialog|alertdialog)"[^>]*)>/g)) {
+    const attrs = m[1];
+    const id = (/id="([^"]+)"/.exec(attrs) || [])[1] || "?";
+    const cls = (/class="([^"]*)"/.exec(attrs) || [])[1] || "";
+    dialogs++;
+    assert.ok(/aria-labelledby="|aria-label="/.test(attrs), `الحوار ${id} بلا اسم`);
+    if (/\b(alert|sheet)\b/.test(cls)) {
+      assert.ok(/aria-modal="true"/.test(attrs), `الحاجز ${id} بلا aria-modal`);
+    } else {
+      assert.ok(!/aria-modal="true"/.test(attrs), `المنبثقة ${id} تعلن أنها حاجز`);
+    }
+  }
+  assert.ok(dialogs >= 5, `عدد الحوارات أقل من المتوقع: ${dialogs}`);
+});
+
 test("المرحلة ٦: تدفّقا التطبيق لا يملكهما برج", () => {
   // ورقة الترحيب وتنبيه التحديث عن التطبيق نفسه: بلا data-for، ولا يعرفان برجًا
   for (const id of ["welcome-sheet", "update-alert", "welcome-picker-menu"]) {
