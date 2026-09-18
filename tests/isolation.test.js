@@ -1349,3 +1349,18 @@ test("المرحلة ٩: مؤشر السطر الفارغ يُعرف بموضع�
   assert.ok(/try\s*\{[^}]*NasaqRtlCaret\?\.attach/.test(shell), "ربط المؤشر غير محروس في القشرة");
   assert.ok(!/NasaqRtlCaret/.test(nasaq) && !/NasaqRtlCaret/.test(shadhb), "برجٌ يربط المؤشر بنفسه");
 });
+
+// المرحلة ٩: سطر القصّة كان «مباشرة.، ٤ كلمات» — خاتمة السبب تُنزع قبل الفاصلة
+test("المرحلة ٩: سطر القصّة بلا «.،»", () => {
+  const vm = require("node:vm");
+  const body = /function cutMetaText\(cut\) \{[\s\S]*?\n    \}/.exec(shadhb);
+  assert.ok(body, "cutMetaText غائبة");
+  const ctx = { wordsLabel: (n) => `${n} كلمات`, out: null };
+  vm.runInNewContext(`${body[0]}\nout = [cutMetaText({ reason: "شرح زائد يربط الإيماءة بالكتاب مباشرة.", wordCount: 4, safe: true }), cutMetaText({ reason: "  تكرار،  ", wordCount: 2, safe: false }), cutMetaText({ reason: "", wordCount: 1, safe: true }), cutMetaText({ reason: "هل هذا ضروري؟", wordCount: 3, safe: true })];`, ctx);
+  assert.deepStrictEqual(JSON.parse(JSON.stringify(ctx.out)), [
+    "شرح زائد يربط الإيماءة بالكتاب مباشرة، 4 كلمات، آمنة",
+    "تكرار، 2 كلمات، جريئة",
+    "بلا سبب، 1 كلمات، آمنة",
+    "هل هذا ضروري؟، 3 كلمات، آمنة",
+  ]);
+});

@@ -1340,8 +1340,9 @@ textarea.empty-bidi {
   color: var(--text-disabled);
 }
 
-/* بطاقة شكل المنعطف (Suggestion Card · Form): لم تُحسم بحدّ هادئ، ومحددة بلون
-   الوحدة حين تعرضها النتيجة، ومعتمدة بوسم «معتمدة» و«تراجع عن القرار» */
+/* بطاقة الاقتراح (Suggestion Card, Figma 73:641): محايدة كمجموعات نماذج الإعدادات
+   — تعبئة المجموعة وحدٌّ شعري (المرحلة ٩: كانت ذهبًا فوق ذهب وصندوقًا في صندوق).
+   شكل المنعطف المحدد وحده بحدٍّ رفيع بلون الوحدة، لأن بين شكلين ما يُختار */
 .suggestion-card {
   display: flex;
   flex-direction: column;
@@ -1349,14 +1350,14 @@ textarea.empty-bidi {
   gap: var(--space-8);
   padding: var(--space-12);
   border-radius: var(--radius-12);
-  box-shadow: inset 0 0 0 var(--stroke-hairline) var(--border-default);
+  background: var(--fill-form-group);
+  box-shadow: inset 0 0 0 var(--stroke-hairline) var(--border-hairline);
 }
 .suggestion-card[data-state="undecided"]:hover {
   background: var(--fill-hover);
 }
 .suggestion-card[data-state="selected"] {
-  background: var(--module-tint);
-  box-shadow: inset 0 0 0 var(--stroke-hairline) var(--module-strong);
+  box-shadow: inset 0 0 0 var(--stroke-hairline) var(--module-accent);
 }
 /* العنوان يمينًا والوسم يسارًا على سطر واحد بلا فجوة ثابتة (Figma 98:364: ١٢٨ + ٦٠
    في ١٨٨)، والعنوان وحده يتنازل عند الضيق */
@@ -1659,10 +1660,18 @@ textarea.empty-bidi {
 .reading-card-skeleton .skeleton-line:nth-child(2) { inline-size: 200px; }
 .reading-card-skeleton .skeleton-line:nth-child(4) { inline-size: 160px; }
 
-/* بطاقة القصّة المحددة (Suggestion Card · Cut, Figma 73:641): الاقتباس الحرفي
-   مُبرَز بلون الوحدة، ثم السبب والعدد والأمان، ثم الأثر المتوقع برمز معلومات */
+/* بطاقة القصّة المحددة (Suggestion Card · Cut, Figma 73:641): هي القصّة الوحيدة
+   المعروضة فلا تحتاج حدّ اختيار. الاقتباس الحرفي بلا صندوق، وخطٌّ رفيع بلون الوحدة
+   في بدايته يردّد خطّ القصّة تحت النص — ثم السبب، ثم الأثر المتوقع */
+#cut-card[data-state="selected"] {
+  box-shadow: inset 0 0 0 var(--stroke-hairline) var(--border-hairline);
+}
 #cut-card .card-quote {
-  background: var(--module-highlight);
+  padding-block: var(--space-2);
+  padding-inline: var(--space-10) 0;
+  border-inline-start: 2px solid var(--module-accent);
+  border-radius: 0;
+  background: none;
   box-shadow: none;
   font: var(--type-body-default);
 }
