@@ -4,7 +4,7 @@
 
 :root {
   /* الشريط الجانبي ٢٤٠ ويتنازل حتى أدناه ليبقى للمحتوى ٥٢٤ (إطار ٧٦٠: 100:918) */
-  --sidebar-width: clamp(var(--layout-sidebar-min), calc(100vw - 524px), var(--layout-sidebar));
+  --sidebar-width: clamp(var(--layout-sidebar-min), calc(100vw - var(--layout-content-at-min-window)), var(--layout-sidebar));
   /* المفتّش ٣٦٠ ويتنازل حتى حدّه الأدنى ليبقى للمحتوى حدّه (اعتماد المالك، المرحلة ٩) */
   --inspector-width: clamp(var(--layout-inspector-min), calc(100vw - var(--layout-content-min)), var(--layout-inspector));
   /* إشارات النافذة: ثلاث بعرض ٦٠، على بعد ١٩ من الحافة، وأول عنصر بعدها على ١٧ */
@@ -13,7 +13,7 @@
   --placeholder-pin: calc(var(--font-line-height-caption) + var(--space-16));
   --window-controls: 60px;
   --window-controls-inset: 19px;
-  --window-controls-gap: 9px;
+  --window-controls-gap: var(--space-9);
 }
 
 /* ما يخص برجًا واحدًا لا يظهر إلا في وحدته — وشَذْب لا يظهر إلا صراحةً */
@@ -423,8 +423,8 @@ textarea.empty-bidi {
   color: var(--text-secondary);
 }
 .shortcut .icon {
-  inline-size: 12px;
-  block-size: 12px;
+  inline-size: var(--size-icon-12);
+  block-size: var(--size-icon-12);
 }
 
 /* المؤشر الدوّار (Figma 57:68): حلقة سمكها ربع نصف القطر تقريبًا، وقوس ١٣٥° من
@@ -1485,7 +1485,7 @@ textarea.empty-bidi {
 .menu-separator {
   flex: none;
   block-size: var(--size-menu-separator);
-  margin-inline: 11px;
+  margin-inline: var(--space-row-inset);
   background: linear-gradient(var(--border-hairline), var(--border-hairline)) center / 100% var(--stroke-hairline) no-repeat;
 }
 .dd-option .menu-check {

@@ -201,6 +201,8 @@
   --layout-about-width: 284px;
   --layout-settings-pane: 500px;
   --size-picker-chevron: 20px;
+  --size-icon-12: 12px;
+  --layout-content-at-min-window: 524px;
 
   /* Typography */
   --font-display: "Cairo", system-ui, sans-serif;

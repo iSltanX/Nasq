@@ -12,9 +12,7 @@
 
 .section-header {
   padding: 0 var(--space-10) var(--space-10);
-  font-size: var(--font-size-label);
-  font-weight: 700;
-  line-height: var(--font-line-height-label);
+  font: var(--type-label-default);
   color: var(--text-primary);
 }
 
@@ -26,8 +24,7 @@
 
 .section-footer {
   padding: var(--space-8) var(--space-10) 0;
-  font-size: var(--font-size-footnote);
-  line-height: var(--font-line-height-footnote);
+  font: var(--type-caption-footnote);
   color: var(--text-secondary);
 }
 
@@ -114,8 +111,8 @@
 }
 
 .row-picker .picker-chevron {
-  inline-size: 20px;
-  block-size: 20px;
+  inline-size: var(--size-picker-chevron);
+  block-size: var(--size-picker-chevron);
   border-radius: var(--radius-full);
   background: var(--fill-control);
   display: grid;
@@ -123,8 +120,8 @@
 }
 
 .row-picker .picker-chevron svg {
-  inline-size: 12px;
-  block-size: 12px;
+  inline-size: var(--size-icon-12);
+  block-size: var(--size-icon-12);
   color: var(--text-primary);
 }
 
@@ -148,10 +145,7 @@
   border: 0;
   border-radius: var(--radius-control-regular);
   background: var(--fill-control);
-  font-family: var(--font-text);
-  font-size: var(--font-size-label);
-  font-weight: 700;
-  line-height: var(--font-line-height-label);
+  font: var(--type-label-default);
   color: var(--text-primary);
   cursor: default;
 }
@@ -189,8 +183,8 @@
   position: absolute;
   inset-block-start: 1.5px;
   inset-inline-start: 1.5px;
-  inline-size: 21px;
-  block-size: 13px;
+  inline-size: var(--size-toggle-knob-width);
+  block-size: var(--size-toggle-knob-height);
   border-radius: var(--radius-full);
   background: var(--fill-knob);
   box-shadow: 0 0.5px 1.5px var(--shadow-window-key);
@@ -228,8 +222,8 @@
 }
 
 .row-status svg {
-  inline-size: 16px;
-  block-size: 16px;
+  inline-size: var(--size-icon-16);
+  block-size: var(--size-icon-16);
   flex-shrink: 0;
 }
 
@@ -281,7 +275,7 @@
   font: inherit;
   color: var(--text-primary);
   cursor: default;
-  block-size: 24px;
+  block-size: var(--size-menu-item);
   padding-inline: var(--space-9);
   border-radius: var(--radius-7);
   display: flex;
@@ -296,8 +290,8 @@
 }
 
 .picker-menu-item svg {
-  inline-size: 16px;
-  block-size: 16px;
+  inline-size: var(--size-icon-16);
+  block-size: var(--size-icon-16);
   visibility: hidden;
 }
 
