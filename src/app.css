@@ -6,6 +6,11 @@
   /* الشريط الجانبي ٢٥٦ ويتنازل حتى أدناه ليبقى للمحتوى ٥٢٤ (إطار ٧٦٠: 100:918) */
   --sidebar-width: clamp(var(--layout-sidebar-min), calc(100vw - 524px), var(--layout-sidebar));
   /* إشارات النافذة: ثلاث بعرض ٦٠، على بعد ١٩ من الحافة، وأول عنصر بعدها على ١٧ */
+  /* مسار التمرير: مقبض ٦ بحشوة ٣ من كل جانب — مقاس مقبض الماك الرفيع */
+  --scroller-width: 12px;
+  /* موضع حالة البداية اللاصقة: يُقاس من داخل حشوة منطقة التمرير لا من حافتها
+     (قيس في WebKit وChromium)، فهو عنوان العمود والفراغ بعده — فتلصق حيث تبدأ */
+  --placeholder-pin: calc(var(--font-line-height-caption) + var(--space-16));
   --window-controls: 60px;
   --window-controls-inset: 19px;
   --window-controls-gap: 9px;
@@ -61,7 +66,7 @@
   flex: none;
   inline-size: var(--layout-inspector);
   padding: var(--size-toolbar) var(--space-16) var(--space-16);
-  overflow-y: auto;
+  padding-inline-end: calc(var(--space-16) - var(--scroller-width));
   background: var(--material-sidebar);
 }
 
@@ -378,6 +383,34 @@ textarea.empty-bidi {
   unicode-bidi: isolate;
 }
 
+/* مؤشر السطر الفارغ (rtl-caret.js، المرحلة ٩): WebKit يرسمه يسارًا على السطر
+   الفارغ في حقل عربي، فيُرسم هذا مكانه في بداية السطر. تحت زجاج الشريط
+   (٥) وفوق النص، وبعرض مؤشر النظام ووميضه */
+.rtl-caret {
+  position: fixed;
+  z-index: 4;
+  inline-size: 2px;
+  border-radius: 1px;
+  pointer-events: none;
+}
+.rtl-caret[hidden] {
+  display: none;
+}
+.rtl-caret-blink {
+  animation: rtl-caret-blink 1.06s step-end infinite;
+}
+@keyframes rtl-caret-blink {
+  50% { opacity: 0; }
+}
+.rtl-caret-mirror {
+  position: fixed;
+  inset-block-start: 0;
+  inset-inline-start: -10000px;
+  visibility: hidden;
+  pointer-events: none;
+  overflow: hidden;
+}
+
 /* الاختصارات تُقرأ من اليسار دائمًا: ⌘↩ */
 .shortcut {
   direction: ltr;
@@ -663,6 +696,8 @@ textarea.empty-bidi {
 /* ================= المحتوى ================= */
 .content {
   position: relative;
+  /* سياق تكديس: حالة البداية تحت النص (z-index: -1) وفوق خلفية المحتوى */
+  isolation: isolate;
   display: flex;
   flex: 1;
   flex-direction: column;
@@ -680,6 +715,37 @@ textarea.empty-bidi {
   min-block-size: 0;
   padding: calc(var(--size-toolbar) + var(--space-8) + var(--space-24)) var(--space-32) var(--space-32);
   overflow-y: auto;
+}
+
+/* شريطا التمرير في المحتوى والمفتّش (المرحلة ٩): كلاهما يمتدّ تحت شريط الأدوات
+   لتمرّ الكتابة تحت زجاجه، فكان مقبض التمرير يصعد بجوار أزراره. المسار يبدأ
+   تحت الشريط، ومكانه محجوز دائمًا (scroll بمسار شفاف) فلا يقفز المحتوى حين
+   يطول النص في إعداد «أشرطة التمرير دائمًا». المقبض بدرجتَي مقبض النظام (٠٫٢٥ ثم ٠٫٥ عند المرور) — مؤقتًا من توكنين
+   قائمين حتى يُضاف material/scroller في Figma */
+.scroll-view,
+.inspector {
+  overflow-y: scroll;
+}
+.scroll-view::-webkit-scrollbar,
+.inspector::-webkit-scrollbar {
+  width: var(--scroller-width);
+}
+.scroll-view::-webkit-scrollbar-track,
+.inspector::-webkit-scrollbar-track {
+  margin-top: var(--size-toolbar);
+  margin-bottom: var(--space-8);
+  background: transparent;
+}
+.scroll-view::-webkit-scrollbar-thumb,
+.inspector::-webkit-scrollbar-thumb {
+  min-height: 40px;
+  border: 3px solid transparent;
+  border-radius: var(--radius-full);
+  background: var(--text-disabled) padding-box;
+}
+.scroll-view::-webkit-scrollbar-thumb:hover,
+.inspector::-webkit-scrollbar-thumb:hover {
+  background: var(--border-strong) padding-box;
 }
 
 .scroll-edge {
@@ -765,6 +831,23 @@ textarea.empty-bidi {
   .content[data-view="source"] .column-result [data-error-slot] {
     display: none;
   }
+  /* حالة البداية في العرض الواحد خارج جريان الصفحة (طلب المالك، المرحلة ٩): كانت
+     تحت المحرر فيدفعها كل سطر إلى أسفل. الآن تثبت في وسط منطقة المحتوى — لا في
+     الجزء المتمرّر — علامةً خافتة خلف النص، لا تلتقط نقرة */
+  #output-placeholder,
+  #shadhb-placeholder {
+    position: absolute;
+    inset-block-start: 50%;
+    inset-inline: 0;
+    z-index: -1;
+    translate: 0 -50%;
+    pointer-events: none;
+  }
+}
+/* خافتة ٣٠٪ في العرضين (طلب المالك، المرحلة ٩) */
+#output-placeholder,
+#shadhb-placeholder {
+  opacity: 0.3;
 }
 /* حاوية خانتَي التنبيه فوق الأصل لا تشغل مكانًا بنفسها */
 .banner-stack {
@@ -791,6 +874,13 @@ textarea.empty-bidi {
   }
   .column-header {
     display: block;
+  }
+  /* حالة البداية في عمود النتيجة تثبت في موضعها ولو طال الأصل وتمرّر (المرحلة ٩):
+     عمود النتيجة يمتدّ بطول الأصل، فتبقى لاصقةً تحت شريط الأدوات حيث بدأت */
+  #output-placeholder,
+  #shadhb-placeholder {
+    position: sticky;
+    inset-block-start: var(--placeholder-pin);
   }
   .compare-divider {
     display: block;
@@ -1153,6 +1243,14 @@ textarea.empty-bidi {
   flex: none;
   white-space: nowrap;
 }
+/* المرحلة ٩: بعرض ٣٦٠ صار الزرّ الصغير في طرفٍ والتسمية في طرف وبينهما فراغ؛
+   فالقائمة تملأ عمود قيمتها كقوائم مفتّش Pages، حتى ٢٠٠ — فتبدأ القوائم
+   المتجاورة على خط واحد مهما اختلف طول تسمياتها */
+.inspector-row.control .dd-btn {
+  flex: 1;
+  justify-content: space-between;
+  max-inline-size: 200px;
+}
 .field-hint {
   font: var(--type-caption-default);
   color: var(--text-tertiary);
@@ -1281,6 +1379,10 @@ textarea.empty-bidi {
   align-self: stretch;
   justify-content: flex-end;
   gap: var(--space-8);
+}
+/* المرحلة ٩: بعرض ٣٦٠ بقي الزرّان صغيرين في الزاوية؛ فيقتسمان عرض البطاقة */
+.card-actions > .button {
+  flex: 1;
 }
 
 /* الوسم (Tag, Figma 57:40): اللون للحالة وحدها، والأيقونة للمعتمدة */

@@ -40,6 +40,7 @@ test("ترتيب التحميل: الهيكل فالقشرة قبل نسق، و�
     "app-links.js",
     "app-version.js",
     "appearance.js",
+    "rtl-caret.js",
     "menu.js",
     "layout.js",
     "shell.js",
@@ -1326,4 +1327,25 @@ test("المرحلة ٩: نجاح «اختبر» يشترط التوليد، و�
     assert.ok(code.includes("NasaqProviders.connectionWorks(report)"), `${name} يحكم بنفسه`);
     assert.ok(!/report\.modelListed/.test(code), `${name} يكرّر شرط النجاح`);
   }
+});
+
+// المرحلة ٩: مؤشر السطر الفارغ — WebKit يرسمه يسارًا في حقل عربي أيًّا كانت
+// خصائص CSS (قيس في WKWebView)، فيُرسم مكانه على السطر الفارغ وحده
+test("المرحلة ٩: مؤشر السطر الفارغ يُعرف بموضعه، وتعذُّره لا يُسقط القشرة", () => {
+  const { onEmptyLine } = require(srcPath("rtl-caret.js"));
+  const at = (value, pos, end = pos) => onEmptyLine({ value, selectionStart: pos, selectionEnd: end });
+  const text = "سطر أول\n\nثالث\n";
+  assert.strictEqual(at(text, 8), true, "السطر الفارغ في الوسط");
+  assert.strictEqual(at(text, text.length), true, "السطر الفارغ بعد Enter الأخير");
+  assert.strictEqual(at(text, 3), false, "داخل سطر نصّي");
+  assert.strictEqual(at(text, 7), false, "آخر سطر نصّي قبل فاصله");
+  assert.strictEqual(at(text, 9), false, "أول سطر نصّي بعد الفارغ");
+  assert.strictEqual(at(text, 8, 10), false, "تحديدٌ لا مؤشر");
+  assert.strictEqual(at("", 0), false, "الحقل الفارغ كله يتولاه isolate كما كان");
+
+  // plaintext باقٍ: إزالته تقلب السطر الإنجليزي («.Hello world»)
+  assert.ok(/textarea\s*\{\s*unicode-bidi:\s*plaintext;/.test(css), "زال plaintext عن حقول الكتابة");
+  // الربط في القشرة محروس: غياب الوحدة يترك المؤشر الأصلي ولا يُسقط NasaqShell
+  assert.ok(/try\s*\{[^}]*NasaqRtlCaret\?\.attach/.test(shell), "ربط المؤشر غير محروس في القشرة");
+  assert.ok(!/NasaqRtlCaret/.test(nasaq) && !/NasaqRtlCaret/.test(shadhb), "برجٌ يربط المؤشر بنفسه");
 });
