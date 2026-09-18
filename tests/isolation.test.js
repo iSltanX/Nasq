@@ -261,14 +261,15 @@ test("الهيكل: كل برج في مناطقه، وCSS لا يُظهر منط
   }
 });
 
-test("الهيكل: فعل شَذْب وجسره في شريط الأدوات، والضمانة في المفتّش — خارج منطقة التمرير", () => {
+test("الهيكل: فعل شَذْب وجسره في كتلة الأدوات، والضمانة في المفتّش — خارج منطقة التمرير", () => {
   for (const id of ["prune-btn", "send-to-nasaq-btn"]) {
-    assert.ok(regions[id].within.includes("toolbar"), `${id} ليس في شريط الأدوات`);
+    assert.ok(regions[id].within.includes("editor-tools"), `${id} ليس في كتلة الأدوات`);
   }
   assert.ok(regions["covenant-bar"].within.includes("inspector"), "الضمانة ليست في المفتّش");
-  for (const id of ["prune-btn", "send-to-nasaq-btn", "covenant-bar"]) {
-    assert.ok(!regions[id].within.includes("scroll-view"), `${id} داخل منطقة التمرير`);
-  }
+  assert.ok(!regions["covenant-bar"].within.includes("scroll-view"), "الضمانة داخل منطقة التمرير");
+  // الكتلة فوق النص داخل المجرى، فحقّها ألا تغيب عن العين حين يُمرَّر: لاصقةٌ
+  // بأعلى المنطقة تحت الشريط (قرار المالك m5)
+  assert.match(css.slice(css.indexOf(".editor-tools {"), css.indexOf(".editor-tools {") + 320), /position: sticky/);
   assert.ok(regions["prune-preview"].classes.includes("column-result"), "«بعد التشذيب» ليس عمود النتيجة");
   assert.ok(/<h2 class="column-header">بعد التشذيب<\/h2>/.test(html), "عنوان عمود «بعد التشذيب» غائب");
 });
@@ -393,8 +394,8 @@ test("المرحلة ٣: لكل حالة من حالات نَسَق عنصرها
   }
   assert.ok(nasaq.includes('action: { label: "أعد المحاولة", run: formatText }'), "«أعد المحاولة» لا تعيد التنسيق");
   // «نسّق» بحالة تحميل، والتقرير بهيكله النائب، والمؤشر في شريط الحالة
-  assert.match(openTag("format-btn"), /data-style="glass"/);
-  assert.ok(nasaq.includes('formatBtn.dataset.style = hasText && !hasResult ? "primary" : "glass";'), "«نسّق» المعطّل مسطح غائر لا زجاجي");
+  assert.match(openTag("format-btn"), /data-style="primary"/);
+  assert.ok(!/formatBtn\.dataset\.style/.test(nasaq), "«نسّق» ما زال يبدّل هيئته — الفعل الرئيس مصمتٌ دائمًا في الكتلة");
   assert.ok(regions["report-skeleton"]?.within.includes("report-section"), "لا هيكل نائب للتقرير");
   assert.strictEqual(regions["nasaq-status"]?.owner, "nasaq");
   assert.ok(nasaq.includes('formatBtn.setAttribute("aria-busy", String(busy))'), "«نسّق» بلا حالة تحميل");

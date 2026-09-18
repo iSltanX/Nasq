@@ -105,22 +105,25 @@
   // ---------- العرض: «الأصل | النتيجة» في العمود الواحد ----------
   function setView(view) {
     content.dataset.view = view;
-    for (const seg of content.querySelectorAll("[data-view-target]")) {
+    for (const seg of document.querySelectorAll("[data-view-target]")) {
       seg.setAttribute("aria-selected", String(seg.dataset.viewTarget === view));
     }
     window.NasaqMenu.setPane(view);
   }
 
-  content.addEventListener("click", (e) => {
+  // مبدّل العرض في شريط النافذة لا في المحتوى (قرار المالك m5)، فالبحث عن عناصره
+  // من المستند لا من المحتوى — وكان قصرُه على المحتوى يُسقط الهيكل كله حين انتقل
+  const viewPicker = document.querySelector(".view-picker");
+  document.addEventListener("click", (e) => {
     const seg = e.target.closest("[data-view-target]");
     if (seg) setView(seg.dataset.viewTarget);
   });
-  content.querySelector(".view-picker").addEventListener("keydown", (e) => {
+  viewPicker.addEventListener("keydown", (e) => {
     if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
     e.preventDefault();
     const next = content.dataset.view === "source" ? "result" : "source";
     setView(next);
-    content.querySelector(`[data-view-target="${next}"]`).focus();
+    viewPicker.querySelector(`[data-view-target="${next}"]`).focus();
   });
 
   // ظهور عنصر معلَّم ينقل العمود الواحد إلى عموده: بدء التنسيق أو نتيجة جديدة
@@ -432,31 +435,33 @@
     isModalOpen: modalOpen,
   };
 
-  // ---------- شريط الأدوات: الطي عند الضيق ----------
-  // تُطوى المجموعات بترتيب data-collapse وتختفي التسميات بترتيب
-  // data-collapse-labels حتى تبقى بين طرفي الشريط مسافة مرنة لا تقل عن ١٤٠ —
-  // القيمة التي تعيد متغيرات Figma الثلاثة كما رُسمت (١٠٢٤ و٧٦٠ و٥٢٤)
-  const MIN_FLEX = 140;
-  const flex = toolbar.querySelector(".toolbar-flex");
-  const overflowGroup = toolbar.querySelector(".overflow-group");
+  // ---------- كتلة الأدوات: الطي عند الضيق ----------
+  // الكتلة تسكن عمود النص، فقاعدتها أن تتّسع فيه: تُطوى المجموعات بترتيب
+  // data-collapse وتختفي التسميات بترتيب data-collapse-labels حتى يبقى بين
+  // طرفيها وحافتي العمود هامشٌ لا يقل عن ٢٠. وكانت القاعدة قبل النقل مسافةً
+  // مرنة في الشريط لا تقل عن ١٤٠
+  const MIN_MARGIN = 20;
+  const tools = document.getElementById("editor-tools");
+  const overflowGroup = tools.querySelector(".overflow-group");
   const overflowButton = overflowGroup.querySelector("[data-overflow-button]");
 
-  const activeToolbar = () => toolbar.querySelector(`.toolbar-module[data-for="${root.dataset.module}"]`);
+  const activeToolbar = () => tools.querySelector(`.toolbar-module[data-for="${root.dataset.module}"]`);
 
   function layoutToolbar() {
-    for (const n of toolbar.querySelectorAll("[data-collapsed]")) n.removeAttribute("data-collapsed");
-    for (const n of toolbar.querySelectorAll("[data-labels-hidden]")) n.removeAttribute("data-labels-hidden");
+    for (const n of tools.querySelectorAll("[data-collapsed]")) n.removeAttribute("data-collapsed");
+    for (const n of tools.querySelectorAll("[data-labels-hidden]")) n.removeAttribute("data-labels-hidden");
     overflowGroup.hidden = true;
     const module = activeToolbar();
-    if (!module || !toolbar.clientWidth) return;
+    if (!module || !content.clientWidth) return;
 
     const steps = [
       ...[...module.querySelectorAll("[data-collapse]")].map((n) => ({ order: +n.dataset.collapse, node: n, attr: "data-collapsed" })),
       ...[...module.querySelectorAll("[data-collapse-labels]")].map((n) => ({ order: +n.dataset.collapseLabels, node: n, attr: "data-labels-hidden" })),
     ].sort((a, b) => a.order - b.order);
 
+    const fits = () => tools.getBoundingClientRect().width <= content.clientWidth - 2 * MIN_MARGIN;
     for (const step of steps) {
-      if (flex.getBoundingClientRect().width >= MIN_FLEX) break;
+      if (fits()) break;
       step.node.setAttribute(step.attr, "");
       if (step.attr === "data-collapsed") overflowGroup.hidden = false;
     }
@@ -492,7 +497,7 @@
     }
   }
 
-  new ResizeObserver(scheduleLayout).observe(toolbar);
+  new ResizeObserver(scheduleLayout).observe(content);
   new MutationObserver((records) => {
     scheduleLayout();
     if (records.some((r) => r.attributeName === "data-module")) {

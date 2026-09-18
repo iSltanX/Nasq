@@ -721,7 +721,8 @@ textarea.empty-bidi {
   align-items: center;
   gap: var(--space-24);
   min-block-size: 0;
-  padding: calc(var(--size-toolbar) + var(--space-8) + var(--space-24)) var(--space-32) var(--space-32);
+  /* الزمرة ترتفع: حشوةٌ بمقدار الشريط وفجوته لا أكثر */
+  padding: calc(var(--size-toolbar) + var(--space-8)) var(--space-32) var(--space-32);
   overflow-y: auto;
 }
 
@@ -779,6 +780,89 @@ textarea.empty-bidi {
 /* منطقة المحتوى هدفًا لإفلات ملفٍّ نصّي: حلقة التركيز داخلها (Figma 355:22800، فحص m4-12) */
 .content[data-drop-target] {
   box-shadow: inset 0 0 0 var(--stroke-focus) var(--module-focus-ring);
+}
+
+/* ================= رأس عمود النص وكتلة أدواته =================
+   كل ما يخصّ النص يسكن عمود النص فيتحرّك معه حين يُطوى لوح: مبدّل العرض في طرف
+   الرأس والمبدّل بين الوحدتين في وسطه، وكتلة الأدوات تحت النص. ولا يبقى في شريط
+   النافذة إلا ما يخصّ النافذة. قيس أن مركز الشريط ليس مركز النص حين يُفتح
+   المفتّش — فرقٌ ١٨٠ — فلذلك سكن المبدّل العمود لا الشريط (Figma «Editor Tools») */
+/* مبدّل العرض يعلو في مستوى الشريط، لكن على حافة عمود النص لا حافة النافذة:
+   الشريط يمتدّ فوق المفتّش أيضًا، فحافته ليست حافة النص */
+.content > .view-picker {
+  position: absolute;
+  inset-block-start: calc((var(--size-toolbar) - var(--size-control-md)) / 2);
+  inset-inline-end: var(--space-32);
+  z-index: 15;
+}
+.content > .view-picker .view-segment {
+  white-space: nowrap;
+}
+
+/* فوق النص لا تحته (قرار المالك m5)، ولاصقةٌ بأعلى منطقة التمرير تحت الشريط
+   فلا تغيب عن العين حين يطول النص ويُمرَّر */
+.editor-tools {
+  /* إزاحة اللصق صفر: حشوة منطقة التمرير تحسب الشريط أصلًا، وأيّ إزاحةٍ فوقها
+     تُضاف إليها فتدفع الكتلة على النص (قيس: ١٢٠ بدل ٦٠) */
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  block-size: var(--size-control-lg);
+  padding-inline: var(--space-4);
+  border-radius: var(--radius-full);
+  /* أخفّ تعبئةٍ في العائلة (٣٪ بدل ٦٪): الكتلة تعلو النص فلا تزاحمه */
+  background: var(--fill-form-group);
+}
+/* نحيفة: مقاييس المبدّل نفسها — مِضمار ٢٨ بحشوة ٢ وعناصر ٢٤ وأيقونات ١٦. الكتلة
+   تعلو النص فحقّها أن تخفّ، ولا قيمة مخترعة: control-md وcontrol-regular وicon-16 */
+.editor-tools {
+  block-size: var(--size-control-md);
+  padding-inline: var(--space-2);
+}
+/* مسافةٌ محسوبة بين الأزرار: space-4 داخل المجموعة الواحدة، والفواصل بهامشها
+   نفسه — فالإيقاع الأفقي من السلّم لا من التقدير */
+.editor-tools,
+.editor-tools .glass-group {
+  gap: var(--space-4);
+}
+.editor-tools .toolbar-item {
+  min-inline-size: var(--size-control-regular);
+  block-size: var(--size-control-regular);
+}
+.editor-tools .toolbar-item .icon-20 {
+  width: var(--size-icon-16);
+  height: var(--size-icon-16);
+}
+.editor-tools .action-button {
+  block-size: var(--size-control-regular);
+  padding-inline: var(--space-10);
+}
+/* أدواتها هادئة بلون الأيقونة الثانوي، وتستردّ حضورها تحت المؤشر. والفعل الرئيس
+   وحده يبقى بلونه كاملًا (قرار المالك m5) */
+.editor-tools .toolbar-item {
+  color: var(--icon-secondary);
+}
+.editor-tools .toolbar-item:hover:not(:disabled) {
+  color: var(--icon-primary);
+}
+
+/* داخل الكتلة تذوب كبسولة كل مجموعة: الكتلة واحدة، وبين المجموعات خطٌّ شعري */
+.editor-tools .glass-group {
+  background: none;
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+.editor-tools .glass-group::before {
+  content: "";
+  flex: none;
+  inline-size: var(--stroke-hairline);
+  block-size: var(--size-icon-12);
+  margin-inline: var(--space-2);
+  margin-block: 0;
+  background: var(--border-hairline);
 }
 
 .compare {

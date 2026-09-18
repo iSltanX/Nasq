@@ -98,11 +98,9 @@
       <header class="toolbar" id="toolbar" data-tauri-drag-region="deep">
         <div class="toolbar-cluster toolbar-leading">
           <span class="window-controls" aria-hidden="true"></span>
-          <div class="glass-group sidebar-toggle-group">
-            <button class="toolbar-item" type="button" data-command="toggle-sidebar" title="الشريط الجانبي ⌃⌘S" aria-label="إظهار الشريط الجانبي">
-              <svg class="icon icon-20" aria-hidden="true"><use href="#sidebar.leading.20r" /></svg>
-            </button>
-          </div>
+          <button class="icon-button sidebar-toggle-group" type="button" data-command="toggle-sidebar" title="الشريط الجانبي ⌃⌘S" aria-label="إظهار الشريط الجانبي">
+            <svg class="icon icon-20" aria-hidden="true"><use href="#sidebar.leading.20r" /></svg>
+          </button>
           <!-- مبدّل الوحدتين: مخفي في الهيكل، وشَذْب وحده يُظهره حين يكون مفعَّلًا -->
           <div id="mode-switch" class="module-switcher" role="radiogroup" aria-label="الوحدة" hidden>
             <button id="mode-nasaq-btn" class="module-segment active" type="button" role="radio" aria-checked="true" title="نَسَق ⌘1">
@@ -118,94 +116,26 @@
 
         <div class="toolbar-flex" aria-hidden="true"></div>
 
-        <div class="toolbar-cluster toolbar-trailing" role="toolbar" aria-label="أدوات النص">
-          <div class="glass-group overflow-group" hidden>
-            <button class="toolbar-item" type="button" data-overflow-button title="عناصر أخرى في الشريط" aria-label="عناصر أخرى في الشريط" aria-haspopup="menu">
-              <svg class="icon icon-20" aria-hidden="true"><use href="#chevron.backward.2.20r" /></svg>
-            </button>
-          </div>
-
-          <!-- نَسَق: الأدوات معطّلة حتى توجد نتيجة (Figma 102:1715)، وآلة الحالات في nasaq.js تبدّلها -->
-          <div class="toolbar-module" data-for="nasaq">
-            <div class="glass-group" data-collapse="1" data-group-label="السطور">
-              <button id="undo-btn" class="toolbar-item" type="button" title="تراجع ⌘Z — حتى ٢٠ خطوة" aria-label="تراجع" disabled>
-                <svg class="icon icon-20" aria-hidden="true"><use href="#arrow.uturn.backward.20r" /></svg>
-              </button>
-              <button id="more-lines-btn" class="toolbar-item" type="button" title="سطور أكثر ⌘]" aria-label="سطور أكثر" disabled>
-                <svg class="icon icon-20" aria-hidden="true"><use href="#text.badge.plus.20r" /></svg>
-              </button>
-              <button id="fewer-lines-btn" class="toolbar-item" type="button" title="سطور أقل ⌘[" aria-label="سطور أقل" disabled>
-                <svg class="icon icon-20" aria-hidden="true"><use href="#text.badge.minus.20r" /></svg>
-              </button>
-              <button id="split-sentences-btn" class="toolbar-item" type="button" title="كسر بعد النقطة ⌥⌘." aria-label="كسر بعد النقطة" disabled>
-                <svg class="icon icon-20" aria-hidden="true"><use href="#return.left.20r" /></svg>
-              </button>
-              <button id="add-blank-lines-btn" class="toolbar-item" type="button" title="إضافة سطور فارغة ⌥⌘↩ — على النتيجة، أو على الأصل قبلها" aria-label="إضافة سطور فارغة" disabled>
-                <svg class="icon icon-20" aria-hidden="true"><use href="#rectangle.expand.vertical.20r" /></svg>
-              </button>
-              <button id="clean-btn" class="toolbar-item" type="button" title="حذف السطور الفارغة ⌥⌘⌫" aria-label="حذف السطور الفارغة" disabled>
-                <svg class="icon icon-20" aria-hidden="true"><use href="#rectangle.compress.vertical.20r" /></svg>
-              </button>
-            </div>
-            <div class="glass-group" data-collapse="2">
-              <button id="output-search-btn" class="toolbar-item" type="button" title="بحث في النتيجة ⌘F" aria-label="بحث في النتيجة" aria-expanded="false" aria-controls="output-search-bar" disabled>
-                <svg class="icon icon-20" aria-hidden="true"><use href="#magnifyingglass.20r" /></svg>
-              </button>
-              <button id="save-draft-btn" class="toolbar-item" type="button" title="حفظ في المسودات ⌘S" aria-label="حفظ في المسودات" disabled>
-                <svg class="icon icon-20" aria-hidden="true"><use href="#tray.and.arrow.down.20r" /></svg>
-              </button>
-              <button id="reading-lens-btn" class="toolbar-item" type="button" title="عدسة القراءة ⌥⌘R — للعرض فقط" aria-label="عدسة القراءة" aria-haspopup="dialog" aria-expanded="false" aria-controls="reading-lens" disabled>
-                <svg class="icon icon-20" aria-hidden="true"><use href="#iphone.20r" /></svg>
-              </button>
-            </div>
-            <div class="glass-group" data-collapse="4" data-collapse-labels="3">
-              <button id="copy-btn" class="toolbar-item has-label" type="button" title="نسخ النتيجة ⇧⌘C" aria-label="نسخ" disabled>
-                <svg class="icon label-icon" aria-hidden="true"><use href="#doc.on.doc.16m" /></svg>
-                <svg class="icon icon-20 bare-icon" aria-hidden="true"><use href="#doc.on.doc.20r" /></svg>
-                <span class="item-label">نسخ</span>
-              </button>
-              <button id="export-btn" class="toolbar-item" type="button" title="تصدير لسابستاك ⌥⌘C — بكسور السطر وبلا أسطر فارغة" aria-label="تصدير لسابستاك" disabled>
-                <svg class="icon icon-20" aria-hidden="true"><use href="#square.and.arrow.up.20r" /></svg>
-              </button>
-            </div>
-            <button id="format-btn" class="action-button" type="button" data-style="glass" title="نسّق ⌘↩" disabled>
-              <span class="spinner spinner-16" aria-hidden="true"></span>
-              <svg class="icon action-icon" aria-hidden="true"><use href="#nsq.nasaq.16m" /></svg>
-              <span>نسّق</span>
-            </button>
-          </div>
-
-          <!-- شَذْب -->
-          <div class="toolbar-module" data-for="shadhb">
-            <div class="glass-group" data-collapse="2" data-collapse-labels="1">
-              <button id="copy-pruned-btn" class="toolbar-item has-label" type="button" title="نسخ النص المشذَّب" aria-label="نسخ" disabled>
-                <svg class="icon label-icon" aria-hidden="true"><use href="#doc.on.doc.16m" /></svg>
-                <svg class="icon icon-20 bare-icon" aria-hidden="true"><use href="#doc.on.doc.20r" /></svg>
-                <span class="item-label">نسخ</span>
-              </button>
-              <button id="send-to-nasaq-btn" class="toolbar-item has-label" type="button" title="النص المشذَّب يصير خامًا لنَسَق — جلسة جديدة" aria-label="أرسل إلى نَسَق" disabled>
-                <svg class="icon label-icon" aria-hidden="true"><use href="#nsq.nasaq.16m" /></svg>
-                <svg class="icon icon-20 bare-icon" aria-hidden="true"><use href="#nsq.nasaq.20r" /></svg>
-                <span class="item-label">أرسل إلى نَسَق</span>
-              </button>
-            </div>
-            <button id="prune-btn" class="action-button" type="button" data-style="primary" title="افحص الشذرة ⌘↩ — فحص واحد يعيد بطاقة قراءة وقصّات مقترحة، ولا يغيّر نصك حتى تقرر" disabled>
-              <svg class="icon action-icon" aria-hidden="true"><use href="#nsq.shadhb.16m" /></svg>
-              <span>افحص الشذرة</span>
-            </button>
-          </div>
-
-          <div class="glass-group">
-            <button class="toolbar-item" type="button" data-command="toggle-inspector" title="المفتّش ⌥⌘I" aria-label="المفتّش" aria-pressed="true">
-              <svg class="icon icon-20" aria-hidden="true"><use href="#sidebar.trailing.20r" /></svg>
-            </button>
-          </div>
+        <div class="toolbar-cluster toolbar-trailing">
+          <button class="icon-button" type="button" data-command="toggle-inspector" title="المفتّش ⌥⌘I" aria-label="المفتّش" aria-pressed="true">
+            <svg class="icon icon-20" aria-hidden="true"><use href="#sidebar.trailing.20r" /></svg>
+          </button>
           <span class="window-controls" aria-hidden="true"></span>
         </div>
       </header>
 
       <!-- ================= المحتوى ================= -->
       <section class="content" id="content" data-view="source" role="main" aria-label="النص">
+        <!-- مبدّل العرض في مستوى الشريط لكن على حافة عمود النص لا حافة النافذة
+             (قرار المالك m5) -->
+          <div class="view-picker" role="tablist" aria-label="العرض">
+          <button class="view-segment" type="button" role="tab" data-view-target="source" aria-selected="true" title="⌥⌘1">
+            <span data-for="nasaq">الأصل</span><span data-for="shadhb">الشذرة</span>
+          </button>
+          <button class="view-segment" type="button" role="tab" data-view-target="result" aria-selected="false" title="⌥⌘2">
+            <span data-for="nasaq">النتيجة</span><span data-for="shadhb">بعد التشذيب</span>
+          </button>
+        </div>
         <!-- شريط البحث في النتيجة: شريط ٣٢ تحت شريط الأدوات (Figma 262:7032) -->
         <div id="output-search-bar" class="find-bar" data-for="nasaq" role="search" aria-label="بحث في النتيجة" hidden>
           <div class="find-field">
@@ -229,13 +159,83 @@
         </div>
 
         <div class="scroll-view" id="scroll-view">
-          <div class="view-picker" role="tablist" aria-label="العرض">
-            <button class="view-segment" type="button" role="tab" data-view-target="source" aria-selected="true" title="⌥⌘1">
-              <span data-for="nasaq">الأصل</span><span data-for="shadhb">الشذرة</span>
-            </button>
-            <button class="view-segment" type="button" role="tab" data-view-target="result" aria-selected="false" title="⌥⌘2">
-              <span data-for="nasaq">النتيجة</span><span data-for="shadhb">بعد التشذيب</span>
-            </button>
+          <!-- كتلة أدوات المحرر أعلى عمود النص (Figma «Editor Tools» 378:23011): الفعل
+               الرئيس في الطرف المتقدّم، ثم الأدوات تفصلها خطوط شعرية، والفائض في طرفها
+               الآخر. لاصقةٌ بأعلى المجرى فلا تغيب حين يُمرَّر النص، وكل ما تحتها للنص -->
+          <div class="editor-tools" id="editor-tools" role="toolbar" aria-label="أدوات النص">
+            <!-- نَسَق: الأدوات معطّلة حتى توجد نتيجة (Figma 102:1715)، وآلة الحالات في nasaq.js تبدّلها -->
+                <div class="toolbar-module" data-for="nasaq">
+                  <button id="format-btn" class="action-button" type="button" data-style="primary" title="نسّق ⌘↩" disabled>
+                    <span class="spinner spinner-16" aria-hidden="true"></span>
+                    <svg class="icon action-icon" aria-hidden="true"><use href="#nsq.nasaq.16m" /></svg>
+                    <span>نسّق</span>
+                  </button>
+                  <div class="glass-group" data-collapse="1" data-group-label="السطور">
+                    <button id="undo-btn" class="toolbar-item" type="button" title="تراجع ⌘Z — حتى ٢٠ خطوة" aria-label="تراجع" disabled>
+                      <svg class="icon icon-20" aria-hidden="true"><use href="#arrow.uturn.backward.20r" /></svg>
+                    </button>
+                    <button id="more-lines-btn" class="toolbar-item" type="button" title="سطور أكثر ⌘]" aria-label="سطور أكثر" disabled>
+                      <svg class="icon icon-20" aria-hidden="true"><use href="#text.badge.plus.20r" /></svg>
+                    </button>
+                    <button id="fewer-lines-btn" class="toolbar-item" type="button" title="سطور أقل ⌘[" aria-label="سطور أقل" disabled>
+                      <svg class="icon icon-20" aria-hidden="true"><use href="#text.badge.minus.20r" /></svg>
+                    </button>
+                    <button id="split-sentences-btn" class="toolbar-item" type="button" title="كسر بعد النقطة ⌥⌘." aria-label="كسر بعد النقطة" disabled>
+                      <svg class="icon icon-20" aria-hidden="true"><use href="#return.left.20r" /></svg>
+                    </button>
+                    <button id="add-blank-lines-btn" class="toolbar-item" type="button" title="إضافة سطور فارغة ⌥⌘↩ — على النتيجة، أو على الأصل قبلها" aria-label="إضافة سطور فارغة" disabled>
+                      <svg class="icon icon-20" aria-hidden="true"><use href="#rectangle.expand.vertical.20r" /></svg>
+                    </button>
+                    <button id="clean-btn" class="toolbar-item" type="button" title="حذف السطور الفارغة ⌥⌘⌫" aria-label="حذف السطور الفارغة" disabled>
+                      <svg class="icon icon-20" aria-hidden="true"><use href="#rectangle.compress.vertical.20r" /></svg>
+                    </button>
+                  </div>
+                  <div class="glass-group" data-collapse="2">
+                    <button id="output-search-btn" class="toolbar-item" type="button" title="بحث في النتيجة ⌘F" aria-label="بحث في النتيجة" aria-expanded="false" aria-controls="output-search-bar" disabled>
+                      <svg class="icon icon-20" aria-hidden="true"><use href="#magnifyingglass.20r" /></svg>
+                    </button>
+                    <button id="save-draft-btn" class="toolbar-item" type="button" title="حفظ في المسودات ⌘S" aria-label="حفظ في المسودات" disabled>
+                      <svg class="icon icon-20" aria-hidden="true"><use href="#tray.and.arrow.down.20r" /></svg>
+                    </button>
+                    <button id="reading-lens-btn" class="toolbar-item" type="button" title="عدسة القراءة ⌥⌘R — للعرض فقط" aria-label="عدسة القراءة" aria-haspopup="dialog" aria-expanded="false" aria-controls="reading-lens" disabled>
+                      <svg class="icon icon-20" aria-hidden="true"><use href="#iphone.20r" /></svg>
+                    </button>
+                  </div>
+                  <div class="glass-group" data-collapse="4" data-collapse-labels="3">
+                    <button id="copy-btn" class="toolbar-item has-label" type="button" title="نسخ النتيجة ⇧⌘C" aria-label="نسخ" disabled>
+                      <svg class="icon label-icon" aria-hidden="true"><use href="#doc.on.doc.16m" /></svg>
+                      <svg class="icon icon-20 bare-icon" aria-hidden="true"><use href="#doc.on.doc.20r" /></svg>
+                      <span class="item-label">نسخ</span>
+                    </button>
+                    <button id="export-btn" class="toolbar-item" type="button" title="تصدير لسابستاك ⌥⌘C — بكسور السطر وبلا أسطر فارغة" aria-label="تصدير لسابستاك" disabled>
+                      <svg class="icon icon-20" aria-hidden="true"><use href="#square.and.arrow.up.20r" /></svg>
+                    </button>
+                  </div>
+                </div>
+                <!-- شَذْب -->
+                <div class="toolbar-module" data-for="shadhb">
+                  <button id="prune-btn" class="action-button" type="button" data-style="primary" title="افحص الشذرة ⌘↩ — فحص واحد يعيد بطاقة قراءة وقصّات مقترحة، ولا يغيّر نصك حتى تقرر" disabled>
+                    <svg class="icon action-icon" aria-hidden="true"><use href="#nsq.shadhb.16m" /></svg>
+                    <span>افحص الشذرة</span>
+                  </button>
+                  <div class="glass-group" data-collapse="2" data-collapse-labels="1">
+                    <button id="copy-pruned-btn" class="toolbar-item has-label" type="button" title="نسخ النص المشذَّب" aria-label="نسخ" disabled>
+                      <svg class="icon label-icon" aria-hidden="true"><use href="#doc.on.doc.16m" /></svg>
+                      <svg class="icon icon-20 bare-icon" aria-hidden="true"><use href="#doc.on.doc.20r" /></svg>
+                      <span class="item-label">نسخ</span>
+                    </button>
+                    <button id="send-to-nasaq-btn" class="toolbar-item has-label" type="button" title="النص المشذَّب يصير خامًا لنَسَق — جلسة جديدة" aria-label="أرسل إلى نَسَق" disabled>
+                      <svg class="icon label-icon" aria-hidden="true"><use href="#nsq.nasaq.16m" /></svg>
+                      <svg class="icon icon-20 bare-icon" aria-hidden="true"><use href="#nsq.nasaq.20r" /></svg>
+                      <span class="item-label">أرسل إلى نَسَق</span>
+                    </button>
+                  </div>
+                </div>
+                <div class="glass-group overflow-group" hidden>
+                  <button class="toolbar-item" type="button" data-overflow-button title="عناصر أخرى في الشريط" aria-label="عناصر أخرى في الشريط" aria-haspopup="menu">
+                    <svg class="icon icon-20" aria-hidden="true"><use href="#chevron.backward.2.20r" /></svg>
+                  </button>
+                </div>
           </div>
 
           <div class="compare">
@@ -377,7 +377,9 @@
               </div>
             </div>
           </div>
+
         </div>
+
 
         <footer class="status-bar">
           <div class="status-start" id="status-start">

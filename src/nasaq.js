@@ -1566,12 +1566,10 @@ function renderState() {
   document.documentElement.dataset.nasaqState = state;
   if (busy && transition && document.activeElement !== document.body) focusBeforeBusy = document.activeElement;
 
-  // «نسّق»: معطّل بلا نص، وتحميل أثناء النداء، وبارز حتى توجد نتيجة ثم زجاجي
+  // «نسّق»: معطّل بلا نص، وتحميل أثناء النداء. وهيئته مصمتة دائمًا داخل كتلة
+  // الأدوات — المِضمار الرمادي تحته يجعل الزجاجيَّ نشازًا، والتعطيل وحده يقول
+  // إن الفعل غير متاح (قرار المالك في m5؛ وكان يتبدّل بين مصمتٍ وزجاجي)
   formatBtn.disabled = busy || !hasText;
-  // بارز بلون الوحدة ما دام هناك نص بلا نتيجة، وزجاجي بحافته في غير ذلك —
-  // والمعطّل بلا نص زجاجي خافت لا مسطح غائر بين كبسولات الشريط. أثناء النداء
-  // يبقى بأسلوب لحظة إطلاقه ولو مُحي النص تحته
-  if (!busy) formatBtn.dataset.style = hasText && !hasResult ? "primary" : "glass";
   formatBtn.setAttribute("aria-busy", String(busy));
 
   // أدوات الشريط تعمل على نتيجة موجودة ولا تزاحم نداءً جاريًا
