@@ -253,7 +253,10 @@ renderProductIdentity();
 // ---------- المسودات: تخزين محلي بالكامل، لا يغادر الجهاز ----------
 // داخل التطبيق تُحفظ في drafts.json بجوار الإعدادات، وفي معاينة المتصفح في localStorage
 const DRAFTS_KEY = "nasaq-drafts";
-const DRAFTS_MAX = 100; // سقف هادئ يمنع تضخم الملف — الأقدم يخرج أولًا
+// سقفٌ يمنع تضخم الملف، ولا يُخرج مسودةً بصمت: بلوغه يرفض الجديدة برسالة (فحص
+// m2-13 — كان ١٠٠ وتُحذف أقدمها بصيغها). وحفظ ١٠٠ مسودة بعشر صيغ ١٦ م.ب في ٢٦ م.ث
+// (m3)، فالألف هامشٌ واسع
+const DRAFTS_MAX = 1000;
 
 const draftsList = el("drafts-list");
 const draftsEmpty = el("drafts-empty");
@@ -278,12 +281,17 @@ let focusedRowKey = null;
 // فلا يُكتب فوقه بها (فحص m2، m1-01). والنواة تُنحّي ما لا يُقرأ وتعيد قائمة
 // فارغة، فلا يبقى هذا إلا حين تتعذّر التنحية نفسها
 let draftsUnread = false;
+// اسم ملفٍّ نحّته النواة لأنه لم يُقرأ، يُعلَن مرة بعد الرسم (فحص m2-17)
+let draftsSetAside = null;
 
 async function loadDraftsFromStore() {
   let raw = [];
   if (insideTauri) {
     try {
-      raw = await invoke("load_drafts");
+      // النواة تعيد القائمة ومعها اسم ما نحّته إن نحّت شيئًا
+      const loaded = await invoke("load_drafts");
+      raw = Array.isArray(loaded) ? loaded : loaded?.drafts ?? [];
+      draftsSetAside = Array.isArray(loaded) ? null : loaded?.setAside ?? null;
     } catch {
       draftsUnread = true;
       raw = [];
@@ -365,10 +373,40 @@ let restoreDraftHandler = null;
 function registerRestoreHandler(fn) {
   restoreDraftHandler = fn;
 }
-function requestRestore(mother, version) {
+function runRestore(mother, version) {
   if (restoreDraftHandler) restoreDraftHandler(mother, version);
   else showToast("الاستعادة غير متاحة — وحدة الوضع لم تُحمَّل.", "danger");
 }
+
+// الاستعادة تكتب فوق الخانة، فتستأذن حين في الخانة نصٌّ لم يُحفظ مسودةً (فحص
+// m2-14 — «جلسة جديدة» تستأذن، والاستعادة كانت تمحو المثل بلا سؤال). والنص
+// المحفوظ أمًّا يُسترجع من المسودات، فلا سؤال عليه
+const restoreAlert = el("restore-alert");
+let restorePending = null;
+
+function requestRestore(mother, version) {
+  const current = el("input-text").value;
+  const key = window.NasaqDrafts.draftKey(current);
+  if (!key || drafts.some((m) => m.key === key)) {
+    runRestore(mother, version);
+    return;
+  }
+  restorePending = { mother, version };
+  el("restore-title").textContent = `تستعيد «${window.NasaqDrafts.draftExcerpt(mother.original)}»؟`;
+  window.NasaqWindow.presentModal(restoreAlert, { initialFocus: "#restore-cancel" });
+}
+
+function closeRestoreAlert() {
+  restorePending = null;
+  window.NasaqWindow.dismissModal(restoreAlert);
+}
+
+el("restore-cancel").addEventListener("click", closeRestoreAlert);
+el("restore-confirm").addEventListener("click", () => {
+  const pending = restorePending;
+  closeRestoreAlert();
+  if (pending) runRestore(pending.mother, pending.version);
+});
 
 // «صيغة واحدة / صيغتان / ٥ صيغ / ١١ صيغة» — بجمع عربي سليم وأرقام هندية
 function versionsCountLabel(n) {
@@ -806,8 +844,11 @@ async function deleteDraft(mother) {
 // تودِع وتثبّت وتعيد الرسم. لقطة تراجع داخلية عند فشل الكتابة فلا تبقى
 // الذاكرة مخالفة للملف، والخطأ يُرمى للمنادي ليقرر رسالته
 async function depositDraftVersions(key, original, newVersions) {
-  const snapshot = JSON.stringify(drafts);
   const existing = drafts.find((m) => m.key === key);
+  if (!existing && drafts.length >= DRAFTS_MAX) {
+    throw `بلغت المسودات سقفها (${arabicDigits.format(DRAFTS_MAX)}) — احذف مسوداتٍ لم تعد تحتاجها ثم احفظ. لم يُحذف شيء.`;
+  }
+  const snapshot = JSON.stringify(drafts);
   if (existing) {
     existing.versions.push(...newVersions);
     // الأمّ ذات النشاط الأحدث تتصدر القائمة
@@ -819,7 +860,6 @@ async function depositDraftVersions(key, original, newVersions) {
       createdAt: new Date().toISOString(),
       versions: newVersions,
     });
-    if (drafts.length > DRAFTS_MAX) drafts.length = DRAFTS_MAX;
   }
   try {
     await persistDrafts();
@@ -947,11 +987,21 @@ document.addEventListener("keydown", (e) => {
   }
 });
 registerEscapeCloser(() => !deleteAlert.hidden, closeDeleteAlert);
+registerEscapeCloser(() => !restoreAlert.hidden, closeRestoreAlert);
 
 // تحميل المسودات المحفوظة عند فتح التطبيق — تُعرض في الشريط الجانبي فورًا
 (async () => {
   drafts = await loadDraftsFromStore();
   renderDrafts();
+  // لا يُعرض ملفٌّ لم يُقرأ قائمةً فارغة بصمت: يعرف الكاتب أين صار (فحص m2-17)
+  if (draftsSetAside) {
+    showError(
+      `تعذّرت قراءة ملف المسودات — نُحّي جانبًا باسم «${draftsSetAside}» في مجلد بيانات التطبيق، وبدأت قائمة فارغة. لم يُحذف شيء.`,
+      { owner: "nasaq" }
+    );
+  } else if (draftsUnread) {
+    showError("تعذّرت قراءة المسودات عند فتح التطبيق — لم يُكتب فوقها شيء. أعد فتح التطبيق.", { owner: "nasaq" });
+  }
 })();
 
 // الإعدادات عند الإقلاع: المظهر منها، وترحيل اختيار قديم من مخزن المتصفح
@@ -978,7 +1028,10 @@ if (window.__TAURI__) {
         forgetLegacyAppearance();
       }
       return settings;
-    } catch {
+    } catch (err) {
+      // لا يُبتلع: بلا إعدادات يتعطّل كل نداء نموذج، والرسالة تقول كيف يُصلح
+      // (النواة تُنحّي الملف التالف عند أول حفظ) — فحص m2-17
+      showError(String(err || "تعذّر تحميل الإعدادات — افتح الإعدادات واحفظها من جديد."));
       return null;
     }
   })();
@@ -1009,8 +1062,9 @@ function startNewSession(run) {
   input.focus();
 }
 
-function confirmNewSession(run) {
-  if (!el("input-text").value.trim()) {
+// unsaved: البرج يقول إن عنده ما لم يُحفظ ولو فرغت الخانة (صيغٌ تنتظر «حفظ») — فحص m2-15
+function confirmNewSession(run, { unsaved } = {}) {
+  if (!el("input-text").value.trim() && !unsaved?.()) {
     startNewSession(run);
     return;
   }
@@ -1081,6 +1135,80 @@ try {
   console.warn("تعذّر ربط مؤشر السطر الفارغ:", error);
 }
 
+// ---------- الجلسة الجارية: ما يُعمل عليه يبقى عبر الإغلاق (فحص m2-16) ----------
+// كان نص الخانة ونتيجته وصيغه غير المحفوظة في الذاكرة وحدها، فيضيع بإغلاقٍ أو
+// انهيار. الآن تُكتب الجلسة بعد سكتةٍ قصيرة من كل تغيير، وتعود عند الفتح. القشرة
+// تملك الخانة المشتركة، وكل برجٍ يسجّل جزأه بنفسه (التقاطٌ واستعادة) فلا تعرف
+// القشرة ما في جزئه. والمسودات باقية على حفظها الصريح: الجلسة غير المسودة
+const SESSION_KEY = "nasaq-session";
+const SESSION_DELAY = 800;
+const sessionParts = new Map(); // الاسم ← { capture، restore }
+let sessionTimer = null;
+// لا حفظ قبل الاستعادة: فلا تكتب خانةٌ فارغة لحظة الإقلاع فوق جلسةٍ محفوظة
+let sessionRestored = false;
+
+function registerSessionPart(name, part) {
+  sessionParts.set(name, part);
+}
+
+function captureSession() {
+  const parts = {};
+  for (const [name, part] of sessionParts) {
+    try {
+      parts[name] = part.capture();
+    } catch (err) {
+      console.error(`تعذّر التقاط جلسة ${name}:`, err);
+    }
+  }
+  return { input: el("input-text").value, parts };
+}
+
+async function writeSession() {
+  sessionTimer = null;
+  const session = captureSession();
+  try {
+    if (insideTauri) await invoke("save_session", { session });
+    else localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+  } catch (err) {
+    // الجلسة احتياطٌ لا حفظ: فشلها لا يقاطع الكاتب، والمحاولة التالية مع التغيير التالي
+    console.warn("تعذّر حفظ الجلسة:", err);
+  }
+}
+
+function touchSession() {
+  if (!sessionRestored) return;
+  clearTimeout(sessionTimer);
+  sessionTimer = setTimeout(writeSession, SESSION_DELAY);
+}
+
+async function restoreSession() {
+  let saved = null;
+  try {
+    saved = insideTauri ? await invoke("load_session") : JSON.parse(localStorage.getItem(SESSION_KEY));
+  } catch {
+    saved = null;
+  }
+  const input = el("input-text");
+  if (saved && typeof saved.input === "string" && !input.value) {
+    input.value = saved.input;
+    input.dispatchEvent(new Event("input"));
+    for (const [name, part] of sessionParts) {
+      if (saved.parts?.[name] == null) continue;
+      try {
+        part.restore(saved.parts[name]);
+      } catch (err) {
+        console.error(`تعذّرت استعادة جلسة ${name}:`, err);
+      }
+    }
+  }
+  sessionRestored = true;
+}
+
+el("input-text").addEventListener("input", touchSession);
+// الأبراج تُحمَّل بعد القشرة وتسجّل أجزاءها وهي تُحمَّل؛ والاستعادة بعد اكتمالها
+if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", restoreSession);
+else restoreSession();
+
 window.NasaqShell = {
   el,
   invoke,
@@ -1102,6 +1230,8 @@ window.NasaqShell = {
   confirmNewSession,
   // الإعدادات كما حُمّلت مرة واحدة عند الإقلاع — أو null إن تعذّر تحميلها
   settingsReady,
+  // الجلسة الجارية: كل برجٍ يسجّل جزأه، ويُعلم القشرة بتغيّره
+  session: { register: registerSessionPart, touch: touchSession },
   drafts: {
     configureDisplay: configureDraftsDisplay,
     registerRestoreHandler,

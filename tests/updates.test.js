@@ -24,6 +24,7 @@ function boot({ delays = {}, autoUpdates = false } = {}) {
   const calls = [];
   const elements = {};
   const commands = {};
+  const closers = [];
   const wait = (name) => tick(delays[name] || 0);
   const handlers = {
     "plugin:updater|check": async () => { calls.push("check"); await wait("check"); return { rid: 7, version: "27.1.0" }; },
@@ -35,7 +36,7 @@ function boot({ delays = {}, autoUpdates = false } = {}) {
   const window = {
     NasaqShell: {
       invoke: (cmd, args) => handlers[cmd](args),
-      registerEscapeCloser() {},
+      registerEscapeCloser: (isOpen, close) => closers.push({ isOpen, close }),
       formatNumber: String,
       settingsReady: Promise.resolve({ autoUpdates }),
     },
@@ -51,21 +52,41 @@ function boot({ delays = {}, autoUpdates = false } = {}) {
     title: elements["update-alert-title"].textContent,
     confirm: () => elements["update-alert-confirm"].onclick(),
     cancel: () => elements["update-alert-cancel"].click(),
+    cancelShown: !elements["update-alert-cancel"].hidden,
   });
-  return { calls, alert, check: () => commands["app.check-updates"]() };
+  // Esc كما تفعله القشرة: أول مُغلِقٍ مفتوح يُغلق — ويعيد هل أغلق شيئًا
+  const escape = () => {
+    const c = closers.find((x) => x.isOpen());
+    if (c) c.close();
+    return Boolean(c);
+  };
+  return { calls, alert, escape, check: () => commands["app.check-updates"]() };
 }
 
-test("فحص m3: «إلغاء» بعد التنزيل وأثناء التثبيت لا يعيد تشغيل التطبيق", async () => {
+test("فحص m3-01: بعد اكتمال التنزيل لا «إلغاء»، وEsc لا يوقف التثبيت ولا يمنع إعادة التشغيل", async () => {
   const app = boot({ delays: { install: 40 } });
   app.check();
   await tick(5);
   app.alert().confirm();
   await tick(15); // التنزيل انتهى، والتثبيت جارٍ
   assert.deepStrictEqual(app.calls, ["check", "download", "install"]);
+  assert.match(app.alert().title, /جارٍ تثبيت نَسَق 27\.1\.0/);
+  assert.strictEqual(app.alert().cancelShown, false, "«إلغاء» ظاهرٌ أثناء تثبيتٍ لا يُلغى");
+  assert.strictEqual(app.escape(), false, "Esc يُغلق حالة التثبيت");
+  await tick(60);
+  assert.deepStrictEqual(app.calls, ["check", "download", "install", "restart"]);
+});
+
+test("فحص m3: «إلغاء» أثناء التنزيل يمنع التثبيت وإعادة التشغيل", async () => {
+  const app = boot({ delays: { download: 30 } });
+  app.check();
+  await tick(5);
+  app.alert().confirm();
+  await tick(5);
+  assert.strictEqual(app.alert().cancelShown, true);
   app.alert().cancel();
   await tick(60);
-  assert.ok(!app.calls.includes("restart"), `أُعيد التشغيل بعد «إلغاء»: ${app.calls}`);
-  assert.strictEqual(app.alert().open, false);
+  assert.deepStrictEqual(app.calls, ["check", "download"]);
 });
 
 test("فحص m3: بلا «إلغاء» يُعاد التشغيل بعد التثبيت كما رُسم", async () => {

@@ -52,6 +52,8 @@ fn main() {
             shared::drafts::load_drafts,
             shared::drafts::save_drafts,
             shared::drafts::export_drafts,
+            shared::session::load_session,
+            shared::session::save_session,
             shared::clipboard::copy_to_clipboard,
             shared::clipboard::read_from_clipboard,
             nasaq::commands::format_text,

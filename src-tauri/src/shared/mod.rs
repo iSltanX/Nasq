@@ -6,5 +6,6 @@ pub(crate) mod clipboard;
 pub(crate) mod drafts;
 pub(crate) mod llm;
 pub(crate) mod secrets;
+pub(crate) mod session;
 pub(crate) mod settings;
 pub(crate) mod storage;

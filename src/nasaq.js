@@ -27,7 +27,7 @@ inputText.addEventListener("input", () => {
   updateCount(inputCount, inputText.value, { withLines: false });
   syncCaretBidi();
   // تعديل الكلمات نفسها (لا المسافات والأسطر — المفتاح مطبَّع) يبدأ جلسة جمع
-  // جديدة: صيغ النص السابق غير المحفوظة تُفقد، فهي لنص لم يعد يُعمل عليه
+  // جديدة: صيغ النص السابق غير المحفوظة تنتظر «حفظ» (heldVersions)
   if (sessionKey && window.NasaqDrafts.draftKey(inputText.value) !== sessionKey) {
     resetSession();
   }
@@ -420,7 +420,18 @@ let sessionVersions = new Map(); // النوع ← { formatted، المحاور�
 // نص بكلمات جديدة يعني أن صور النتيجة السابقة لم تعد تخص ما يُعمل عليه
 let outputUndoStack = [];
 
+// صيغٌ لم تُحفظ لنصوصٍ تُركت (تغيّرت كلماتها، أو استُعيدت مسودة فوقها): لا تسقط
+// بصمت، ولا تُحفظ بلا إذن — تنتظر «حفظ» التالي فيودعها كلًّا تحت أمّه
+// (فحص m2-15). و«جلسة جديدة» وحدها تمحوها، وهي تستأذن قبل ذلك
+let heldVersions = []; // [{ key، original، entries: [صيغ الجلسة غير المحفوظة] }]
+
 function resetSession() {
+  const pending = [...sessionVersions.values()].filter((v) => !v.saved);
+  if (sessionKey && pending.length) {
+    const held = heldVersions.find((h) => h.key === sessionKey);
+    if (held) held.entries.push(...pending);
+    else heldVersions.push({ key: sessionKey, original: sessionOriginal, entries: pending });
+  }
   sessionKey = null;
   sessionOriginal = "";
   sessionVersions = new Map();
@@ -434,7 +445,7 @@ function recordSessionVersion(originalText, meta, formatted) {
   if (meta.intervention === LEVELS.CLEAN) return;
   const key = window.NasaqDrafts.draftKey(originalText);
   if (key !== sessionKey) {
-    // نص بكلمات جديدة → جلسة جمع جديدة (ما لم يُحفظ من السابقة فُقد)
+    // نص بكلمات جديدة → جلسة جمع جديدة (وما لم يُحفظ من السابقة ينتظر «حفظ»)
     resetSession();
     sessionKey = key;
     sessionOriginal = originalText;
@@ -717,13 +728,15 @@ async function adjustLines(direction) {
     setOutput(result.formattedText);
     markAdjusted(result.formattedText);
     showRhythmFingerprint(result.rhythmProfile);
-  } catch {
-    // فشل الخدمة لا يخذل الزر: تعديل محلي مع إشعار خفيف
+  } catch (err) {
+    // فشل الخدمة لا يخذل الزر: تعديل محلي مع إشعار خفيف يسمّي السبب كما قالته
+    // النواة (مفتاح، رصيد، حدّ، مهلة…) لا «تعذّر الاتصال» لكل سبب (فحص m3-07)
     const adjusted = localFallback(current);
     setOutput(adjusted);
     showRhythmFingerprint(null); // تعديل محلي بلا نموذج — الوصف السابق صار غير دقيق
     markAdjusted(adjusted);
-    showToast("تعذّر الاتصال بالنموذج — طُبّق تعديل محلي.", "warning");
+    const reason = String(err || "").split(" — ")[0].trim().replace(/\.$/, "") || "تعذّر الاتصال بالنموذج";
+    showToast(`${reason} — طُبّق تعديل محلي.`, "warning");
   } finally {
     setAdjustBusy(false);
   }
@@ -1239,20 +1252,8 @@ function restoreDraft(mother, version) {
 // التخزيني في القشرة (depositDraftVersions)، وهنا نصف الجلسة فقط.
 // ما حُفظ من قبل لا يُعاد إيداعه — علامة saved لكل مدخل تمنع التكرار
 const saveBtn = el("save-draft-btn");
-saveBtn.addEventListener("click", async () => {
-  if (sessionVersions.size === 0) {
-    showToast("لا توجد صيغة للحفظ — نسّق النص أولًا.", "neutral");
-    return;
-  }
-
-  const pending = [...sessionVersions.values()].filter((v) => !v.saved);
-  if (pending.length === 0) {
-    showToast("لا جديد ليُحفظ منذ آخر حفظ.", "neutral");
-    return;
-  }
-
-  const base = Date.now();
-  const newVersions = pending.map((v, i) => ({
+function draftVersionsOf(entries, base) {
+  return entries.map((v, i) => ({
     id: base + i,
     createdAt: v.updatedAt,
     formatted: v.formatted,
@@ -1262,14 +1263,45 @@ saveBtn.addEventListener("click", async () => {
     // ناتج «سطور أقل/أكثر» يبقى تحت نوعه الأصلي بوسم خفيف، لا نوعًا هجينًا
     linesAdjusted: v.linesAdjusted,
   }));
+}
 
+saveBtn.addEventListener("click", async () => {
+  if (sessionVersions.size === 0 && heldVersions.length === 0) {
+    showToast("لا توجد صيغة للحفظ — نسّق النص أولًا.", "neutral");
+    return;
+  }
+
+  const pending = [...sessionVersions.values()].filter((v) => !v.saved);
+  if (pending.length === 0 && heldVersions.length === 0) {
+    showToast("لا جديد ليُحفظ منذ آخر حفظ.", "neutral");
+    return;
+  }
+
+  // الصيغ المنتظرة لنصوصٍ سابقة أولًا، كلٌّ تحت أمّه، ثم صيغ النص الحالي. وكل
+  // دفعةٍ نجحت تُرفع من الانتظار فورًا، ففشلٌ بعدها لا يعيد إيداعها
+  let base = Date.now();
+  let saved = 0;
   try {
-    await depositDraftVersions(sessionKey, sessionOriginal, newVersions);
-    // خفض «متسخة» بعد نجاح الحفظ فقط — الخريطة تبقى، وما يُنتج بعدها يتجمع طبيعيًا
-    for (const v of pending) v.saved = true;
-    showToast(`حُفظت ${versionsCountLabel(pending.length)}.`);
+    while (heldVersions.length) {
+      const held = heldVersions[0];
+      await depositDraftVersions(held.key, held.original, draftVersionsOf(held.entries, base));
+      base += held.entries.length;
+      saved += held.entries.length;
+      heldVersions.shift();
+    }
+    if (pending.length) {
+      await depositDraftVersions(sessionKey, sessionOriginal, draftVersionsOf(pending, base));
+      // خفض «متسخة» بعد نجاح الحفظ فقط — الخريطة تبقى، وما يُنتج بعدها يتجمع طبيعيًا
+      for (const v of pending) v.saved = true;
+      saved += pending.length;
+    }
+    showToast(`حُفظت ${versionsCountLabel(saved)}.`);
   } catch (err) {
     showError(String(err), { owner: "nasaq" });
+  } finally {
+    // ما رُفع من الانتظار يُرفع من الجلسة المحفوظة أيضًا، وإلا عاد بعد الإقلاع
+    // فحُفظ مرتين — والحفظ لا يمرّ بـ renderState
+    window.NasaqShell.session.touch();
   }
 });
 
@@ -1292,6 +1324,29 @@ const TYPE_ORDER = [
 
 configureDraftsDisplay({ versionTypeOf: versionType, typeOrder: TYPE_ORDER });
 registerRestoreHandler(restoreDraft);
+
+// جزء نَسَق من الجلسة الجارية (فحص m2-16): النتيجة وعلى أي أساسٍ صدرت، وصيغ
+// الجلسة غير المحفوظة والمنتظرة. التراجع والتنويعات والبصمة لا تُحمل — عرضٌ لا عمل
+window.NasaqShell.session.register("nasaq", {
+  capture: () => ({
+    sessionKey,
+    sessionOriginal,
+    versions: [...sessionVersions.entries()],
+    held: heldVersions,
+    output: outputText.textContent,
+    meta: lastFormatMeta,
+  }),
+  restore(saved) {
+    sessionKey = saved.sessionKey ?? null;
+    sessionOriginal = saved.sessionOriginal ?? "";
+    sessionVersions = new Map(Array.isArray(saved.versions) ? saved.versions : []);
+    heldVersions = Array.isArray(saved.held) ? saved.held : [];
+    lastFormatMeta = saved.meta ?? null;
+    if (saved.output) setOutput(saved.output);
+    syncResultTools();
+    renderState();
+  },
+});
 
 // تنبيه نسق زال (زر الإغلاق، أو «أعد المحاولة»، أو خطأ آخر لنسق حلّ محله) — تعود
 // الحالة إلى ما تحتها. تنبيهات شَذْب لا تمسّها
@@ -1495,6 +1550,8 @@ function nasaqState() {
 }
 
 function renderState() {
+  // كل تغيّرٍ يُرسم تغيّرٌ في الجلسة: تُكتب بعد سكتة (القشرة تجمع المتتابع)
+  window.NasaqShell.session.touch();
   const state = nasaqState();
   const busy = state === "processing";
   const hasText = Boolean(inputText.value.trim());
@@ -1622,6 +1679,8 @@ window.NasaqMenu.register(
   () =>
     // الخانة تفرّغها القشرة — وهذا تصفير ما يملكه نَسَق: نتيجة وتقرير وتراجع
     window.NasaqShell.confirmNewSession(() => {
+      // الإذن أُعطي: يُمحى ما لم يُحفظ، ومعه صيغ النصوص السابقة المنتظرة
+      heldVersions = [];
       setOutput("");
       outputUndoStack = [];
       lastFormatMeta = null;
@@ -1629,7 +1688,7 @@ window.NasaqMenu.register(
       showRhythmFingerprint(null);
       syncResultTools();
       renderState();
-    }),
+    }, { unsaved: () => heldVersions.length > 0 || [...sessionVersions.values()].some((v) => !v.saved) }),
   { owner: "nasaq" }
 );
 

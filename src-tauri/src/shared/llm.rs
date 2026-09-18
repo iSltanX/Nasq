@@ -26,7 +26,7 @@ const ERR_SERVER: &str = "الخدمة تواجه خللًا مؤقتًا — أ
 const ERR_UNREADABLE: &str = "تعذّرت قراءة استجابة الخدمة.";
 const ERR_EMPTY_RESULT: &str = "أعاد النموذج نتيجة فارغة — أعد المحاولة.";
 const ERR_TOO_LONG: &str =
-    "النص أطول من حد المعالجة — قسّمه إلى أجزاء أقصر ونسّق كل جزء على حدة.";
+    "النص أطول من حد المعالجة — قسّمه إلى أجزاء أقصر وجرّب كل جزء على حدة.";
 // رفضٌ صريح من النموذج: إعادة المحاولة بالنص نفسه تُرفض مجددًا، فلا تُقال
 // «أعد المحاولة» وحدها كما في النتيجة الفارغة (فحص m3: مسار OpenAI كان يقرؤه فراغًا)
 const ERR_REFUSAL: &str =
@@ -43,6 +43,17 @@ fn missing_key_message(settings: &Settings) -> &'static str {
 
 fn request_failed(code: u16) -> String {
     format!("فشل الطلب (رمز {}). تحقق من الإعدادات وأعد المحاولة.", code)
+}
+
+/// مهلة طلب التوليد من سقف مخرجه: نصف دقيقة للاتصال والانتظار، وثانيةٌ لكل ٥٠
+/// توكنًا، بين أدنى المهلة القديمة و٣٦٠ ثانية. كانت ثابتة (١٢٠، و١٨٠ لـ Claude)،
+/// فنصٌّ قرب سقف ١٦٣٨٤ توكنًا لا يولَّد فيها تحت ١٣٦٫٥ توكن/ث، وتنتهي كل إعادة
+/// مثلها (فحص m3-09). والطلب القصير — ومنه طلب «اختبر» — على مهلته القديمة
+const GENERATION_TIMEOUT_MAX_SECS: u64 = 360;
+
+fn generation_timeout(max_tokens: u64, floor_secs: u64) -> std::time::Duration {
+    let secs = (30 + max_tokens / 50).clamp(floor_secs, GENERATION_TIMEOUT_MAX_SECS);
+    std::time::Duration::from_secs(secs)
 }
 
 fn transport_error(e: &reqwest::Error) -> String {
@@ -292,7 +303,7 @@ async fn request_completion_detailed(
     );
 
     let client = reqwest::Client::builder()
-        .timeout(std::time::Duration::from_secs(120))
+        .timeout(generation_timeout(max_tokens, 120))
         .build()
         .map_err(|_| ERR_CLIENT_INIT.to_string())?;
 
@@ -608,7 +619,7 @@ async fn request_completion_anthropic(
 
     // التفكير التكيفي أبطأ من نداء بلا تفكير — مهلة أوسع من المسار المتوافق
     let client = reqwest::Client::builder()
-        .timeout(std::time::Duration::from_secs(CLAUDE_TIMEOUT_SECS))
+        .timeout(generation_timeout(max_tokens, CLAUDE_TIMEOUT_SECS))
         .build()
         .map_err(|_| ERR_CLIENT_INIT.to_string())?;
 
@@ -677,8 +688,10 @@ async fn request_completion_ollama(
         return Err("اسم نموذج Ollama غير مضبوط — أضفه من لوحة الإعدادات.".to_string());
     }
 
+    // لا سقف مخرج في طلب Ollama، وأول طلبٍ يحمّل النموذج كله في الذاكرة: المهلة
+    // العليا نفسها (فحص m3-09)
     let client = reqwest::Client::builder()
-        .timeout(std::time::Duration::from_secs(120))
+        .timeout(std::time::Duration::from_secs(GENERATION_TIMEOUT_MAX_SECS))
         .build()
         .map_err(|_| "تعذّر تهيئة الاتصال.".to_string())?;
 
@@ -1073,6 +1086,18 @@ pub(crate) async fn test_connection(app: tauri::AppHandle) -> Result<ConnectionR
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    // فحص m3-09: المهلة تتسع مع سقف المخرج، والطلب القصير على مهلته القديمة
+    #[test]
+    fn generation_timeout_grows_with_the_output_cap() {
+        let secs = |max, floor| generation_timeout(max, floor).as_secs();
+        assert_eq!(secs(16, 120), 120, "طلب «اختبر»");
+        assert_eq!(secs(1500, 120), 120);
+        assert_eq!(secs(1500, CLAUDE_TIMEOUT_SECS), 180);
+        assert_eq!(secs(16384, 120), 357);
+        assert!(16384.0 / secs(16384, 120) as f64 <= 50.0, "سقف نَسَق يُولَّد بخمسين توكنًا في الثانية");
+        assert_eq!(secs(1_000_000, 120), GENERATION_TIMEOUT_MAX_SECS);
+    }
 
     #[test]
     fn gemini_first_attempt_carries_thinking_budget() {

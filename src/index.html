@@ -661,6 +661,19 @@
     </div>
   </div>
 
+  <!-- «استعادة إلى المحرر» فوق نصٍّ لم يُحفظ مسودةً تستأذن (Figma 353:8911، فحص
+       m2-14): نصّ الخانة لا يُسترجع بعدها، وصيغه غير المحفوظة تنتظر «حفظ» -->
+  <div id="restore-alert" class="alert" role="alertdialog" aria-modal="true" aria-labelledby="restore-title" aria-describedby="restore-message" hidden>
+    <div class="alert-body">
+      <h2 id="restore-title" class="alert-title">تستعيد المسودة؟</h2>
+      <p id="restore-message" class="alert-message">يحلّ نصّ المسودة محلّ النص الحالي، ولا يُسترجع بعدها. وصيغه التي لم تُحفظ تبقى حتى «حفظ».</p>
+    </div>
+    <div class="alert-buttons">
+      <button id="restore-cancel" class="alert-button" type="button">إلغاء</button>
+      <button id="restore-confirm" class="alert-button is-destructive" type="button">استعد</button>
+    </div>
+  </div>
+
   <!-- ورقة أول تشغيل بخطوتيها في عنصر واحد (Figma 255:524 و256:1155): عرضها
        ٤٨٠ لا ٧٢٠، وخطوتها تُقرأ من data-step على الورقة نفسها -->
   <div id="welcome-sheet" class="sheet sheet-narrow" data-step="welcome" role="dialog" aria-modal="true" aria-labelledby="welcome-label" hidden>

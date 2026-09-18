@@ -10,24 +10,34 @@ use tauri::Manager;
 use super::settings::data_file_path;
 use super::storage::{set_aside, write_private};
 
+/// القائمة، واسم ما نُحّي جانبًا إن نُحّي شيء — فيعرف الكاتب أن ملفًّا لم يُقرأ
+/// ووُضع بجوار الأصل، لا أن مسوداته اختفت (فحص m2-17)
 #[tauri::command]
 pub(crate) fn load_drafts(app: tauri::AppHandle) -> Result<Value, String> {
-    load_drafts_at(&data_file_path(&app, "drafts.json")?)
+    let (drafts, aside) = load_drafts_reporting(&data_file_path(&app, "drafts.json")?)?;
+    let set_aside = aside.and_then(|p| p.file_name().map(|n| n.to_string_lossy().into_owned()));
+    Ok(json!({ "drafts": drafts, "setAside": set_aside }))
+}
+
+/// القائمة وحدها كما يراها الشريط — للاختبارات التي سبقت الإبلاغ عن التنحية
+#[cfg(test)]
+fn load_drafts_at(path: &Path) -> Result<Value, String> {
+    load_drafts_reporting(path).map(|(drafts, _)| drafts)
 }
 
 /// ما لا يُقرأ قائمةً لا يعطّل اللوحة ولا يُكتب فوقه: بايتاتٌ لا تُقرأ (ومنها
 /// كتابةٌ بُترت وسط حرف)، أو JSON تالف، أو JSON ليس مصفوفة — كلها تُنحّى جانبًا
 /// باسمٍ لم يُستعمل، ثم تُعرض قائمة فارغة، فيبقى ما كان قابلًا للإنقاذ اليدوي
 /// محفوظًا. وإن تعذّرت التنحية نفسها وصل الخطأ الواجهةَ بدل قائمةٍ فارغة (فحص m2)
-fn load_drafts_at(path: &Path) -> Result<Value, String> {
+fn load_drafts_reporting(path: &Path) -> Result<(Value, Option<std::path::PathBuf>), String> {
     if !path.exists() {
-        return Ok(json!([]));
+        return Ok((json!([]), None));
     }
     match fs::read(path).ok().and_then(|raw| serde_json::from_slice::<Value>(&raw).ok()) {
-        Some(list @ Value::Array(_)) => Ok(list),
+        Some(list @ Value::Array(_)) => Ok((list, None)),
         _ => {
-            set_aside(path).map_err(|_| "تعذّرت قراءة المسودات.".to_string())?;
-            Ok(json!([]))
+            let aside = set_aside(path).map_err(|_| "تعذّرت قراءة المسودات.".to_string())?;
+            Ok((json!([]), Some(aside)))
         }
     }
 }
@@ -153,6 +163,22 @@ mod tests {
         save_drafts_at(&path, &one_new_draft()).unwrap();
 
         assert!(survives(&dir, &original), "أول حفظٍ كتب فوق ملفٍّ ليس قائمة، ولا نسخة منه");
+    }
+
+    // فحص m2-17: التنحية تُذكر باسمها، والملف السليم لا يُذكر معه شيء
+    #[test]
+    fn a_set_aside_file_is_reported_by_name() {
+        let dir = temp_dir("reported");
+        let path = dir.join("drafts.json");
+        fs::write(&path, b"[{\"key\": \"cut").unwrap();
+        let (drafts, aside) = load_drafts_reporting(&path).unwrap();
+        assert_eq!(drafts, json!([]));
+        assert_eq!(aside.unwrap().file_name().unwrap(), "drafts.json.corrupt");
+
+        save_drafts_at(&path, &sample()).unwrap();
+        let (drafts, aside) = load_drafts_reporting(&path).unwrap();
+        assert_eq!(drafts, sample());
+        assert!(aside.is_none(), "ملفٌّ سليم ذُكر معه تنحية");
     }
 
     #[test]

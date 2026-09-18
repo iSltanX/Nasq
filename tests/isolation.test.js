@@ -1294,7 +1294,8 @@ test("المرحلة ٧-ب: اللصق عبر النواة لا عبر WebKit", 
 test("المرحلة ٧-ب: «جلسة جديدة» تستأذن، والخانة تفرّغها القشرة لا البرج", () => {
   assert.ok(html.includes('id="new-session-alert"'), "تنبيه «جلسة جديدة» غائب");
   assert.strictEqual(regions["new-session-alert"]?.owner, null, "تنبيه «جلسة جديدة» صار ملكًا لبرج");
-  assert.ok(/if \(!el\("input-text"\)\.value\.trim\(\)\)/.test(shell), "المسح يمضي بلا استئذان ولو كان هناك نص");
+  // (فحص m2-15: يستأذن أيضًا حين يقول البرج إن عنده صيغًا لم تُحفظ ولو فرغت الخانة)
+  assert.ok(/if \(!el\("input-text"\)\.value\.trim\(\)(\)| && !unsaved\?\.\(\)\))/.test(shell), "المسح يمضي بلا استئذان ولو كان هناك نص");
   // الخانة مشتركة تملكها القشرة، والبرج يصفّر ما يملكه هو
   assert.ok(/function startNewSession\([\s\S]*?input\.value = "";/.test(shell), "القشرة لا تفرّغ الخانة");
   for (const [file, code] of [["nasaq.js", nasaq], ["shadhb.js", shadhb]]) {

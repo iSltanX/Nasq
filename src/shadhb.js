@@ -392,6 +392,8 @@
 
     // ---------- الرسم: كل حالة بعناصرها ----------
     function renderState() {
+      // كل تغيّرٍ يُرسم تغيّرٌ في الجلسة: تُكتب بعد سكتة (فحص m2-16)
+      shell.session.touch();
       const now = shadhbState();
       const transition = now !== renderedState;
       const busy = now === "checking";
@@ -702,6 +704,19 @@
       shell.sendToNasaq(state.currentText);
       setMode("nasaq");
       shell.showToast("انتقل النص المشذَّب إلى نَسَق — جلسة جديدة.", "success");
+    });
+
+    // جزء شَذْب من الجلسة الجارية (فحص m2-16): الفحص وقرارات القصّ والنص المشذَّب
+    // — عملٌ لا يُعاد بنداءٍ جديد، فالنموذج قد يقترح غير ما قرّره الكاتب
+    shell.session.register("shadhb", {
+      capture: () => (state ? { state, selected } : null),
+      restore(saved) {
+        if (!saved.state || !Array.isArray(saved.state.cuts)) return;
+        state = saved.state;
+        selected = Number.isInteger(saved.selected) ? saved.selected : -1;
+        renderCuts();
+        renderState();
+      },
     });
 
     // واجهة تشخيص واختبار: تسمح بفحص خط القصّ محليًا (معاينة المتصفح)
