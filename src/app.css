@@ -462,7 +462,9 @@ textarea.empty-bidi {
   align-items: center;
   gap: var(--space-8);
   block-size: var(--size-toolbar);
-  padding-inline: var(--space-8);
+  /* بُعدٌ واحد عن حافة العمود: حشوة الشريط تساوي حشوة منطقة النص، فلا يكون أحد
+     المبدّلين أبعد من الآخر (قرار المالك m5) */
+  padding-inline: var(--space-32);
 }
 
 .toolbar-cluster {
