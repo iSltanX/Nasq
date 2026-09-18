@@ -34,7 +34,7 @@ pub(crate) fn create_main_window(app: &tauri::App) -> tauri::Result<()> {
     let background = if system_prefers_dark() { WINDOW_DARK } else { WINDOW_LIGHT };
     let titlebar = if titlebar_is_rtl() { "rtl" } else { "ltr" };
 
-    let window = WebviewWindowBuilder::new(app, "main", WebviewUrl::App(entry_page().into()))
+    let window = WebviewWindowBuilder::new(app, "main", WebviewUrl::App("index.html".into()))
         .initialization_script(format!("document.documentElement.dataset.titlebar = \"{titlebar}\";"))
         .title("نَسَق")
         .inner_size(1280.0, 800.0)
@@ -69,15 +69,6 @@ pub(crate) fn main_window_ready(window: tauri::WebviewWindow) {
     if let Some(t0) = LAUNCHED_AT.get() {
         eprintln!("[nasaq] main window shown {} ms after launch", t0.elapsed().as_millis());
     }
-}
-
-// صفحة الدخول — متغير NSQ_ENTRY في نسخ التطوير فقط يفتح صفحة تجربة بدلها
-fn entry_page() -> String {
-    #[cfg(debug_assertions)]
-    if let Ok(page) = std::env::var("NSQ_ENTRY") {
-        return page;
-    }
-    "index.html".to_string()
 }
 
 pub(crate) fn titlebar_is_rtl() -> bool {

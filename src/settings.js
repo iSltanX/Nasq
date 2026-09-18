@@ -242,7 +242,7 @@
   const version = window.__TAURI__?.app
     ?.getVersion?.()
     .then((value) => {
-      el("app-version").textContent = value;
+      el("app-version").textContent = window.NasaqVersion.display(value);
     })
     .catch(() => {});
 

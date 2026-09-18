@@ -132,7 +132,7 @@
 
   async function currentVersion() {
     try {
-      return await window.__TAURI__.app.getVersion();
+      return window.NasaqVersion.display(await window.__TAURI__.app.getVersion());
     } catch {
       return "";
     }
@@ -183,7 +183,7 @@
       invoke("save_settings", { patch: { lastUpdateCheck: Math.floor(Date.now() / 1000) } }).catch(() => {});
       if (meta && meta.rid != null) {
         rid = meta.rid;
-        version = meta.version;
+        version = window.NasaqVersion.display(meta.version);
         showAvailable(version, await currentVersion());
       } else if (origin === MANUAL) {
         showUpToDate(await currentVersion());

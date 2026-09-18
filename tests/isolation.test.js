@@ -38,6 +38,7 @@ test("ترتيب التحميل: الهيكل فالقشرة قبل نسق، و�
     "substack-markers.js",
     "prune.js",
     "app-links.js",
+    "app-version.js",
     "appearance.js",
     "menu.js",
     "layout.js",
@@ -1280,4 +1281,31 @@ test("المرحلة ٧-ب: «جلسة جديدة» تستأذن، والخان�
     const body = code.slice(code.indexOf('"file.new-session"'), code.indexOf('"file.new-session"') + 600);
     assert.ok(!/inputText\.value\s*=/.test(body), `${file}: البرج يفرّغ الخانة بنفسه`);
   }
+});
+
+// المرحلة ٩: الإصدار كما رُسم — جزءان في «حول» والإعدادات وتنبيهات التحديث،
+// والجزء الثالث يظهر حين يحمل إصلاحًا. ومصدره واحد تحمّله النوافذ الثلاث
+test("المرحلة ٩: رقم الإصدار يُعرض كما رُسم ومن مصدر واحد", () => {
+  const { display } = require(srcPath("app-version.js"));
+  assert.strictEqual(display("27.0.0"), "27.0");
+  assert.strictEqual(display("27.1.0"), "27.1");
+  assert.strictEqual(display("27.0.1"), "27.0.1");
+  assert.strictEqual(display("27.0.10"), "27.0.10");
+  assert.strictEqual(display("27.0.0-beta.1"), "27.0.0-beta.1");
+  assert.strictEqual(display(undefined), "");
+
+  for (const [name, page] of [["index.html", html], ["settings.html", settingsHtml], ["about.html", aboutHtml]]) {
+    assert.ok(page.includes('src="app-version.js"'), `${name} لا تحمّل app-version.js`);
+  }
+  // كل موضع يعرض إصدارًا يمرّ بالمنسّق، ولا getVersion خامًا يصل الشاشة
+  for (const [name, code] of [["about.js", aboutJs], ["settings.js", settingsJs], ["updates.js", updatesJs]]) {
+    const raw = (code.match(/getVersion(\?\.)?\(\)/g) || []).length;
+    const shown = (code.match(/NasaqVersion\.display\(/g) || []).length;
+    assert.ok(raw > 0 && shown >= raw, `${name} يعرض الإصدار دون المنسّق`);
+  }
+  assert.ok(updatesJs.includes("NasaqVersion.display(meta.version)"), "إصدار التحديث المتاح يُعرض خامًا");
+  assert.ok(
+    updatesJs.includes("NasaqVersion.display(await window.__TAURI__.app.getVersion())"),
+    "الإصدار الحالي في تنبيهات التحديث يُعرض خامًا"
+  );
 });

@@ -7,7 +7,7 @@
   const version = window.__TAURI__?.app
     ?.getVersion?.()
     .then((value) => {
-      document.getElementById("app-version").textContent = value;
+      document.getElementById("app-version").textContent = window.NasaqVersion.display(value);
     })
     .catch(() => {});
 
