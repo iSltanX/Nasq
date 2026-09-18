@@ -128,6 +128,11 @@
   color: var(--text-primary);
 }
 
+/* زرّ السهمين تحت الضغط (Form Picker · Pressed، فحص m4-13) */
+.row-picker:active .picker-chevron {
+  background-image: linear-gradient(var(--fill-pressed), var(--fill-pressed));
+}
+
 .row-picker:focus-visible {
   outline: none;
   box-shadow: var(--focus-ring);
@@ -149,6 +154,11 @@
   line-height: var(--font-line-height-label);
   color: var(--text-primary);
   cursor: default;
+}
+
+/* تحت الضغط كزرّ ثانوي (Button · Secondary · Pressed، فحص m4-13) */
+.row-button:active:not(:disabled) {
+  background-image: linear-gradient(var(--fill-pressed), var(--fill-pressed));
 }
 
 .row-button:disabled {

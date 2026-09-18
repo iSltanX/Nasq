@@ -91,6 +91,17 @@ body {
   color: var(--text-secondary);
 }
 
+/* المرور والضغط لغير المحدد (Settings Tab · Hover وPressed، فحص m4-13) */
+.tab:not([aria-selected="true"]):hover {
+  background: var(--fill-hover);
+}
+.tab:not([aria-selected="true"]):active {
+  background: var(--fill-pressed);
+}
+.tab:not([aria-selected="true"]):active span {
+  color: var(--text-primary);
+}
+
 .tab[aria-selected="true"] {
   background: var(--fill-tab-selected);
   border-color: var(--border-hairline);

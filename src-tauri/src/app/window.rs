@@ -44,6 +44,10 @@ pub(crate) fn create_main_window(app: &tauri::App) -> tauri::Result<()> {
         .visible(false)
         .background_color(background)
         .center()
+        // الإفلات للصفحة لا لـ Tauri: ملفٌّ نصّي يُفلت في المحرر فيُقرأ بواجهة HTML5
+        // (File) دون أمرٍ في النواة ولا إذنٍ بقراءة الملفات (فحص m4-12). والنافذتان
+        // الثانويتان على الافتراضي، فلا يُفتح فيهما ملفٌّ مُفلت
+        .disable_drag_drop_handler()
         .build()?;
 
     #[cfg(target_os = "macos")]

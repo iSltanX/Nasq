@@ -760,6 +760,11 @@ textarea.empty-bidi {
 .view-segment:hover {
   background: var(--fill-hover);
 }
+/* المقطع غير المحدد تحت الضغط (Segmented Control · Pressed، فحص m4-13) */
+.view-segment:not([aria-selected="true"]):active {
+  background: var(--fill-pressed);
+  color: var(--text-primary);
+}
 .view-segment[aria-selected="true"],
 .view-segment.active {
   background: var(--fill-control-raised);
@@ -769,6 +774,11 @@ textarea.empty-bidi {
 .view-segment[aria-selected="true"]:focus-visible,
 .view-segment.active:focus-visible {
   box-shadow: var(--focus-ring), inset 0 0 0 var(--stroke-hairline) var(--border-hairline);
+}
+
+/* منطقة المحتوى هدفًا لإفلات ملفٍّ نصّي: حلقة التركيز داخلها (Figma 355:22800، فحص m4-12) */
+.content[data-drop-target] {
+  box-shadow: inset 0 0 0 var(--stroke-focus) var(--module-focus-ring);
 }
 
 .compare {
@@ -1183,6 +1193,13 @@ textarea.empty-bidi {
   color: var(--text-primary);
   text-align: start;
 }
+/* الرأس تحت الضغط (Inspector Section · Header=Pressed، فحص m4-13): تعبئة مدوّرة ٤
+   تمتدّ ٤ بظلٍّ صلب من اللون نفسه — الزاوية الخارجية ٨، والتخطيط لا يتحرك */
+.section-header:active {
+  background: var(--fill-pressed);
+  border-radius: var(--radius-4);
+  box-shadow: 0 0 0 var(--space-4) var(--fill-pressed);
+}
 .section-header .icon {
   color: var(--icon-secondary);
 }
@@ -1311,6 +1328,8 @@ textarea.empty-bidi {
 .dd-btn:hover {
   background-image: linear-gradient(var(--fill-hover), var(--fill-hover));
 }
+/* الضغط كالمفتوح (Popup Button · Pressed، فحص m4-13): يظهر من لحظة الضغط */
+.dd-btn:active:not(:disabled),
 .dd-btn[aria-expanded="true"] {
   background-image: linear-gradient(var(--fill-pressed), var(--fill-pressed));
 }

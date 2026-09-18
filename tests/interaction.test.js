@@ -230,3 +230,71 @@ test("m4-09: كل كتابةٍ عبر المحرّر في الواجهة تمر�
   // الموضع الوحيد المسموح داخل الدالة نفسها، وهي تمرّر اسم الأمر متغيّرًا
   assert.deepStrictEqual(offenders, []);
 });
+
+// ---------- قرارات المالك بعد m4 ----------
+
+// m4-11: كل قرارٍ في شَذْب يُسبق بلقطة، و⌘Z/⇧⌘Z خارج الحقول يتراجعان ويعيدان، والسجلّ
+// عمر الفحص (Figma 355:23219). المشهد في المتصفح: m4/decisions
+test("m4-11: قرارا «احذف» و«أبقِ» يُسجَّلان، و⌘Z ⇧⌘Z يتراجعان ويعيدان خارج الحقول", () => {
+  const shadhb = src("shadhb.js");
+  const body = (name) => {
+    const at = shadhb.indexOf(`function ${name}(`);
+    return shadhb.slice(at, shadhb.indexOf("\n    }\n", at));
+  };
+  for (const name of ["applyCutAt", "keepCutAt"]) {
+    const b = body(name);
+    const record = b.indexOf("recordDecision()");
+    assert.ok(record !== -1, `${name} لا يسجّل قراره`);
+    assert.ok(record < b.indexOf("cut.status ="), `${name} يسجّل بعد أن يغيّر`);
+  }
+  const key = shadhb.slice(shadhb.indexOf('e.code !== "KeyZ"') - 200, shadhb.indexOf('e.code !== "KeyZ"') + 700);
+  assert.ok(/input, textarea, \[contenteditable='true'\]/.test(key), "⌘Z في حقلٍ يُؤخذ من تحريره");
+  assert.ok(/isModalOpen\(\)/.test(key), "⌘Z يعمل تحت ورقة");
+  assert.ok(/e\.shiftKey\) redoDecision\(\)/.test(key) && /else undoDecision\(\)/.test(key), "لا تراجع أو لا إعادة");
+  // السجلّ يُنسى حيث يُستبدل الفحص كله
+  assert.ok(/forgetDecisions\(\);\n\s+state = \{/.test(shadhb), "فحصٌ جديد يرث سجلّ القديم");
+  assert.ok(/confirmNewSession\(\(\) => \{\n\s+forgetDecisions\(\);/.test(shadhb), "جلسة جديدة ترث السجلّ");
+  assert.ok(/forgetDecisions\(\);\n\s+state = saved\.state;/.test(shadhb), "الجلسة المستعادة ترث سجلًّا");
+});
+
+// m4-12: الإفلات للصفحة لا لـ Tauri، وملفٌّ مُفلتٌ في أي موضع لا يُفتح، والإدراج عبر المحرّر
+test("m4-12: الإفلات مسموحٌ للصفحة، والملف لا يُفتح، والإدراج يُتراجع عنه", () => {
+  const rs = fs.readFileSync(path.join(__dirname, "..", "src-tauri", "src", "app", "window.rs"), "utf8");
+  const builder = rs.slice(rs.indexOf('WebviewWindowBuilder::new(app, "main"'), rs.indexOf(".build()?", rs.indexOf('"main"')));
+  assert.ok(builder.includes(".disable_drag_drop_handler()"), "Tauri يلتقط الإفلات قبل الصفحة");
+  const shell = src("shell.js");
+  for (const type of ["dragover", "drop"]) {
+    const at = shell.indexOf(`document.addEventListener("${type}"`);
+    const handler = shell.slice(at, shell.indexOf("\n});", at));
+    assert.ok(at !== -1 && /if \(!carriesFiles\(e\)\) return;\s+e\.preventDefault\(\);/.test(handler), `${type}: ملفٌّ مُفلت قد يفتحه WebKit`);
+  }
+  const insert = shell.slice(shell.indexOf("async function insertDroppedFile"), shell.indexOf('document.addEventListener("dragenter"'));
+  assert.ok(insert.includes('editThroughPage(field, "insertText", text)'), "الإدراج لا يُتراجع عنه");
+  assert.ok(insert.indexOf('showView("source")') < insert.indexOf("field.focus()"), "الكتابة في خانةٍ مخفية");
+});
+
+test("m4-12: فكّ ترميز الملف المُفلت — UTF-8 ثم UTF-16 بعلامته ثم ويندوز-١٢٥٦", () => {
+  const shell = src("shell.js");
+  const start = shell.indexOf("function decodeDropped");
+  const fn = shell.slice(start, shell.indexOf("\n}\n", start) + 2);
+  const ctx = { TextDecoder, out: {} };
+  vm.runInNewContext(fn + `
+    out.utf8 = decodeDropped(new TextEncoder().encode("سلامٌ عليكم").buffer);
+    out.cp1256 = decodeDropped(new Uint8Array([0xd3, 0xe1, 0xc7, 0xe3]).buffer);
+    out.utf16 = decodeDropped(new Uint8Array([0xff, 0xfe, 0x33, 0x06, 0x44, 0x06]).buffer);
+    out.bom = decodeDropped(new Uint8Array([0xef, 0xbb, 0xbf, 0xd8, 0xa3]).buffer);`, { ...ctx, TextEncoder });
+  assert.deepStrictEqual(ctx.out, { utf8: "سلامٌ عليكم", cp1256: "سلام", utf16: "سل", bom: "أ" });
+});
+
+// m4-13: حالة الضغط لكل عنصرٍ رسمها Figma (Segmented Control وSettings Tab وInspector Section
+// وForm Picker ممّا أُضيف، وPopup Button وButton · Secondary ممّا كان مرسومًا)
+test("m4-13: لكل عنصرٍ حالة ضغطٍ بـ fill-pressed", () => {
+  const css = ["app.css", "forms.css", "secondary.css"].map(src).join("\n").replace(/\/\*[\s\S]*?\*\//g, "");
+  const rules = [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)].map((m) => ({ sel: m[1].trim(), body: m[2] }));
+  const missing = [];
+  for (const cls of ["view-segment", "module-segment", "section-header", "dd-btn", "tab", "row-picker", "row-button"]) {
+    const ok = rules.some((r) => r.sel.split(",").some((s) => new RegExp(`\\.${cls}\\b[^,]*:active`).test(s)) && r.body.includes("var(--fill-pressed)"));
+    if (!ok) missing.push(cls);
+  }
+  assert.deepStrictEqual(missing, []);
+});

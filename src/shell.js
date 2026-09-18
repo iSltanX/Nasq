@@ -680,6 +680,103 @@ async function pasteFromCore(field) {
   }
 }
 
+// ---------- إفلات ملفٍّ نصّي في المحرر (فحص m4-12، Figma 355:22800 و355:22980) ----------
+// ملفٌّ من Finder على منطقة المحتوى يُبرزها بحلقة التركيز داخلها (كما يبرز الماك هدف
+// الإفلات)، وإفلاته يُدرج نصّه في الخانة عند المؤشر عبر المحرّر فيتراجع عنه ⌘Z —
+// في البرجين، فالخانة مشتركة. والنافذة كلها لا تفتح ملفًا مُفلتًا خارج المحتوى: كان
+// WebKit سيذهب إليه ويترك التطبيق. والنصّ المسحوب من تطبيقٍ آخر يبقى على سلوكه الأصلي
+const DROP_MAX_BYTES = 1024 * 1024;
+const DROP_TEXT_NAME = /\.(txt|text|md|markdown)$/i;
+const dropZone = el("content");
+let dropDepth = 0;
+
+const carriesFiles = (e) => Boolean(e.dataTransfer && [...e.dataTransfer.types].includes("Files"));
+
+function setDropTarget(on) {
+  dropZone.toggleAttribute("data-drop-target", on);
+}
+
+// الترميز: UTF-8 أولًا، ثم UTF-16 بعلامته، ثم ويندوز-١٢٥٦ لملفات العربية القديمة
+function decodeDropped(bytes) {
+  const view = new Uint8Array(bytes);
+  if (view[0] === 0xff && view[1] === 0xfe) return new TextDecoder("utf-16le").decode(bytes);
+  if (view[0] === 0xfe && view[1] === 0xff) return new TextDecoder("utf-16be").decode(bytes);
+  try {
+    return new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+  } catch {
+    return new TextDecoder("windows-1256").decode(bytes);
+  }
+}
+
+async function insertDroppedFile(file, extra) {
+  const owner = activeProduct();
+  if (!(String(file.type).startsWith("text/") || DROP_TEXT_NAME.test(file.name))) {
+    showError("هذا الملف ليس نصًّا — أفلِت ملفًا نصيًا (txt أو md). نصّك لم يتغيّر.", { owner });
+    return;
+  }
+  if (file.size > DROP_MAX_BYTES) {
+    showError("الملف أكبر من أن يُفتح هنا — الحدّ ١ م.ب للملف النصّي. نصّك لم يتغيّر.", { owner });
+    return;
+  }
+  let text;
+  try {
+    text = decodeDropped(await file.arrayBuffer());
+  } catch {
+    showError("تعذّرت قراءة الملف — نصّك لم يتغيّر.", { owner });
+    return;
+  }
+  if (!text.trim()) {
+    showToast("الملف فارغ — لم يتغيّر شيء.", "neutral");
+    return;
+  }
+  clearError(owner);
+  // الخانة في عمود الأصل: تُعرض قبل الكتابة، فالمخفيّة لا تقبل تركيزًا ولا تراجعًا
+  window.NasaqWindow.showView("source");
+  const field = el("input-text");
+  const start = field.value ? field.selectionStart ?? field.value.length : 0;
+  const end = field.value ? field.selectionEnd ?? start : 0;
+  field.focus();
+  field.setSelectionRange(start, end);
+  if (!editThroughPage(field, "insertText", text)) {
+    field.value = field.value.slice(0, start) + text + field.value.slice(end);
+    field.setSelectionRange(start + text.length, start + text.length);
+    field.dispatchEvent(new Event("input"));
+  }
+  showToast(extra ? `أُدرج «${file.name}» — والملفات الأخرى لم تُدرج: أفلِتها واحدًا واحدًا.` : `أُدرج «${file.name}».`, extra ? "warning" : "success");
+}
+
+document.addEventListener("dragenter", (e) => {
+  if (!carriesFiles(e)) return;
+  if (dropZone.contains(e.target) && !window.NasaqWindow.isModalOpen()) {
+    dropDepth += 1;
+    setDropTarget(true);
+  }
+});
+document.addEventListener("dragleave", (e) => {
+  if (!carriesFiles(e) || !dropZone.contains(e.target)) return;
+  dropDepth = Math.max(0, dropDepth - 1);
+  if (!dropDepth) setDropTarget(false);
+});
+document.addEventListener("dragover", (e) => {
+  if (!carriesFiles(e)) return;
+  e.preventDefault();
+  const ok = dropZone.contains(e.target) && !window.NasaqWindow.isModalOpen();
+  e.dataTransfer.dropEffect = ok ? "copy" : "none";
+});
+document.addEventListener("drop", (e) => {
+  if (!carriesFiles(e)) return;
+  e.preventDefault();
+  dropDepth = 0;
+  setDropTarget(false);
+  if (!dropZone.contains(e.target) || window.NasaqWindow.isModalOpen()) return;
+  const files = [...e.dataTransfer.files];
+  if (files.length) insertDroppedFile(files[0], files.length > 1);
+});
+document.addEventListener("dragend", () => {
+  dropDepth = 0;
+  setDropTarget(false);
+});
+
 function selectionIn(node) {
   const selection = document.getSelection();
   if (node.tagName === "TEXTAREA" || node.tagName === "INPUT") {

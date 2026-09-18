@@ -567,6 +567,7 @@
     function applyCutAt(index) {
       const cut = state && state.cuts[index];
       if (!cut || cut.status !== "pending") return;
+      recordDecision();
       const outcome = prune.applyCuts(state.currentText, [{ quote: cut.quote, occurrence: cut.occurrence }]);
       if (outcome.skipped.length > 0) {
         // قصٌّ سابق غيّر الموضع فلم يعد الاقتباس حرفيًا — لا اجتهاد ولا تقريب
@@ -585,6 +586,7 @@
     function keepCutAt(index) {
       const cut = state && state.cuts[index];
       if (!cut || cut.status !== "pending") return;
+      recordDecision();
       cut.status = "kept";
       selectFirstPending();
       renderCuts();
@@ -594,18 +596,78 @@
     // القرار يعيد بناء الصفوف ويُخفي أزرار البطاقة حين لا يبقى ما يُحسم، فيسقط
     // التركيز إلى الصفحة إن كان على صفٍّ أو زرٍّ منها (⌘⌫ و⌘K من الشريط، أو Return).
     // يعود إلى الصفّ الذي يقبل Tab في القائمة كما يبقى في قائمة الماك (فحص m4-06)
-    function decide(apply) {
+    function keepingFocus(run) {
       const hadFocus = cutsList.contains(document.activeElement) || cutActions.contains(document.activeElement);
-      apply(selected);
+      run();
       // المخفيّ يبقى «مركَّزًا» حتى الإطار التالي، فالسؤال: هل ما زال معروضًا؟
       const lost = !document.activeElement || document.activeElement === document.body || document.activeElement.offsetParent === null;
       if (hadFocus && lost) {
         cutsList.querySelector('[tabindex="0"]')?.focus();
       }
     }
+    const decide = (apply) => keepingFocus(() => apply(selected));
 
     applyBtn.addEventListener("click", () => decide(applyCutAt));
     keepBtn.addEventListener("click", () => decide(keepCutAt));
+
+    // ---------- التراجع عن القرار: ⌘Z وإعادته ⇧⌘Z (فحص m4-11، Figma 355:23219) ----------
+    // كل قرارٍ («احذف» أو «أبقِ») يُسبق بلقطة: النص المشذَّب، وحال كل قصّة، والمحددة.
+    // ⌘Z يعيد اللقطة فتعود القصّة «لم تُحسم» ومحددةً، و⇧⌘Z يعيد القرار — كسجلّ تراجع
+    // الماك: قرارٌ جديد بعد التراجع يمحو ما يُعاد. والسجلّ عمر الفحص: فحصٌ جديد، أو
+    // جلسة جديدة، أو جلسةٌ مستعادة تبدأ بلا سجلّ. والتركيز في حقلٍ يُبقي ⌘Z لتحريره
+    let undoDecisions = [];
+    let redoDecisions = [];
+    const decisionSnapshot = () => ({
+      currentText: state.currentText,
+      statuses: state.cuts.map((c) => c.status),
+      selected,
+    });
+    function recordDecision() {
+      undoDecisions.push(decisionSnapshot());
+      redoDecisions = [];
+    }
+    function forgetDecisions() {
+      undoDecisions = [];
+      redoDecisions = [];
+    }
+    function applySnapshot(snap) {
+      state.currentText = snap.currentText;
+      snap.statuses.forEach((status, i) => {
+        if (state.cuts[i]) state.cuts[i].status = status;
+      });
+      selected = snap.selected;
+      renderCuts();
+      renderState();
+    }
+    function undoDecision() {
+      const snap = state && undoDecisions.pop();
+      if (!snap) {
+        shell.showToast("لا قرار للتراجع عنه.", "neutral");
+        return;
+      }
+      redoDecisions.push(decisionSnapshot());
+      keepingFocus(() => applySnapshot(snap));
+      shell.showToast("أُعيدت القصّة إلى «لم تُحسم»", "success");
+    }
+    function redoDecision() {
+      const snap = state && redoDecisions.pop();
+      if (!snap) {
+        shell.showToast("لا قرار لإعادته.", "neutral");
+        return;
+      }
+      undoDecisions.push(decisionSnapshot());
+      keepingFocus(() => applySnapshot(snap));
+      shell.showToast("أُعيد القرار", "success");
+    }
+    document.addEventListener("keydown", (e) => {
+      if (!e.metaKey || e.altKey || e.ctrlKey || e.code !== "KeyZ") return;
+      // شَذْب هو الظاهر، ولا ورقة فوقه، والتركيز ليس في حقلٍ يملك تراجعه
+      if (pruneBtn.offsetParent === null || window.NasaqWindow.isModalOpen()) return;
+      if (e.target.closest && e.target.closest("input, textarea, [contenteditable='true']")) return;
+      e.preventDefault();
+      if (e.shiftKey) redoDecision();
+      else undoDecision();
+    });
 
     // ---------- الفحص: النداء الوحيد للنموذج في هذا البرج ----------
     function presentResult(original, result) {
@@ -616,6 +678,7 @@
         .filter((c) => c && typeof c.quote === "string" && c.quote.length > 0)
         .map((c) => ({ ...c, status: "pending" }));
       const dropped = ((result && result.droppedCuts) || 0) + (proposed.length - cuts.length);
+      forgetDecisions();
       state = {
         original,
         currentText: original,
@@ -675,6 +738,7 @@
       () =>
         // الخانة تفرّغها القشرة — شَذْب لا يكتب فيها. وهذا تصفير ما يملكه هو
         window.NasaqShell.confirmNewSession(() => {
+          forgetDecisions();
           state = null;
           selected = -1;
           failed = false;
@@ -731,6 +795,7 @@
       capture: () => (state ? { state, selected } : null),
       restore(saved) {
         if (!saved.state || !Array.isArray(saved.state.cuts)) return;
+        forgetDecisions();
         state = saved.state;
         selected = Number.isInteger(saved.selected) ? saved.selected : -1;
         renderCuts();
