@@ -209,6 +209,37 @@ pub(crate) async fn call_api(
         .map_err(|e| transport_error(&e))
 }
 
+/// فشل طلب التوليد بتفصيله: الرسالة العربية التي تُعرض، ونصّ المزوّد نفسه حين
+/// ردّ بخطأ. البرجان يأخذان الرسالة وحدها كما كانت؛ والتفصيل لاختبار الاتصال،
+/// فهو الموضع الذي يُسأل فيه «لماذا» لا «ماذا أفعل الآن»
+pub(crate) struct CompletionFailure {
+    pub(crate) message: String,
+    pub(crate) detail: Option<String>,
+}
+
+impl From<String> for CompletionFailure {
+    fn from(message: String) -> Self {
+        CompletionFailure { message, detail: None }
+    }
+}
+
+/// نصّ خطأ المزوّد من جسم ردّه: {"error":{"message"}} في المتوافق مع OpenAI،
+/// ومصفوفةٌ بعنصر واحد عند Gemini أحيانًا. يُقصّ، ويُحجب منه المفتاح إن ردّده
+/// المزوّد — فلا يصل سرٌّ إلى الواجهة عبر رسالة خطأ
+fn provider_detail(body: &str, api_key: &str) -> Option<String> {
+    let payload: Value = serde_json::from_str(body).ok()?;
+    let error = if payload.is_array() { &payload[0]["error"] } else { &payload["error"] };
+    let text = error["message"].as_str().or_else(|| error.as_str())?.trim();
+    if text.is_empty() {
+        return None;
+    }
+    let key = api_key.trim();
+    let text = if key.len() >= 8 { text.replace(key, "…") } else { text.to_string() };
+    Some(text.chars().take(DETAIL_LIMIT).collect())
+}
+
+const DETAIL_LIMIT: usize = 200;
+
 /// يرسل الرسائل إلى المزود ويعيد نص المحتوى الخام — نقل مشترك بين الوضعين،
 /// وميزانية التفكير يمررها الوضع المنادي (لا قيمة افتراضية هنا عمدًا)
 pub(crate) async fn request_completion(
@@ -218,23 +249,37 @@ pub(crate) async fn request_completion(
     temperature: f64,
     thinking_budget: u64,
 ) -> Result<String, String> {
+    request_completion_detailed(settings, messages, max_tokens, temperature, thinking_budget)
+        .await
+        .map_err(|failure| failure.message)
+}
+
+async fn request_completion_detailed(
+    settings: &Settings,
+    messages: &Value,
+    max_tokens: u64,
+    temperature: f64,
+    thinking_budget: u64,
+) -> Result<String, CompletionFailure> {
     // Ollama المحلي: بروتوكول مختلف تمامًا (لا مفتاح) — فرع مبكر ومنفصل، ولا
     // يمسّ المسار السحابي أدناه بشيء. ميزانية التفكير نفسها (لا قيمة جديدة)
     // تُترجم لحقل Ollama الخاص بها، فيتوقف نسق شَذْب على تصميمهما نفسه
     if settings.provider.trim() == PROVIDER_OLLAMA {
-        return request_completion_ollama(settings, messages, thinking_budget).await;
+        return Ok(request_completion_ollama(settings, messages, thinking_budget).await?);
     }
 
     // Claude: واجهة Messages الأصلية (مصادقة وجسم واستجابة مختلفة الشكل) — فرع
     // مبكر منفصل كفرع Ollama لا يمسّ المسار السحابي أدناه. لا تُمرَّر إليه
     // الحرارة عمدًا: نماذج Claude الحديثة ترفض معاملات أخذ العينات بـ400
     if settings.provider.trim() == PROVIDER_ANTHROPIC {
-        return request_completion_anthropic(settings, messages, max_tokens, thinking_budget).await;
+        return Ok(
+            request_completion_anthropic(settings, messages, max_tokens, thinking_budget).await?,
+        );
     }
 
     let api_key = settings.api_key.trim();
     if api_key.is_empty() {
-        return Err(missing_key_message(settings).to_string());
+        return Err(missing_key_message(settings).to_string().into());
     }
 
     let url = format!(
@@ -289,7 +334,7 @@ pub(crate) async fn request_completion(
 
     let status = response.status();
     if !status.is_success() {
-        return Err(match status.as_u16() {
+        let message = match status.as_u16() {
             401 | 403 => ERR_BAD_KEY.to_string(),
             // نفاد الرصيد له اسمه الصريح (الإصلاح ٢-ج) — كان يسقط في الذراع العام
             402 => ERR_NO_CREDIT.to_string(),
@@ -297,7 +342,9 @@ pub(crate) async fn request_completion(
             429 => ERR_RATE_LIMITED.to_string(),
             500..=599 => ERR_SERVER.to_string(),
             code => request_failed(code),
-        });
+        };
+        let body = response.text().await.unwrap_or_default();
+        return Err(CompletionFailure { message, detail: provider_detail(&body, api_key) });
     }
 
     let payload: Value = response
@@ -308,7 +355,7 @@ pub(crate) async fn request_completion(
     // ناتج مقطوع بسبب بلوغ سقف التوكنات → رسالة واضحة بدل «ناتج غير صالح».
     // يُفحص قبل الفراغ: نموذج استدلالي قد يستنفد السقف تفكيرًا فلا يبقى نص ظاهر
     if payload["choices"][0]["finish_reason"].as_str() == Some("length") {
-        return Err(ERR_TOO_LONG.to_string());
+        return Err(ERR_TOO_LONG.to_string().into());
     }
 
     let content = payload["choices"][0]["message"]["content"]
@@ -318,7 +365,7 @@ pub(crate) async fn request_completion(
         .to_string();
 
     if content.is_empty() {
-        return Err(ERR_EMPTY_RESULT.to_string());
+        return Err(ERR_EMPTY_RESULT.to_string().into());
     }
 
     Ok(content)
@@ -743,6 +790,8 @@ pub(crate) struct ConnectionReport {
     /// None حين لا نموذج مكتوب أو حين لا تصلح القائمة للحكم
     pub(crate) model_listed: Option<bool>,
     pub(crate) model_count: usize,
+    /// ولّد النموذج فعلًا بطلبٍ صغير — None حين لم يُجرَّب (لا نموذج، أو Ollama)
+    pub(crate) generates: Option<bool>,
     /// نصّ عربي جاهز للعرض كما هو
     pub(crate) message: String,
 }
@@ -754,6 +803,7 @@ impl ConnectionReport {
             key_accepted: false,
             model_listed: None,
             model_count: 0,
+            generates: None,
             message,
         }
     }
@@ -898,6 +948,7 @@ pub(crate) async fn check_connection(settings: &Settings) -> ConnectionReport {
             key_accepted: !key_rejected,
             model_listed: None,
             model_count: 0,
+            generates: None,
             message,
         };
     }
@@ -917,17 +968,38 @@ pub(crate) async fn check_connection(settings: &Settings) -> ConnectionReport {
             key_accepted: true,
             model_listed: None,
             model_count: count,
+            generates: None,
             message: format!("تم الاتصال بـ{} — {} نموذجًا متاحًا.", service, count),
         };
     }
 
     if model_is_listed(provider, model, &models) {
+        // وجود الاسم في القائمة لا يعني أنه يولّد: قد يُسرد نموذجٌ لا يقبله
+        // الحساب أو المسار. فالحكم لطلب توليد صغير بالمسار نفسه الذي يسلكه
+        // البرجان. Ollama يُستثنى: القائمة محلية، والتوليد يحمّل النموذج كله
+        if !ollama {
+            if let Err(failure) = probe_generation(settings).await {
+                return ConnectionReport {
+                    connected: true,
+                    key_accepted: failure.message != ERR_BAD_KEY,
+                    model_listed: Some(true),
+                    model_count: count,
+                    generates: Some(false),
+                    message: probe_failure_message(model, &failure),
+                };
+            }
+        }
         return ConnectionReport {
             connected: true,
             key_accepted: true,
             model_listed: Some(true),
             model_count: count,
-            message: format!("تم الاتصال، و«{}» متاح.", model),
+            generates: (!ollama).then_some(true),
+            message: if ollama {
+                format!("تم الاتصال، و«{}» متاح.", model)
+            } else {
+                format!("تم الاتصال، و«{}» ولّد نصًّا فعلًا.", model)
+            },
         };
     }
 
@@ -943,7 +1015,31 @@ pub(crate) async fn check_connection(settings: &Settings) -> ConnectionReport {
         key_accepted: true,
         model_listed: Some(false),
         model_count: count,
+        generates: None,
         message,
+    }
+}
+
+// طلب الفحص: رسالة نقلٍ لا عقد فيها ولا سلوك، وسقفٌ يكفي كلمة واحدة
+const PROBE_MESSAGE: &str = "ping";
+const PROBE_MAX_TOKENS: u64 = 16;
+
+/// التوليد نفسه الذي يطلبه البرجان، بأصغر حجم. بلوغ السقف أو نتيجة فارغة
+/// نجاحٌ هنا: المزوّد قبل الطلب وولّد، والفحص لا يطلب جوابًا بعينه
+async fn probe_generation(settings: &Settings) -> Result<(), CompletionFailure> {
+    let messages = json!([{ "role": "user", "content": PROBE_MESSAGE }]);
+    match request_completion_detailed(settings, &messages, PROBE_MAX_TOKENS, 0.0, 0).await {
+        Ok(_) => Ok(()),
+        Err(failure) if failure.message == ERR_TOO_LONG || failure.message == ERR_EMPTY_RESULT => Ok(()),
+        Err(failure) => Err(failure),
+    }
+}
+
+fn probe_failure_message(model: &str, failure: &CompletionFailure) -> String {
+    let head = format!("«{}» في قائمة المزوّد، لكن التوليد فشل: {}", model, failure.message);
+    match &failure.detail {
+        Some(detail) => format!("{}\nردّ المزوّد: {}", head, detail),
+        None => head,
     }
 }
 
@@ -1554,6 +1650,53 @@ mod tests {
         (format!("http://127.0.0.1:{port}"), receiver)
     }
 
+    /// كـ stub_once لطلبات متتالية على العنوان نفسه، ويقرأ الجسم كاملًا
+    /// بطوله المعلن — فطلب التوليد يصل بحمولته ولا يُقطع الاتصال قبل الردّ
+    fn stub_seq(replies: Vec<(&'static str, &'static str)>) -> (String, std::sync::mpsc::Receiver<String>) {
+        use std::io::{Read, Write};
+        use std::net::TcpListener;
+
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let port = listener.local_addr().unwrap().port();
+        let (sender, receiver) = std::sync::mpsc::channel();
+
+        std::thread::spawn(move || {
+            for (status, body) in replies {
+                let Ok((mut stream, _)) = listener.accept() else { return };
+                let mut request = Vec::new();
+                let mut buffer = [0u8; 4096];
+                loop {
+                    let Ok(read) = stream.read(&mut buffer) else { break };
+                    if read == 0 {
+                        break;
+                    }
+                    request.extend_from_slice(&buffer[..read]);
+                    let text = String::from_utf8_lossy(&request).to_string();
+                    if let Some(end) = text.find("\r\n\r\n") {
+                        let length = text[..end]
+                            .lines()
+                            .find_map(|l| l.to_ascii_lowercase().strip_prefix("content-length:").map(|v| v.trim().parse::<usize>().unwrap_or(0)))
+                            .unwrap_or(0);
+                        if request.len() >= end + 4 + length {
+                            break;
+                        }
+                    }
+                }
+                let _ = sender.send(String::from_utf8_lossy(&request).to_string());
+                let response = format!(
+                    "HTTP/1.1 {}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
+                    status,
+                    body.len(),
+                    body
+                );
+                let _ = stream.write_all(response.as_bytes());
+                let _ = stream.flush();
+            }
+        });
+
+        (format!("http://127.0.0.1:{port}"), receiver)
+    }
+
     fn cloud_settings(base_url: &str, model: &str) -> Settings {
         Settings {
             api_key: "sk-test".to_string(),
@@ -1565,19 +1708,71 @@ mod tests {
 
     #[test]
     fn a_listed_model_reports_a_clean_connection() {
-        let (base, request) = stub_once("200 OK", r#"{"data":[{"id":"gpt-5.6-terra"},{"id":"o4-mini"}]}"#);
+        let (base, request) = stub_seq(vec![
+            ("200 OK", r#"{"data":[{"id":"gpt-5.6-terra"},{"id":"o4-mini"}]}"#),
+            ("200 OK", r#"{"choices":[{"finish_reason":"stop","message":{"content":"pong"}}]}"#),
+        ]);
         let report = futures_lite_block_on(check_connection(&cloud_settings(&base, "gpt-5.6-terra")));
 
         assert!(report.connected && report.key_accepted);
         assert_eq!(report.model_listed, Some(true));
+        assert_eq!(report.generates, Some(true));
         assert_eq!(report.model_count, 2);
         assert!(report.message.contains("gpt-5.6-terra"));
 
-        // والطلب نفسه: سرد نماذج موقَّع بـ bearer، بلا أي حمولة
-        let sent = request.recv().unwrap();
-        assert!(sent.starts_with("GET /models "), "المسار ليس سرد نماذج: {sent}");
-        assert!(sent.to_lowercase().contains("authorization: bearer sk-test"));
-        assert!(!sent.contains("messages"), "حمولة في طلب سرد");
+        // الطلب الأول: سرد نماذج موقَّع بـ bearer، بلا أي حمولة
+        let listing = request.recv().unwrap();
+        assert!(listing.starts_with("GET /models "), "المسار ليس سرد نماذج: {listing}");
+        assert!(listing.to_lowercase().contains("authorization: bearer sk-test"));
+        assert!(!listing.contains("messages"), "حمولة في طلب سرد");
+
+        // والثاني: توليد فعلي بالمسار الذي يسلكه البرجان، بالنموذج المكتوب
+        // بمهلة: غياب طلب التوليد يُفشل الاختبار ولا يُعلّقه
+        let probe = request
+            .recv_timeout(std::time::Duration::from_secs(5))
+            .expect("لم يُرسَل طلب توليد بعد السرد");
+        assert!(probe.starts_with("POST /chat/completions "), "لم يُجرَّب التوليد: {probe}");
+        assert!(probe.contains(r#""model":"gpt-5.6-terra""#), "جُرّب نموذج آخر: {probe}");
+    }
+
+    // الشكوى التي أنشأت الفحص: «اختبر» قال متاح، والتنسيق بالاسم نفسه أعاد 404
+    #[test]
+    fn a_listed_model_that_refuses_to_generate_is_not_a_success() {
+        let (base, _request) = stub_seq(vec![
+            ("200 OK", r#"{"data":[{"id":"models/gemini-2.5-flash"}]}"#),
+            ("404 Not Found", r#"[{"error":{"code":404,"message":"models/gemini-2.5-flash is not found for key sk-test-secret-123","status":"NOT_FOUND"}}]"#),
+        ]);
+        let mut settings = cloud_settings(&base, "gemini-2.5-flash");
+        settings.api_key = "sk-test-secret-123".to_string();
+        let report = futures_lite_block_on(check_connection(&settings));
+
+        assert_eq!(report.model_listed, Some(true), "الاسم في القائمة فعلًا");
+        assert_eq!(report.generates, Some(false), "نجاحٌ وهو لا يولّد");
+        assert!(report.message.contains(ERR_MODEL_UNAVAILABLE), "{}", report.message);
+        // سبب المزوّد نفسه يصل — وبلا المفتاح ولو ردّده المزوّد
+        assert!(report.message.contains("is not found"), "لم يصل ردّ المزوّد: {}", report.message);
+        assert!(!report.message.contains("sk-test-secret-123"), "تسرّب المفتاح: {}", report.message);
+    }
+
+    #[test]
+    fn a_probe_that_hits_the_token_cap_still_counts_as_generating() {
+        let (base, _request) = stub_seq(vec![
+            ("200 OK", r#"{"data":[{"id":"gpt-5.6-terra"}]}"#),
+            ("200 OK", r#"{"choices":[{"finish_reason":"length","message":{"content":""}}]}"#),
+        ]);
+        let report = futures_lite_block_on(check_connection(&cloud_settings(&base, "gpt-5.6-terra")));
+        assert_eq!(report.generates, Some(true), "{}", report.message);
+    }
+
+    #[test]
+    fn provider_detail_reads_both_shapes_and_hides_the_key() {
+        let key = "AIzaSy-secret-key-000";
+        let object = r#"{"error":{"message":"Model AIzaSy-secret-key-000 not found"}}"#;
+        let array = r#"[{"error":{"message":"not supported for generateContent"}}]"#;
+        assert_eq!(provider_detail(object, key).as_deref(), Some("Model … not found"));
+        assert_eq!(provider_detail(array, key).as_deref(), Some("not supported for generateContent"));
+        assert_eq!(provider_detail("<html>bad gateway</html>", key), None);
+        assert_eq!(provider_detail(&format!(r#"{{"error":{{"message":"{}"}}}}"#, "x".repeat(500)), key).unwrap().chars().count(), DETAIL_LIMIT);
     }
 
     #[test]

@@ -78,5 +78,11 @@
     );
   }
 
-  window.NasaqProviders = { PROVIDERS, PROVIDER_ORDER, LOCAL_PROVIDER, presetFor, menuItems };
+  // حكم «اختبر» في موضع واحد للنافذتين: النجاح أن يولّد النموذج فعلًا، لا أن
+  // يُسرد اسمه وحده — قائمةٌ قد تحوي نموذجًا لا يقبل التوليد (المرحلة ٩)
+  function connectionWorks(report) {
+    return Boolean(report?.connected) && report.modelListed !== false && report.generates !== false;
+  }
+
+  window.NasaqProviders = { PROVIDERS, PROVIDER_ORDER, LOCAL_PROVIDER, presetFor, menuItems, connectionWorks };
 })();

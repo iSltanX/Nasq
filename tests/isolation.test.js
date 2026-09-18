@@ -1309,3 +1309,21 @@ test("المرحلة ٩: رقم الإصدار يُعرض كما رُسم ومن
     "الإصدار الحالي في تنبيهات التحديث يُعرض خامًا"
   );
 });
+
+// المرحلة ٩: «اختبر» كان يقول «متاح» لنموذجٍ مسرود لا يولّد، والتنسيق بالاسم
+// نفسه يعيد 404. الحكم الآن في مصدر واحد، ولا نجاح بلا توليد فعلي
+test("المرحلة ٩: نجاح «اختبر» يشترط التوليد، وحكمه واحد للنافذتين", () => {
+  const vm = require("node:vm");
+  const sandbox = { window: {} };
+  vm.runInNewContext(providersJs, sandbox);
+  const works = sandbox.window.NasaqProviders.connectionWorks;
+  assert.strictEqual(works({ connected: true, modelListed: true, generates: true }), true);
+  assert.strictEqual(works({ connected: true, modelListed: true, generates: false }), false, "مسرود لا يولّد صار نجاحًا");
+  assert.strictEqual(works({ connected: true, modelListed: false, generates: null }), false);
+  assert.strictEqual(works({ connected: true, modelListed: true, generates: null }), true, "Ollama بلا تجربة توليد");
+  assert.strictEqual(works({ connected: false }), false);
+  for (const [name, code] of [["settings.js", settingsJs], ["onboarding.js", onboardingJs]]) {
+    assert.ok(code.includes("NasaqProviders.connectionWorks(report)"), `${name} يحكم بنفسه`);
+    assert.ok(!/report\.modelListed/.test(code), `${name} يكرّر شرط النجاح`);
+  }
+});

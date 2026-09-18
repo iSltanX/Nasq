@@ -203,7 +203,7 @@
     el("connection-status").hidden = true;
     try {
       const report = await invoke("test_connection");
-      showConnection(report.message, report.connected && report.modelListed !== false ? "success" : "danger");
+      showConnection(report.message, window.NasaqProviders.connectionWorks(report) ? "success" : "danger");
     } catch (error) {
       showConnection(String(error), "danger");
     }
