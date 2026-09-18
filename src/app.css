@@ -1174,10 +1174,17 @@ textarea.empty-bidi {
   font: var(--type-caption-emphasis);
   color: var(--text-secondary);
 }
+/* `.row-value` في forms.css مصمَّمة لصفٍّ أفقي: تسريحة `flex: 1 0 0` تملأ ما
+   بقي من العرض، و`nowrap` مع `overflow: hidden` تقصّ بثلاث نقاط. و«التقرير»
+   صفٌّ عمودي، فالأساس صفرًا على المحور الرأسي يطوي الارتفاع إلى صفر والقصّ
+   يبتلع النص — فتُردّ الثلاثة هنا (المرحلة ٨) */
 .stacked-row .row-value {
   font: var(--type-body-small);
   color: var(--text-primary);
   white-space: pre-line;
+  flex: 0 0 auto;
+  overflow: visible;
+  text-overflow: clip;
 }
 /* «١. كُسرت الفقرة…» — الرقم جزء من السطر نفسه كما في Figma (98:313) */
 #notes-list {

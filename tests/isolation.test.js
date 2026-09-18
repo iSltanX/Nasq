@@ -1006,6 +1006,36 @@ test("المرحلة ٦: المكوّن المشترك مصدرٌ واحد لا 
   assert.ok(!/^\.menu \{/m.test(forms), "قائمة المنتقي تصطدم بقوائم النافذة الرئيسية");
 });
 
+// المرحلة ٨: ملفٌّ مشترك تحمّله نافذتان يسري على الاثنتين — ولو كان مصمَّمًا
+// لإحداهما. `.row-value` في forms.css صفٌّ أفقي (أساسٌ صفر يملأ العرض، وقصٌّ
+// بثلاث نقاط)، ولمّا حملت النافذة الرئيسية الملف طُبِّقت القاعدة على «التقرير»
+// وهو صفٌّ عمودي، فطوى الأساسُ ارتفاعَه إلى صفر وابتلع القصُّ نصَّه: اختفى
+// «ما تغيّر» و«بصمة الإيقاع» من الواجهة مع بقاء نصّهما في DOM
+test("المرحلة ٨: الصفّ العمودي يردّ افتراضات الصفّ الأفقي المشتركة", () => {
+  const forms = src("forms.css");
+  const decl = (text, selector) => {
+    const at = text.indexOf(selector + " {");
+    return at === -1 ? "" : text.slice(at, text.indexOf("}", at));
+  };
+  const shared = decl(forms, ".row-value");
+  assert.ok(shared, ".row-value ليست في forms.css");
+
+  const stacked = decl(css, ".stacked-row .row-value");
+  assert.ok(stacked, ".stacked-row .row-value ليست في app.css");
+
+  // كل خاصيّة في المشترك تفترض صفًّا أفقيًا يجب أن تُردّ في الصفّ العمودي
+  for (const prop of ["flex", "overflow", "white-space", "text-overflow"]) {
+    if (!new RegExp(`(^|[;{\\s])${prop}\\s*:`).test(shared)) continue;
+    assert.ok(
+      new RegExp(`(^|[;{\\s])${prop}\\s*:`).test(stacked),
+      `.row-value تضبط ${prop} لصفٍّ أفقي ولا تردّها .stacked-row .row-value — يطوي العمودَ أو يقصّ نصّه`
+    );
+  }
+  // وصراحةً: لا أساس صفر ولا قصّ على المحور الرأسي
+  assert.ok(!/flex:\s*1\s+0\s+0/.test(stacked), "الصفّ العمودي بأساس صفر: ارتفاعه صفر");
+  assert.ok(!/overflow:\s*hidden/.test(stacked), "الصفّ العمودي يقصّ نصّه");
+});
+
 test("المرحلة ٦: تدفّقا التطبيق لا يملكهما برج", () => {
   // ورقة الترحيب وتنبيه التحديث عن التطبيق نفسه: بلا data-for، ولا يعرفان برجًا
   for (const id of ["welcome-sheet", "update-alert", "welcome-picker-menu"]) {
