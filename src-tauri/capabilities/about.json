@@ -1,12 +1,20 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "about",
-  "description": "قدرات لوحة «حول» — أقلّ من الإعدادات: نواة، وسحب من صفّ العنوان الذي ترسمه الصفحة. لا تحديث ولا فتح روابط",
+  "description": "قدرات لوحة «حول» — أقلّ من الإعدادات: نواة، وسحب من صفّ العنوان الذي ترسمه الصفحة. لا تحديث، وفتحُ رابطٍ واحد بعينه: موقع المؤلف",
   "windows": [
     "about"
   ],
   "permissions": [
     "core:default",
-    "core:window:allow-start-dragging"
+    "core:window:allow-start-dragging",
+    {
+      "identifier": "opener:allow-open-url",
+      "allow": [
+        {
+          "url": "https://www.bysltan.com"
+        }
+      ]
+    }
   ]
 }

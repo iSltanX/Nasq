@@ -23,6 +23,8 @@ const secondaryJs = src("secondary.js");
 // وحدات المرحلة ٦: المشترك بين النافذتين، وتدفّقا أول تشغيل والتحديث
 const menuJs = src("menu.js");
 const providersJs = src("providers.js");
+const linksJs = src("app-links.js");
+const aboutJs = src("about.js");
 const formsJs = src("forms.js");
 const onboardingJs = src("onboarding.js");
 const updatesJs = src("updates.js");
@@ -35,6 +37,7 @@ test("ترتيب التحميل: الهيكل فالقشرة قبل نسق، و�
     "fragments.js",
     "substack-markers.js",
     "prune.js",
+    "app-links.js",
     "appearance.js",
     "menu.js",
     "layout.js",
@@ -1131,6 +1134,66 @@ test("المرحلة ٦: صفحات المفاتيح مسموحة بالاسم �
     );
     assert.ok(!other.permissions.includes("updater:allow-download"), `${name} تملك التنزيل`);
     assert.ok(!other.permissions.includes("updater:allow-install"), `${name} تملك التثبيت`);
+  }
+});
+
+// المرحلة ٨: رابطا التطبيق — مصدرٌ واحد، وكل نافذة لا تفتح إلا ما أُذن لها
+// باسمه. لوحة «حول» كانت «لا تفتح روابط» فصارت تفتح عنوانًا واحدًا بعينه
+test("المرحلة ٨: روابط التطبيق مصدرها واحد، وإذنُ كل نافذة بقدر ما تفتح", () => {
+  const urlOf = (key) => {
+    const m = new RegExp(`${key}:\\s*"([^"]+)"`).exec(linksJs);
+    assert.ok(m, `${key} ليس في app-links.js`);
+    return m[1];
+  };
+  const PROJECT = urlOf("PROJECT_URL");
+  const SITE = urlOf("SITE_URL");
+
+  // النوافذ الثلاث تحمّل الوحدة، ولا نافذة تكتب العنوان حرفيًا في نفسها
+  for (const [name, page] of [["index.html", html], ["settings.html", settingsHtml], ["about.html", aboutHtml]]) {
+    assert.ok(page.includes('src="app-links.js"'), `${name} لا تحمّل app-links.js`);
+  }
+  for (const [name, code] of [["shell.js", shell], ["settings.js", settingsJs], ["about.js", aboutJs],
+                              ["index.html", html], ["settings.html", settingsHtml], ["about.html", aboutHtml]]) {
+    for (const url of [PROJECT, SITE]) {
+      assert.ok(!code.includes(url), `${name} يكتب ${url} حرفيًا بدل المصدر المشترك`);
+    }
+  }
+
+  // ما تفتحه كل نافذة ⊆ ما أُذن لها به بالاسم
+  const capOf = (file) => {
+    const cap = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "src-tauri", "capabilities", file), "utf8"));
+    const o = cap.permissions.find((x) => x && x.identifier === "opener:allow-open-url");
+    return o ? o.allow.map((a) => a.url) : [];
+  };
+  const opens = (code) => {
+    const found = new Set();
+    if (/\bPROJECT_URL\b/.test(code)) found.add(PROJECT);
+    if (/\bSITE_URL\b/.test(code)) found.add(SITE);
+    if (/keyUrl/.test(code)) for (const m of providersJs.matchAll(/keyUrl: "([^"]+)"/g)) found.add(m[1]);
+    return [...found];
+  };
+  const allowsUrl = (allowed, url) =>
+    allowed.some((a) => a === url || (a.endsWith("/*") && url.startsWith(a.slice(0, -1))));
+
+  for (const [capFile, codes] of [
+    ["default.json", [shell, onboardingJs]],
+    ["settings.json", [settingsJs]],
+    ["about.json", [aboutJs]],
+  ]) {
+    const allowed = capOf(capFile);
+    for (const code of codes) {
+      for (const url of opens(code)) {
+        assert.ok(allowsUrl(allowed, url), `${capFile}: تُفتح ${url} بلا إذن`);
+      }
+    }
+  }
+
+  // ولا إذن زائد: كل عنوان مأذون في نافذة ثانوية تفتحه فعلًا
+  for (const [capFile, code] of [["settings.json", settingsJs], ["about.json", aboutJs]]) {
+    const used = opens(code);
+    for (const url of capOf(capFile)) {
+      assert.ok(used.includes(url), `${capFile}: إذنٌ لـ${url} لا تفتحه النافذة`);
+    }
   }
 });
 

@@ -10,13 +10,20 @@
   </head>
   <!-- لوحة «حول» ٢٨٤×٢١٣: أيقونة ٦٤ ثم الاسم ١٤ عريضًا، فالإصدار والوعد والحقوق -->
   <body data-window="about" data-tauri-drag-region>
-    <div class="about">
+    <!-- الدوران لا الوسوم: اللوحة مقيسة ٢٨٤×٢١٣ بالنقطة، وتبديل <p> بـ<h1>
+         يجرّ مقاسًا وهوامش افتراضية تزحزح القياس. الدور يعطي المعلمَ والعنوان
+         لقارئ الشاشة وحده -->
+    <div class="about" role="main">
       <img src="app-icon.png" alt="أيقونة نَسَق" width="64" height="64" />
-      <p class="app-name">نَسَق</p>
+      <p class="app-name" role="heading" aria-level="1">نَسَق</p>
       <p class="app-version">الإصدار <span id="app-version" dir="ltr"></span></p>
       <p class="app-promise">كلماتك كما هي، بنَسَقٍ أوضح.</p>
-      <p class="app-rights">© ٢٠٢٦ سلطان</p>
+      <p class="app-rights">
+        © ٢٠٢٦ سلطان ·
+        <button type="button" class="link" id="site-link" dir="ltr"></button>
+      </p>
     </div>
+    <script src="app-links.js"></script>
     <script src="appearance.js"></script>
     <script src="secondary.js"></script>
     <script src="about.js"></script>

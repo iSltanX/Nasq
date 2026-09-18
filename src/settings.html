@@ -176,6 +176,22 @@
           </div>
           <p class="section-footer">لا يُنزَّل أي تحديث قبل موافقتك.</p>
         </div>
+
+        <!-- المشروع ونسبته (Figma 252:606 و252:777): العنوان معرّف لاتيني
+             فيُقرأ من اليسار، والزرّ يفتحه في المتصفح عبر النواة -->
+        <div class="form-section">
+          <div class="section-rows">
+            <div class="form-row" data-control="button">
+              <span class="row-label" id="label-project">صفحة المشروع</span>
+              <span class="row-value" id="project-url" dir="ltr"></span>
+              <button class="row-button" type="button" id="open-project" aria-labelledby="label-project">افتح</button>
+            </div>
+          </div>
+          <p class="section-footer">
+            تطوير وتصميم: سلطان ·
+            <button type="button" class="link" id="site-link" dir="ltr"></button>
+          </p>
+        </div>
       </section>
     </main>
 
@@ -184,6 +200,7 @@
     <!-- قائمة اختيار واحدة تخدم المزوّد والمظهر معًا -->
     <div class="picker-menu" id="picker-menu" role="menu" hidden></div>
 
+    <script src="app-links.js"></script>
     <script src="appearance.js"></script>
     <script src="secondary.js"></script>
     <script src="providers.js"></script>

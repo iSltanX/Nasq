@@ -5,7 +5,7 @@
 // باسمها أبدًا. (انقسمت عن main.js نقلًا حرفيًا في المرحلة 2 — v4.2)
 
 // صفحة المشروع — نطاقها وحده مسموح في القدرة، وتفتح في المتصفح الافتراضي
-const PROJECT_URL = "https://github.com/iSltanX/Nasq";
+// عنوان المستودع مصدرُه app-links.js — تشترك فيه النوافذ الثلاث
 
 // خارج التطبيق (معاينة متصفح) تبقى الواجهة والأدوات المحلية تعمل، وتفشل أوامر النواة برسالة واضحة
 const invoke = window.__TAURI__?.core?.invoke
@@ -1023,7 +1023,7 @@ window.NasaqMenu.register("file.import-merge", () => el("import-drafts-btn").cli
 });
 // «مساعدة نَسَق» بلا وجهة بعد، فيبقى عنصرها معطّلًا حتى تُقرّر (المرحلة ٨)
 window.NasaqMenu.register("help.project", () => {
-  invoke("plugin:opener|open_url", { url: PROJECT_URL }).catch(() => {});
+  invoke("plugin:opener|open_url", { url: window.NasaqLinks.PROJECT_URL }).catch(() => {});
 });
 
 // ---------- الجسر الوحيد بين البرجين ----------

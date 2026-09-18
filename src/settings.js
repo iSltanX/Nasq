@@ -246,6 +246,16 @@
     })
     .catch(() => {});
 
+  // المستودع وموقع المؤلف: نصوصهما وعناوينهما من المصدر المشترك، والفتح يمرّ
+  // بالنواة — وقدرة هذه النافذة تسمح بالعنوانين بالاسم وحدهما
+  const links = window.NasaqLinks;
+  const openUrl = (url) => invoke("plugin:opener|open_url", { url }).catch(() => {});
+  el("project-url").textContent = links.PROJECT_LABEL;
+  el("open-project").addEventListener("click", () => openUrl(links.PROJECT_URL));
+  const site = el("site-link");
+  site.textContent = links.SITE_LABEL;
+  site.addEventListener("click", () => openUrl(links.SITE_URL));
+
   Promise.all([loaded, version ?? Promise.resolve()]).then(() => {
     setTab("general");
     announceReady();

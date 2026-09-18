@@ -11,6 +11,14 @@
     })
     .catch(() => {});
 
+  // موقع المؤلف: نصُّه ورابطه من المصدر المشترك، والفتح يمرّ بالنواة —
+  // وقدرة هذه النافذة تسمح بهذا العنوان بالاسم وحده
+  const site = document.getElementById("site-link");
+  site.textContent = window.NasaqLinks.SITE_LABEL;
+  site.addEventListener("click", () => {
+    invoke("plugin:opener|open_url", { url: window.NasaqLinks.SITE_URL }).catch(() => {});
+  });
+
   let choice = "auto";
   const settings = invoke("load_settings")
     .then((view) => {

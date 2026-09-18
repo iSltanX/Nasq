@@ -171,3 +171,25 @@ body[data-window="about"] {
   color: var(--text-primary);
   margin-block-start: 7px;
 }
+
+/* رابطٌ بهيئة نصّ: زرٌّ لأن الفتح يمرّ بالنواة لا بملاحة الصفحة. لونه لون
+   الهوية ثابتًا — لوحة «حول» على مستوى التطبيق لا على مستوى برج */
+.link {
+  appearance: none;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: var(--accent-nasaq-strong);
+  cursor: pointer;
+  border-radius: var(--radius-4);
+}
+
+.link:hover {
+  text-decoration: underline;
+}
+
+.link:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
