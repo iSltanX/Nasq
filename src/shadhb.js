@@ -116,12 +116,13 @@
     // data-shadhb-state على الجذر، وكل ما تقرره (أزرار، أقسام المفتّش، العمود
     // الظاهر، مؤشر الحالة) يُضبط هنا صراحةً. المنطق تحتها لا يتغير
     const STATUS_LABELS = {
-      before: "لم يُفحص بعد",
-      ready: "لم يُفحص بعد",
-      checking: "جارٍ الفحص…",
-      polished: "حُسمت كل القصّات",
-      "no-cuts": "لا قصّات مقترحة",
-      error: "تعذّر التحقق",
+      before: "شَذْب — بانتظار النص",
+      ready: "شَذْب — بانتظار الفحص",
+      checking: "شَذْب — جارٍ الفحص، لا حذف تلقائي",
+      review: "شَذْب — بانتظار قرارات المراجعة",
+      polished: "شَذْب — حُسمت كل القصّات",
+      "no-cuts": "شَذْب — لا قصّات مقترحة",
+      error: "شَذْب — تعذّر الفحص، النص لم يتغير",
     };
 
     // أقسام المفتّش لكل حالة (Figma 107:504): null غائب، true مفتوح، false مطويّ
@@ -171,8 +172,9 @@
     // كلها عبر منسّق القشرة المشترك: [مفرد، مثنى، جمع ٣–١٠، مفرد منصوب ١١+، مفرد]
     const wordsLabel = (n) => count(n, ["كلمة واحدة", "كلمتان", "كلمات", "كلمة", "كلمة"]);
 
-    const undecidedLabel = (n) =>
-      `بانتظار قرارك في ${count(n, ["قصّة واحدة", "قصّتين", "قصّات", "قصّة", "قصّة"])}`;
+    // رأس اللوح: «٠ من ٣ محسومة» كما في Review-Decision 2009:1632
+    const decidedLabel = (cuts) =>
+      `${AR(cuts.filter((c) => c.status !== "pending").length)} من ${AR(cuts.length)} محسومة`;
 
     // الإسقاط الجزئي لا موضع دائم له في التصميم، فيُعلَن مرة بنبرة محايدة.
     // الفعل يوافق العدد، فيسير مع الاسم في الصيغة نفسها
@@ -424,7 +426,7 @@
       // الشريط الجانبي: العدد في العنوان، والملاحظة مكان القائمة حين لا صفوف
       const hasCuts = Boolean(state) && state.cuts.length > 0;
       cutsCount.hidden = !hasCuts;
-      if (hasCuts) cutsCount.textContent = AR(state.cuts.length);
+      if (hasCuts) cutsCount.textContent = decidedLabel(state.cuts);
       cutsNote.hidden = hasCuts;
       cutsNote.textContent =
         now === "no-cuts"
@@ -492,16 +494,10 @@
 
       // شريط الحالة: المؤشر وتسميته، وعدّاد كلمات الشذرة (Figma 71:471)
       statusBadge.dataset.status = now;
-      statusLabel.textContent =
-        now === "review"
-          ? undecidedLabel(state.cuts.filter((c) => c.status === "pending").length)
-          : STATUS_LABELS[now];
-      if (now === "polished" && applied > 0) {
-        const total = words(state.original);
-        countBox.textContent = `${wordsLabel(words(state.currentText))} من ${AR(total)}`;
-      } else {
-        countBox.textContent = wordsLabel(words(inputText.value));
-      }
+      // نصّ الحالة كما في إطارات شَذْب في NsqV272، وعدد ما لم يُحسم في رأس اللوح («٠ من ٣ محسومة»)
+      statusLabel.textContent = STATUS_LABELS[now];
+      // العدّاد بصيغة شريط الحالة المشتركة: كلمات النص الجاري وحروفه
+      shell.updateCount(countBox, state ? state.currentText : inputText.value, { withLines: false });
 
       // العمود الظاهر عند العرض الواحد يتبع الحالة عند تغيّرها وحده، فلا يُسحب
       // اختيار الكاتب من تحته وهو يراجع

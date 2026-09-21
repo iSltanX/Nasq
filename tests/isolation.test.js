@@ -368,13 +368,17 @@ test("المرحلة ٣: لا نافذة منبثقة داخل الصفحة لن
 });
 
 test("المرحلة ٣: لكل حالة من حالات نَسَق عنصرها وتسميتها", () => {
+  // نصوص شريط الحالة في NsqV272 (m6): Empty 2008:30 وProcessing 2009:342 وResult-Ready 2008:328
+  // وCrossroads 2009:1085 وNarrow / Nasaq-Error 2288:2147
   const labels = {
-    empty: "لم يُنسَّق بعد",
-    processing: "جارٍ التنسيق…",
-    result: "منسَّق",
-    review: "بانتظار اختيارك",
-    error: "تعذّر التنسيق",
+    empty: "محلي — مستعد لاستقبال نصوصك",
+    processing: "جارٍ التنسيق — الأصل محفوظ كما هو",
+    result: "تم التنسيق والتحسين بنجاح",
+    review: "اختر وجهة النص قبل المتابعة",
+    error: "تعذّر إتمام التنسيق — نصّك محفوظ",
   };
+  // و«جاهز للتنسيق» (Ready 2009:281) للحالة الفارغة حين يكون في الخانة نص
+  assert.ok(nasaq.includes('const READY_LABEL = "جاهز للتنسيق";') && nasaq.includes('state === "empty" && hasText ? READY_LABEL : STATUS_LABELS[state]'), "الخانة المملوءة قبل التنسيق بلا تسميتها");
   const stateFn = functionBody(nasaq, "nasaqState");
   assert.ok(stateFn, "آلة الحالات nasaqState غائبة");
   for (const [state, label] of Object.entries(labels)) {
@@ -595,13 +599,16 @@ const SHADHB_STATES = ["before", "ready", "checking", "review", "polished", "no-
 const stateKey = (state) => (state.includes("-") ? `"${state}"` : state);
 
 test("المرحلة ٤: لكل حالة من حالات شَذْب السبع عنصرها وتسميتها", () => {
+  // نصوص شريط الحالة في إطارات شَذْب في NsqV272 (m6): Before وReady وChecking وReview-Decision
+  // وPolished وNo-Cuts وError
   const labels = {
-    before: "لم يُفحص بعد",
-    ready: "لم يُفحص بعد",
-    checking: "جارٍ الفحص…",
-    polished: "حُسمت كل القصّات",
-    "no-cuts": "لا قصّات مقترحة",
-    error: "تعذّر التحقق",
+    before: "شَذْب — بانتظار النص",
+    ready: "شَذْب — بانتظار الفحص",
+    checking: "شَذْب — جارٍ الفحص، لا حذف تلقائي",
+    review: "شَذْب — بانتظار قرارات المراجعة",
+    polished: "شَذْب — حُسمت كل القصّات",
+    "no-cuts": "شَذْب — لا قصّات مقترحة",
+    error: "شَذْب — تعذّر الفحص، النص لم يتغير",
   };
   const stateFn = functionBody(shadhb, "shadhbState");
   assert.ok(stateFn, "آلة الحالات shadhbState غائبة");
@@ -611,9 +618,9 @@ test("المرحلة ٤: لكل حالة من حالات شَذْب السبع �
   for (const [state, label] of Object.entries(labels)) {
     assert.ok(shadhb.includes(`${stateKey(state)}: "${label}"`), `حالة ${state} بلا تسميتها «${label}»`);
   }
-  // «مراجعة» تسميتها محسوبة بعدد ما لم يُحسم، بجمع عربي سليم من المنسّق المشترك
-  assert.ok(shadhb.includes("`بانتظار قرارك في ${count(n,"), "تسمية المراجعة ليست بعدد ما لم يُحسم");
-  assert.ok(shadhb.includes('"قصّتين"'), "صيغة المثنى غائبة عن تسمية المراجعة");
+  // عدد ما حُسم في رأس اللوح كما في Review-Decision 2009:1632 («٠ من ٣ محسومة»)، بالأرقام الهندية
+  assert.ok(shadhb.includes('`${AR(cuts.filter((c) => c.status !== "pending").length)} من ${AR(cuts.length)} محسومة`'), "رأس اللوح لا يعدّ ما حُسم من القصّات");
+  assert.ok(shadhb.includes("cutsCount.textContent = decidedLabel(state.cuts)"), "عدد المحسوم لا يُكتب في رأس اللوح");
   // أقسام المفتّش وأعمدة العرض الواحد مجدولة لكل حالة لا مشتقة
   const sections = (shadhb.match(/const SECTIONS = \{([\s\S]*?)\n    \};/) || [])[1] || "";
   assert.ok(sections, "جدول أقسام المفتّش غائب");

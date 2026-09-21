@@ -40,21 +40,16 @@ function countLabel(n, [one, two, few, many, single]) {
   return `${num} ${single}`;
 }
 
+// العدّادات بصيغة شريط الحالة في NsqV272 (Status Bar 2408:59): «الكلمات: ٩٤» و«الحروف: ٤١٢»
+// و«الأسطر: ١٢»، كلٌّ عنصرٌ بفجوته. الحروف تُعدّ بنقاط الترميز، فالرمز المركّب حرفٌ واحد
 function updateCount(node, text, { withLines = true } = {}) {
   const words = text.split(/\s+/).filter(Boolean).length;
-  if (!words) {
-    node.textContent = `${arabicDigits.format(0)} كلمة`;
-    return;
-  }
-  const chars = [...text].length;
-  const lines = text.replace(/\n+$/, "").split("\n").length;
-  node.textContent =
-    `${countLabel(words, ["كلمة واحدة", "كلمتان", "كلمات", "كلمة", "كلمة"])}، ` +
-    countLabel(chars, ["حرف واحد", "حرفان", "أحرف", "حرفًا", "حرف"]) +
-    (withLines ? ` — ${countLabel(lines, ["سطر واحد", "سطران", "أسطر", "سطرًا", "سطر"])}` : "");
+  const parts = [`الكلمات: ${arabicDigits.format(words)}`, `الحروف: ${arabicDigits.format(words ? [...text].length : 0)}`];
+  if (withLines && words) parts.push(`الأسطر: ${arabicDigits.format(text.replace(/\n+$/, "").split("\n").length)}`);
+  node.replaceChildren(...parts.map((part) => span("count-item", part)));
 }
 
-// العدّاد يبدأ على «٠ كلمة» قبل أي كتابة، كما في الحالة الفارغة
+// العدّاد يبدأ على الصفر قبل أي كتابة، كما في الحالة الفارغة
 updateCount(el("input-count"), el("input-text").value);
 
 // ---------- التنبيه في عمود الوحدة (Figma 99:669) ----------
@@ -536,7 +531,7 @@ function renderDrafts() {
   const none = drafts.length === 0;
   draftsEmpty.querySelector(".empty-title").textContent = none ? "لا مسودات بعد" : "لا مسودة تطابق البحث";
   draftsEmpty.querySelector(".empty-body").textContent = none
-    ? "احفظ النتيجة من شريط الأدوات لتجد النص الأصلي وصيغه هنا."
+    ? "احفظ النتيجة لتجد النص الأصلي وصيغه هنا."
     : "جرّب كلمة أقصر أو ابحث بنوع التنسيق.";
   draftsEmpty.hidden = visible.length > 0;
 
@@ -558,7 +553,24 @@ function renderDrafts() {
     current.tabIndex = 0;
     if (hadFocus) current.focus();
   }
+  syncSelectedDraft();
   updateDraftsBadge();
+}
+
+// المسودة المحددة (Draft Row · Selected في NsqV272): أمُّ الصف الذي اختاره الكاتب آخر مرة.
+// عليها يعمل «حذف المسودة» في اللوحة (Drafts-Sidebar-Open 2009:968)، وبلا تحديدٍ يتعطّل
+function selectedMother() {
+  if (!focusedRowKey) return null;
+  const key = focusedRowKey.startsWith("d:") ? focusedRowKey.slice(2) : focusedRowKey.slice(2, focusedRowKey.lastIndexOf(":"));
+  return visibleDrafts().find((m) => m.key === key) || null;
+}
+
+function syncSelectedDraft() {
+  const mother = selectedMother();
+  for (const row of draftsList.querySelectorAll(".draft-row")) {
+    row.classList.toggle("is-selected", Boolean(mother) && row.dataset.draftKey === mother.key);
+  }
+  el("delete-draft-btn").disabled = !mother;
 }
 
 // هوية الصف للتركيز: المسودة بمفتاحها، والصيغة بمفتاح أمّها ومعرّفها
@@ -614,6 +626,19 @@ draftsList.addEventListener("click", (e) => {
     for (const r of draftsList.querySelectorAll("[data-draft-key]")) r.tabIndex = r === row ? 0 : -1;
     row.focus();
   }
+});
+
+// التحديد يتبع التركيز بلوحة المفاتيح والنقر على صيغة (النقر على المسودة يعيد الرسم)
+draftsList.addEventListener("focusin", (e) => {
+  const row = e.target.closest("[data-draft-key]");
+  if (!row || rowId(row) === focusedRowKey) return;
+  focusedRowKey = rowId(row);
+  syncSelectedDraft();
+});
+
+el("delete-draft-btn").addEventListener("click", () => {
+  const mother = selectedMother();
+  if (mother) confirmDelete(mother, null);
 });
 
 draftsList.addEventListener("dblclick", (e) => {

@@ -154,6 +154,49 @@ test("m6-07: كل معرّفٍ تسمّيه قائمة «المزيد ⋯» زر
   assert.ok(src("nasaq.js").includes("window.NasaqWindow.anchorFor(readingLensBtn)"), "عدسة القراءة لا تسأل الهيكل عن مرساتها الظاهرة");
 });
 
+// ---------- m6-09: زرّ الواجهة الذي يسمّي أمرًا ينفّذه بمساره وحالته ----------
+// لوحة المسودات في NsqV272 (2009:968) فيها «مسودة جديدة» و«حفظ المسودة الحالية»، وهما أمران من أوامر
+// الشريط. الزر يسمّي أمره بـ data-menu-command: الشرط نفسه (الورقة المفتوحة، وحالة زرّ المصدر)، فلا
+// يُكتب الفعل مرتين ولا يتفعّل الزر والأمر معطّل
+test("m6-09: زرّ data-menu-command يتبع حالة أمره وينفّذه، ولا ينفّذ أمرًا معطّلًا", () => {
+  const source = { disabled: true, hidden: false, offsetParent: {} };
+  const proxy = { dataset: { menuCommand: "file.save-draft" }, disabled: false };
+  let click = null;
+  const calls = [];
+  const window = {
+    NasaqShell: { invoke: async (cmd, args) => { calls.push({ cmd, args }); } },
+    NasaqWindow: { isModalOpen: () => false },
+    __TAURI__: { event: { listen: async () => {} } },
+  };
+  const element = { dataset: { view: "result", module: "nasaq" } };
+  const document = {
+    readyState: "complete", documentElement: element, body: {},
+    getElementById: () => element,
+    addEventListener: (type, fn) => { if (type === "click") click = fn; },
+    querySelector: () => null,
+    querySelectorAll: (sel) => (sel === "[data-menu-command]" ? [proxy] : []),
+  };
+  class MutationObserver { observe() {} }
+  vm.runInNewContext(src("menu.js"), { window, document, MutationObserver, requestAnimationFrame: (cb) => { cb(); return 1; } });
+  let ran = 0;
+  window.NasaqMenu.register("file.save-draft", () => ran++, { button: source });
+  window.NasaqMenu.sync();
+  assert.strictEqual(proxy.disabled, true, "زرّ الواجهة مفعّل وأمره معطّل");
+  click({ target: { closest: () => proxy } });
+  assert.strictEqual(ran, 0, "أمرٌ معطّل نُفّذ من زرّ الواجهة");
+  source.disabled = false;
+  window.NasaqMenu.sync();
+  assert.strictEqual(proxy.disabled, false);
+  click({ target: { closest: () => proxy } });
+  assert.strictEqual(ran, 1);
+  // وفي الهيكل: الزرّان يسمّيان أمرين مسجّلين
+  const html = src("index.html");
+  const named = [...html.matchAll(/data-menu-command="([^"]+)"/g)].map((m) => m[1]);
+  assert.deepStrictEqual(named.sort(), ["file.new-session", "file.save-draft"]);
+  const registered = ["nasaq.js", "shell.js", "shadhb.js", "layout.js"].map(src).join("\n");
+  for (const id of named) assert.ok(registered.includes(`"${id}"`), `أمرٌ غير مسجّل: ${id}`);
+});
+
 test("m6-08: النافذة المنبثقة تنقلب فوق مرساتها حين لا يتّسع ما تحتها", () => {
   // مرساة عدسة القراءة في الضيّق «المزيد ⋯» أسفل النافذة؛ وكان الموضع «تحت المرساة» دائمًا
   // فتُرسم العدسة خارج النافذة (m6/surfaces n22 عند ٧٦٠)

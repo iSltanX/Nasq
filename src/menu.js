@@ -86,6 +86,10 @@
       return update;
     });
     if (updates.length) invoke("set_menu_state", { updates }).catch(() => {});
+    // وزرّ الواجهة الذي يسمّي أمره (data-menu-command) حالتُه حالةُ الأمر نفسها
+    for (const button of document.querySelectorAll?.("[data-menu-command]") ?? []) {
+      button.disabled = blocked || !usable(entryFor(button.dataset.menuCommand));
+    }
   }
 
   // الأزرار مصدر الحقيقة: أي تبدّل في `disabled` أو `hidden` أو في الوحدة
@@ -98,6 +102,20 @@
   new MutationObserver(schedule).observe(root, {
     attributes: true,
     attributeFilter: ["data-module"],
+  });
+
+  // ---------- أزرار الواجهة التي تنفّذ أمرًا ----------
+  // زرٌّ في الواجهة يسمّي أمرًا من أوامر الشريط بـ data-menu-command فينفّذه بمساره نفسه — الشرط
+  // نفسه والفعل نفسه —، فلا يُكتب الفعل مرتين ولا تعرف القشرة دالة برجٍ باسمها
+  function run(id) {
+    const entry = entryFor(id);
+    if (!usable(entry) || modalOpen()) return false;
+    entry.run();
+    return true;
+  }
+  document.addEventListener("click", (e) => {
+    const button = e.target.closest?.("[data-menu-command]");
+    if (button) run(button.dataset.menuCommand);
   });
 
   // ---------- استقبال الحدث ----------
@@ -142,5 +160,5 @@
     invoke("set_active_pane", { pane }).catch(() => {});
   }
 
-  window.NasaqMenu = { register, announceReady, sync, setModule, setPane };
+  window.NasaqMenu = { register, announceReady, sync, setModule, setPane, run };
 })();

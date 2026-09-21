@@ -199,6 +199,9 @@ const RAW_PX_ALLOWED = {
     "app|.window-controls|block-size|14",
     "app|.title-toggle|block-size|26",
     // Search Field 26:388 ارتفاعه ٣٤ وعرضه في شريط البحث ٢٨٠، وصفّ التلميح ٣٤ (2009:281)
+    // لوحة المسودات (Drafts-Sidebar-Open 2009:968) عرضها ٢٨٠، وحقل بحثها فيها ارتفاعه ٣٠
+    "app|.drafts-panel|inline-size|280",
+    "app|.search-field|block-size|30",
     "app|.search-field, .find-field|block-size|34",
     "app|.find-field|inline-size|280",
     "app|.hint-row|min-block-size|34",

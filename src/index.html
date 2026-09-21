@@ -59,9 +59,13 @@
                 <span>المسودات</span>
                 <span id="drafts-count" class="count-badge" hidden></span>
               </h2>
-              <button class="icon-button" type="button" data-command="toggle-sidebar" title="إغلاق ⌃⌘S" aria-label="إغلاق لوحة المسودات">
-                <span class="sf" aria-hidden="true">􀆄</span>
-              </button>
+              <div class="drafts-header-controls">
+                <!-- «مسودة جديدة» و«حفظ المسودة الحالية» أمران من أوامر الشريط: ينفّذان بمسارهما وحالتهما -->
+                <button class="button button-secondary button-small" type="button" data-menu-command="file.new-session" title="مسودة جديدة ⌘N">مسودة جديدة</button>
+                <button class="icon-button" type="button" data-command="toggle-sidebar" title="إغلاق ⌃⌘S" aria-label="إغلاق لوحة المسودات">
+                  <span class="sf" aria-hidden="true">􀆄</span>
+                </button>
+              </div>
             </header>
             <div class="search-field">
               <span class="sf" aria-hidden="true">􀊫</span>
@@ -76,10 +80,16 @@
             </div>
             <div id="drafts-list" class="drafts-list" role="tree" aria-labelledby="drafts-heading"></div>
             <div class="drafts-actions">
-              <button id="export-drafts-btn" class="button button-secondary" type="button">تصدير</button>
-              <button id="import-drafts-btn" class="button button-secondary" type="button">استيراد</button>
+              <button class="button button-secondary" type="button" data-menu-command="file.save-draft" title="حفظ في المسودات ⌘S">حفظ المسودة الحالية</button>
+              <div class="drafts-actions-row">
+                <button id="export-drafts-btn" class="button button-secondary" type="button" title="تصدير نسخة احتياطية…">تصدير</button>
+                <button id="import-drafts-btn" class="button button-secondary" type="button" title="استيراد ودمج…">استيراد</button>
+              </div>
             </div>
-            <p id="drafts-footer-note" class="panel-note">تُحفظ على جهازك فقط</p>
+            <div class="drafts-bottom">
+              <button id="delete-draft-btn" class="button button-destructive" type="button" disabled>حذف المسودة</button>
+              <p id="drafts-footer-note" class="panel-note">تُحفظ على جهازك فقط</p>
+            </div>
             <input id="import-drafts-input" type="file" accept=".json,application/json" hidden />
           </div>
         </aside>
@@ -514,11 +524,11 @@
         </span>
         <span id="nasaq-status" class="polish-status" data-for="nasaq" data-status="idle">
           <span class="status-indicator" aria-hidden="true"></span>
-          <span id="nasaq-status-label" class="status-label">لم يُنسَّق بعد</span>
+          <span id="nasaq-status-label" class="status-label">محلي — مستعد لاستقبال نصوصك</span>
         </span>
         <span id="shadhb-status" class="polish-status" data-for="shadhb" data-status="before">
           <span class="status-indicator" aria-hidden="true"></span>
-          <span id="shadhb-status-label" class="status-label">لم يُفحص بعد</span>
+          <span id="shadhb-status-label" class="status-label">شَذْب — بانتظار النص</span>
         </span>
       </div>
       <div class="status-counts">

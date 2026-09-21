@@ -152,7 +152,7 @@
   display: none;
   flex: none;
   flex-direction: column;
-  inline-size: var(--sidebar-width);
+  inline-size: 280px;
   min-block-size: 0;
   background: var(--sidebar-bg);
   border-inline-end: var(--stroke-hairline) solid var(--border-default);
@@ -160,13 +160,19 @@
 [data-module="nasaq"] .window[data-sidebar="open"] .drafts-panel {
   display: flex;
 }
+/* drafts-sidebar: ٢٨٠، حشو ٢٠ وفجوة ٢٠ */
 .panel-body {
   display: flex;
   flex: 1;
   flex-direction: column;
-  gap: var(--layout-component-gap);
+  gap: var(--layout-content-gap);
   min-block-size: 0;
-  padding: var(--component-padding-lg);
+  padding: var(--component-padding-xl);
+}
+.drafts-header-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--layout-tight-gap);
 }
 .drafts-header {
   display: flex;
@@ -188,12 +194,34 @@
   font: var(--type-metadata);
   color: var(--text-tertiary);
 }
+/* sidebar-actions: فجوة ٨؛ «حفظ المسودة الحالية» بعرض نصّه عند الحافة اليسرى، ثم «استيراد» و«تصدير» يملآن */
 .drafts-actions {
   display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: flex-end;
   gap: var(--layout-element-gap);
 }
-.drafts-actions .button {
+.drafts-actions-row {
+  display: flex;
+  align-self: stretch;
+  gap: var(--layout-element-gap);
+}
+.drafts-actions-row .button {
   flex: 1;
+}
+/* sidebar-bottom: حدّ علوي وحشو ١٢، و«حذف المسودة» عند الحافة اليسرى */
+.drafts-bottom {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--layout-element-gap);
+  padding-block-start: var(--component-padding-md);
+  border-block-start: var(--stroke-hairline) solid var(--border-default);
+}
+.drafts-bottom .panel-note {
+  align-self: stretch;
 }
 
 /* Search Field 26:388 — ٣٤، حشو ٦/١٢، فجوة ٨، surface/reading، قطر ٦ */
@@ -205,8 +233,12 @@
   block-size: 34px;
   padding: var(--component-padding-tight) var(--component-padding-md);
   border-radius: var(--radius-6);
-  background: var(--surface-elevated);
+  background: var(--surface-reading);
   color: var(--icon-secondary);
+}
+.search-field {
+  flex: none;
+  block-size: 30px;
 }
 .search-field:focus-within,
 .find-field:focus-within {
@@ -249,9 +281,9 @@
 /* Draft Row 27:969 — حشو ٢/٦، فجوة ٦، قطر ٤؛ وDraft Version Row 27:994 — حشو ٤/٨ */
 .drafts-list {
   display: flex;
-  flex: 1;
+  flex: 0 1 auto;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--layout-tight-gap);
   min-block-size: 0;
   overflow-y: auto;
 }
@@ -296,6 +328,11 @@
 .version-row .row-icon {
   display: none;
 }
+/* Draft Row 27:969 سطرٌ واحد: العنوان وسهم الإفصاح؛ نوع الصيغ وتاريخها في صفوف الصيغ تحته */
+.draft-row .row-subtitle,
+.draft-row .row-meta {
+  display: none;
+}
 .draft-row .row-disclosure {
   order: 3;
   color: var(--text-tertiary);
@@ -324,7 +361,7 @@
 .draft-versions {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--space-4);
 }
 
 /* ================= اللوحة ================= */
@@ -1322,9 +1359,17 @@ textarea.empty-bidi {
   align-items: center;
   min-inline-size: 0;
 }
-.status-counts {
+.status-counts,
+.status-counts > * {
   gap: var(--layout-group-gap);
   white-space: nowrap;
+}
+.status-counts > * {
+  display: flex;
+}
+/* عدّادٌ واحد كما في الملف: عدّاد النتيجة ما دامت معروضة، وإلا عدّاد الخانة */
+#output-count:not([hidden]) ~ #input-count {
+  display: none;
 }
 .polish-status,
 .status-toast {

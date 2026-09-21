@@ -865,6 +865,14 @@ function metaSubstackFace() {
 // تحذير هادئ في سطر العدّاد نفسه — لا نافذة ولا منع
 const PLATFORM_LIMITS = { "إكس": 280, "ثريدز": 500, "إنستغرام": 2200 };
 
+// التحذير عنصرٌ بجوار العدّادات في شريط الحالة، لا نصٌّ يُلصق بها
+function limitNote(text) {
+  const note = document.createElement("span");
+  note.className = "count-item";
+  note.textContent = text;
+  return note;
+}
+
 function syncPlatformLimitWarning() {
   outputCount.classList.remove("over-limit");
   const meta = lastFormatMeta;
@@ -877,11 +885,11 @@ function syncPlatformLimitWarning() {
     // ناتج إكس قد يكون سلسلة مقاطع يفصلها الفراغ — العبرة بأطول مقطع لا المجموع
     const longest = Math.max(...text.split(/\n\s*\n+/).map((b) => b.trim().length));
     if (longest > limit) {
-      outputCount.textContent += ` — أطول مقطع (${arabicDigits.format(longest)}) يتجاوز حدّ إكس ${arabicDigits.format(limit)}`;
+      outputCount.append(limitNote(`أطول مقطع (${arabicDigits.format(longest)}) يتجاوز حدّ إكس ${arabicDigits.format(limit)}`));
       outputCount.classList.add("over-limit");
     }
   } else if (text.length > limit) {
-    outputCount.textContent += ` — يتجاوز حدّ ${meta.platform} (${arabicDigits.format(limit)})`;
+    outputCount.append(limitNote(`يتجاوز حدّ ${meta.platform} (${arabicDigits.format(limit)})`));
     outputCount.classList.add("over-limit");
   }
 }
@@ -1527,13 +1535,16 @@ new MutationObserver(() => {
 // نتيجة، مراجعة المنعطف، خطأ. الحالة تُكتب في data-nasaq-state على الجذر،
 // وكل ما تقرره (أزرار معطّلة، هيكل نائب، أقسام المفتّش، مؤشر الحالة) يُضبط هنا
 // صراحةً. المنطق تحتها لا يتغير: هي تعرض ما فعله فقط
+// نصوص شريط الحالة كما في إطارات NsqV272 (Empty وReady وProcessing وResult وCrossroads
+// وNarrow / Nasaq-Error). «جاهز» للحالة الفارغة حين يكون في الخانة نص
 const STATUS_LABELS = {
-  empty: "لم يُنسَّق بعد",
-  processing: "جارٍ التنسيق…",
-  result: "منسَّق",
-  review: "بانتظار اختيارك",
-  error: "تعذّر التنسيق",
+  empty: "محلي — مستعد لاستقبال نصوصك",
+  processing: "جارٍ التنسيق — الأصل محفوظ كما هو",
+  result: "تم التنسيق والتحسين بنجاح",
+  review: "اختر وجهة النص قبل المتابعة",
+  error: "تعذّر إتمام التنسيق — نصّك محفوظ",
 };
+const READY_LABEL = "جاهز للتنسيق";
 const nasaqStatus = el("nasaq-status");
 const nasaqStatusLabel = el("nasaq-status-label");
 const settingsHeader = document.querySelector('[aria-controls="settings-content"]');
@@ -1638,7 +1649,7 @@ function renderState() {
 
   // شريط الحالة: مؤشر الحالة، وعدّاد النتيجة ما دامت النتيجة هي المعروضة
   nasaqStatus.dataset.status = state;
-  nasaqStatusLabel.textContent = STATUS_LABELS[state];
+  nasaqStatusLabel.textContent = state === "empty" && hasText ? READY_LABEL : STATUS_LABELS[state];
   outputCount.hidden = !(state === "result" || state === "review");
 
   // التعطيل يُسقط التركيز إلى الصفحة: بعد النداء يعود إلى حيث كان إن بقي صالحًا
