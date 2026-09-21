@@ -88,6 +88,84 @@ test("m4-02: الأمر المتاح يُعرض معطّلًا ما دامت و�
   assert.strictEqual(ran, 1);
 });
 
+// ---------- m6-07: أمرٌ طُوي زرّه في قائمةٍ ظاهرة يبقى متاحًا في الشريط ----------
+// إطارات ٧٦٠ من NsqV272 لا تعرض «التقرير» و«بحث» و«عدسة القراءة» و«تصدير» و«أعد التنسيق»
+// بعد النتيجة؛ فصار لها مدخلٌ واحد «المزيد ⋯» (قرار المالك بتفويضه، Figma 2553:9458). والسجلّ
+// كان يعدّ الزرّ غير الظاهر أمرًا معطّلًا، فتُطفأ الأوامر الخمسة في الشريط عند ٧٦٠
+function bootMenuWithDom(nodes) {
+  const calls = [];
+  const window = {
+    NasaqShell: { invoke: async (cmd, args) => { calls.push({ cmd, args }); } },
+    NasaqWindow: { isModalOpen: () => false },
+    __TAURI__: { event: { listen: async () => {} } },
+  };
+  const element = { dataset: { view: "result", module: "nasaq" } };
+  const document = {
+    readyState: "complete",
+    documentElement: element,
+    body: {},
+    getElementById: () => element,
+    addEventListener() {},
+    querySelector: (selector) => nodes[selector] || null,
+  };
+  class MutationObserver { observe() {} }
+  vm.runInNewContext(src("menu.js"), { window, document, MutationObserver, requestAnimationFrame: (cb) => { cb(); return 1; } });
+  const lastState = () => Object.fromEntries(calls.filter((c) => c.cmd === "set_menu_state").at(-1).args.updates.map((u) => [u.id, u.enabled]));
+  return { menu: window.NasaqMenu, lastState };
+}
+
+test("m6-07: زرٌّ مطويّ في «المزيد ⋯» الظاهر أمرُه متاح، ومع غيابه معطّل", () => {
+  const shown = { offsetParent: {} };
+  const folded = { id: "reading-lens-btn", disabled: false, hidden: false, offsetParent: null, closest: () => null };
+  const open = bootMenuWithDom({ '[data-menu-items~="reading-lens-btn"]': shown });
+  open.menu.register("format.reading-lens", () => {}, { button: folded });
+  open.menu.sync();
+  assert.strictEqual(open.lastState()["format.reading-lens"], true, "الأمر مُطفأ وزرّه مبلوغ من «المزيد ⋯»");
+
+  // «المزيد ⋯» نفسه غير ظاهر (النافذة واسعة والزرّ مخفيّ بحالته): الأمر معطّل كما كان
+  const closed = bootMenuWithDom({ '[data-menu-items~="reading-lens-btn"]': { offsetParent: null } });
+  closed.menu.register("format.reading-lens", () => {}, { button: folded });
+  closed.menu.sync();
+  assert.strictEqual(closed.lastState()["format.reading-lens"], false);
+
+  // والمعطَّل يبقى معطّلًا ولو كان مبلوغًا
+  const disabled = bootMenuWithDom({ '[data-menu-items~="reading-lens-btn"]': shown });
+  disabled.menu.register("format.reading-lens", () => {}, { button: { ...folded, disabled: true } });
+  disabled.menu.sync();
+  assert.strictEqual(disabled.lastState()["format.reading-lens"], false);
+});
+
+test("m6-07: كل معرّفٍ تسمّيه قائمة «المزيد ⋯» زرٌّ موجود، وله تسمية تصلح بندًا", () => {
+  const html = src("index.html");
+  const lists = [...html.matchAll(/data-menu-items="([^"]+)"/g)].map((m) => m[1].split(/\s+/));
+  assert.ok(lists.length > 0, "لا قائمة «المزيد» في الهيكل");
+  for (const id of lists.flat()) {
+    const tag = new RegExp(`<button[^>]*\\bid="${id}"[^>]*>`).exec(html);
+    assert.ok(tag, `«المزيد ⋯» يسمّي زرًّا غائبًا: ${id}`);
+    // البند يأخذ data-menu-label ثم aria-label ثم نصّ الزر؛ والزرّ متعدد النصوص (حالات «نسّق») يحتاج تسمية صريحة
+    const body = html.slice(tag.index + tag[0].length, html.indexOf("</button>", tag.index));
+    const spans = (body.match(/<span/g) || []).length;
+    assert.ok(/data-menu-label="|aria-label="/.test(tag[0]) || spans <= 1, `${id} بلا تسمية تصلح بندًا في القائمة`);
+  }
+  // الهيكل يبني القائمة من المعرّفات، ويُعطي الأبراج المرساة الظاهرة بلا أن تعرف أين طُوي زرّها
+  const layout = src("layout.js");
+  assert.ok(/closest\("\[data-menu-items\]"\)/.test(layout), "الهيكل لا يفتح قائمة data-menu-items");
+  assert.ok(/window\.NasaqWindow = \{[^}]*\banchorFor\b/.test(layout), "الهيكل لا ينشر anchorFor");
+  assert.ok(src("nasaq.js").includes("window.NasaqWindow.anchorFor(readingLensBtn)"), "عدسة القراءة لا تسأل الهيكل عن مرساتها الظاهرة");
+});
+
+test("m6-08: النافذة المنبثقة تنقلب فوق مرساتها حين لا يتّسع ما تحتها", () => {
+  // مرساة عدسة القراءة في الضيّق «المزيد ⋯» أسفل النافذة؛ وكان الموضع «تحت المرساة» دائمًا
+  // فتُرسم العدسة خارج النافذة (m6/surfaces n22 عند ٧٦٠)
+  const layout = src("layout.js");
+  const fn = layout.slice(layout.indexOf("function positionPopover()"), layout.indexOf("function presentPopover("));
+  assert.match(fn, /const flip = h > below && above > below;/, "لا مقارنة بين ما فوق المرساة وما تحتها");
+  assert.match(fn, /el\.dataset\.placement = flip \? "above" : "below";/, "الموضع لا يُعلَن للسهم");
+  assert.match(fn, /maxBlockSize = \(flip \? above : below\)/, "الارتفاع الأقصى لا يتبع الجهة");
+  const css = src("app.css").replace(/\/\*[\s\S]*?\*\//g, "");
+  assert.match(css, /\.popover\[data-placement="above"\]::before \{[^}]*inset-block-end:/, "السهم لا ينقلب مع النافذة");
+});
+
 // ---------- m4-03: حلقة التركيز لا يغطيها ظلُّ حالةٍ أعلى أولوية ----------
 // base.css يرسم الحلقة ظلًّا على :focus-visible (0,1,0). قاعدةٌ لحالةٍ (مفعَّل،
 // محدد، زجاجي) تضع box-shadow بمحدِّدٍ أعلى تمحو الحلقة عن العنصر المركَّز بلوحة

@@ -29,12 +29,21 @@
     return list.find((c) => !c.owner || c.owner === activeModule()) ?? null;
   }
 
+  // زرٌّ غير ظاهر يبقى مبلوغًا إن طوته النافذة في قائمةٍ ظاهرة: «المزيد ⋯» الذي يسمّيه في
+  // data-menu-items، أو «⋯» الصفّ حين تُطوى مجموعته (data-collapsed). أمرُه إذن متاح (فحص m6-07)
+  function reachable(button) {
+    if (button.offsetParent !== null) return true;
+    const visible = (node) => Boolean(node) && node.offsetParent !== null;
+    if (button.id && visible(document.querySelector(`[data-menu-items~="${button.id}"]`))) return true;
+    return Boolean(button.closest("[data-collapsed]")) && visible(document.querySelector("[data-overflow-button]"));
+  }
+
   // الزرّ يقرّر: مخفيٌّ أو معطَّل يعني أمرًا معطَّلًا، وبلا زرٍّ يعني دائمًا مفعّلًا
   function usable(entry) {
     if (!entry) return false;
     const button = entry.button;
     if (!button) return true;
-    return !button.disabled && !button.hidden && button.offsetParent !== null;
+    return !button.disabled && !button.hidden && reachable(button);
   }
 
   /**

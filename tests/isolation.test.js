@@ -452,7 +452,10 @@ test("المرحلة ٣: التنبيه لصاحبه — لا يعبر من بر
 test("المرحلة ٧-ب: الاختصارات قرينة أزرارها — والقرين صار مسرّعًا لا مستمعًا", () => {
   // كان لكل اختصار مستمع `keydown` يفحص زرّه بيده. صارت المسرّعات في الشريط،
   // والسجلّ يقرأ الزرّ نفسه — فالقرينة محفوظة بمكان واحد لا بفحصين
-  assert.ok(menuJs.includes("!button.disabled && !button.hidden && button.offsetParent !== null"), "حالة الأمر لا تتبع زرّه");
+  // الأمر يتبع زرّه: معطّلٌ أو مخفيّ أو غير مبلوغ يعني أمرًا معطّلًا. و«مبلوغ» ظاهرٌ، أو مطويّ في قائمةٍ
+  // ظاهرة (فحص m6-07) — وسلوكه محروس في interaction.test.js
+  assert.ok(menuJs.includes("!button.disabled && !button.hidden && reachable(button)"), "حالة الأمر لا تتبع زرّه");
+  assert.ok(/function reachable\(button\) \{\s*if \(button\.offsetParent !== null\) return true;/.test(menuJs), "الزرّ الظاهر ليس أول ما يُسأل عنه");
   assert.ok(/if \(!usable\(entry\) \|\| modalOpen\(\)\) return;/.test(menuJs), "أمرٌ ينفَّذ تحت ورقة مفتوحة");
   // وكل أمر له زرّ يُسجَّل بزرّه: أمرٌ بلا زرّ لا حالة له فيبقى مفتوحًا دائمًا
   for (const [file, code] of [["nasaq.js", nasaq], ["shadhb.js", shadhb]]) {

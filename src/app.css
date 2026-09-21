@@ -1990,6 +1990,12 @@ body:has([aria-modal="true"]:not([hidden]))::before {
   background: var(--surface-reading);
   transform: rotate(45deg);
 }
+/* فوق المرساة: السهم في الحافة السفلى مقلوبًا */
+.popover[data-placement="above"]::before {
+  inset-block-start: auto;
+  inset-block-end: calc(-1 * var(--space-8));
+  border-width: 0 var(--stroke-hairline) var(--stroke-hairline) 0;
+}
 .lens-header {
   display: flex;
   flex-direction: column;
@@ -2113,6 +2119,11 @@ body:has([aria-modal="true"]:not([hidden]))::before {
   [data-module="nasaq"][data-nasaq-state="review"] .action-bar {
     display: none;
   }
+  /* إلا إن كانت فيه توجيهاتٌ مكتوبة: «أعد التنسيق» يرسلها، فتبقى أمام العين — لا شيء بصمت */
+  [data-module="nasaq"][data-nasaq-state="result"][data-has-directives] .action-bar,
+  [data-module="nasaq"][data-nasaq-state="review"][data-has-directives] .action-bar {
+    display: flex;
+  }
   [data-module="nasaq"][data-nasaq-state="result"] .view-strip,
   [data-module="nasaq"][data-nasaq-state="review"] .view-strip,
   [data-module="shadhb"][data-shadhb-state="polished"] .view-strip {
@@ -2173,7 +2184,11 @@ body:has([aria-modal="true"]:not([hidden]))::before {
     padding: var(--component-padding-sm) var(--component-padding-lg);
     border-block-start: var(--stroke-hairline) solid var(--border-default);
   }
-  .narrow-result-bar > * {
+  .narrow-slot {
+    display: contents;
+  }
+  .narrow-result-bar > .narrow-more,
+  .narrow-slot > * {
     inline-size: auto;
     block-size: auto;
     gap: var(--space-4);
@@ -2186,30 +2201,28 @@ body:has([aria-modal="true"]:not([hidden]))::before {
     color: var(--text-secondary);
     opacity: 1;
   }
-  .narrow-result-bar > *:hover {
+  .narrow-result-bar > .narrow-more:hover,
+  .narrow-slot > *:hover {
     background: var(--fill-hover);
     color: var(--text-primary);
   }
-  .narrow-result-bar > *:active {
+  .narrow-result-bar > .narrow-more:active,
+  .narrow-result-bar > .narrow-more[aria-expanded="true"],
+  .narrow-slot > *:active {
     background: var(--fill-pressed);
   }
-  .narrow-result-bar > *:disabled {
+  .narrow-slot > *:disabled {
     background: var(--fill-disabled);
     color: var(--text-disabled);
   }
-  .narrow-result-bar > *:focus-visible {
+  .narrow-result-bar > .narrow-more:focus-visible,
+  .narrow-slot > *:focus-visible {
     outline: var(--stroke-emphasis) solid var(--focus-ring);
     box-shadow: none;
   }
-  /* «حفظ» في الطرف الأيمن، و«نسخ النتيجة» ثم «تراجع» في الأيسر */
-  .narrow-result-bar #save-draft-btn {
+  /* «حفظ» ثم «المزيد ⋯» في الطرف الأيمن، و«نسخ النتيجة» ثم «تراجع» في الأيسر (2009:2199) */
+  .narrow-result-bar > .narrow-more {
     margin-inline-end: auto;
-  }
-  .narrow-result-bar #copy-btn {
-    order: 2;
-  }
-  .narrow-result-bar #undo-btn {
-    order: 3;
   }
   .narrow-result-bar #copy-btn .shortcut,
   .narrow-result-bar #undo-btn .shortcut {

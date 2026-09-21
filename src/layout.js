@@ -166,7 +166,8 @@
       canvasOpener = opener;
       content.querySelector(".canvas-view:not([hidden]) [data-canvas-close]")?.focus();
     } else if (canvasOpener && canvasOpener.isConnected && !canvasOpener.disabled) {
-      canvasOpener.focus();
+      // الزرّ المطويّ في «المزيد ⋯» لا يقبل التركيز: يعود إلى مرساته الظاهرة
+      anchorFor(canvasOpener).focus();
       canvasOpener = null;
     }
   }
@@ -330,8 +331,20 @@
   // عنصر يفتح قائمة من أزرار مخفية: كل بند ينقر زره الأصلي فتبقى مستمعاته كما هي
   const proxyItems = (buttons) =>
     buttons
-      .filter((b) => !b.hidden)
-      .map((b) => ({ label: b.getAttribute("aria-label") || b.textContent.trim(), disabled: b.disabled, run: () => b.click() }));
+      .filter((b) => b && !b.hidden)
+      .map((b) => ({ label: b.dataset.menuLabel || b.getAttribute("aria-label") || b.textContent.trim(), disabled: b.disabled, run: () => b.click() }));
+
+  // زرٌّ لا يظهر لأن النافذة طوته في قائمة: مرساته الظاهرة هي زرّ تلك القائمة — «المزيد ⋯»
+  // الذي يسمّيه في data-menu-items، أو «⋯» الصفّ حين تُطوى مجموعته. النوافذ المنبثقة وعودة
+  // التركيز تسأل عنها، فلا يعرف برجٌ أين طُوي زرّه
+  function anchorFor(button) {
+    if (!button || button.offsetParent !== null) return button;
+    const candidates = [
+      button.id ? document.querySelector(`[data-menu-items~="${button.id}"]`) : null,
+      button.closest("[data-collapsed]") ? document.querySelector("[data-overflow-button]") : null,
+    ];
+    return candidates.find((n) => n && n.offsetParent !== null) || button;
+  }
 
   document.addEventListener("click", (e) => {
     const anchor = e.target.closest("[data-menu]");
@@ -340,6 +353,15 @@
     const source = document.getElementById(anchor.dataset.menu);
     // نقرة بلا مؤشر (detail = 0) جاءت من Return أو المسافة
     openMenu(anchor, [proxyItems([...source.querySelectorAll("button")])], { align: anchor.dataset.menuAlign, keyboard: e.detail === 0 });
+  });
+
+  // وقائمةٌ تسمّي أزرارها بمعرّفاتها (data-menu-items) حين تكون في مواضع شتّى
+  document.addEventListener("click", (e) => {
+    const anchor = e.target.closest("[data-menu-items]");
+    if (!anchor) return;
+    if (menu && menu.anchor === anchor) return closeMenu();
+    const buttons = anchor.dataset.menuItems.split(/\s+/).map((id) => document.getElementById(id));
+    openMenu(anchor, [proxyItems(buttons)], { align: anchor.dataset.menuAlign, keyboard: e.detail === 0 });
   });
 
   // ---------- الأوراق والتنبيهات: نافذة واحدة فوق النافذة ----------
@@ -410,10 +432,18 @@
     const w = el.offsetWidth;
     const centre = r.left + r.width / 2;
     const left = clamp(Math.round(centre - w / 2), MARGIN, window.innerWidth - MARGIN - w);
-    const top = Math.round(r.bottom + 4 + ARROW);
+    // تحت المرساة ما اتّسع لها، وإلا فوقها بسهمٍ أسفلها كما رُسم مكوّن Popover (30:36) — مرساةٌ
+    // في أسفل النافذة («المزيد ⋯» في الضيّق) كانت تُلقي النافذة المنبثقة خارجها
+    el.style.maxBlockSize = "";
+    const h = el.offsetHeight;
+    const below = window.innerHeight - r.bottom - 4 - ARROW - MARGIN;
+    const above = r.top - 4 - ARROW - MARGIN;
+    const flip = h > below && above > below;
+    const top = flip ? Math.max(MARGIN, Math.round(r.top - 4 - ARROW - Math.min(h, above))) : Math.round(r.bottom + 4 + ARROW);
+    el.dataset.placement = flip ? "above" : "below";
     el.style.left = left + "px";
     el.style.top = top + "px";
-    el.style.maxBlockSize = window.innerHeight - top - MARGIN + "px";
+    el.style.maxBlockSize = (flip ? above : below) + "px";
     el.style.setProperty("--arrow-x", Math.round(centre - left) + "px");
   }
 
@@ -452,6 +482,7 @@
     dismissModal,
     presentPopover,
     dismissPopover,
+    anchorFor,
     isModalOpen: modalOpen,
   };
 
@@ -461,16 +492,16 @@
   // بـ data-narrow-slot، فيُنقل إليه حين تضيق النافذة ويعود إلى مكانه حين تتسع.
   // النقل يُبقي العقدة نفسها بمستمعاتها وتركيزها، ولا يعرف الهيكل صاحبها
   const narrow = window.matchMedia("(max-width: 1023px)");
-  const movable = [...document.querySelectorAll("[data-narrow-slot]")].map((node) => ({
-    node,
-    home: node.parentElement,
-    next: node.nextElementSibling,
-  }));
+  // data-narrow-order يرتّب المنقولات داخل موضعها حين يخالف ترتيبُها هناك ترتيبَها في المستند
+  const movable = [...document.querySelectorAll("[data-narrow-slot]")]
+    .map((node, index) => ({ node, index, home: node.parentElement, next: node.nextElementSibling }))
+    .sort((a, b) => (Number(a.node.dataset.narrowOrder) || 0) - (Number(b.node.dataset.narrowOrder) || 0) || a.index - b.index);
   function applyNarrowSlots() {
     root.toggleAttribute("data-narrow", narrow.matches);
     const focused = document.activeElement;
     // العودة بترتيب معكوس: الأخ اللاحق يعود قبل سابقه فيجد كلٌّ موضعه
-    for (const { node, home, next } of narrow.matches ? movable : [...movable].reverse()) {
+    const byDocument = [...movable].sort((a, b) => b.index - a.index);
+    for (const { node, home, next } of narrow.matches ? movable : byDocument) {
       const slot = narrow.matches ? document.getElementById(node.dataset.narrowSlot) : null;
       if (slot) {
         if (node.parentElement !== slot) slot.appendChild(node);

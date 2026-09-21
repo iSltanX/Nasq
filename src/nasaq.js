@@ -1204,7 +1204,7 @@ function openReadingLens() {
   // وجه النوت يُعرض يسارًا كما في المخرَج الرئيس — العدسة تعرض لا تقرر
   readingLensText.classList.toggle("note-face", metaSubstackFace() === SUBSTACK_NOTE);
   // الزر قد يكون مطويًّا في «المزيد» عند الضيق — فتشير النافذة إلى «المزيد»
-  const anchor = readingLensBtn.offsetParent ? readingLensBtn : document.querySelector("[data-overflow-button]");
+  const anchor = window.NasaqWindow.anchorFor(readingLensBtn);
   window.NasaqWindow.presentPopover(readingLensOverlay, anchor, { control: readingLensBtn });
 }
 
@@ -1563,6 +1563,8 @@ function renderState() {
   const hasResult = Boolean(outputText.textContent.trim());
   const transition = state !== renderedState;
   document.documentElement.dataset.nasaqState = state;
+  // توجيهاتٌ مكتوبة تُرسَل مع كل تنسيق: حالةٌ صريحة ليُبقيها الهيكل ظاهرة حيث يُخفى شريطها
+  document.documentElement.toggleAttribute("data-has-directives", Boolean(directivesInput.value.trim()));
   if (busy && transition && document.activeElement !== document.body) focusBeforeBusy = document.activeElement;
 
   // «نسّق»: معطّل بلا نص، وتحميل أثناء النداء. وهيئته مصمتة دائمًا داخل كتلة
