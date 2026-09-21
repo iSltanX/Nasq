@@ -1000,7 +1000,7 @@ test("المرحلة ٥: لوحة «حول» بنصوص التصميم ومقا�
   assert.ok(fs.existsSync(srcPath("app-icon.png")), "ملف الأيقونة غير موجود في src");
   const rust = fs.readFileSync(path.join(__dirname, "..", "src-tauri", "src", "app", "secondary.rs"), "utf8");
   // About-Window 2009:2911 في NsqV272
-  assert.ok(rust.includes("ABOUT_WIDTH: f64 = 320.0") && rust.includes("ABOUT_HEIGHT: f64 = 324.0"), "مقاس «حول» ليس مقاس التصميم");
+  assert.ok(rust.includes("ABOUT_WIDTH: f64 = 320.0") && rust.includes("ABOUT_HEIGHT: f64 = 344.0"), "مقاس «حول» ليس مقاس التصميم");
 });
 
 // ---------- حرّاس المرحلة ٦: أول تشغيل والتحديثات (Figma 255:521 و258:18771) ----------

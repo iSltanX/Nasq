@@ -90,10 +90,10 @@ main {
 .pane-footer {
   gap: var(--layout-element-gap);
 }
-/* سطر الصنعة (credit-row 2593:5076 و2593:5084): موسَّط، بفجوة ٤ بين أجزائه */
+/* سطر الصنعة (credit-row 2593:5076 و2593:5084): المؤلف وتحته رابط المستودع، موسَّطان بفجوة ٤ */
 .credit-row {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
   align-items: center;
   gap: var(--space-4);
   font: var(--type-metadata);
