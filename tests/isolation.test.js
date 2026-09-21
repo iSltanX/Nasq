@@ -1069,6 +1069,17 @@ test("المرحلة ٦: المكوّن المشترك مصدرٌ واحد لا 
   assert.ok(!/^\.menu \{/m.test(forms), "قائمة المنتقي تصطدم بقوائم النافذة الرئيسية");
 });
 
+// m6-18: إعادة بناء forms.css أسقطت مقاس علامة البند المختار، فملأ الرمزُ القائمة ودفعها خارج
+// النافذة؛ وموضع القائمة كان يُحسب من rect.left وinset-inline-start في واجهةٍ من اليمين يُقاس من اليمين
+test("m6-18: علامة بند المنتقي بمقاسها، والقائمة تُوضع من حافة البداية", () => {
+  const rule = /\.picker-menu-item svg \{([^}]*)\}/.exec(src("forms.css"));
+  assert.ok(rule, "علامة بند المنتقي بلا قاعدة في forms.css");
+  assert.ok(/inline-size:\s*var\(--icon-16\)/.test(rule[1]) && /block-size:\s*var\(--icon-16\)/.test(rule[1]), "علامة بند المنتقي بلا مقاس");
+  const formsJs = src("forms.js");
+  assert.ok(/window\.innerWidth - rect\.right/.test(formsJs), "القائمة تُوضع من اليسار في واجهةٍ من اليمين");
+  assert.ok(!/insetInlineStart = `\$\{Math\.max\(4, rect\.left/.test(formsJs), "القائمة تُوضع من rect.left");
+});
+
 // المرحلة ٨: ملفٌّ مشترك تحمّله نافذتان يسري على الاثنتين — ولو كان مصمَّمًا
 // لإحداهما. `.row-value` في forms.css صفٌّ أفقي (أساسٌ صفر يملأ العرض، وقصٌّ
 // بثلاث نقاط)، ولمّا حملت النافذة الرئيسية الملف طُبِّقت القاعدة على «التقرير»
@@ -1383,9 +1394,25 @@ test("المرحلة ٩: نجاح «اختبر» يشترط التوليد، و�
   assert.strictEqual(works({ connected: true, modelListed: false, generates: null }), false);
   assert.strictEqual(works({ connected: true, modelListed: true, generates: null }), true, "Ollama بلا تجربة توليد");
   assert.strictEqual(works({ connected: false }), false);
+  // m6-17: ردّ خطأٍ من المزوّد يصل connected: true بلا حكم على النموذج — كان يُقرأ نجاحًا
+  // فيُعرض «المفتاح مرفوض» بعلامة النجاح الخضراء
+  assert.strictEqual(works({ connected: true, keyAccepted: false, modelListed: null, modelCount: 0, generates: null }), false, "مفتاح مرفوض صار نجاحًا");
+  assert.strictEqual(works({ connected: true, keyAccepted: true, modelListed: null, modelCount: 0, generates: null }), false, "ردّ خطأ (429/5xx) صار نجاحًا");
+  assert.strictEqual(works({ connected: true, keyAccepted: true, modelListed: null, modelCount: 12, generates: null }), true, "اتصالٌ بلا نموذج مكتوب لم يعد نجاحًا");
+  // m6: شاشات نتيجة أول تشغيل أربع (Success وKey-Rejected وInvalid-Model وConnection-Failed)،
+  // والحكم بينها في المصدر نفسه بجوار شرط النجاح
+  const verdict = sandbox.window.NasaqProviders.connectionVerdict;
+  assert.strictEqual(verdict({ connected: true, keyAccepted: true, modelListed: true, generates: true }), "works");
+  assert.strictEqual(verdict({ connected: false }), "unreachable");
+  assert.strictEqual(verdict(null), "unreachable", "ردٌّ فارغ صار نجاحًا");
+  assert.strictEqual(verdict({ connected: true, keyAccepted: false }), "key-rejected");
+  assert.strictEqual(verdict({ connected: true, keyAccepted: true, modelListed: false }), "model-unavailable");
+  assert.strictEqual(verdict({ connected: true, keyAccepted: true, modelListed: true, generates: false }), "model-unavailable");
+  assert.strictEqual(verdict({ connected: true, keyAccepted: true, modelListed: null, modelCount: 0, generates: null }), "unreachable", "ازدحام أو عطل خادم لا يُلام عليه النموذج");
+  assert.ok(settingsJs.includes("NasaqProviders.connectionWorks(report)"), "settings.js يحكم بنفسه");
+  assert.ok(onboardingJs.includes("NasaqProviders.connectionVerdict(report)"), "onboarding.js يحكم بنفسه");
   for (const [name, code] of [["settings.js", settingsJs], ["onboarding.js", onboardingJs]]) {
-    assert.ok(code.includes("NasaqProviders.connectionWorks(report)"), `${name} يحكم بنفسه`);
-    assert.ok(!/report\.modelListed/.test(code), `${name} يكرّر شرط النجاح`);
+    assert.ok(!/report\.(modelListed|keyAccepted|connected|generates)/.test(code), `${name} يكرّر شرط الحكم`);
   }
 });
 
@@ -1490,6 +1517,9 @@ test("فحص m2: الورقة ونافذة الإعدادات تتبعان ما 
         `${name}: الرسم يكتب في ${field} تحت المؤشر`);
     }
   }
-  assert.ok(/textContent = checkMessage \?\? lastCheckLabel\(view\.lastUpdateCheck\)/.test(settingsJs),
-    "الرسم يمحو نتيجة «تحقّق الآن» بوقت آخر تحقق");
+  // m6 (بطاقة التحديث 2128:644): النتيجة صارت في عنوان البطاقة ووقتُ التحقق في سطره، فلا يتزاحمان.
+  // والعقد نفسه باقٍ: الرسم — وحفظُ وقت التحقق يستدعيه — يعيد العنوان من حالة التحقق المحفوظة لا من أصله
+  assert.ok(/function render\(\) \{[\s\S]*?\n    renderCheck\(\);\n  \}/.test(settingsJs), "الرسم لا يعيد نتيجة «تحقق الآن»");
+  assert.ok(/CHECK_TITLES\[check\.state\]/.test(settingsJs), "عنوان البطاقة لا يتبع حالة التحقق");
+  assert.ok(!/check = \{ state: "idle"[^}]*\};?[\s\S]*check = \{ state: "idle"/.test(settingsJs), "حالة التحقق تُصفَّر في غير تعريفها");
 });

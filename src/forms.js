@@ -1,4 +1,4 @@
-// forms.js — سلوك «المنتقي» (Picker) كما في الماك: القائمة تنفتح فوق زرّها
+// forms.js — الحالة السطرية، وسلوك «المنتقي» (Picker) كما في الماك: القائمة تنفتح فوق زرّها
 // لا تحته، والبند الحالي معلَّم بصحّ ومميَّز عند الفتح.
 //
 // مشتركة بين نافذة الإعدادات وورقة «اربط نموذجًا» في النافذة الرئيسية، فلا
@@ -61,11 +61,18 @@
       menu.hidden = false;
       picker.setAttribute("aria-controls", menu.id);
       const rect = picker.getBoundingClientRect();
+      // القائمة بعرض زرّها على الأقل (Select 26:420 وقائمته ٢٢٠)، وحافتها الأولى على حافته:
+      // inset-inline-start في واجهةٍ من اليمين يُقاس من اليمين، لا من rect.left (فحص m6-18)
+      menu.style.minInlineSize = `${Math.round(rect.width)}px`;
       const height = menu.getBoundingClientRect().height;
       const top = Math.min(Math.max(4, rect.top - 4), window.innerHeight - height - 4);
+      const rtl = getComputedStyle(picker).direction === "rtl";
+      const start = rtl ? window.innerWidth - rect.right : rect.left;
       menu.style.insetBlockStart = `${top}px`;
-      menu.style.insetInlineStart = `${Math.max(4, rect.left - 4)}px`;
-      menu.querySelector(".picker-menu-item[data-active='true'], .picker-menu-item")?.focus();
+      menu.style.insetInlineStart = `${Math.max(4, start)}px`;
+      // التركيز على البند الحالي، وإلا فالأول: قائمة محدِّدات في querySelector تعيد الأسبق في
+      // الشجرة لا الأسبق في القائمة، فكان التركيز يقع على البند الأول دائمًا
+      (menu.querySelector(".picker-menu-item[data-active='true']") ?? menu.querySelector(".picker-menu-item"))?.focus();
     }
 
     // تنقّل القوائم كما في الماك: الأسهم بين البنود، وHome/End إلى طرفيها
@@ -89,5 +96,22 @@
     return { open, close, isOpen: () => !menu.hidden };
   }
 
-  window.NasaqForms = { attachPicker: attach };
+  // Inline Status 27:1029 — تسميةٌ ثم علامتها بلون الحالة: ✓ للنجاح، ورمز التحذير للتحذير
+  // والخطأ، ورمز المعلومة، ودوّارٌ أثناء العمل. رسالةٌ فارغة تُخفيه
+  const STATUS_MARKS = { success: "✓", warning: "􀇾", danger: "􀇾", info: "􀅴" };
+  function setStatus(node, message, tone = "success") {
+    if (!message) {
+      node.hidden = true;
+      return;
+    }
+    node.querySelector(".row-status-label").textContent = message;
+    const mark = node.querySelector(".row-status-mark");
+    mark.textContent = STATUS_MARKS[tone] ?? "";
+    mark.classList.toggle("sf", tone !== "success" && tone !== "loading");
+    mark.classList.toggle("spinner", tone === "loading");
+    node.dataset.tone = tone;
+    node.hidden = false;
+  }
+
+  window.NasaqForms = { attachPicker: attach, setStatus };
 })();

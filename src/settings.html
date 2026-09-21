@@ -12,7 +12,8 @@
   <body data-window="settings">
     <!-- نافذة الإعدادات كما في Figma «NsqV272» (Settings / General 2128:576 وUpdates
          2128:625): حشو ٢٠ وفجوة ١٦؛ صفّ عنوان ١٨ عنوانه «الإعدادات» دائمًا، ثم مضمار
-         تبويبين ٣٤، ثم اللوح وتذييله. الهيئة فوق اللوح وتحته ١٢٤ (secondary.rs) -->
+         تبويبين ٣٤، ثم اللوح وتذييله. الهيئة فوق اللوح وتحته ١٢٤ (secondary.rs). وحالتاها
+         المرسومتان: Testing 2285:2016 وAuto-Off 2285:2084 -->
     <header class="titlebar" data-tauri-drag-region>
       <h1 id="window-title" data-tauri-drag-region>الإعدادات</h1>
     </header>
@@ -46,6 +47,8 @@
                   <svg class="icon" aria-hidden="true"><use id="reveal-key-icon" href="#eye.16r"></use></svg>
                 </button>
               </span>
+              <!-- «إزالة المفتاح» (btn-remove-key 2401:4159): يظهر ما دام في السلسلة مفتاح -->
+              <button class="button button-secondary button-small row-aside" type="button" id="remove-key" hidden>إزالة المفتاح</button>
             </div>
             <div class="form-row" data-control="field">
               <label class="row-label" for="model-name">النموذج النشط:</label>
@@ -59,80 +62,89 @@
                 <input class="row-field" id="base-url" type="text" dir="ltr" autocomplete="off" spellcheck="false" />
               </span>
             </div>
+            <!-- صفّ الاختبار ٣٦: الزرّ عند بداية عمود العناصر، وحالته السطرية إلى يساره
+                 (Inline Status 27:1029؛ وأثناء الاختبار نوعها Loading كما في 2285:2016) -->
             <div class="form-row" data-control="button">
               <span class="row-label"></span>
               <button class="button button-secondary" type="button" id="test-connection">اختبر الاتصال</button>
               <span class="row-status" id="connection-status" role="status" aria-live="polite" hidden>
-                <span id="connection-message"></span>
-                <svg aria-hidden="true"><use id="connection-icon" href="#checkmark.circle.16m"></use></svg>
+                <span class="row-status-mark" aria-hidden="true"></span>
+                <span class="row-status-label"></span>
               </span>
             </div>
           </div>
+          <p class="section-footer section-note">يُحفظ المفتاح في سلسلة المفاتيح على جهازك، ولا يُرسَل نصّك إلا حين تطلب التنسيق أو الفحص.</p>
         </div>
 
         <div class="form-section">
           <h2 class="section-header">مظهر التطبيق</h2>
           <div class="section-rows">
-            <div class="form-row" data-control="picker">
+            <!-- مبدّل مقطّع ٢٢٠×٢٨ (2128:610): تلقائي ففاتح فداكن من اليمين -->
+            <div class="form-row" data-control="segments">
               <span class="row-label" id="label-appearance">نمط المظهر:</span>
-              <button class="row-picker" type="button" id="appearance-picker" aria-labelledby="label-appearance" aria-haspopup="menu" aria-expanded="false">
-                <span id="appearance-value">تلقائي</span>
-                <span class="picker-chevron" aria-hidden="true"></span>
-              </button>
+              <div class="row-segments" id="appearance-picker" role="radiogroup" aria-labelledby="label-appearance">
+                <button class="row-segment" type="button" role="radio" data-appearance-value="auto" aria-checked="true">تلقائي</button>
+                <button class="row-segment" type="button" role="radio" data-appearance-value="light" aria-checked="false" tabindex="-1">فاتح</button>
+                <button class="row-segment" type="button" role="radio" data-appearance-value="dark" aria-checked="false" tabindex="-1">داكن</button>
+              </div>
             </div>
           </div>
         </div>
 
+        <!-- تذييل اللوح (2128:618): حالة الحفظ يمينًا، فالإصدار وسطًا، ف«حول نَسَق» يسارًا -->
         <footer class="pane-footer">
-          <p class="section-footer" id="key-footer" aria-live="polite">
-            <svg class="icon" aria-hidden="true" hidden><use href="#checkmark.circle.16m"></use></svg>
-            <span id="key-footer-text">يُحفظ المفتاح في سلسلة المفاتيح على جهازك، ولا يُرسَل نصّك إلا حين تطلب التنسيق أو الفحص.</span>
-          </p>
+          <div class="footer-row">
+            <span class="row-status" id="save-status" role="status" aria-live="polite" data-tone="success">
+              <span class="row-status-mark" aria-hidden="true">✓</span>
+              <span class="row-status-label">تم حفظ التغييرات تلقائيًا</span>
+            </span>
+            <span class="footer-note" id="footer-version"></span>
+            <button class="button button-secondary button-small" type="button" id="open-about">حول نَسَق</button>
+          </div>
         </footer>
       </section>
 
       <section class="pane" id="pane-updates" role="tabpanel" aria-labelledby="tab-updates" hidden>
         <div class="form-section">
           <h2 class="section-header">تحديث البرمجية</h2>
-          <div class="section-rows">
+          <div class="section-rows section-rows-wide">
             <div class="form-row" data-control="switch">
               <span class="row-label" id="label-auto-updates">التحقق التلقائي من وجود تحديثات</span>
-              <button class="row-switch" type="button" id="auto-updates" role="switch" aria-checked="true" aria-labelledby="label-auto-updates"></button>
+              <span class="row-cell">
+                <button class="row-switch" type="button" id="auto-updates" role="switch" aria-checked="true" aria-labelledby="label-auto-updates"></button>
+              </span>
             </div>
+            <!-- بطاقة التحديث (2128:644): العنوان يتبع نتيجة التحقق في هذه الجلسة، فلا يدّعي
+                 «أحدث إصدار» قبل أن يُتحقَّق -->
             <div class="update-card">
-              <div class="form-row" data-control="value">
-                <span class="row-label">الإصدار الحالي</span>
-                <span class="row-value" id="app-version" dir="ltr"></span>
+              <div class="update-summary">
+                <p class="update-title" id="update-title">تحديثات نَسَق</p>
+                <p class="update-meta">الإصدار الحالي: <span id="app-version"></span></p>
+                <p class="update-meta" id="update-status" role="status" aria-live="polite">آخر تحقق: <span id="update-message"></span></p>
               </div>
-              <div class="form-row" data-control="button">
-                <span class="row-label">آخر تحقق</span>
-                <span class="row-status" id="update-status" role="status" aria-live="polite" hidden>
-                  <span id="update-message"></span>
-                </span>
-                <button class="button button-secondary" type="button" id="check-updates">تحقّق الآن</button>
-              </div>
-              <div class="form-row" data-control="button">
-                <span class="row-label" id="label-project">صفحة المشروع</span>
-                <span class="row-value" id="project-url" dir="ltr"></span>
-                <button class="button button-secondary button-small" type="button" id="open-project" aria-labelledby="label-project">افتح</button>
+              <div class="update-actions">
+                <button class="button button-secondary" type="button" id="check-updates">تحقق الآن</button>
+                <button type="button" class="link" id="open-project">عرض سجل التغييرات على <bdi dir="ltr">GitHub</bdi></button>
               </div>
             </div>
           </div>
         </div>
 
         <footer class="pane-footer">
-          <p class="section-footer">لا يُنزَّل أي تحديث قبل موافقتك.</p>
-          <p class="section-footer">
-            تطوير وتصميم: سلطان ·
-            <button type="button" class="link" id="site-link" dir="ltr"></button>
-          </p>
+          <div class="footer-row">
+            <span class="row-status" id="updates-state" data-tone="success">
+              <span class="row-status-mark" aria-hidden="true"></span>
+              <span class="row-status-label"></span>
+            </span>
+            <span class="footer-note">الضبط محفوظ على جهازك. لا يُنزَّل أي تحديث قبل موافقتك.</span>
+          </div>
         </footer>
       </section>
     </main>
 
     <div id="sprite" hidden aria-hidden="true"></div>
 
-    <!-- قائمة اختيار واحدة تخدم المزوّد والمظهر معًا (Dropdown Menu 30:39) -->
+    <!-- قائمة اختيار المزوّد (Dropdown Menu 30:39) -->
     <div class="picker-menu" id="picker-menu" role="menu" hidden></div>
 
     <script src="app-links.js"></script>

@@ -2136,10 +2136,17 @@ body:has([aria-modal="true"]:not([hidden]))::before {
   border-block-start: var(--stroke-hairline) solid var(--border-default);
 }
 
-/* ورقة أول تشغيل (Onboarding / Welcome 2008:2 وProvider-Setup 2009:28): الخطوة من data-step */
-.sheet[data-step="welcome"] [data-step-pane="connect"],
-.sheet[data-step="connect"] [data-step-pane="welcome"] {
+/* ورقة أول تشغيل (Onboarding / Welcome 2008:2 وProvider-Setup 2009:28 وشاشات النتيجة 2009:97
+   و2009:115 و2009:195): الخطوة من data-step، وكل جزءٍ يسمّي خطواته في data-step-pane */
+.sheet [data-step-pane] {
   display: none;
+}
+.sheet[data-step="welcome"] [data-step-pane~="welcome"],
+.sheet[data-step="connect"] [data-step-pane~="connect"],
+.sheet[data-step="testing"] [data-step-pane~="testing"],
+.sheet[data-step="success"] [data-step-pane~="success"],
+.sheet[data-step="failed"] [data-step-pane~="failed"] {
+  display: flex;
 }
 /* مؤشر الخطوة في رأس الورقة: Metadata Strong بلون text/secondary */
 .sheet-step {
@@ -2153,8 +2160,8 @@ body:has([aria-modal="true"]:not([hidden]))::before {
   color: var(--text-secondary);
 }
 .welcome-intro,
-.welcome-connect {
-  display: flex;
+.welcome-connect,
+.welcome-result {
   flex-direction: column;
   gap: var(--layout-group-gap);
 }
@@ -2208,6 +2215,7 @@ body:has([aria-modal="true"]:not([hidden]))::before {
   color: var(--text-primary);
 }
 .sheet .form-row > .row-picker,
+.sheet .form-row > .row-input,
 .sheet .form-row > .row-field {
   inline-size: auto;
 }
@@ -2215,6 +2223,106 @@ body:has([aria-modal="true"]:not([hidden]))::before {
   flex-direction: row;
   align-items: center;
   gap: var(--layout-element-gap);
+}
+/* الحالة السطرية تحت حقلها (Key-Rejected 2009:134 وInvalid-Model 2009:165): فجوة ٦ عن الحقل */
+.sheet .form-row > .row-status {
+  margin-block-start: var(--space-2);
+}
+/* بطاقة نتيجة (Success 2009:115 وProvider-Ollama 2009:52 وConnection-Failed 2009:195): حشو ١٦،
+   فجوة ٨، قطر ٨؛ النجاح status/success-subtle بحدّ accent/clay، والخطأ status/danger-subtle بحدّه */
+.result-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--layout-element-gap);
+  padding: var(--component-padding-lg);
+  border: var(--stroke-hairline) solid var(--accent-clay);
+  border-radius: var(--radius-8);
+  background: var(--status-success-subtle);
+}
+.result-card[hidden] {
+  display: none;
+}
+.result-card[data-tone="danger"] {
+  border-color: var(--status-danger);
+  background: var(--status-danger-subtle);
+}
+.result-card-inline {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--layout-component-gap);
+}
+.result-card-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-inline-size: 0;
+}
+.result-card-title {
+  display: flex;
+  align-items: center;
+  gap: var(--layout-element-gap);
+  font: var(--type-button-label);
+  color: var(--module-accent-text);
+}
+.result-card-heading {
+  font: var(--type-button-label);
+  color: var(--text-secondary);
+}
+.result-card-accent {
+  font: var(--type-metadata);
+  color: var(--module-accent-text);
+}
+.result-card-note {
+  font: var(--type-metadata);
+  color: var(--text-secondary);
+}
+.result-card-detail {
+  font: var(--type-metadata);
+  color: var(--status-danger);
+  overflow-wrap: anywhere;
+}
+/* بطاقة الاختبار (2009:97): حشو ٢٤، فجوة ١٢، surface/sunken بحدّ وقطر ٨؛ قرص ٤٠ فيه الدوّار */
+.testing-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--layout-component-gap);
+  padding: var(--component-padding-2xl);
+  border: var(--stroke-hairline) solid var(--border-default);
+  border-radius: var(--radius-8);
+  background: var(--surface-sunken);
+}
+.testing-disc {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: var(--space-40);
+  block-size: var(--space-40);
+  border-radius: var(--radius-full);
+  background: var(--surface-reading);
+  color: var(--module-accent);
+}
+.testing-label {
+  font: var(--type-button-label);
+  color: var(--module-accent-text);
+}
+.testing-host {
+  font: var(--type-metadata);
+  color: var(--text-tertiary);
+}
+.failed-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--layout-component-gap);
+}
+.failed-group > .result-card {
+  align-self: stretch;
+}
+/* بعد فشل: «تخطي الآن» وحده يمينًا، والبقية يسارًا (2009:134) */
+.sheet[data-footer="split"] #welcome-skip {
+  margin-inline-end: auto;
 }
 .welcome-help {
   align-self: flex-start;

@@ -79,10 +79,40 @@
   }
 
   // حكم «اختبر» في موضع واحد للنافذتين: النجاح أن يولّد النموذج فعلًا، لا أن
-  // يُسرد اسمه وحده — قائمةٌ قد تحوي نموذجًا لا يقبل التوليد (المرحلة ٩)
+  // يُسرد اسمه وحده — قائمةٌ قد تحوي نموذجًا لا يقبل التوليد (المرحلة ٩).
+  // وردُّ خطأٍ من المزوّد (401 مفتاح مرفوض، 402، 429، 5xx) يصل connected: true بلا حكمٍ على
+  // النموذج ولا قائمة: ليس نجاحًا. كان يُعرض بعلامة النجاح الخضراء (فحص m6-17)
   function connectionWorks(report) {
-    return Boolean(report?.connected) && report.modelListed !== false && report.generates !== false;
+    if (!report?.connected || report.keyAccepted === false) return false;
+    if (report.modelListed === false || report.generates === false) return false;
+    // بلا نموذج مكتوب لا حكم عليه؛ فالنجاح حينها أن تصل قائمةٌ فيها نماذج
+    return report.modelListed === true || report.modelCount > 0;
   }
 
-  window.NasaqProviders = { PROVIDERS, PROVIDER_ORDER, LOCAL_PROVIDER, presetFor, menuItems, connectionWorks };
+  // ما الذي فشل؟ شاشات أول تشغيل المرسومة أربع (Success وKey-Rejected وInvalid-Model
+  // وConnection-Failed)، والحكم بينها هنا بجوار شرط النجاح فلا تكرّره نافذة. وردُّ خطأٍ
+  // لا يخصّ المفتاح ولا النموذج (ازدحام، عطل خادم) يُعرض بشاشة التعذّر ورسالته فيها
+  function connectionVerdict(report) {
+    if (connectionWorks(report)) return "works";
+    if (!report?.connected) return "unreachable";
+    if (report.keyAccepted === false) return "key-rejected";
+    if (report.modelListed === false || report.generates === false) return "model-unavailable";
+    return "unreachable";
+  }
+
+  // مضيف العنوان كما يُعرض للمستخدم، والمحليّ منه: الجهاز نفسه لا غير
+  function hostOf(baseUrl) {
+    try {
+      return new URL(String(baseUrl || "")).host;
+    } catch {
+      return "";
+    }
+  }
+  function isLocalHost(baseUrl) {
+    return /^(127\.0\.0\.1|localhost|\[::1\])(:\d+)?$/.test(hostOf(baseUrl));
+  }
+
+  window.NasaqProviders = {
+    PROVIDERS, PROVIDER_ORDER, LOCAL_PROVIDER, presetFor, menuItems, connectionWorks, connectionVerdict, hostOf, isLocalHost,
+  };
 })();

@@ -239,6 +239,11 @@ const RAW_PX_ALLOWED = {
     "forms|.row-picker, .row-input|inline-size|220",
     "forms|.form-row > .row-field|inline-size|220",
     "forms|.row-switch|inline-size|36",
+    // المبدّل المقطّع 2128:610 عرضه ٢٢٠؛ وصفّ المبدِّل 2128:640 تسميته ٢٢٠ وخانته ٢٢٠؛ وملاحظة القسم تبدأ بعد التسمية ١٢٠
+    "forms|.row-segments|inline-size|220",
+    "forms|.form-row[data-control=\"switch\"] > .row-label|inline-size|220",
+    "forms|.row-cell|inline-size|220",
+    "forms|.section-note|padding-inline-start|120",
     "secondary|.tab|block-size|30",
     // About-Window 2009:2911: صفّ إشارات النظام ١٤، والأيقونة ٨٠
     "secondary|.about|padding-block-start|14",

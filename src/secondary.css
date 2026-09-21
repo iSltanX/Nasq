@@ -71,15 +71,39 @@ main {
   flex-direction: column;
   gap: var(--layout-group-gap);
 }
-/* تذييل اللوح: خطّ ثم سطر Metadata */
+/* تذييل اللوح (2128:618 و2128:653): خطّ، ثم صفّ بطرفين بفجوة ٨ فوقه — الحالة السطرية يمينًا،
+   والملاحظة Metadata بلون text/tertiary، والزرّ الصغير يسارًا */
 .pane-footer {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
   padding-block-start: var(--layout-element-gap);
   border-block-start: var(--stroke-hairline) solid var(--border-default);
 }
-/* بطاقة التحديث: حشو ١٦، فجوة ١٢، حدّ، قطر ٨ */
+.footer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--layout-component-gap);
+  min-block-size: var(--type-metadata-lh);
+}
+.footer-note {
+  min-inline-size: 0;
+  font: var(--type-metadata);
+  color: var(--text-tertiary);
+}
+/* حالةٌ بلا علامة (التحقق التلقائي معطَّل/مفعَّل): خبرٌ لا نجاح */
+.row-status[data-tone="neutral"] {
+  font: var(--type-metadata);
+  color: var(--text-secondary);
+}
+.row-status[data-tone="neutral"] .row-status-mark {
+  display: none;
+}
+/* صفوف لوح التحديثات بفجوة ١٦ (2128:639) */
+.section-rows-wide {
+  gap: var(--layout-group-gap);
+}
+/* بطاقة التحديث (2128:644): حشو ١٦، فجوة ١٢، حدّ، قطر ٨؛ ملخّصها بفجوة ٤ ثم صفّ فعليها */
 .update-card {
   display: flex;
   flex-direction: column;
@@ -89,12 +113,27 @@ main {
   border-radius: var(--radius-8);
   background: var(--surface-elevated);
 }
-.update-card > * {
-  min-block-size: 0;
+.update-summary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
 }
-.update-card .row-label {
-  flex: 1;
-  inline-size: auto;
+.update-title {
+  font: var(--type-button-label);
+  color: var(--text-primary);
+}
+.update-meta {
+  font: var(--type-metadata);
+  color: var(--text-tertiary);
+}
+.update-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--layout-component-gap);
+}
+.update-actions .link {
+  font: var(--type-metadata);
 }
 
 /* ================= حول: ٣٢٠×٣٠٠، حشو ٢٤ وفجوة ١٦ ================= */

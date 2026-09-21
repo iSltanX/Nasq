@@ -661,7 +661,7 @@
          من data-step على الورقة نفسها -->
     <header class="sheet-step">
       <span class="step-label" data-step-pane="welcome">الخطوة ١ من ٢</span>
-      <span class="step-label" data-step-pane="connect">الخطوة ٢ من ٢</span>
+      <span class="step-label" data-step-pane="connect testing success failed">الخطوة ٢ من ٢</span>
     </header>
     <div class="sheet-body">
       <!-- الخطوة ١: الترحيب -->
@@ -686,7 +686,9 @@
         </p>
       </div>
 
-      <!-- الخطوة ٢: ربط المزوّد — حقولها مكدّسة: التسمية فوق عنصرها بعرض الورقة -->
+      <!-- الخطوة ٢: ربط المزوّد — حقولها مكدّسة: التسمية فوق عنصرها بعرض الورقة. عنوانها ووصفها
+           يتبعان حالها (Provider-Setup 2009:28 وProvider-Ollama 2009:52 وKey-Saved 2009:74
+           وKey-Rejected 2009:134 وInvalid-Model 2009:165)، والخطأ حالةٌ سطرية تحت حقله -->
       <div class="welcome-connect" data-step-pane="connect">
         <header class="sheet-topbar">
           <h2 id="welcome-topbar-title" class="sheet-title">إعداد مزوّد التنسيق</h2>
@@ -701,30 +703,95 @@
                 <span class="picker-chevron" aria-hidden="true"></span>
               </button>
             </div>
+            <!-- بطاقة التشغيل المحلي (2009:52): للمزوّد المحلي على هذا الجهاز وحده -->
+            <div class="result-card" id="welcome-local-card" data-tone="success" hidden>
+              <p class="result-card-title">
+                <span class="sf" aria-hidden="true">􀇻</span>
+                <span>تشغيل محلي بالكامل</span>
+              </p>
+              <p class="result-card-note"><bdi dir="ltr">Ollama</bdi> يعمل محليًا على حاسوبك — لا حاجة لإدخال مفاتيح <bdi dir="ltr">API</bdi> أو مشاركة بياناتك خارج الشبكة.</p>
+            </div>
             <div class="form-row" data-control="field" id="welcome-key-row">
               <label class="row-label" for="welcome-key">مفتاح واجهة البرمجة (<bdi dir="ltr">API Key</bdi>)</label>
-              <input class="row-field" id="welcome-key" type="password" dir="ltr" autocomplete="off" spellcheck="false" placeholder="أدخل مفتاح الربط السري هنا..." />
+              <span class="row-input">
+                <input class="row-field" id="welcome-key" type="password" dir="ltr" autocomplete="off" spellcheck="false" placeholder="أدخل مفتاح الربط السري هنا..." />
+                <!-- العين (Key-Visible 2352:3338) لما يُكتب في الحقل وحده: المحفوظ لا يعبر إلى هذه الورقة -->
+                <button class="row-reveal" type="button" id="welcome-reveal" aria-pressed="false" aria-controls="welcome-key" title="إظهار المفتاح" aria-label="إظهار المفتاح" hidden>
+                  <svg class="icon" aria-hidden="true"><use id="welcome-reveal-icon" href="#eye.16r" /></svg>
+                </button>
+              </span>
+              <span class="row-status" id="welcome-key-status" role="status" aria-live="polite" hidden>
+                <span class="row-status-mark" aria-hidden="true"></span>
+                <span class="row-status-label"></span>
+              </span>
               <button id="welcome-help" class="welcome-help" type="button">كيف أحصل على مفتاح؟</button>
             </div>
             <div class="form-row" data-control="field">
-              <label class="row-label" for="welcome-model">النموذج المفضل</label>
+              <label class="row-label" for="welcome-model" id="welcome-model-label">النموذج المفضل</label>
               <input class="row-field" id="welcome-model" type="text" dir="ltr" autocomplete="off" spellcheck="false" />
-            </div>
-            <div class="form-row" data-control="button">
-              <button class="button button-secondary" type="button" id="welcome-test">اختبر الاتصال</button>
-              <span class="row-status" id="welcome-connection" role="status" aria-live="polite" hidden>
-                <span id="welcome-connection-message"></span>
-                <svg aria-hidden="true"><use id="welcome-connection-icon" href="#checkmark.circle.16m" /></svg>
+              <span class="row-status" id="welcome-model-status" role="status" aria-live="polite" hidden>
+                <span class="row-status-mark" aria-hidden="true"></span>
+                <span class="row-status-label"></span>
               </span>
             </div>
           </div>
-          <p class="section-footer">يُحفظ المفتاح في سلسلة المفاتيح على جهازك، ويمكنك تغييره لاحقًا من الإعدادات.</p>
+          <p class="section-footer" id="welcome-key-note">يُحفظ المفتاح في سلسلة المفاتيح على جهازك، ويمكنك تغييره لاحقًا من الإعدادات.</p>
+        </div>
+      </div>
+
+      <!-- أثناء الاختبار (Onboarding / Testing 2009:97) -->
+      <div class="welcome-result" data-step-pane="testing">
+        <header class="sheet-topbar">
+          <h2 id="welcome-testing-title" class="sheet-title">اختبار الاتصال بالخادم</h2>
+        </header>
+        <p class="sheet-subtitle">نتحقق من استجابة المزوّد…</p>
+        <div class="testing-card" role="status" aria-live="polite">
+          <span class="testing-disc"><span class="spinner" aria-hidden="true"></span></span>
+          <span class="testing-label">جارٍ اختبار الاتصال…</span>
+          <bdi class="testing-host" id="welcome-testing-host" dir="ltr"></bdi>
+        </div>
+      </div>
+
+      <!-- نجح الاختبار (Onboarding / Success 2009:115) -->
+      <div class="welcome-result" data-step-pane="success">
+        <header class="sheet-topbar">
+          <h2 id="welcome-success-title" class="sheet-title">اكتمل الإعداد بنجاح</h2>
+        </header>
+        <p class="sheet-subtitle">أنت جاهز الآن لخوض تجربة كتابية جديدة متناغمة مع نَسَق.</p>
+        <div class="result-card result-card-inline" data-tone="success">
+          <span class="tag" aria-hidden="true">✓</span>
+          <div class="result-card-text">
+            <p class="result-card-heading">تم الاتصال بنجاح</p>
+            <p class="result-card-accent">النموذج متاح ومستعد للعمل.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- تعذّر الاتصال (Onboarding / Connection-Failed 2009:195) -->
+      <div class="welcome-result" data-step-pane="failed">
+        <header class="sheet-topbar">
+          <h2 id="welcome-failed-title" class="sheet-title">خطأ في الاتصال بالخادم</h2>
+        </header>
+        <p class="sheet-subtitle">فشل الاتصال بخوادم مزوّد الخدمة. يرجى مراجعة حالة الاتصال بالشبكة المحلية.</p>
+        <div class="failed-group">
+          <div class="result-card" data-tone="danger" role="alert">
+            <span class="row-status" data-tone="danger">
+              <span class="row-status-mark sf" aria-hidden="true">􀇾</span>
+              <span class="row-status-label">تعذّر الاتصال بالخادم</span>
+            </span>
+            <p class="result-card-detail" id="welcome-failed-detail"></p>
+          </div>
+          <button id="welcome-provider-settings" class="button button-secondary" type="button">إعدادات المزوّد</button>
         </div>
       </div>
     </div>
+    <!-- صفّ الأزرار: «لاحقًا» ثم الفعل الأساسي من اليسار؛ وبعد فشلٍ ينقسم كما رُسم — «تخطي الآن»
+         يمينًا، و«أعد الاختبار» و«السابق» يسارًا (2009:134) -->
     <footer class="sheet-bottombar">
       <button id="welcome-skip" class="button button-quiet" type="button">لاحقًا</button>
+      <button id="welcome-cancel" class="button button-quiet" type="button" hidden>إلغاء</button>
       <button id="welcome-next" class="button button-primary" type="button">متابعة</button>
+      <button id="welcome-back" class="button button-secondary" type="button" hidden>السابق</button>
     </footer>
   </div>
 

@@ -10,6 +10,7 @@
   const el = (id) => document.getElementById(id);
 
   const { PROVIDERS, presetFor, menuItems } = window.NasaqProviders;
+  const { setStatus } = window.NasaqForms;
   const KEY_MASK = "••••••••••••••••••••••••";
 
   const tabs = [...document.querySelectorAll(".tab")];
@@ -18,14 +19,14 @@
 
   const apiKeyInput = el("api-key");
   const revealBtn = el("reveal-key");
-  const keyFooter = el("key-footer");
-  const keyFooterText = el("key-footer-text");
-  const KEY_FOOTER_NOTE = keyFooterText.textContent.trim();
+  const removeKeyBtn = el("remove-key");
+  const saveStatus = el("save-status");
+  const SAVED_NOTE = saveStatus.querySelector(".row-status-label").textContent.trim();
   const SAVED_FLASH_MS = 3000;
   const modelInput = el("model-name");
   const baseUrlInput = el("base-url");
   const providerValue = el("provider-value");
-  const appearanceValue = el("appearance-value");
+  const segments = [...document.querySelectorAll("[data-appearance-value]")];
 
   let view = null;
   let preset = "gemini";
@@ -33,9 +34,16 @@
   // المعروض في الحقل مفتاحٌ جاء من السلسلة بزر العين، لا شيء كتبه صاحبه
   let revealedFromStore = false;
   let footerTimer = null;
-  // ما جاء به «تحقّق الآن» يبقى في خانته: حفظُ وقت التحقق يعيد الرسم، والرسم
-  // لا يمحو النتيجة بوقتٍ (فحص m2)
-  let checkMessage = null;
+  // ما جاء به «تحقق الآن» يبقى في بطاقته: حفظُ وقت التحقق يعيد الرسم، والرسم
+  // لا يمحو النتيجة بوقتٍ (فحص m2). والعنوان لا يدّعي «أحدث إصدار» قبل أن يُتحقَّق
+  // في هذه الجلسة: idle ← checking ← current | available | failed
+  let check = { state: "idle", version: "" };
+  const CHECK_TITLES = {
+    idle: "تحديثات نَسَق",
+    checking: "جارٍ التحقق من التحديثات…",
+    current: "نَسَق قيد التشغيل بأحدث إصدار",
+    failed: "تعذّر التحقق من التحديثات",
+  };
 
   // ---------- العرض ----------
 
@@ -71,11 +79,26 @@
 
     syncReveal();
 
-    appearanceValue.textContent = appearance.LABELS[appearance.apply(view.appearance)];
+    const chosen = appearance.apply(view.appearance);
+    for (const segment of segments) {
+      const selected = segment.dataset.appearanceValue === chosen;
+      segment.setAttribute("aria-checked", String(selected));
+      segment.tabIndex = selected ? 0 : -1;
+    }
 
     el("auto-updates").setAttribute("aria-checked", String(view.autoUpdates));
-    el("update-message").textContent = checkMessage ?? lastCheckLabel(view.lastUpdateCheck);
-    el("update-status").hidden = false;
+    el("update-message").textContent = lastCheckLabel(view.lastUpdateCheck);
+    renderCheck();
+  }
+
+  // بطاقة التحديث وتذييلها (2128:644 و2128:653، وAuto-Off 2285:2084)
+  function renderCheck() {
+    el("update-title").textContent =
+      check.state === "available" ? `يتوفر إصدار ${window.NasaqVersion.display(check.version)}` : CHECK_TITLES[check.state];
+    const state = el("updates-state");
+    if (view && !view.autoUpdates) setStatus(state, "التحقق التلقائي مُعطَّل", "neutral");
+    else if (check.state === "current") setStatus(state, "نظام نَسَق مُحدّث", "success");
+    else setStatus(state, "التحقق التلقائي مفعَّل", "neutral");
   }
 
   async function save(patch) {
@@ -152,13 +175,23 @@
     });
   });
 
-  el("appearance-picker").addEventListener("click", () => {
-    const items = appearance.VALUES.map((value) => ({ value, label: appearance.LABELS[value] }));
-    openMenu(el("appearance-picker"), items, view?.appearance ?? "auto", (value) => {
-      appearance.apply(value);
-      save({ appearance: value });
+  // نمط المظهر مبدّلٌ مقطّع (2128:610): مجموعة راديو بتركيز متجوّل، والسهمان يختاران
+  function chooseAppearance(segment) {
+    const value = segment.dataset.appearanceValue;
+    appearance.apply(value);
+    save({ appearance: value }).then((ok) => ok && flashSaved());
+  }
+  for (const segment of segments) {
+    segment.addEventListener("click", () => chooseAppearance(segment));
+    segment.addEventListener("keydown", (e) => {
+      if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+      e.preventDefault();
+      const step = e.key === "ArrowLeft" ? 1 : -1;
+      const next = segments[(segments.indexOf(segment) + step + segments.length) % segments.length];
+      next.focus();
+      chooseAppearance(next);
     });
-  });
+  }
 
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && picker.isOpen()) {
@@ -169,21 +202,14 @@
 
   // ---------- زر العين وتأكيد الحفظ (المرحلة ٩، طلب المالك) ----------
   // المالك كتب مفتاحه فرغ الحقل ولم يدرِ أنه حُفظ؛ ثم طلب أن يرى أيّ مفتاح
-  // محفوظ. فالحفظ يُعلَن في سطر الملاحظة ثلاث ثوانٍ، والعين تُظهر المفتاح
+  // محفوظ. فالحفظ يُعلَن في حالة التذييل السطرية ثلاث ثوانٍ («تم حفظ التغييرات
+  // تلقائيًا ✓» في 2128:620 هي نصّها المقيم)، والعين تُظهر المفتاح
 
-  function flashKeyFooter(message) {
+  function flashSaved(message) {
     clearTimeout(footerTimer);
-    keyFooter.dataset.tone = "success";
-    // رمز SVG: hidden سمةٌ لا خاصية عليه، فتُبدَّل السمة نفسها
-    keyFooter.querySelector(".icon").toggleAttribute("hidden", false);
-    keyFooterText.textContent = message;
-    footerTimer = setTimeout(() => {
-      delete keyFooter.dataset.tone;
-      keyFooter.querySelector(".icon").toggleAttribute("hidden", true);
-      keyFooterText.textContent = KEY_FOOTER_NOTE;
-      measure();
-    }, SAVED_FLASH_MS);
-    measure();
+    setStatus(saveStatus, message ?? SAVED_NOTE, "success");
+    if (!message) return;
+    footerTimer = setTimeout(() => setStatus(saveStatus, SAVED_NOTE, "success"), SAVED_FLASH_MS);
   }
 
   const shown = () => apiKeyInput.type === "text";
@@ -191,6 +217,8 @@
   function syncReveal() {
     const local = view && view.provider === "ollama";
     revealBtn.hidden = local || !(view?.hasApiKey || apiKeyInput.value);
+    // «إزالة المفتاح» لما في السلسلة وحده: ما يُكتب ولم يُحفظ يُمحى من حقله
+    removeKeyBtn.hidden = local || !view?.hasApiKey;
     revealBtn.setAttribute("aria-pressed", String(shown()));
     const label = shown() ? "إخفاء المفتاح" : "إظهار المفتاح";
     revealBtn.title = label;
@@ -245,7 +273,7 @@
   async function saveKeyNow() {
     const typed = apiKeyInput.value;
     const ok = await save({ apiKey: typed });
-    if (ok) flashKeyFooter(typed.trim() ? "حُفظ المفتاح في سلسلة المفاتيح." : "حُذف المفتاح من سلسلة المفاتيح.");
+    if (ok) flashSaved(typed.trim() ? "حُفظ المفتاح في سلسلة المفاتيح" : "حُذف المفتاح من سلسلة المفاتيح");
     return ok;
   }
   const saveKey = debounce(saveKeyNow, TYPING_PAUSE);
@@ -267,6 +295,16 @@
     }
   });
 
+  // «إزالة المفتاح» (2401:4159): محوٌ صريح بزرّه، وإفراغ الحقل بعد كتابة طريقه الآخر
+  removeKeyBtn.addEventListener("click", async () => {
+    keyTouched = false;
+    revealedFromStore = false;
+    apiKeyInput.value = "";
+    apiKeyInput.type = "password";
+    if (await save({ apiKey: "" })) flashSaved("حُذف المفتاح من سلسلة المفاتيح");
+    apiKeyInput.focus();
+  });
+
   const saveModel = debounce(() => save({ model: modelInput.value.trim() }), TYPING_PAUSE);
   modelInput.addEventListener("input", saveModel);
   modelInput.addEventListener("change", () => saveModel.now());
@@ -286,21 +324,15 @@
   // ---------- اختبار الاتصال ----------
 
   function showConnection(message, tone) {
-    const status = el("connection-status");
-    el("connection-message").textContent = message;
-    el("connection-icon").setAttribute(
-      "href",
-      tone === "danger" ? "#xmark.octagon.16m" : "#checkmark.circle.16m"
-    );
-    status.dataset.tone = tone;
-    status.hidden = false;
+    setStatus(el("connection-status"), message, tone);
     measure();
   }
 
   el("test-connection").addEventListener("click", async () => {
     const button = el("test-connection");
     button.disabled = true;
-    el("connection-status").hidden = true;
+    // Settings / General / Testing 2285:2016 — الحالة السطرية بنوع Loading
+    showConnection("جارٍ اختبار الاتصال بالمزوّد…", "loading");
     try {
       const report = await invoke("test_connection");
       showConnection(report.message, window.NasaqProviders.connectionWorks(report) ? "success" : "danger");
@@ -315,18 +347,19 @@
   el("check-updates").addEventListener("click", async () => {
     const button = el("check-updates");
     button.disabled = true;
-    const show = (message) => {
-      checkMessage = message;
-      el("update-message").textContent = message;
+    const show = (state, version = "") => {
+      check = { state, version };
+      renderCheck();
     };
-    show("جارٍ التحقق…");
+    show("checking");
     try {
       const meta = await invoke("plugin:updater|check", {});
       // لا تنزيل هنا: قدرات هذه النافذة لا تملك إلا التحقق
-      show(meta?.available ? `يتوفر إصدار ${meta.version}` : "أنت على أحدث إصدار");
+      if (meta?.available) show("available", meta.version);
+      else show("current");
       save({ lastUpdateCheck: Math.floor(Date.now() / 1000) });
     } catch {
-      show("تعذّر التحقق من التحديثات");
+      show("failed");
     }
     button.disabled = false;
   });
@@ -351,23 +384,26 @@
     })
     .catch(() => {});
 
-  // رقم الإصدار كما رُسم: لاتينيّ، فهو معرّف لا عدد يُقرأ
+  // رقم الإصدار كما رُسم (٢٧٫٠): في بطاقة التحديث وفي تذييل «عام». و«بنية مستقرة» لإصدارٍ
+  // بلا وسمٍ تجريبي وحده
   const version = window.__TAURI__?.app
     ?.getVersion?.()
     .then((value) => {
-      el("app-version").textContent = window.NasaqVersion.display(value);
+      const shown = window.NasaqVersion.display(value);
+      const stable = /^\d+\.\d+\.\d+$/.test(String(value).trim());
+      el("app-version").textContent = stable ? `${shown} (بنية مستقرة)` : shown;
+      el("footer-version").textContent = `نَسَق \u2066v\u2069${shown}`;
     })
     .catch(() => {});
 
-  // المستودع وموقع المؤلف: نصوصهما وعناوينهما من المصدر المشترك، والفتح يمرّ
-  // بالنواة — وقدرة هذه النافذة تسمح بالعنوانين بالاسم وحدهما
+  // «عرض سجل التغييرات على GitHub»: عنوان المستودع من المصدر المشترك، والفتح يمرّ
+  // بالنواة — وقدرة هذه النافذة تسمح به بالاسم وحده. وموقع المؤلف في «حول»
   const links = window.NasaqLinks;
-  const openUrl = (url) => invoke("plugin:opener|open_url", { url }).catch(() => {});
-  el("project-url").textContent = links.PROJECT_LABEL;
-  el("open-project").addEventListener("click", () => openUrl(links.PROJECT_URL));
-  const site = el("site-link");
-  site.textContent = links.SITE_LABEL;
-  site.addEventListener("click", () => openUrl(links.SITE_URL));
+  el("open-project").addEventListener("click", () =>
+    invoke("plugin:opener|open_url", { url: links.PROJECT_URL }).catch(() => {})
+  );
+  // «حول نَسَق» (btn-about 2401:4162): النافذة نفسها التي تفتحها قائمة التطبيق
+  el("open-about").addEventListener("click", () => invoke("open_about").catch(() => {}));
 
   Promise.all([loaded, version ?? Promise.resolve()]).then(() => {
     setTab("general");
