@@ -219,6 +219,9 @@ const RAW_PX_ALLOWED = {
     "forms|.picker-menu|min-inline-size|200",
     // لوح شَذْب (Review-Decision 2009:1632) ٤٢٠، وفي الضيّق ٣٢٠؛ وCut Decision 2124:32 ارتفاعه ٤٤
     "app|.inspector|inline-size|420",
+    // ولوح «جاهز» ٤٠٠ (info-sidebar في Ready 2009:1548)، والفعل الرئيس في اللوح بارتفاع مكوّنه ٤٢ (Primary Action 2120:64)
+    "app|[data-module=\"shadhb\"][data-shadhb-state=\"ready\"] .inspector, [data-module=\"shadhb\"][data-shadhb-state=\"checking\"] .inspector|inline-size|400",
+    "app|.panel-actions .primary-action|block-size|42",
     "app|.inspector|inline-size|320",
     "app|.decision-button|block-size|44",
     // Alert 30:26 عرضه ٤٠٠، وSheet 30:27 ٤٤٠ (وورقة التنويعات ٧٢٠)، وPopover 30:36 ٣٦٠

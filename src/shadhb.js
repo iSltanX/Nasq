@@ -246,7 +246,8 @@
       return rows.length > 0;
     }
 
-    // ---------- القصّات في الشريط الجانبي: صفٌّ لكل قصّة ورمز قرارها ----------
+    // ---------- القصّات في لوح المراجعة: شريحةٌ لكل قصّة ورمز قرارها ----------
+    const CUT_WORDS = { pending: "معلّقة", cut: "محذوفة", kept: "مُبقاة", stale: "منتهية" };
     function buildCutRow(cut, index) {
       const row = document.createElement("div");
       row.className = "sidebar-row cut-row";
@@ -262,9 +263,13 @@
 
       const text = document.createElement("span");
       text.className = "row-text";
+      // شريحة Cut Row في NsqV272 (27:1013): «القصّة ١ · معلّقة» ورمز حالتها؛ والاقتباس في بطاقة
+      // القرار، ويبقى هنا تلميحًا وتسميةً لقارئ الشاشة
       const title = document.createElement("span");
       title.className = "row-title";
-      title.textContent = quoted(cut.quote);
+      title.textContent = `القصّة ${AR(index + 1)} · ${CUT_WORDS[cut.status] || ""}`;
+      row.title = quoted(cut.quote);
+      row.setAttribute("aria-label", `${title.textContent} — ${quoted(cut.quote)}`);
       const subtitle = document.createElement("span");
       subtitle.className = "row-subtitle";
       subtitle.textContent = cutMetaText(cut);

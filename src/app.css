@@ -413,6 +413,21 @@
   font: var(--type-caption);
   color: var(--text-secondary);
 }
+/* التلميح في طرف الرأس الأيسر: Caption بلون text/tertiary */
+.panel-hint {
+  font: var(--type-caption);
+  color: var(--text-tertiary);
+}
+.when-shadhb-draft,
+.when-shadhb-review,
+.when-shadhb-polished {
+  display: none;
+}
+[data-module="shadhb"]:not([data-shadhb-state="review"], [data-shadhb-state="polished"]) .when-shadhb-draft,
+[data-module="shadhb"][data-shadhb-state="review"] .when-shadhb-review,
+[data-module="shadhb"][data-shadhb-state="polished"] .when-shadhb-polished {
+  display: inline;
+}
 .header-tools {
   display: flex;
   align-items: center;
@@ -1474,12 +1489,100 @@ textarea.empty-bidi {
 [data-module="shadhb"]:not([data-shadhb-state="before"]) .window[data-inspector="open"] .inspector {
   display: flex;
 }
+/* decision-sidebar: في المراجعة حشو ٢٠ وفجوة ١٦ (2009:1632)، وفي «جاهز» و«مصقول» حشو ٢٤ وفجوة ٢٠ */
 .inspector-body {
   display: flex;
   flex: 1;
   flex-direction: column;
   gap: var(--layout-group-gap);
+  padding: var(--component-padding-xl);
+}
+[data-module="shadhb"][data-shadhb-state="ready"] .inspector-body,
+[data-module="shadhb"][data-shadhb-state="checking"] .inspector-body,
+[data-module="shadhb"][data-shadhb-state="polished"] .inspector-body {
+  gap: var(--layout-content-gap);
   padding: var(--component-padding-2xl);
+}
+[data-module="shadhb"][data-shadhb-state="ready"] .inspector,
+[data-module="shadhb"][data-shadhb-state="checking"] .inspector {
+  inline-size: 400px;
+}
+.panel-intro {
+  display: none;
+  flex-direction: column;
+  gap: var(--layout-content-gap);
+}
+.panel-heading {
+  font: var(--type-section-title);
+  color: var(--text-primary);
+}
+.panel-heading-polished {
+  display: none;
+}
+/* scope-statement-card: حشو ١٦، حدّ، قطر ٦، نص Body UI */
+.scope-card {
+  padding: var(--component-padding-lg);
+  border: var(--stroke-hairline) solid var(--border-default);
+  border-radius: var(--radius-6);
+  background: var(--surface-elevated);
+  font: var(--type-body-ui);
+  color: var(--text-secondary);
+}
+[data-module="shadhb"][data-shadhb-state="ready"] .panel-intro,
+[data-module="shadhb"][data-shadhb-state="checking"] .panel-intro {
+  display: flex;
+}
+[data-module="shadhb"][data-shadhb-state="polished"] .panel-heading-polished {
+  display: block;
+}
+/* قائمة القصّات للمراجعة وحدها؛ قبلها مقدّمة «جاهز»، وبعد الحسم بطاقة الملخص */
+[data-module="shadhb"]:not([data-shadhb-state="review"]) .cuts-header,
+[data-module="shadhb"]:not([data-shadhb-state="review"]) .cuts-list,
+[data-module="shadhb"][data-shadhb-state="ready"] #cuts-note,
+[data-module="shadhb"][data-shadhb-state="checking"] #cuts-note {
+  display: none;
+}
+/* summary-card: حشو ١٦، فجوة ١٦، حدّ، قطر ٨ */
+.summary-card {
+  display: flex;
+  flex-direction: column;
+  padding: var(--component-padding-lg);
+  border: var(--stroke-hairline) solid var(--border-default);
+  border-radius: var(--radius-8);
+  background: var(--surface-elevated);
+}
+.summary-title {
+  padding-block-end: var(--layout-element-gap);
+  font: var(--type-button-label);
+  color: var(--text-secondary);
+}
+.summary-card .inspector-row {
+  border-block-end-color: var(--fill-pressed);
+}
+.summary-card .inspector-row:last-child {
+  border-block-end: 0;
+}
+.summary-card .row-label {
+  font: var(--type-body-ui);
+  color: var(--text-secondary);
+}
+.summary-card .row-value {
+  font: var(--type-button-label);
+}
+/* Guarantee Badge 2412:53 — حشو ٤/٨، فجوة ٦، قطر ٤، status/success-subtle */
+.guarantee-badge {
+  align-self: flex-start;
+  gap: var(--layout-tight-gap);
+  padding: var(--component-padding-xs) var(--component-padding-sm);
+  border-radius: var(--radius-4);
+  background: var(--status-success-subtle);
+  color: var(--status-success);
+}
+.guarantee-badge .covenant-bar-icon {
+  color: var(--status-success);
+}
+.guarantee-badge.fail {
+  background: var(--status-danger-subtle);
 }
 [data-module="shadhb"] .content {
   background: var(--surface-elevated);
@@ -1491,7 +1594,7 @@ textarea.empty-bidi {
   font: var(--type-button-label);
 }
 [data-module="shadhb"]:not([data-shadhb-state="polished"], [data-shadhb-state="checking"]) .column-result[data-for="shadhb"],
-[data-module="shadhb"]:not([data-shadhb-state="polished"]) .compare-divider {
+[data-module="shadhb"] .compare-divider {
   display: none;
 }
 [data-module="shadhb"][data-shadhb-state="checking"] .column-source {
@@ -1500,11 +1603,35 @@ textarea.empty-bidi {
 [data-module="shadhb"][data-shadhb-state="checking"] .column-result[data-for="shadhb"] > :not(.text-container) {
   display: none;
 }
-[data-module="shadhb"][data-shadhb-state="polished"] .editor-stack {
+/* Polished 2009:1937: side-by-side بفجوة ١٦ — صندوق «الأصل» يمينًا surface/reading، و«المشذّبة» يسارًا
+   surface/elevated، كلاهما بحشو ١٦ وحدّ وقطر ٦، وعنوانه داخله Caption Strong */
+[data-module="shadhb"][data-shadhb-state="polished"] .compare {
+  gap: var(--layout-group-gap);
+  padding: var(--layout-page-margin);
+}
+[data-module="shadhb"][data-shadhb-state="polished"] .column {
+  gap: var(--layout-component-gap);
   padding: var(--component-padding-lg);
   border: var(--stroke-hairline) solid var(--border-default);
-  border-radius: var(--radius-8);
+  border-radius: var(--radius-6);
+}
+[data-module="shadhb"][data-shadhb-state="polished"] .column-source {
   background: var(--surface-reading);
+}
+[data-module="shadhb"][data-shadhb-state="polished"] .column .panel-title {
+  font: var(--type-caption-strong);
+}
+[data-module="shadhb"][data-shadhb-state="polished"] .column .panel-header {
+  min-block-size: 0;
+}
+[data-module="shadhb"][data-shadhb-state="polished"] .column-source .editor,
+[data-module="shadhb"][data-shadhb-state="polished"] .column-source .marked-text {
+  color: var(--text-secondary);
+}
+[data-module="shadhb"][data-shadhb-state="polished"] .column-result .text-container {
+  padding: 0;
+  border: 0;
+  background: none;
 }
 .cuts-header {
   display: flex;
@@ -1543,7 +1670,7 @@ textarea.empty-bidi {
   color: var(--text-secondary);
 }
 .cut-row > .icon {
-  display: none;
+  order: 2;
 }
 .cut-row .row-subtitle {
   display: none;
@@ -1565,6 +1692,10 @@ textarea.empty-bidi {
 .cut-row[data-status="kept"] {
   background: var(--status-success-subtle);
   color: var(--status-success);
+}
+.cut-row[data-status="stale"] {
+  background: var(--status-warning-subtle);
+  color: var(--status-warning);
 }
 .inspector-section {
   display: flex;
@@ -1691,25 +1822,34 @@ textarea.empty-bidi {
   flex-direction: column;
   gap: var(--layout-component-gap);
 }
+/* actions: حشو علوي ٢٠ وفجوة ١٢؛ الفعل الرئيس ٤٢ يملأ، ثم Secondary Small يملأ */
 .panel-actions {
   display: flex;
   flex-direction: column;
-  gap: var(--layout-element-gap);
-  margin-block-start: auto;
+  gap: var(--layout-component-gap);
+}
+.panel-actions .primary-action {
+  block-size: 42px;
 }
 .panel-actions .primary-action {
   inline-size: 100%;
 }
 [data-module="shadhb"]:not([data-shadhb-state="polished"]) #send-to-nasaq-btn,
 [data-module="shadhb"]:not([data-shadhb-state="polished"]) #copy-pruned-btn,
+[data-module="shadhb"][data-shadhb-state="review"] #prune-btn,
 [data-module="shadhb"][data-shadhb-state="polished"] #prune-btn {
   display: none;
 }
+/* بطاقة القراءة من مخرجات عقد شَذْب ولم يرسمها الملف: تبقى في اللوح تحت الضمانة والملخص، وفوق الأفعال */
+.inspector-body > #reading-card-section {
+  order: 1;
+}
+.inspector-body > .panel-actions {
+  order: 2;
+}
 /* علامات القصّات فوق الشذرة: لم تُحسم، ومحددة بالطين، ومحذوفة مشطوبة */
 .mark-pending {
-  border-radius: var(--radius-2);
-  background: var(--editor-mark-bg);
-  color: var(--accent-clay-text);
+  color: var(--module-accent-text);
 }
 .mark-selected {
   border-radius: var(--radius-2);

@@ -118,8 +118,14 @@
                   <h2 class="panel-title">
                     <span data-for="nasaq" class="when-before">النص العربي المدخل</span>
                     <span data-for="nasaq" class="when-after">الأصل</span>
-                    <span data-for="shadhb">مراجعة الشذرة الجارية</span>
+                    <span data-for="shadhb" class="when-shadhb-draft">مسودة الشذرة الأولى</span>
+                    <span data-for="shadhb" class="when-shadhb-review">مراجعة الشذرة الجارية</span>
+                    <span data-for="shadhb" class="when-shadhb-polished">الأصل والمقاطع المحسومة</span>
                   </h2>
+                  <p class="panel-hint" data-for="shadhb">
+                    <span class="when-shadhb-draft">النص المُدخل يدويًا</span>
+                    <span class="when-shadhb-review">اضغط على المقاطع الملونة لمراجعتها</span>
+                  </p>
                 </header>
                 <!-- تنبيه كل وحدة فوق خانتها: خانة لكل برج داخل الحاوية المشتركة، فلا
                      يعبر تنبيه برج إلى الآخر -->
@@ -281,6 +287,7 @@
               <div class="column column-result" data-for="shadhb">
                 <header class="panel-header">
                   <h2 class="panel-title">الشذرة المشذَّبة النهائية</h2>
+                  <p class="panel-hint when-shadhb-polished">مقارنة بنيوية قبل وبعد الحذف</p>
                 </header>
                 <div id="shadhb-error" class="banner banner-error" data-error-slot role="alert" hidden>
                   <div class="banner-lead">
@@ -388,6 +395,13 @@
           <!-- شَذْب: القصّات، ثم القصّة المحددة عند المراجعة، ثم الضمانة — وتحلّ
                «النتيجة» محل الضمانة بعد الحسم -->
           <div class="inspector-body" data-for="shadhb">
+            <!-- Ready 2009:1548: عنوان وبطاقة نطاق الفحص -->
+            <div class="panel-intro">
+              <h2 class="panel-heading">جاهز لبدء التشذيب البنيوي</h2>
+              <p class="scope-card">سيفحص شَذْب النص بحثًا عن عبارات يمكن حذفها بأمان. لن يُضيف كلمات ولن يُغيّر الترتيب.</p>
+            </div>
+            <!-- Polished 2009:1937 -->
+            <h2 class="panel-heading panel-heading-polished">اكتمال فحص ومراجعة الشذرة</h2>
             <header class="cuts-header">
               <h2 class="cuts-title" id="cuts-heading">قائمة القصّات المقترحة</h2>
               <span id="cuts-count" class="count-badge" hidden></span>
@@ -446,35 +460,38 @@
                 <span class="section-title">النتيجة</span>
               </button>
               <div class="section-content" id="outcome-content">
-                <span id="outcome-status" class="polish-status" data-status="polished">
-                  <span class="status-indicator" aria-hidden="true"></span>
-                  <span class="status-label">حُسمت كل القصّات</span>
-                </span>
-                <div class="inspector-row">
-                  <span class="row-label">القصّات المحذوفة</span>
-                  <span id="outcome-cut" class="row-value"></span>
+                <div class="summary-card">
+                  <h3 class="summary-title">ملخص نتائج التشذيب البنيوي</h3>
+                  <span id="outcome-status" class="polish-status visually-hidden" data-status="polished">
+                    <span class="status-indicator" aria-hidden="true"></span>
+                    <span class="status-label">حُسمت كل القصّات</span>
+                  </span>
+                  <div class="inspector-row">
+                    <span class="row-label">إجمالي الكلمات المحذوفة:</span>
+                    <span id="outcome-words" class="row-value"></span>
+                  </div>
+                  <div class="inspector-row">
+                    <span class="row-label">المقاطع المقبولة للقص:</span>
+                    <span id="outcome-cut" class="row-value"></span>
+                  </div>
+                  <div class="inspector-row">
+                    <span class="row-label">المقاطع المُبقاة اختيارًا:</span>
+                    <span id="outcome-kept" class="row-value"></span>
+                  </div>
                 </div>
-                <div class="inspector-row">
-                  <span class="row-label">القصّات المُبقاة</span>
-                  <span id="outcome-kept" class="row-value"></span>
-                </div>
-                <div class="inspector-row">
-                  <span class="row-label">الكلمات المحذوفة</span>
-                  <span id="outcome-words" class="row-value"></span>
-                </div>
-                <div id="outcome-covenant" class="covenant-bar"></div>
+                <div id="outcome-covenant" class="covenant-bar guarantee-badge"></div>
               </div>
             </section>
 
             <div class="panel-actions">
               <button id="prune-btn" class="primary-action" type="button" data-style="primary" title="افحص الشذرة ⌘↵ — فحص واحد يعيد بطاقة قراءة وقصّات مقترحة، ولا يغيّر نصك حتى تقرر" disabled>
                 <span class="spinner spinner-16" aria-hidden="true"></span>
-                <span>افحص الشذرة</span>
+                <span>افحص الشذرة الآن</span>
               </button>
               <button id="send-to-nasaq-btn" class="primary-action" type="button" title="النص المشذَّب يصير خامًا لنَسَق — جلسة جديدة" disabled>
                 <span>أرسل إلى نَسَق الآن</span>
               </button>
-              <button id="copy-pruned-btn" class="button button-secondary button-block" type="button" title="نسخ النص المشذَّب" disabled>
+              <button id="copy-pruned-btn" class="button button-secondary button-small button-block" type="button" title="نسخ النص المشذَّب" disabled>
                 <span>انسخ النص المشذَّب</span>
               </button>
             </div>
