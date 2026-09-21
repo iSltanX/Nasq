@@ -1336,10 +1336,11 @@ test("المرحلة ٧-ب: «جلسة جديدة» تستأذن، والخان�
 // والجزء الثالث يظهر حين يحمل إصلاحًا. ومصدره واحد تحمّله النوافذ الثلاث
 test("المرحلة ٩: رقم الإصدار يُعرض كما رُسم ومن مصدر واحد", () => {
   const { display } = require(srcPath("app-version.js"));
-  assert.strictEqual(display("27.0.0"), "27.0");
-  assert.strictEqual(display("27.1.0"), "27.1");
-  assert.strictEqual(display("27.0.1"), "27.0.1");
-  assert.strictEqual(display("27.0.10"), "27.0.10");
+  // NsqV272 (m6): الأرقام هندية والفاصلة عربية — «الإصدار ٢٧٫٠»
+  assert.strictEqual(display("27.0.0"), "٢٧٫٠");
+  assert.strictEqual(display("27.1.0"), "٢٧٫١");
+  assert.strictEqual(display("27.0.1"), "٢٧٫٠٫١");
+  assert.strictEqual(display("27.0.10"), "٢٧٫٠٫١٠");
   assert.strictEqual(display("27.0.0-beta.1"), "27.0.0-beta.1");
   assert.strictEqual(display(undefined), "");
 

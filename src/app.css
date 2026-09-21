@@ -684,6 +684,14 @@ textarea.empty-bidi {
   padding: var(--component-padding-2xl);
 }
 
+/* لوحة المسودات مفتوحة (Drafts-Sidebar-Open 2009:968): لوح النتيجة وحده بجوارها، و«الأصل» يعود
+   بإغلاقها — وإلا ضاق لوح النتيجة عن أدوات رأسه عند ١٠٢٤–١٠٦٤ (مسح العروض في m6) */
+[data-module="nasaq"][data-nasaq-state="result"] .window[data-sidebar="open"] .column-source,
+[data-module="nasaq"][data-nasaq-state="review"] .window[data-sidebar="open"] .column-source,
+[data-module="nasaq"] .window[data-sidebar="open"] .compare-divider {
+  display: none;
+}
+
 /* الخطأ (Error 2008:223): اللافتة ثم النص المحفوظ في صندوق مرتفع بقطر ١٢ */
 [data-module="nasaq"][data-nasaq-state="error"] .column-source {
   gap: var(--layout-content-gap);
