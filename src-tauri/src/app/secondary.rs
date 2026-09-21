@@ -28,7 +28,7 @@ const SETTINGS_PAGE: &str = "settings.html";
 const ABOUT_PAGE: &str = "about.html";
 /// لوحة «حول» كما رُسمت في NsqV272 (About-Window 2009:2911) ٣٢٠×٣٠٠، بزر إغلاق وحده
 const ABOUT_WIDTH: f64 = 320.0;
-const ABOUT_HEIGHT: f64 = 300.0;
+const ABOUT_HEIGHT: f64 = 324.0;
 
 /// نافذة الإعدادات في NsqV272 (Settings / General 2128:576) عرضها ٥٢٠
 const SETTINGS_WIDTH: f64 = 520.0;
@@ -304,7 +304,7 @@ mod tests {
     #[test]
     fn the_about_panel_keeps_the_measured_size_of_the_system_one() {
         // About-Window 2009:2911 في NsqV272
-        assert_eq!((ABOUT_WIDTH, ABOUT_HEIGHT), (320.0, 300.0));
+        assert_eq!((ABOUT_WIDTH, ABOUT_HEIGHT), (320.0, 324.0));
         // أصغر من أقصر نافذة إعدادات: لوحة لا نافذة عمل
         assert!(ABOUT_HEIGHT < settings_height(SETTINGS_MIN_PANE, ROOMY_SCREEN));
     }

@@ -19,6 +19,12 @@
     invoke("plugin:opener|open_url", { url: window.NasaqLinks.SITE_URL }).catch(() => {});
   });
 
+  // سطر الصنعة: رابط المستودع من المصدر المشترك، وقدرة هذه النافذة تسمح به بالاسم
+  document.getElementById("repo-label").textContent = window.NasaqLinks.PROJECT_LABEL;
+  document.getElementById("repo-link").addEventListener("click", () => {
+    invoke("plugin:opener|open_url", { url: window.NasaqLinks.PROJECT_URL }).catch(() => {});
+  });
+
   let choice = "auto";
   const settings = invoke("load_settings")
     .then((view) => {

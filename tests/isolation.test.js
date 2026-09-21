@@ -1000,7 +1000,7 @@ test("المرحلة ٥: لوحة «حول» بنصوص التصميم ومقا�
   assert.ok(fs.existsSync(srcPath("app-icon.png")), "ملف الأيقونة غير موجود في src");
   const rust = fs.readFileSync(path.join(__dirname, "..", "src-tauri", "src", "app", "secondary.rs"), "utf8");
   // About-Window 2009:2911 في NsqV272
-  assert.ok(rust.includes("ABOUT_WIDTH: f64 = 320.0") && rust.includes("ABOUT_HEIGHT: f64 = 300.0"), "مقاس «حول» ليس مقاس التصميم");
+  assert.ok(rust.includes("ABOUT_WIDTH: f64 = 320.0") && rust.includes("ABOUT_HEIGHT: f64 = 324.0"), "مقاس «حول» ليس مقاس التصميم");
 });
 
 // ---------- حرّاس المرحلة ٦: أول تشغيل والتحديثات (Figma 255:521 و258:18771) ----------
@@ -1273,6 +1273,15 @@ test("المرحلة ٦: صفحات المفاتيح مسموحة بالاسم �
     assert.ok(!other.permissions.includes("updater:allow-download"), `${name} تملك التنزيل`);
     assert.ok(!other.permissions.includes("updater:allow-install"), `${name} تملك التثبيت`);
   }
+});
+
+// فحص m7-02: قوائم النمط والمستوى والمنصة في النافذة الرئيسية (dd-popup في nasaq.js) كانت تُوضع
+// عند r.left بعرض زرّها، وعرضها الأدنى أكبر منه، ففاضت خارج النافذة في التطبيق الحقيقي
+test("فحص m7-02: قائمة الاختيار في النافذة الرئيسية تحاذي زرّها وتبقى داخل النافذة", () => {
+  const nasaqJs = src("nasaq.js");
+  assert.ok(!/popup\.style\.left = r\.left \+ "px"/.test(nasaqJs), "القائمة تُوضع عند r.left بلا حصر");
+  assert.ok(/const wanted = rtl \? r\.right - w : r\.left;/.test(nasaqJs), "القائمة لا تحاذي حافة زرّها اليمنى في واجهةٍ من اليمين");
+  assert.ok(/Math\.min\(Math\.max\(margin, wanted\), window\.innerWidth - w - margin\)/.test(nasaqJs), "القائمة غير محصورة داخل النافذة");
 });
 
 // فحص m7-05: بنود النظام في الشريط (تراجع، قص، إخفاء، إنهاء…) تأخذ عنوانها من المكتبة

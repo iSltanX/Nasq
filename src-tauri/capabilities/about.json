@@ -13,6 +13,9 @@
       "allow": [
         {
           "url": "https://www.bysltan.com"
+        },
+        {
+          "url": "https://github.com/iSltanX/Nasq"
         }
       ]
     }

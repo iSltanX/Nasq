@@ -90,6 +90,15 @@ main {
 .pane-footer {
   gap: var(--layout-element-gap);
 }
+/* سطر الصنعة (credit-row 2593:5076 و2593:5084): موسَّط، بفجوة ٤ بين أجزائه */
+.credit-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--space-4);
+  font: var(--type-metadata);
+  color: var(--text-tertiary);
+}
 .credit-row .link {
   color: var(--status-info);
 }

@@ -12,7 +12,9 @@ use super::storage::{set_aside, write_private};
 
 pub(crate) const DEFAULT_BASE_URL: &str =
     "https://generativelanguage.googleapis.com/v1beta/openai/";
-pub(crate) const DEFAULT_MODEL: &str = "gemini-2.5-flash";
+// فحص m7-07: gemini-2.5-flash يرفضه المزوّد للمستخدمين الجدد («no longer available to new
+// users»)، فكان أول تنسيقٍ بالإعداد الافتراضي يفشل. gemini-3.5-flash جرّبه المالك في التطبيق فولّد
+pub(crate) const DEFAULT_MODEL: &str = "gemini-3.5-flash";
 
 // OpenAI المباشر يسلك المسار السحابي نفسه (provider "cloud") ويُعرف بمضيف
 // Base URL كما يُعرف Gemini وOpenRouter. نموذجه الافتراضي لحقل نموذج فارغ فقط:

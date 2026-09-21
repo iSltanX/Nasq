@@ -214,8 +214,14 @@ function enhanceSelectAsDropdown(sel) {
   function positionPopup() {
     const margin = 8;
     const r = btn.getBoundingClientRect();
-    popup.style.left = r.left + "px";
+    // فحص m7-02: القائمة أعرض من زرّها حين يقلّ عن عرضها الأدنى (٢٠٠ في app.css)، وكانت تُوضع
+    // عند r.left ففاضت يمينًا خارج النافذة في التطبيق. حافتها اليمنى على حافة زرّها في واجهةٍ
+    // من اليمين، ومحصورة داخل النافذة
     popup.style.width = r.width + "px";
+    const w = popup.getBoundingClientRect().width;
+    const rtl = getComputedStyle(btn).direction === "rtl";
+    const wanted = rtl ? r.right - w : r.left;
+    popup.style.left = Math.min(Math.max(margin, wanted), window.innerWidth - w - margin) + "px";
     popup.style.top = r.bottom + 4 + "px";
     popup.style.bottom = "";
     popup.style.maxHeight = "";
