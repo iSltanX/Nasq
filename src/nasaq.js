@@ -1054,9 +1054,9 @@ function buildVariationColumn(index, state, payload) {
   if (state === "ready") {
     const adopt = document.createElement("button");
     adopt.type = "button";
-    adopt.className = "button button-primary variation-adopt";
+    adopt.className = "button button-secondary button-small variation-adopt";
     adopt.innerHTML = '<svg class="icon" aria-hidden="true"><use href="#nsq.approve.16m" /></svg>';
-    adopt.append("اعتمد هذا الشكل");
+    adopt.append("استخدم هذا");
     adopt.addEventListener("click", () => adoptVariation(payload));
     col.appendChild(adopt);
   }
@@ -1083,6 +1083,8 @@ function renderVariationColumns(index = null) {
 // جارية أو منتهية — بلا نداءات، فلا يتوقف ما يراه الكاتب على توقيت لا يراه.
 // التوليد من جديد لـ «ولّد ثلاثًا جديدة» وحده
 function showVariations() {
+  // صندوق «الأصل» في رأس الورقة: النص الذي تُعرض تنويعاته، للقراءة وحدها
+  el("variations-original").textContent = inputText.value.trim();
   if (variationStates.length && variationInputsCurrent()) {
     window.NasaqWindow.presentModal(variationsOverlay, { initialFocus: "#close-variations" });
     return;

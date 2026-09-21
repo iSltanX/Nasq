@@ -2030,120 +2030,178 @@ body:has([aria-modal="true"]:not([hidden]))::before {
   border-block-start: var(--stroke-hairline) solid var(--border-default);
 }
 
-/* ورقة أول تشغيل: الخطوة من data-step */
+/* ورقة أول تشغيل (Onboarding / Welcome 2008:2 وProvider-Setup 2009:28): الخطوة من data-step */
 .sheet[data-step="welcome"] [data-step-pane="connect"],
 .sheet[data-step="connect"] [data-step-pane="welcome"] {
   display: none;
 }
-.welcome-hero {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--layout-element-gap);
-  text-align: center;
-}
-.welcome-app-icon {
-  inline-size: var(--space-64);
-  block-size: var(--space-64);
-}
-.welcome-heading {
-  font: var(--type-section-title);
-  color: var(--text-primary);
-}
-.welcome-tagline {
-  font: var(--type-body-ui);
-  color: var(--text-secondary);
-}
-.welcome-features {
-  display: flex;
-  flex-direction: column;
-  gap: var(--layout-component-gap);
-}
-.welcome-feature {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--layout-component-gap);
-}
-.welcome-feature-icon {
+/* مؤشر الخطوة في رأس الورقة: Metadata Strong بلون text/secondary */
+.sheet-step {
   display: flex;
   flex: none;
   align-items: center;
-  justify-content: center;
-  inline-size: var(--space-32);
-  block-size: var(--space-32);
+  min-block-size: var(--space-24);
+}
+.step-label {
+  font: var(--type-metadata-strong);
+  color: var(--text-secondary);
+}
+.welcome-intro,
+.welcome-connect {
+  display: flex;
+  flex-direction: column;
+  gap: var(--layout-group-gap);
+}
+/* بطاقة الأداتين: حشو ١٢، فجوة ٨، surface/sunken، حدّ، قطر ٨، وبين الأداتين خطّ */
+.welcome-features {
+  display: flex;
+  flex-direction: column;
+  gap: var(--layout-element-gap);
+  padding: var(--component-padding-md);
+  border: var(--stroke-hairline) solid var(--border-default);
   border-radius: var(--radius-8);
-  background: var(--module-accent-subtle);
-  color: var(--text-primary);
+  background: var(--surface-sunken);
 }
-.welcome-feature-icon svg {
-  inline-size: var(--icon-20);
-  block-size: var(--icon-20);
-  fill: currentColor;
-}
-.welcome-feature-text {
+.welcome-feature {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
 }
+.welcome-feature + .welcome-feature {
+  padding-block-start: var(--layout-element-gap);
+  border-block-start: var(--stroke-hairline) solid var(--border-default);
+}
 .welcome-feature-title {
   font: var(--type-button-label);
-  color: var(--text-primary);
+  color: var(--module-accent-text);
 }
 .welcome-feature-note {
-  font: var(--type-caption);
+  font: var(--type-metadata);
   color: var(--text-secondary);
 }
-.welcome-connect {
+.welcome-privacy {
   display: flex;
+  align-items: center;
+  gap: var(--layout-tight-gap);
+  font: var(--type-metadata);
+  color: var(--text-tertiary);
+}
+.welcome-privacy .sf {
+  color: var(--accent-clay);
+}
+/* حقول الخطوة ٢ مكدّسة: التسمية Control Label فوق عنصرها بعرض الورقة، فجوة ٤ */
+.sheet .form-row {
   flex-direction: column;
-  gap: var(--layout-component-gap);
+  align-items: stretch;
+  gap: var(--space-4);
+  min-block-size: 0;
+}
+.sheet .form-row > .row-label {
+  inline-size: auto;
+  font: var(--type-control-label);
+  color: var(--text-primary);
+}
+.sheet .form-row > .row-picker,
+.sheet .form-row > .row-field {
+  inline-size: auto;
+}
+.sheet .form-row[data-control="button"] {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--layout-element-gap);
 }
 .welcome-help {
   align-self: flex-start;
   border-radius: var(--radius-2);
-  font: var(--type-caption);
-  color: var(--module-accent-text);
+  font: var(--type-metadata);
+  color: var(--status-info);
 }
 .welcome-help:hover {
   text-decoration: underline;
 }
 
-/* ورقة التنويعات */
-.variations-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+/* ورقة التنويعات (Substack-Variations-Ready 2009:2661): ٤٤٠، بطاقات مكدّسة */
+.sheet-head {
+  display: flex;
+  flex: none;
+  align-items: center;
   gap: var(--layout-component-gap);
 }
-.variation {
+.sheet-heading {
+  font: var(--type-section-title);
+  color: var(--text-primary);
+}
+.sheet-count {
+  flex: 1;
+  font: var(--type-metadata);
+  color: var(--text-secondary);
+  text-align: center;
+}
+/* صندوق «الأصل»: حشو ١٢، surface/sunken، حدّ، قطر ٨؛ وتحته خطّ يفصله عن التنويعات */
+.original-box {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: var(--space-4);
+  max-block-size: 120px;
+  padding: var(--component-padding-md);
+  border: var(--stroke-hairline) solid var(--border-default);
+  border-radius: var(--radius-8);
+  background: var(--surface-sunken);
+  overflow-y: auto;
+}
+.original-label {
+  font: var(--type-caption);
+  color: var(--text-secondary);
+}
+.original-text {
+  font: var(--type-body-ui);
+  color: var(--text-secondary);
+  white-space: pre-wrap;
+}
+.variations-grid {
   display: flex;
   flex-direction: column;
   gap: var(--layout-component-gap);
-  min-block-size: 280px;
+  padding-block-start: var(--layout-group-gap);
+  border-block-start: var(--stroke-hairline) solid var(--border-default);
+}
+/* بطاقة التنويعة: حشو ١٦، حدّ، قطر ٨؛ رأسها يمينًا و«استخدم هذا» يسارًا، ثم النص */
+.variation {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas: "head adopt" "body body";
+  align-items: center;
+  gap: var(--layout-component-gap);
   padding: var(--component-padding-lg);
   border: var(--stroke-hairline) solid var(--border-default);
   border-radius: var(--radius-8);
   background: var(--surface-elevated);
 }
 .variation-header {
+  grid-area: head;
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: var(--layout-element-gap);
 }
 .variation-title {
-  font: var(--type-button-label);
-  color: var(--text-primary);
+  font: var(--type-caption);
+  color: var(--module-accent-text);
 }
 .variation-body {
+  grid-area: body;
   display: flex;
-  flex: 1;
   flex-direction: column;
   gap: var(--layout-component-gap);
-  min-block-size: 0;
-  overflow-y: auto;
+}
+.variation-adopt {
+  grid-area: adopt;
+}
+.variation-adopt .icon {
+  display: none;
 }
 .variation-text {
-  font: var(--type-body-ui);
+  font: var(--type-body-reading);
   color: var(--text-primary);
   white-space: pre-wrap;
 }
@@ -2151,8 +2209,8 @@ body:has([aria-modal="true"]:not([hidden]))::before {
   font: var(--type-caption);
   color: var(--text-secondary);
 }
-.variation-adopt {
-  align-self: stretch;
+.variation-failed-icon {
+  color: var(--status-danger);
 }
 
 /* Popover 30:36 — ٣٦٠، حشو ٢٠، فجوة ١٦، ظل Shadow/Sheet، وسهم ١٦ إلى مرساته */
@@ -2416,8 +2474,5 @@ body:has([aria-modal="true"]:not([hidden]))::before {
 
   .inspector {
     inline-size: 320px;
-  }
-  .variations-grid {
-    grid-template-columns: 1fr;
   }
 }

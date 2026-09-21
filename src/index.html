@@ -558,20 +558,26 @@
 
   <!-- ================= فوق النافذة: ورقة وتنبيه ونافذة منبثقة لنَسَق ================= -->
   <!-- ورقة تنويعات سابستاك في وسط النافذة (Figma 259:6142 و259:6483) -->
-  <div id="variations-sheet" class="sheet" data-for="nasaq" role="dialog" aria-modal="true" aria-labelledby="variations-title" aria-describedby="variations-subtitle" hidden>
-    <header class="sheet-topbar">
-      <h2 id="variations-title" class="sheet-title">تنويعات — مقال سابستاك</h2>
+  <div id="variations-sheet" class="sheet sheet-narrow" data-for="nasaq" role="dialog" aria-modal="true" aria-labelledby="variations-heading variations-title" aria-describedby="variations-subtitle" hidden>
+    <!-- ورقة التنويعات كما في NsqV272 (Substack-Variations-Ready 2009:2661): رأسٌ بعنوانها وحالتها وإغلاق،
+         فصندوق «الأصل»، فخطّ، فبطاقات التنويعات مكدّسةً و«استخدم هذا» في رأس كلٍّ منها -->
+    <header class="sheet-head">
+      <h2 id="variations-heading" class="sheet-heading">تنويعات الشكل</h2>
+      <span id="variations-title" class="sheet-count"></span>
+      <button id="close-variations" class="icon-button" type="button" title="إغلاق" aria-label="إغلاق">
+        <span class="sf" aria-hidden="true">􀆄</span>
+      </button>
     </header>
     <div class="sheet-body">
-      <p id="variations-subtitle" class="sheet-subtitle">ثلاث معالجات شكلية لنفس النص؛ الكلمات والمعنى كما هي. اختر أنقاها.</p>
+      <div class="original-box">
+        <span class="original-label">الأصل</span>
+        <p id="variations-original" class="original-text selectable" dir="rtl"></p>
+      </div>
+      <p id="variations-subtitle" class="visually-hidden">معالجات شكلية لنفس النص؛ الكلمات والمعنى كما هي. اختر أنقاها.</p>
       <div id="variations-grid" class="variations-grid"></div>
     </div>
     <footer class="sheet-bottombar">
-      <button id="regen-variations" class="button button-secondary" type="button">
-        <svg class="icon" aria-hidden="true"><use href="#arrow.clockwise.16m" /></svg>
-        <span>ولّد ثلاثًا جديدة</span>
-      </button>
-      <button id="close-variations" class="button button-secondary" type="button">إغلاق</button>
+      <button id="regen-variations" class="button button-secondary button-small" type="button">ولّد ثلاثًا جديدة</button>
     </footer>
   </div>
 
@@ -630,89 +636,74 @@
   <!-- ورقة أول تشغيل بخطوتيها في عنصر واحد (Figma 255:524 و256:1155): عرضها
        ٤٨٠ لا ٧٢٠، وخطوتها تُقرأ من data-step على الورقة نفسها -->
   <div id="welcome-sheet" class="sheet sheet-narrow" data-step="welcome" role="dialog" aria-modal="true" aria-labelledby="welcome-label" hidden>
-    <header class="sheet-topbar">
-      <h2 id="welcome-topbar-title" class="sheet-title">اربط نموذجًا</h2>
+    <!-- ورقة أول تشغيل بخطوتيها في عنصر واحد كما في NsqV272 (Onboarding / Welcome 2008:2 وProvider-Setup
+         2009:28): مؤشر الخطوة، فالعنوان وخطّه، فالوصف، فمحتوى الخطوة، فخطّ وصفّ الأزرار. خطوتها تُقرأ
+         من data-step على الورقة نفسها -->
+    <header class="sheet-step">
+      <span class="step-label" data-step-pane="welcome">الخطوة ١ من ٢</span>
+      <span class="step-label" data-step-pane="connect">الخطوة ٢ من ٢</span>
     </header>
     <div class="sheet-body">
-      <p id="welcome-subtitle" class="sheet-subtitle">يعمل نَسَق بمفتاحك من مزوّد تختاره، أو بنموذج على جهازك عبر Ollama.</p>
-
       <!-- الخطوة ١: الترحيب -->
       <div class="welcome-intro" data-step-pane="welcome">
-        <div class="welcome-hero">
-          <img class="welcome-app-icon" src="app-icon.png" alt="" width="64" height="64" />
-          <h3 id="welcome-label" class="welcome-heading">مرحبًا بك في نَسَق</h3>
-          <p class="welcome-tagline">رتّب نصّك قبل النشر واحذف ما يزيد عنه، دون أن نكتب عنك كلمة.</p>
-        </div>
+        <header class="sheet-topbar">
+          <h2 id="welcome-label" class="sheet-title">مرحبًا بك في نَسَق</h2>
+        </header>
+        <p class="sheet-subtitle">نَسَق هو رفيقك المكتبي لتنسيق وتحرير النصوص العربية برؤية لغوية معاصرة وهيكل متناغم.</p>
         <ul class="welcome-features">
           <li class="welcome-feature">
-            <span class="welcome-feature-icon" data-tint="nasaq" aria-hidden="true">
-              <svg><use href="#nsq.nasaq.20r" /></svg>
-            </span>
-            <span class="welcome-feature-text">
-              <span class="welcome-feature-title">نَسَق يرتّب</span>
-              <span class="welcome-feature-note">يوزّع الأسطر والوقفات لتُقرأ بوضوح، والكلمات كما كتبتها.</span>
-            </span>
+            <span class="welcome-feature-title">أداة نَسَق</span>
+            <span class="welcome-feature-note">تُعنى بضبط تشكيل وإيقاع النص وتجميل المظهر البصري للكلمات.</span>
           </li>
           <li class="welcome-feature">
-            <span class="welcome-feature-icon" data-tint="shadhb" aria-hidden="true">
-              <svg><use href="#nsq.shadhb.20r" /></svg>
-            </span>
-            <span class="welcome-feature-text">
-              <span class="welcome-feature-title">شَذْب يقترح</span>
-              <span class="welcome-feature-note">يدلّك على ما يمكن حذفه، وأنت من يقرّر في كل قصّة.</span>
-            </span>
-          </li>
-          <li class="welcome-feature">
-            <span class="welcome-feature-icon" aria-hidden="true">
-              <svg><use href="#lock.20r" /></svg>
-            </span>
-            <span class="welcome-feature-text">
-              <span class="welcome-feature-title">نصّك على جهازك</span>
-              <span class="welcome-feature-note">لا يُرسَل شيء إلا حين تطلب، والمسودات محفوظة محليًا.</span>
-            </span>
+            <span class="welcome-feature-title">أداة شَذْب</span>
+            <span class="welcome-feature-note">تُعنى بالتشذيب البنيوي بالحذف والاختصار اللغوي غير المخل.</span>
           </li>
         </ul>
+        <p class="welcome-privacy">
+          <span class="sf" aria-hidden="true">􀇻</span>
+          <span>خصوصيتك أولويتنا: نصك لا يغادر جهازك إلا عند طلب التنسيق أو الفحص صراحةً.</span>
+        </p>
       </div>
 
-      <!-- الخطوة ٢: ربط النموذج — صفوفه مكوّن «Form Section» نفسه الذي في الإعدادات -->
+      <!-- الخطوة ٢: ربط المزوّد — حقولها مكدّسة: التسمية فوق عنصرها بعرض الورقة -->
       <div class="welcome-connect" data-step-pane="connect">
+        <header class="sheet-topbar">
+          <h2 id="welcome-topbar-title" class="sheet-title">إعداد مزوّد التنسيق</h2>
+        </header>
+        <p id="welcome-subtitle" class="sheet-subtitle">لتفعيل مستويات التنسيق المتقدمة وشَذْب، اربط مزوّدًا بمفتاحك الخاص، أو نموذجًا على جهازك عبر <bdi dir="ltr">Ollama</bdi>.</p>
         <div class="form-section">
           <div class="section-rows">
             <div class="form-row" data-control="picker">
-              <span class="row-label" id="welcome-provider-label">المزوّد</span>
-              <span class="row-spacer"></span>
+              <span class="row-label" id="welcome-provider-label">مزوّد الخدمة</span>
               <button class="row-picker" type="button" id="welcome-provider" aria-labelledby="welcome-provider-label" aria-haspopup="menu" aria-expanded="false">
                 <span id="welcome-provider-value">Gemini</span>
-                <span class="picker-chevron" aria-hidden="true">
-                  <svg><use href="#chevron.up.chevron.down.16m" /></svg>
-                </span>
+                <span class="picker-chevron" aria-hidden="true"></span>
               </button>
             </div>
             <div class="form-row" data-control="field" id="welcome-key-row">
-              <label class="row-label" for="welcome-key">مفتاح API</label>
-              <input class="row-field" id="welcome-key" type="password" dir="ltr" autocomplete="off" spellcheck="false" placeholder="الصق المفتاح هنا" />
+              <label class="row-label" for="welcome-key">مفتاح واجهة البرمجة (<bdi dir="ltr">API Key</bdi>)</label>
+              <input class="row-field" id="welcome-key" type="password" dir="ltr" autocomplete="off" spellcheck="false" placeholder="أدخل مفتاح الربط السري هنا..." />
+              <button id="welcome-help" class="welcome-help" type="button">كيف أحصل على مفتاح؟</button>
             </div>
             <div class="form-row" data-control="field">
-              <label class="row-label" for="welcome-model">النموذج</label>
+              <label class="row-label" for="welcome-model">النموذج المفضل</label>
               <input class="row-field" id="welcome-model" type="text" dir="ltr" autocomplete="off" spellcheck="false" />
             </div>
             <div class="form-row" data-control="button">
-              <span class="row-label">الاتصال</span>
-              <span class="row-spacer"></span>
+              <button class="button button-secondary" type="button" id="welcome-test">اختبر الاتصال</button>
               <span class="row-status" id="welcome-connection" role="status" aria-live="polite" hidden>
                 <span id="welcome-connection-message"></span>
                 <svg aria-hidden="true"><use id="welcome-connection-icon" href="#checkmark.circle.16m" /></svg>
               </span>
-              <button class="row-button" type="button" id="welcome-test">اختبر</button>
             </div>
           </div>
           <p class="section-footer">يُحفظ المفتاح في سلسلة المفاتيح على جهازك، ويمكنك تغييره لاحقًا من الإعدادات.</p>
         </div>
-        <button id="welcome-help" class="welcome-help" type="button">كيف أحصل على مفتاح؟</button>
       </div>
     </div>
     <footer class="sheet-bottombar">
-      <button id="welcome-skip" class="button button-secondary" type="button">لاحقًا</button>
+      <button id="welcome-skip" class="button button-quiet" type="button">لاحقًا</button>
       <button id="welcome-next" class="button button-primary" type="button">متابعة</button>
     </footer>
   </div>

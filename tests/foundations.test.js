@@ -229,7 +229,7 @@ const RAW_PX_ALLOWED = {
     "app|.sheet|inline-size|720",
     "app|.sheet-narrow|inline-size|440",
     "app|.popover|inline-size|360",
-    "app|.variation|min-block-size|280",
+    "app|.original-box|max-block-size|120",
     "app|.lens-phone|max-block-size|320",
     // Settings / General 2128:576: التسمية ١٢٠ والعنصر ٢٢٠، وToggle 26:449 مضماره ٣٦، وSettings Tab 26:110 ارتفاعه ٣٠
     "forms|.form-row > .row-label|inline-size|120",

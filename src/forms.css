@@ -184,17 +184,19 @@
   font: var(--type-metadata-strong);
   color: var(--text-primary);
 }
+/* رموز icons.svg تُلوَّن بـ currentColor، فلون العلامة لون الحالة */
 .row-status svg {
   flex: none;
   inline-size: var(--icon-16);
   block-size: var(--icon-16);
-  fill: var(--status-success);
+  fill: currentColor;
+  color: var(--status-success);
 }
 .row-status[data-tone="danger"] svg {
-  fill: var(--status-danger);
+  color: var(--status-danger);
 }
 .row-status[data-tone="warning"] svg {
-  fill: var(--status-warning);
+  color: var(--status-warning);
 }
 
 /* Toggle 26:449 — مضمار ٣٦×٢٠ بقطر كامل، وإبهام ١٦ يبعد ٢ عن الحافة */
