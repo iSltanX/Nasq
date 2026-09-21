@@ -190,6 +190,9 @@
     // «تكرار، كلمتان، آمنة» — السبب فالعدد فالأمان (Figma 105:389 و107:395).
     // السبب جملة من النموذج تنتهي بنقطة غالبًا، فتُنزع خاتمته قبل الفاصلة —
     // كان السطر «مباشرة.، ٤ كلمات» (المرحلة ٩)
+    // القصّة تتعذّر حين لا يبقى اقتباسها في النص بعد قصّةٍ سبقتها (لا بتحرير الكاتب: ذاك «اقتراحات قديمة»).
+    // شريحتها لا تُحدَّد فلا بطاقة لها؛ فسببها تلميحُ الشريحة وتسميتها لقارئ الشاشة (Review-Stale 2009:1826)
+    const STALE_NOTE = "تعذّرت: لم يعد اقتباسها في النص بعد قصّةٍ سبقتها. افحص من جديد إن أردت اقتراحات تطابق النص الحالي.";
     function cutMetaText(cut) {
       const reason = String(cut.reason || "").trim().replace(/[.۔،؛\s]+$/u, "") || "بلا سبب";
       return `${reason}، ${wordsLabel(Number(cut.wordCount) || 0)}، ${cut.safe ? "آمنة" : "جريئة"}`;
@@ -247,7 +250,7 @@
     }
 
     // ---------- القصّات في لوح المراجعة: شريحةٌ لكل قصّة ورمز قرارها ----------
-    const CUT_WORDS = { pending: "معلّقة", cut: "محذوفة", kept: "مُبقاة", stale: "منتهية" };
+    const CUT_WORDS = { pending: "معلّقة", cut: "محذوفة", kept: "مُبقاة", stale: "تعذّرت" };
     // الخانة تغيّرت أثناء المراجعة (Diverged 2009:2100): المعلّقة تُعرض «منتهية الصلاحية»
     let stalled = false;
     function buildCutRow(cut, index) {
@@ -271,8 +274,8 @@
       title.className = "row-title";
       const word = stalled && cut.status === "pending" ? "منتهية الصلاحية" : CUT_WORDS[cut.status] || "";
       title.textContent = `القصّة ${AR(index + 1)} · ${word}`;
-      row.title = quoted(cut.quote);
-      row.setAttribute("aria-label", `${title.textContent} — ${quoted(cut.quote)}`);
+      row.title = cut.status === "stale" ? STALE_NOTE : quoted(cut.quote);
+      row.setAttribute("aria-label", `${title.textContent} — ${cut.status === "stale" ? STALE_NOTE : quoted(cut.quote)}`);
       const subtitle = document.createElement("span");
       subtitle.className = "row-subtitle";
       subtitle.textContent = cutMetaText(cut);
@@ -429,6 +432,9 @@
       const wasStalled = stalled;
       stalled = gone && (now === "review" || now === "no-cuts");
       root.toggleAttribute("data-shadhb-diverged", stalled);
+      // قصّةٌ تعذّرت: سمةٌ يقرؤها CSS. و«افحص من جديد» المرسوم في Review-Stale 2009:1826 وAfter-Trim
+      // 2009:1883 لم يُبنَ: checkShard تبدأ من الأصل فتمحو ما حُسم بلا إذن (ملاحظة حارس شَذْب؛ m6-23)
+      root.toggleAttribute("data-shadhb-stale", Boolean(state) && state.cuts.some((c) => c.status === "stale"));
       if (stalled !== wasStalled) renderCuts();
       // «انسخ النص» في No-Cuts 2009:2002 ينسخ النص كما فُحص: لا قصّات، فلا حذف يُشترط. وما دامت
       // الخانة غير ما فُحص فلا نسخ: المنسوخ نصٌّ قديم لا ما تراه العين (ملاحظة حارس شَذْب، m6)

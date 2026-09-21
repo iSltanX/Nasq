@@ -1705,6 +1705,7 @@ div.scope-card {
 [data-module="shadhb"]:not([data-shadhb-state="error"]) #shadhb-provider-settings {
   display: none;
 }
+
 [data-module="shadhb"][data-shadhb-state="polished"] .panel-heading-polished {
   display: block;
 }
