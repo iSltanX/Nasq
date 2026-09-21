@@ -157,6 +157,13 @@
                     </div>
                   </div>
                 </div>
+                <!-- Diverged 2009:2100: لافتة تحذير فوق الخانة ما دام نصّها غير ما فُحص -->
+                <div id="diverged-source" class="banner banner-warning" data-for="shadhb" role="status">
+                  <div class="banner-lead">
+                    <span class="sf banner-icon" aria-hidden="true">􀇾</span>
+                    <p class="banner-title">تغيّر النص بعد الفحص، فلم تعد الاقتراحات تطابقه. أعد الفحص لتحديث مواضع القص.</p>
+                  </div>
+                </div>
                 <div id="no-cuts-source" class="banner banner-info" data-for="shadhb" role="status" hidden>
                   <div class="banner-lead">
                     <span class="status-dot" aria-hidden="true"></span>
@@ -409,10 +416,41 @@
           <!-- شَذْب: القصّات، ثم القصّة المحددة عند المراجعة، ثم الضمانة — وتحلّ
                «النتيجة» محل الضمانة بعد الحسم -->
           <div class="inspector-body" data-for="shadhb">
-            <!-- Ready 2009:1548: عنوان وبطاقة نطاق الفحص -->
-            <div class="panel-intro">
+            <!-- مقدّمة اللوح لكل حالٍ مرسوم، وظهورها من data-shadhb-state (وdata-shadhb-diverged) على الجذر.
+                 Ready 2009:1548: عنوان وبطاقة نطاق الفحص -->
+            <div class="panel-intro" data-when="ready">
               <h2 class="panel-heading">جاهز لبدء التشذيب البنيوي</h2>
               <p class="scope-card">سيفحص شَذْب النص بحثًا عن عبارات يمكن حذفها بأمان. لن يُضيف كلمات ولن يُغيّر الترتيب.</p>
+            </div>
+            <!-- Checking 2009:1591 -->
+            <div class="panel-intro" data-when="checking">
+              <h2 class="panel-heading">جارٍ فحص الشذرة…</h2>
+              <div class="scope-card">
+                <p>يبحث شَذْب الآن عن مواضع الإطناب والتكرار اللفظي غير المفيد.</p>
+                <p class="scope-note">نصّك لن يتغيّر — النظام يقرأ فقط</p>
+              </div>
+            </div>
+            <!-- No-Cuts 2009:2002 -->
+            <div class="panel-intro" data-when="no-cuts">
+              <h2 class="panel-heading">نتائج تحليل الشذرة البنيوي</h2>
+              <div class="scope-card">
+                <div class="scope-head">
+                  <h3 class="scope-title">تقرير شَذْب</h3>
+                  <span class="tag" data-tone="success">مكتمل الفحص</span>
+                </div>
+                <p>لم يجد شَذْب عبارةً فضفاضة أو تكرارًا يمكن حذفه حرفيًا دون الإخلال بالمعنى. نصّك كما هو.</p>
+              </div>
+            </div>
+            <!-- Error 2009:2055: رسالة الخطأ نفسها في لافتة عمود الأصل؛ وهنا ما يُفعل بعدها -->
+            <div class="panel-intro" data-when="error">
+              <h2 class="panel-heading">خطأ في فحص الشذرة</h2>
+              <div class="scope-card">
+                <div class="scope-head">
+                  <h3 class="scope-title">خطأ فني</h3>
+                  <span class="tag">فشل الفحص</span>
+                </div>
+                <p>تعذّر إتمام الفحص، ونصّك لم يتغيّر. سببه في اللافتة فوق النص؛ حاول مجددًا بعد معالجته.</p>
+              </div>
             </div>
             <!-- Polished 2009:1937 -->
             <h2 class="panel-heading panel-heading-polished">اكتمال فحص ومراجعة الشذرة</h2>
@@ -420,6 +458,16 @@
               <h2 class="cuts-title" id="cuts-heading">قائمة القصّات المقترحة</h2>
               <span id="cuts-count" class="count-badge" hidden></span>
             </header>
+            <!-- Diverged 2009:2100: الخانة تغيّرت أثناء المراجعة، فالاقتراحات لم تعد تصف ما فيها -->
+            <div class="panel-intro" data-when="diverged">
+              <div class="scope-card">
+                <div class="scope-head">
+                  <h3 class="scope-title">اقتراحات قديمة</h3>
+                  <span class="tag">تغيير في النص</span>
+                </div>
+                <p>لقد قمت بتعديل مسودة النص يدويًا بعد تفعيل الفحص. هذا يعني أن المقاطع المقترحة للقص لم تعد تطابق النص الحالي بدقة.</p>
+              </div>
+            </div>
             <p id="cuts-note" class="section-note">تظهر القصّات المقترحة هنا بعد الفحص، ولكل واحدة قرارك: احذف أو أبقِ.</p>
             <div id="cuts-list" class="cuts-list" role="listbox" aria-labelledby="cuts-heading"></div>
 
@@ -500,13 +548,20 @@
             <div class="panel-actions">
               <button id="prune-btn" class="primary-action" type="button" data-style="primary" title="افحص الشذرة ⌘↵ — فحص واحد يعيد بطاقة قراءة وقصّات مقترحة، ولا يغيّر نصك حتى تقرر" disabled>
                 <span class="spinner spinner-16" aria-hidden="true"></span>
-                <span>افحص الشذرة الآن</span>
+                <span class="when-idle">افحص الشذرة الآن</span>
+                <span class="when-busy">جارٍ التحليل الإيجازي…</span>
+                <span class="when-error">حاول مجددًا</span>
+                <span class="when-diverged">افحص الشذرة من جديد</span>
               </button>
+              <!-- Error 2009:2055: «إعدادات المزوّد» تحت الفعل الأساسي -->
+              <button id="shadhb-provider-settings" class="button button-secondary button-small button-block" type="button" data-open-settings>إعدادات المزوّد</button>
               <button id="send-to-nasaq-btn" class="primary-action" type="button" title="النص المشذَّب يصير خامًا لنَسَق — جلسة جديدة" disabled>
-                <span>أرسل إلى نَسَق الآن</span>
+                <span class="when-idle">أرسل إلى نَسَق الآن</span>
+                <span class="when-no-cuts">أرسل إلى نَسَق (لا تغييرات)</span>
               </button>
               <button id="copy-pruned-btn" class="button button-secondary button-small button-block" type="button" title="نسخ النص المشذَّب" disabled>
-                <span>انسخ النص المشذَّب</span>
+                <span class="when-idle">انسخ النص المشذَّب</span>
+                <span class="when-no-cuts">انسخ النص</span>
               </button>
             </div>
           </div>

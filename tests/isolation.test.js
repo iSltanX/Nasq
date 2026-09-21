@@ -587,7 +587,12 @@ test("المرحلة ٣: مدخل الإعدادات زرٌّ في شريط ال
   // NsqV272 (قرار المالك D1): «زر في title-bar + شريط القوائم» — واحد مشترك بلا data-for
   const bar = html.slice(html.indexOf('class="title-bar"'), html.indexOf("</header>"));
   assert.ok(/data-open-settings[^>]*title="الإعدادات ⌘،"/.test(bar) && bar.includes("الإعدادات</span>"), "لا مدخل للإعدادات في شريط العنوان");
-  assert.strictEqual((html.match(/data-open-settings/g) || []).length, 1);
+  assert.strictEqual((bar.match(/data-open-settings/g) || []).length, 1, "أكثر من مدخل للإعدادات في شريط العنوان");
+  // m6: خارج الشريط لا يفتحها إلا «إعدادات المزوّد» في حال الخطأ كما رُسم (Core Shadhb / Error 2009:2055)
+  const rest = html.replace(bar, "");
+  for (const m of rest.matchAll(/<button\b[^>]*data-open-settings[^>]*>([^<]*)</g)) {
+    assert.strictEqual(m[1].trim(), "إعدادات المزوّد", "مدخلٌ ثانٍ للإعدادات خارج شريط العنوان");
+  }
   assert.strictEqual(regions["mode-switch"].owner, null);
   assert.ok(shell.includes('document.querySelectorAll("[data-open-settings]")'), "زر الإعدادات لا يفتح الإعدادات");
 });
@@ -599,6 +604,15 @@ test("المرحلة ٣: مدخل الإعدادات زرٌّ في شريط ال
 
 const SHADHB_STATES = ["before", "ready", "checking", "review", "polished", "no-cuts", "error"];
 const stateKey = (state) => (state.includes("-") ? `"${state}"` : state);
+
+// m6-21 (ملاحظة حارس شَذْب): «انسخ النص» فُعِّل في «لا قصّات» كما رُسم (2009:2002)؛ وبلا حارس الانحراف
+// كان ينسخ النص كما فُحص — قديمًا — والخانة قد تغيّرت، ويقول «نُسخ النص»
+test("m6-21: «انسخ النص» في «لا قصّات» لا ينسخ نصًّا قديمًا حين تتغيّر الخانة", () => {
+  const gone = shadhb.indexOf("const gone = diverged();");
+  const copy = shadhb.indexOf("copyBtn.disabled =");
+  assert.ok(gone !== -1 && copy !== -1 && gone < copy, "تعطيل النسخ لا يعرف الانحراف");
+  assert.ok(/copyBtn\.disabled = busy \|\| \(now === "no-cuts" \? gone : applied === 0\)/.test(shadhb), "النسخ في «لا قصّات» لا يُمنع حين تتغيّر الخانة");
+});
 
 test("المرحلة ٤: لكل حالة من حالات شَذْب السبع عنصرها وتسميتها", () => {
   // نصوص شريط الحالة في إطارات شَذْب في NsqV272 (m6): Before وReady وChecking وReview-Decision
@@ -622,7 +636,8 @@ test("المرحلة ٤: لكل حالة من حالات شَذْب السبع �
   }
   // عدد ما حُسم في رأس اللوح كما في Review-Decision 2009:1632 («٠ من ٣ محسومة»)، بالأرقام الهندية
   assert.ok(shadhb.includes('`${AR(cuts.filter((c) => c.status !== "pending").length)} من ${AR(cuts.length)} محسومة`'), "رأس اللوح لا يعدّ ما حُسم من القصّات");
-  assert.ok(shadhb.includes("cutsCount.textContent = decidedLabel(state.cuts)"), "عدد المحسوم لا يُكتب في رأس اللوح");
+  // (m6: وحين تتغيّر الخانة أثناء المراجعة يحلّ محلّه «الاقتراحات معلّقة ومؤجلة» كما في Diverged 2009:2100)
+  assert.ok(/cutsCount\.textContent = [^;]*decidedLabel\(state\.cuts\)/.test(shadhb), "عدد المحسوم لا يُكتب في رأس اللوح");
   // أقسام المفتّش وأعمدة العرض الواحد مجدولة لكل حالة لا مشتقة
   const sections = (shadhb.match(/const SECTIONS = \{([\s\S]*?)\n    \};/) || [])[1] || "";
   assert.ok(sections, "جدول أقسام المفتّش غائب");

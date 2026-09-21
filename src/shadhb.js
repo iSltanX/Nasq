@@ -248,6 +248,8 @@
 
     // ---------- القصّات في لوح المراجعة: شريحةٌ لكل قصّة ورمز قرارها ----------
     const CUT_WORDS = { pending: "معلّقة", cut: "محذوفة", kept: "مُبقاة", stale: "منتهية" };
+    // الخانة تغيّرت أثناء المراجعة (Diverged 2009:2100): المعلّقة تُعرض «منتهية الصلاحية»
+    let stalled = false;
     function buildCutRow(cut, index) {
       const row = document.createElement("div");
       row.className = "sidebar-row cut-row";
@@ -267,7 +269,8 @@
       // القرار، ويبقى هنا تلميحًا وتسميةً لقارئ الشاشة
       const title = document.createElement("span");
       title.className = "row-title";
-      title.textContent = `القصّة ${AR(index + 1)} · ${CUT_WORDS[cut.status] || ""}`;
+      const word = stalled && cut.status === "pending" ? "منتهية الصلاحية" : CUT_WORDS[cut.status] || "";
+      title.textContent = `القصّة ${AR(index + 1)} · ${word}`;
       row.title = quoted(cut.quote);
       row.setAttribute("aria-label", `${title.textContent} — ${quoted(cut.quote)}`);
       const subtitle = document.createElement("span");
@@ -419,10 +422,17 @@
       // يوجد نص مشذَّب — والإرسال يشترط الضمانة فوق ذلك
       pruneBtn.disabled = busy || !hasText;
       pruneBtn.setAttribute("aria-busy", String(busy));
-      copyBtn.disabled = busy || applied === 0;
       // الجسر يكتب فوق الخانة، فتغيّرها بعد الفحص يمنعه: يُعطَّل ويقول سببه في
       // تلميحه بدل أن يُعرض متاحًا ويرفض عند النقر
       const gone = diverged();
+      // «اقتراحات قديمة» (Diverged 2009:2100): سمةٌ على الجذر يقرؤها CSS، والشرائح تُعاد بتسميتها
+      const wasStalled = stalled;
+      stalled = gone && (now === "review" || now === "no-cuts");
+      root.toggleAttribute("data-shadhb-diverged", stalled);
+      if (stalled !== wasStalled) renderCuts();
+      // «انسخ النص» في No-Cuts 2009:2002 ينسخ النص كما فُحص: لا قصّات، فلا حذف يُشترط. وما دامت
+      // الخانة غير ما فُحص فلا نسخ: المنسوخ نصٌّ قديم لا ما تراه العين (ملاحظة حارس شَذْب، m6)
+      copyBtn.disabled = busy || (now === "no-cuts" ? gone : applied === 0);
       sendBtn.disabled = busy || applied === 0 || !check.ok || gone;
       sendBtn.title = gone
         ? "النص في الخانة تغيّر بعد الفحص — افحص من جديد قبل الإرسال"
@@ -431,7 +441,7 @@
       // الشريط الجانبي: العدد في العنوان، والملاحظة مكان القائمة حين لا صفوف
       const hasCuts = Boolean(state) && state.cuts.length > 0;
       cutsCount.hidden = !hasCuts;
-      if (hasCuts) cutsCount.textContent = decidedLabel(state.cuts);
+      if (hasCuts) cutsCount.textContent = stalled ? "الاقتراحات معلّقة ومؤجلة" : decidedLabel(state.cuts);
       cutsNote.hidden = hasCuts;
       cutsNote.textContent =
         now === "no-cuts"
@@ -500,7 +510,7 @@
       // شريط الحالة: المؤشر وتسميته، وعدّاد كلمات الشذرة (Figma 71:471)
       statusBadge.dataset.status = now;
       // نصّ الحالة كما في إطارات شَذْب في NsqV272، وعدد ما لم يُحسم في رأس اللوح («٠ من ٣ محسومة»)
-      statusLabel.textContent = STATUS_LABELS[now];
+      statusLabel.textContent = stalled ? "شَذْب — الاقتراحات لم تعد تطابق النص" : STATUS_LABELS[now];
       // العدّاد بصيغة شريط الحالة المشتركة: كلمات النص الجاري وحروفه
       shell.updateCount(countBox, state ? state.currentText : inputText.value, { withLines: false });
 
@@ -768,7 +778,8 @@
     copyBtn.addEventListener("click", async () => {
       if (!state) return;
       const ok = await shell.copyText(state.currentText);
-      shell.showToast(ok ? "نُسخ النص المشذّب." : "تعذّر النسخ إلى الحافظة.", ok ? "success" : "danger");
+      const copied = appliedCount() > 0 ? "نُسخ النص المشذّب." : "نُسخ النص.";
+      shell.showToast(ok ? copied : "تعذّر النسخ إلى الحافظة.", ok ? "success" : "danger");
     });
 
     // ---------- الجسر إلى نَسَق: المعبر الوحيد، وبشرطي أمان ----------

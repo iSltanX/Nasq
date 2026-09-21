@@ -1634,9 +1634,76 @@ textarea.empty-bidi {
   font: var(--type-body-ui);
   color: var(--text-secondary);
 }
-[data-module="shadhb"][data-shadhb-state="ready"] .panel-intro,
-[data-module="shadhb"][data-shadhb-state="checking"] .panel-intro {
+[data-module="shadhb"][data-shadhb-state="ready"] .panel-intro[data-when="ready"],
+[data-module="shadhb"][data-shadhb-state="checking"] .panel-intro[data-when="checking"],
+[data-module="shadhb"][data-shadhb-state="no-cuts"] .panel-intro[data-when="no-cuts"],
+[data-module="shadhb"][data-shadhb-state="error"] .panel-intro[data-when="error"],
+[data-module="shadhb"][data-shadhb-diverged] .panel-intro[data-when="diverged"] {
   display: flex;
+}
+/* بطاقة الحال (No-Cuts 2009:2002 وError 2009:2055 وDiverged 2009:2100): رأسٌ بعنوان Button Label
+   ووسمه، ثم نصّها */
+div.scope-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--layout-component-gap);
+}
+.scope-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--layout-element-gap);
+}
+.scope-title {
+  font: var(--type-button-label);
+  color: var(--text-primary);
+}
+.scope-note {
+  font: var(--type-caption);
+  color: var(--text-tertiary);
+}
+[data-module="shadhb"][data-shadhb-state="error"] .scope-card > p {
+  color: var(--text-primary);
+}
+/* «اقتراحات قديمة»: بطاقة القرار وقراءتها تغيبان، ويبقى الفعل الواحد «افحص من جديد» */
+[data-module="shadhb"][data-shadhb-diverged] .panel-intro[data-when="no-cuts"],
+[data-module="shadhb"][data-shadhb-diverged] #no-cuts-source,
+[data-module="shadhb"][data-shadhb-diverged] #cut-card-section,
+[data-module="shadhb"][data-shadhb-diverged] #reading-card-section {
+  display: none;
+}
+#diverged-source {
+  display: none;
+}
+[data-module="shadhb"][data-shadhb-diverged] #diverged-source {
+  display: flex;
+}
+.banner-warning {
+  border-color: var(--status-warning);
+  background: var(--status-warning-subtle);
+}
+.banner-warning .banner-icon {
+  color: var(--status-warning);
+}
+/* تسمية الزرّ بحسب الحال: واحدةٌ ظاهرة دائمًا */
+.panel-actions .when-busy,
+.panel-actions .when-error,
+.panel-actions .when-diverged,
+.panel-actions .when-no-cuts,
+[data-module="shadhb"][data-shadhb-state="checking"] #prune-btn .when-idle,
+[data-module="shadhb"][data-shadhb-state="error"] #prune-btn .when-idle,
+[data-module="shadhb"][data-shadhb-diverged] #prune-btn .when-idle,
+[data-module="shadhb"][data-shadhb-state="no-cuts"] .panel-actions .when-idle {
+  display: none;
+}
+[data-module="shadhb"][data-shadhb-state="checking"] #prune-btn .when-busy,
+[data-module="shadhb"][data-shadhb-state="error"] #prune-btn .when-error,
+[data-module="shadhb"][data-shadhb-diverged] #prune-btn .when-diverged,
+[data-module="shadhb"][data-shadhb-state="no-cuts"] .panel-actions .when-no-cuts {
+  display: inline;
+}
+[data-module="shadhb"]:not([data-shadhb-state="error"]) #shadhb-provider-settings {
+  display: none;
 }
 [data-module="shadhb"][data-shadhb-state="polished"] .panel-heading-polished {
   display: block;
@@ -1645,7 +1712,12 @@ textarea.empty-bidi {
 [data-module="shadhb"]:not([data-shadhb-state="review"]) .cuts-header,
 [data-module="shadhb"]:not([data-shadhb-state="review"]) .cuts-list,
 [data-module="shadhb"][data-shadhb-state="ready"] #cuts-note,
-[data-module="shadhb"][data-shadhb-state="checking"] #cuts-note {
+[data-module="shadhb"][data-shadhb-state="checking"] #cuts-note,
+[data-module="shadhb"][data-shadhb-state="no-cuts"] #cuts-note,
+[data-module="shadhb"][data-shadhb-state="error"] #cuts-note,
+/* لوح الخطأ كما رُسم (2009:2055) بلا شارة ضمانة: «استُبعدت كل القصّات» لا تصحّ لخطأ اتصال، وسببُ
+   الخطأ أيًّا كان في لافتته فوق النص */
+[data-module="shadhb"][data-shadhb-state="error"] #covenant-section {
   display: none;
 }
 /* summary-card: حشو ١٦، فجوة ١٦، حدّ، قطر ٨ */
@@ -1940,9 +2012,12 @@ textarea.empty-bidi {
 .panel-actions .primary-action {
   inline-size: 100%;
 }
-[data-module="shadhb"]:not([data-shadhb-state="polished"]) #send-to-nasaq-btn,
-[data-module="shadhb"]:not([data-shadhb-state="polished"]) #copy-pruned-btn,
-[data-module="shadhb"][data-shadhb-state="review"] #prune-btn,
+[data-module="shadhb"]:not([data-shadhb-state="polished"], [data-shadhb-state="no-cuts"]) #send-to-nasaq-btn,
+[data-module="shadhb"]:not([data-shadhb-state="polished"], [data-shadhb-state="no-cuts"]) #copy-pruned-btn,
+[data-module="shadhb"][data-shadhb-state="no-cuts"][data-shadhb-diverged] #send-to-nasaq-btn,
+[data-module="shadhb"][data-shadhb-state="no-cuts"][data-shadhb-diverged] #copy-pruned-btn,
+[data-module="shadhb"][data-shadhb-state="review"]:not([data-shadhb-diverged]) #prune-btn,
+[data-module="shadhb"][data-shadhb-state="no-cuts"]:not([data-shadhb-diverged]) #prune-btn,
 [data-module="shadhb"][data-shadhb-state="polished"] #prune-btn {
   display: none;
 }
