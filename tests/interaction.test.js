@@ -16,11 +16,14 @@ const src = (name) => fs.readFileSync(path.join(__dirname, "..", "src", name), "
 // ودمج…» في قائمة «ملف» معطّلين في كل حالة (m4/cmd-matrix)
 test("m4-01: لا أمر في الشريط يأخذ حالته من زرٍّ في مصدر قائمة مخفي", () => {
   const html = ["index.html", "settings.html", "about.html"].map(src).join("\n");
+  // في هيكل NsqV272 (m6) لا «مصدر قائمة» مخفيًّا، والخطر نفسه في لوحة المسودات: مغلقةٌ
+  // حتى تُطلب (display: none)، فزرٌّ فيها مصدرًا لحالة أمرٍ يُطفئه ما دامت مغلقة — وفيها
+  // زرّا النسخ الاحتياطي اللذان أصلحهما m4-01
   const hiddenIds = new Set();
-  for (const block of html.matchAll(/<div[^>]*class="menu-source"[^>]*>([\s\S]*?)<\/div>/g)) {
+  for (const block of html.matchAll(/<aside[^>]*id="sidebar"[^>]*>([\s\S]*?)<\/aside>/g)) {
     for (const m of block[1].matchAll(/id="([^"]+)"/g)) hiddenIds.add(m[1]);
   }
-  assert.ok(hiddenIds.size > 0, "لم يُعثر على مصدر قائمة — تغيّر الترميز فحدّث الحارس");
+  assert.ok(hiddenIds.has("export-drafts-btn") && hiddenIds.has("import-drafts-btn"), "لم يُعثر على زرَّي النسخ الاحتياطي في لوحة المسودات — تغيّر الترميز فحدّث الحارس");
   const offenders = [];
   for (const file of fs.readdirSync(path.join(__dirname, "..", "src")).filter((f) => f.endsWith(".js"))) {
     const code = src(file);
@@ -286,13 +289,15 @@ test("m4-12: فكّ ترميز الملف المُفلت — UTF-8 ثم UTF-16 �
   assert.deepStrictEqual(ctx.out, { utf8: "سلامٌ عليكم", cp1256: "سلام", utf16: "سل", bom: "أ" });
 });
 
-// m4-13: حالة الضغط لكل عنصرٍ رسمها Figma (Segmented Control وSettings Tab وInspector Section
-// وForm Picker ممّا أُضيف، وPopup Button وButton · Secondary ممّا كان مرسومًا)
+// m4-13: حالة الضغط لكل عنصرٍ تفاعلي بـ fill/pressed كما في NsqV272 (Module Switch وPopup Button
+// وEditor Tool وSidebar Toggle وIcon Button وButton · Secondary وCut Decision)، ومعها ما أضافه
+// m4 لما لم يُرسم له ضغط (Settings Tab ورأس القسم ومنتقي النموذج). مبدّل العرض مستثنى:
+// مضماره نفسه fill/pressed في الملف (View Switch 26:94)، فلا حالة ضغط تتميّز فوقه
 test("m4-13: لكل عنصرٍ حالة ضغطٍ بـ fill-pressed", () => {
   const css = ["app.css", "forms.css", "secondary.css"].map(src).join("\n").replace(/\/\*[\s\S]*?\*\//g, "");
   const rules = [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)].map((m) => ({ sel: m[1].trim(), body: m[2] }));
   const missing = [];
-  for (const cls of ["view-segment", "module-segment", "section-header", "dd-btn", "tab", "row-picker", "row-button"]) {
+  for (const cls of ["module-segment", "section-header", "dd-btn", "editor-tool", "title-toggle", "decision-button", "tab", "row-picker", "row-button"]) {
     const ok = rules.some((r) => r.sel.split(",").some((s) => new RegExp(`\\.${cls}\\b[^,]*:active`).test(s)) && r.body.includes("var(--fill-pressed)"));
     if (!ok) missing.push(cls);
   }

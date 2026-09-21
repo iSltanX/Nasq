@@ -1,378 +1,426 @@
-/* app.css — النافذة الرئيسية كما في Figma «nasq-v10»: الشريط الجانبي، وشريط
-   الأدوات، والمحتوى، والمفتّش، وشريط الحالة. القيم من tokens.css، وما لا توكن
-   له مقيس من إطارات الشاشات ومذكور مصدره. الخصائص منطقية ليتبع الاتجاه وحده. */
+/* app.css — النافذة الرئيسية كما في Figma «NsqV272» (صفحة 12_PROTOTYPE، ومكوّنات
+   07_COMPONENTS). كل قيمة من tokens.css باسم متغيّرها في الملف. ما يخص برجًا
+   واحدًا يظهر بـ data-module على الجذر، وحالات نَسَق وشَذْب تُقرأ من
+   data-nasaq-state وdata-shadhb-state اللتين تكتبهما وحدتاهما. */
 
-:root {
-  /* الشريط الجانبي ٢٤٠ ويتنازل حتى أدناه ليبقى للمحتوى ٥٢٤ (إطار ٧٦٠: 100:918) */
-  --sidebar-width: clamp(var(--layout-sidebar-min), calc(100vw - var(--layout-content-at-min-window)), var(--layout-sidebar));
-  /* المفتّش ٣٦٠ ويتنازل حتى حدّه الأدنى ليبقى للمحتوى حدّه (اعتماد المالك، المرحلة ٩) */
-  --inspector-width: clamp(var(--layout-inspector-min), calc(100vw - var(--layout-content-min)), var(--layout-inspector));
-  /* إشارات النافذة: ثلاث بعرض ٦٠، على بعد ١٩ من الحافة، وأول عنصر بعدها على ١٧ */
-  /* موضع حالة البداية اللاصقة: يُقاس من داخل حشوة منطقة التمرير لا من حافتها
-     (قيس في WebKit وChromium)، فهو عنوان العمود والفراغ بعده — فتلصق حيث تبدأ */
-  --placeholder-pin: calc(var(--font-line-height-caption) + var(--space-16));
-  --window-controls: 60px;
-  --window-controls-inset: 19px;
-  --window-controls-gap: var(--space-9);
-}
-
-/* ما يخص برجًا واحدًا لا يظهر إلا في وحدته — وشَذْب لا يظهر إلا صراحةً */
+/* ================= ظهور الوحدتين ================= */
 :root:not([data-module="shadhb"]) [data-for="shadhb"],
 [data-module="shadhb"] [data-for="nasaq"] {
   display: none !important;
 }
 
-/* تبديل الوحدة: تلاشٍ هادئ بمدة Motion، ويقصر مع تقليل الحركة من التوكنز نفسها */
-@keyframes module-in {
-  from { opacity: 0; }
-}
-[data-module-switching] :is(.sidebar-body, .sidebar-footer, .inspector-body, .column-result, .polish-status)[data-for],
-[data-module-switching] .toolbar-module > * {
-  animation: module-in var(--motion-duration-module-switch) var(--motion-easing-standard);
-}
-
 /* ================= النافذة ================= */
 .window {
   display: flex;
-  block-size: 100vh;
-  overflow: hidden;
-}
-
-.main {
-  position: relative;
-  display: flex;
-  flex: 1;
-  min-inline-size: 0;
-}
-
-/* ================= الشريط الجانبي ================= */
-.sidebar {
-  display: flex;
-  flex: none;
   flex-direction: column;
-  gap: var(--space-4);
-  inline-size: var(--sidebar-width);
-  padding: var(--space-8) var(--space-10);
+  block-size: 100%;
+  background: var(--surface-elevated);
   overflow: hidden;
-  background: var(--material-sidebar);
 }
 
-.window[data-sidebar="hidden"] .sidebar {
-  margin-inline-start: calc(-1 * var(--sidebar-width));
-  visibility: hidden;
-}
-
-.inspector {
-  flex: none;
-  inline-size: var(--inspector-width);
-  padding: var(--size-toolbar) var(--space-16) var(--space-16);
-  overflow-y: auto;
-  background: var(--material-sidebar);
-}
-
-.window[data-inspector="hidden"] .inspector {
-  margin-inline-end: calc(-1 * var(--inspector-width));
-  visibility: hidden;
-}
-
-/* الطي والإظهار بانزلاق اللوح، والحركة لا تبدأ إلا بعد أول ظهور للنافذة */
-[data-ready] .sidebar {
-  transition: margin-inline-start var(--motion-duration-panel) var(--motion-easing-standard),
-    visibility 0s linear var(--motion-duration-panel);
-}
-[data-ready] .inspector {
-  transition: margin-inline-end var(--motion-duration-panel) var(--motion-easing-standard),
-    visibility 0s linear var(--motion-duration-panel);
-}
-[data-ready] .window[data-sidebar="open"] .sidebar,
-[data-ready] .window[data-inspector="open"] .inspector {
-  transition-delay: 0s;
-}
-@media (prefers-reduced-motion: reduce) {
-  [data-ready] .sidebar,
-  [data-ready] .inspector {
-    transition: none;
-  }
-}
-
-.sidebar-top {
-  display: flex;
-  flex: none;
-  align-items: center;
-  gap: 17px;
-  block-size: var(--size-control-lg);
-  padding-inline-start: var(--window-controls-gap);
-}
-
-.window-controls {
-  display: none;
-  flex: none;
-  inline-size: var(--window-controls);
-  block-size: 14px;
-}
-[data-titlebar="rtl"]:not([data-fullscreen]) .sidebar-top .window-controls {
-  display: block;
-}
-
-.sidebar-body {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  min-block-size: 0;
-  overflow-y: auto;
-}
-
-.sidebar-gap {
-  flex: none;
-  block-size: var(--space-8);
-}
-.section-gap {
-  flex: none;
-  block-size: var(--space-9);
-}
-
-.sidebar-row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-10);
-  block-size: var(--size-sidebar-row);
-  padding-inline: var(--space-row-inset);
-  border-radius: var(--radius-8);
-  font: var(--type-body-small);
-  color: var(--text-primary);
-}
-.sidebar-row .icon {
-  color: var(--module-glyph);
-}
-.sidebar-row .row-title {
-  flex: 1;
-  min-inline-size: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.sidebar-row.is-selected {
-  background: var(--module-button);
-  color: var(--text-on-accent);
-  font: var(--type-body-small-emphasis);
-}
-.sidebar-row.is-selected .icon {
-  color: var(--text-on-accent);
-}
-/* النافذة ليست في المقدمة: التحديد محايد (Sidebar Row · Selected Inactive) */
-[data-inactive] .sidebar-row.is-selected {
-  background: var(--fill-pressed);
-  color: var(--text-primary);
-}
-[data-inactive] .sidebar-row.is-selected .icon {
-  color: var(--icon-secondary);
-}
-
-.sidebar-section-header {
-  display: flex;
-  flex: none;
-  align-items: center;
-  gap: var(--space-8);
-  block-size: var(--size-section-header);
-  padding-inline: var(--space-5);
-  font: var(--type-caption-section);
-  color: var(--text-secondary);
-}
-.sidebar-section-header .section-title {
-  flex: 1;
-}
-
-.count-badge {
-  display: inline-flex;
-  align-items: center;
-  block-size: var(--size-badge);
-  padding-inline: var(--space-8);
-  border-radius: var(--radius-full);
-  background: var(--fill-control);
-  font: var(--type-caption-emphasis);
-  color: var(--text-secondary);
-}
-
-.sidebar-footer {
+/* ================= Title Bar 2164:3821 =================
+   ٤٨، حشو ٠/٢٠، surface/sunken، وحدّ سفلي. يمينًا: الاسم فالفاصل فمبدّل الوحدتين؛
+   يسارًا: الإعدادات فالمسودات فإشارات النظام. */
+.title-bar {
   display: flex;
   flex: none;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-8);
-  margin-block-start: auto;
-  padding: var(--space-4) var(--space-8) var(--space-4) var(--space-4);
-  font: var(--type-caption-default);
-  color: var(--text-secondary);
+  block-size: var(--space-48);
+  padding-inline: var(--component-padding-xl);
+  background: var(--surface-sunken);
+  border-block-end: var(--stroke-hairline) solid var(--border-default);
 }
-.sidebar-footer-note {
-  justify-content: flex-start;
-}
-.sidebar-footer .footer-icon {
-  color: var(--module-glyph);
-}
-/* أزرار الذيل في نهايته، والترس آخرها في الوحدتين فلا يتحرك موضعه بينهما (Figma 97:207 و105:340) */
-.footer-actions {
+.title-identity {
   display: flex;
-  flex: none;
   align-items: center;
-  gap: var(--space-2);
-  margin-inline-start: auto;
+  gap: var(--layout-component-gap);
 }
-.sidebar-hint {
-  padding-inline: var(--space-5);
-  font: var(--type-caption-default);
-  color: var(--text-secondary);
-}
-
-.empty-state-compact {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  padding: var(--space-12);
-  text-align: center;
-}
-.empty-state-compact .empty-title {
-  font: var(--type-label-default);
+.app-name {
+  font: var(--type-section-title);
   color: var(--text-primary);
 }
-.empty-state-compact .empty-body {
-  font: var(--type-caption-default);
-  color: var(--text-secondary);
+.title-divider {
+  inline-size: var(--stroke-hairline);
+  block-size: var(--space-16);
+  background: var(--border-default);
+}
+.title-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--layout-group-gap);
+}
+/* إشارات النظام يرسمها macOS عند الحافة اليسرى (Q8: تبقى يسارًا)، فيُحجز مكانها:
+   ثلاث دوائر ١٤ بفجوة ٨ وحشو ٨ بعدها. وفي ملء الشاشة لا إشارات فلا حجز */
+.window-controls {
+  flex: none;
+  inline-size: calc(3 * 14px + 2 * var(--layout-element-gap) + var(--component-padding-sm));
+  block-size: 14px;
+}
+[data-fullscreen] .window-controls {
+  display: none;
+}
+[data-inactive] .app-name {
+  color: var(--text-tertiary);
+}
+[data-inactive] .module-switch {
+  opacity: 0.6;
 }
 
-/* ================= عناصر التحكم ================= */
-.search-field {
-  display: flex;
+/* Sidebar Toggle 2408:10618 — ارتفاع ٢٦، حشو ٤/١٢، فجوة ٤، قطر ٤ */
+.title-toggle {
+  display: inline-flex;
   flex: none;
   align-items: center;
   gap: var(--space-4);
-  block-size: var(--size-control-regular);
-  padding-inline: var(--space-8);
-  border-radius: var(--radius-control-regular);
-  background: var(--fill-control);
+  block-size: 26px;
+  padding: var(--component-padding-xs) var(--component-padding-md);
+  border-radius: var(--radius-4);
+  font: var(--type-caption);
+  color: var(--text-secondary);
+  transition: background-color var(--motion-fast), color var(--motion-fast);
+}
+.title-toggle:hover {
+  background: var(--fill-hover);
+  color: var(--text-primary);
+}
+.title-toggle:active {
+  background: var(--fill-pressed);
+  color: var(--text-primary);
+}
+.title-toggle[aria-pressed="true"] {
+  background: var(--fill-selected);
+  color: var(--text-primary);
+}
+.title-toggle:disabled {
+  background: var(--fill-disabled);
+  color: var(--text-disabled);
+}
+
+/* Module Switch 26:85 — ٣٢، حشو ٤، fill/hover، قطر ٨؛ شريحتان ٢٤ بحشو ٤/١٦ وقطر ٦ */
+.module-switch {
+  display: flex;
+  flex: none;
+  block-size: var(--space-32);
+  padding: var(--component-padding-xs);
+  border-radius: var(--radius-8);
+  background: var(--fill-hover);
+  transition: background-color var(--motion-fast);
+}
+/* Pressed في الملف على الحاوية كلها لا على الشريحة */
+.module-switch:has(.module-segment:active) {
+  background: var(--fill-pressed);
+}
+.module-switch:has(:focus-visible) {
+  outline: var(--stroke-emphasis) solid var(--focus-ring);
+}
+.module-segment {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--component-padding-xs) var(--component-padding-lg);
+  border: var(--stroke-hairline) solid transparent;
+  border-radius: var(--radius-6);
+  font: var(--type-body-ui);
+  color: var(--text-secondary);
+}
+.module-segment:focus-visible {
+  outline: none;
+}
+.module-segment[aria-checked="true"] {
+  background: var(--accent-clay-subtle);
+  border-color: var(--accent-clay);
+  font: var(--type-button-label);
+  color: var(--accent-clay-text);
+}
+
+/* ================= مساحة العمل ================= */
+.workspace {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-block-size: 0;
+}
+.workspace-row {
+  display: flex;
+  flex: 1;
+  min-block-size: 0;
+}
+
+/* ================= لوحة المسودات (Drafts-Sidebar-Open 2009:968) ================= */
+.drafts-panel {
+  display: none;
+  flex: none;
+  flex-direction: column;
+  inline-size: var(--sidebar-width);
+  min-block-size: 0;
+  background: var(--sidebar-bg);
+  border-inline-end: var(--stroke-hairline) solid var(--border-default);
+}
+[data-module="nasaq"] .window[data-sidebar="open"] .drafts-panel {
+  display: flex;
+}
+.panel-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--layout-component-gap);
+  min-block-size: 0;
+  padding: var(--component-padding-lg);
+}
+.drafts-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.drafts-title {
+  display: flex;
+  align-items: center;
+  gap: var(--layout-element-gap);
+  font: var(--type-button-label);
+  color: var(--text-primary);
+}
+.count-badge {
+  font: var(--type-metadata);
+  color: var(--text-tertiary);
+}
+.panel-note {
+  font: var(--type-metadata);
+  color: var(--text-tertiary);
+}
+.drafts-actions {
+  display: flex;
+  gap: var(--layout-element-gap);
+}
+.drafts-actions .button {
+  flex: 1;
+}
+
+/* Search Field 26:388 — ٣٤، حشو ٦/١٢، فجوة ٨، surface/reading، قطر ٦ */
+.search-field,
+.find-field {
+  display: flex;
+  align-items: center;
+  gap: var(--layout-element-gap);
+  block-size: 34px;
+  padding: var(--component-padding-tight) var(--component-padding-md);
+  border-radius: var(--radius-6);
+  background: var(--surface-elevated);
   color: var(--icon-secondary);
 }
-.search-field:focus-within {
-  box-shadow: var(--focus-ring);
+.search-field:focus-within,
+.find-field:focus-within {
+  outline: var(--stroke-emphasis) solid var(--focus-ring);
 }
-.search-field input {
+.search-field input,
+.find-field input {
   flex: 1;
   min-inline-size: 0;
   padding: 0;
   border: 0;
   background: none;
-  outline: none;
-  font: var(--type-body-small);
+  font: var(--type-caption);
   color: var(--text-primary);
-}
-.search-field input::placeholder {
-  color: var(--text-secondary);
-}
-.search-field input::-webkit-search-decoration,
-.search-field input::-webkit-search-cancel-button {
   -webkit-appearance: none;
+  appearance: none;
 }
-.search-field input:focus-visible {
-  box-shadow: none;
+.search-field input::placeholder,
+.find-field input::placeholder {
+  color: var(--text-tertiary);
 }
-/* زر المسح يسار الحقل ما دام فيه نص (Search Field · Filled) */
+.search-field input::-webkit-search-cancel-button,
+.find-field input::-webkit-search-cancel-button {
+  display: none;
+}
+.search-field input:focus-visible,
+.find-field input:focus-visible {
+  outline: none;
+}
 .search-clear,
 .find-clear {
   display: inline-flex;
-  flex: none;
-  border-radius: var(--radius-full);
   color: var(--icon-secondary);
 }
 .search-clear:hover,
 .find-clear:hover {
-  color: var(--icon-primary);
+  color: var(--text-primary);
 }
 
-.icon-button {
-  display: inline-flex;
+/* Draft Row 27:969 — حشو ٢/٦، فجوة ٦، قطر ٤؛ وDraft Version Row 27:994 — حشو ٤/٨ */
+.drafts-list {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-block-size: 0;
+  overflow-y: auto;
+}
+.draft-row,
+.version-row {
+  display: flex;
   flex: none;
   align-items: center;
-  justify-content: center;
-  inline-size: var(--size-control-md);
-  block-size: var(--size-control-md);
-  border-radius: var(--radius-full);
-  color: var(--icon-primary);
+  gap: var(--layout-tight-gap);
+  padding: var(--space-2) var(--component-padding-tight);
+  border-radius: var(--radius-4);
+  font: var(--type-caption);
+  color: var(--text-primary);
 }
-.icon-button-small {
-  inline-size: var(--size-control-sm);
-  block-size: var(--size-control-sm);
+.version-row {
+  gap: var(--layout-element-gap);
+  padding: var(--component-padding-xs) var(--component-padding-sm);
+  margin-inline-start: var(--component-padding-md);
+  color: var(--text-secondary);
 }
-.icon-button:hover {
+.draft-row:hover,
+.version-row:hover {
+  background: var(--sidebar-bg-hover);
+}
+.draft-row[aria-selected="true"],
+.version-row[aria-selected="true"],
+.draft-row.is-selected,
+.version-row.is-selected,
+.version-row[data-context-target],
+.draft-row[data-context-target] {
+  background: var(--sidebar-bg-selected);
+}
+[data-inactive] .draft-row.is-selected,
+[data-inactive] .version-row.is-selected {
   background: var(--fill-hover);
 }
-.icon-button:active {
-  background: var(--fill-pressed);
+.draft-row:focus-visible,
+.version-row:focus-visible {
+  outline-offset: calc(-1 * var(--stroke-emphasis));
 }
-.icon-button:disabled {
-  background: none;
-  color: var(--text-disabled);
+.draft-row .row-icon,
+.version-row .row-icon {
+  display: none;
 }
-
-.button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-4);
-  block-size: var(--size-control-regular);
-  padding-inline: var(--space-12);
-  border-radius: var(--radius-control-regular);
-  font: var(--type-label-default);
-  white-space: nowrap;
-}
-.button-block {
-  inline-size: 100%;
-}
-.button-primary {
-  background: var(--module-strong);
-  color: var(--text-on-accent);
-}
-.button-primary:hover {
-  background: var(--module-hover);
-}
-.button-primary:active {
-  background: var(--module-pressed);
-}
-.button-secondary {
-  background: var(--fill-control);
-  color: var(--text-primary);
-}
-.button-secondary:hover {
-  background-image: linear-gradient(var(--fill-hover), var(--fill-hover));
-}
-.button-secondary:active {
-  background-image: linear-gradient(var(--fill-pressed), var(--fill-pressed));
-}
-.button:disabled {
-  background: var(--fill-disabled);
-  color: var(--text-disabled);
-}
-
-.text-area {
-  display: block;
-  inline-size: 100%;
-  min-block-size: 64px;
-  max-block-size: 98px;
-  padding: var(--space-8);
-  border: var(--stroke-hairline) solid var(--border-strong);
-  border-radius: var(--radius-8);
-  background: var(--fill-field);
-  font: var(--type-body-small);
-  color: var(--text-primary);
-  resize: none;
-  field-sizing: content;
-}
-.text-area::placeholder {
+.draft-row .row-disclosure {
+  order: 3;
   color: var(--text-tertiary);
 }
-.text-area:disabled {
-  border-color: var(--border-default);
-  background: var(--fill-disabled);
-  color: var(--text-disabled);
+.row-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-inline-size: 0;
+}
+.row-title,
+.row-subtitle {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.row-subtitle,
+.row-meta {
+  font: var(--type-metadata);
+  color: var(--text-tertiary);
+}
+.version-row .row-title {
+  flex: 1;
+  min-inline-size: 0;
+}
+.draft-versions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* ================= اللوحة ================= */
+.content {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-inline-size: 0;
+  min-block-size: 0;
+  background: var(--surface-reading);
+}
+.scroll-view {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-block-size: 0;
+}
+.compare {
+  display: flex;
+  flex: 1;
+  min-block-size: 0;
+}
+.column {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--layout-group-gap);
+  min-inline-size: 0;
+  min-block-size: 0;
+}
+.compare-divider {
+  flex: none;
+  inline-size: var(--stroke-hairline);
+  background: var(--fill-pressed);
+}
+.scroll-edge {
+  display: none;
+}
+
+.panel-header {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  min-block-size: var(--space-24);
+}
+.panel-title {
+  font: var(--type-caption);
+  color: var(--text-secondary);
+}
+.header-tools {
+  display: flex;
+  align-items: center;
+  gap: var(--layout-element-gap);
+}
+
+/* ---- الخانة: نصّ القراءة يملأ عموده ---- */
+.editor-stack {
+  position: relative;
+  display: flex;
+  flex: 1;
+  min-block-size: 0;
+}
+.editor,
+.marked-text {
+  flex: 1;
+  inline-size: 100%;
+  min-block-size: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: var(--type-body-reading);
+  color: var(--text-primary);
+  text-align: start;
+  resize: none;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.editor:focus-visible {
+  outline: none;
+}
+/* نصّ الخانة النائب تحمله حالة البداية فوقها بصريًا (Empty State)، ويبقى في الخانة
+   لقارئ الشاشة ولمحدِّد :placeholder-shown */
+.editor::placeholder {
+  color: transparent;
+}
+.marked-text {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+:root[data-module="shadhb"][data-shadhb-marks] #input-text {
+  color: transparent;
+  caret-color: var(--text-primary);
 }
 
 /* علّة مؤشر WebKit: plaintext مع وجود نص، وisolate عند الفراغ ليبقى المؤشر يمينًا */
@@ -383,14 +431,13 @@ textarea.empty-bidi {
   unicode-bidi: isolate;
 }
 
-/* مؤشر السطر الفارغ (rtl-caret.js، المرحلة ٩): WebKit يرسمه يسارًا على السطر
-   الفارغ في حقل عربي، فيُرسم هذا مكانه في بداية السطر. تحت زجاج الشريط
-   (٥) وفوق النص، وبعرض مؤشر النظام ووميضه */
+/* مؤشر السطر الفارغ (rtl-caret.js): WebKit يرسمه يسارًا على السطر الفارغ في حقل
+   عربي، فيُرسم هذا مكانه في بداية السطر، بعرض مؤشر النظام ووميضه */
 .rtl-caret {
   position: fixed;
   z-index: 4;
-  inline-size: 2px;
-  border-radius: 1px;
+  inline-size: var(--stroke-emphasis);
+  border-radius: var(--stroke-hairline);
   pointer-events: none;
 }
 .rtl-caret[hidden] {
@@ -411,588 +458,266 @@ textarea.empty-bidi {
   overflow: hidden;
 }
 
-/* الاختصارات تُقرأ من اليسار دائمًا: ⌘↩ */
-.shortcut {
-  direction: ltr;
-  display: inline-flex;
-  align-items: center;
-  block-size: var(--size-badge);
-  padding-inline: var(--space-4);
-  border: var(--stroke-hairline) solid var(--border-default);
-  border-radius: var(--radius-4);
-  color: var(--text-secondary);
-}
-.shortcut .icon {
-  inline-size: var(--size-icon-12);
-  block-size: var(--size-icon-12);
-}
-
-/* المؤشر الدوّار (Figma 57:68): حلقة سمكها ربع نصف القطر تقريبًا، وقوس ١٣٥° من
-   الأعلى. النبرة من متغيرين: الوحدة افتراضيًا، وفوق لون الوحدة داخل زر بارز */
-.spinner {
-  --spinner-arc: var(--module-strong);
-  --spinner-track: var(--fill-control);
-  display: block;
-  flex: none;
-  inline-size: var(--size-spinner-lg);
-  block-size: var(--size-spinner-lg);
-  border-radius: 50%;
-  background: conic-gradient(var(--spinner-arc) 0 37.5%, var(--spinner-track) 0);
-  mask: radial-gradient(farthest-side, transparent 76%, black calc(76% + 0.5px));
-  animation: spin 900ms linear infinite;
-}
-.spinner-16 {
-  inline-size: var(--size-icon-16);
-  block-size: var(--size-icon-16);
-}
-@keyframes spin {
-  to { transform: rotate(1turn); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .spinner { animation-duration: 2400ms; }
-}
-
-/* ================= شريط الأدوات ================= */
-.toolbar {
-  position: absolute;
-  inset-block-start: 0;
-  inset-inline: 0;
-  z-index: 10;
-  display: flex;
-  align-items: center;
-  gap: var(--space-8);
-  block-size: var(--size-toolbar);
-  /* بُعدٌ واحد عن حافة العمود: حشوة الشريط تساوي حشوة منطقة النص، فلا يكون أحد
-     المبدّلين أبعد من الآخر (قرار المالك m5) */
-  padding-inline: var(--space-32);
-}
-
-.toolbar-cluster {
-  display: flex;
-  flex: none;
-  align-items: center;
-  gap: var(--space-8);
-}
-.toolbar-flex {
-  flex: 1;
-  align-self: stretch;
-  min-inline-size: 0;
-}
-.toolbar-module {
-  display: contents;
-}
-
-/* الشريط الجانبي مطويّ والإشارات يمينًا: تنتقل إلى أول الشريط بحجز ٦٩ */
-.window[data-sidebar="open"] .sidebar-toggle-group {
-  display: none;
-}
-.toolbar .window-controls {
-  inline-size: calc(var(--window-controls) + var(--window-controls-gap));
-}
-[data-titlebar="rtl"]:not([data-fullscreen]) .window[data-sidebar="hidden"] .toolbar {
-  padding-inline-start: var(--window-controls-inset);
-}
-[data-titlebar="rtl"]:not([data-fullscreen]) .window[data-sidebar="hidden"] .toolbar-leading .window-controls {
-  display: block;
-}
-/* نظام بلغة يسارية: الإشارات فوق نهاية الشريط دائمًا */
-[data-titlebar="ltr"]:not([data-fullscreen]) .toolbar {
-  padding-inline-end: var(--window-controls-inset);
-}
-[data-titlebar="ltr"]:not([data-fullscreen]) .toolbar-trailing .window-controls {
-  display: block;
-}
-
-.glass-group,
-.module-switcher {
-  background: var(--material-toolbar);
-  box-shadow: inset 0 0 0 var(--stroke-hairline) var(--material-edge), 0 0 6px -2px var(--shadow-popover-contact);
-  -webkit-backdrop-filter: blur(var(--blur-glass-toolbar));
-  backdrop-filter: blur(var(--blur-glass-toolbar));
-}
-
-.glass-group {
-  display: flex;
-  flex: none;
-  align-items: center;
-  block-size: var(--size-control-lg);
-  padding-inline: 1px;
-  border-radius: var(--radius-full);
-}
-.glass-group[data-collapsed],
-.glass-group:not(:has(> :not([hidden]))) {
-  display: none;
-}
-
-.toolbar-item {
-  display: inline-flex;
-  flex: none;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-4);
-  min-inline-size: var(--size-control-lg);
-  block-size: var(--size-control-lg);
-  border-radius: var(--radius-full);
-  font: var(--type-label-default);
-  color: var(--icon-primary);
-}
-.toolbar-item:hover {
-  background: var(--fill-hover);
-}
-.toolbar-item:active {
-  background: var(--fill-pressed);
-}
-/* المفعَّل وحده بلون الوحدة (Toolbar Item · Selected)؛ الزر الذي فتح نافذته أو
-   قائمته يبقى بحاله كما في إطارات Figma (261:6648 و262:7032) */
-.toolbar-item[aria-pressed="true"] {
-  background: var(--module-tint);
-  box-shadow: inset 0 0 0 var(--stroke-hairline) var(--material-edge);
-  color: var(--module-strong);
-}
-/* ظلُّ الحالة أعلى أولويةً من حلقة التركيز في base.css فيمحوها: تُجمع الحلقة معه
-   (فحص m4-03) — وكذا في الزجاجي والجزء المحدد أدناه */
-.toolbar-item[aria-pressed="true"]:focus-visible {
-  box-shadow: var(--focus-ring), inset 0 0 0 var(--stroke-hairline) var(--material-edge);
-}
-.toolbar-item:disabled {
-  background: none;
-  color: var(--text-disabled);
-}
-.toolbar-item.has-label {
-  padding-inline: var(--space-14);
-  color: var(--text-primary);
-}
-.toolbar-item.has-label .label-icon {
-  margin: 2px;
-  color: var(--icon-primary);
-}
-.toolbar-item .bare-icon,
-[data-labels-hidden] .toolbar-item.has-label :is(.label-icon, .item-label) {
-  display: none;
-}
-[data-labels-hidden] .toolbar-item.has-label {
-  padding-inline: 0;
-}
-[data-labels-hidden] .toolbar-item.has-label .bare-icon {
-  display: block;
-}
-.toolbar-item.has-label:disabled :is(.item-label, .label-icon) {
-  color: var(--text-disabled);
-}
-
-/* الفعل الرئيس «نسّق»: كبسولة ٣٦ — بارز بلون الوحدة حتى توجد نتيجة، ثم زجاجي
-   يفسح للأدوات، ومعطّل بلا نص، وفي حالة تحميل أثناء النداء (Figma 102:2311) */
-.action-button {
-  display: inline-flex;
-  flex: none;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-8);
-  block-size: var(--size-control-lg);
-  padding-inline: var(--space-14);
-  border-radius: var(--radius-full);
-  font: var(--type-label-default);
-}
-.action-button .spinner {
-  display: none;
-}
-.action-button[data-style="primary"] {
-  background: var(--module-strong);
-  color: var(--text-on-accent);
-}
-.action-button[data-style="primary"]:hover {
-  background: var(--module-hover);
-}
-.action-button[data-style="primary"]:active {
-  background: var(--module-pressed);
-}
-.action-button[data-style="glass"] {
-  background: var(--material-toolbar);
-  box-shadow: inset 0 0 0 var(--stroke-hairline) var(--material-edge), 0 0 6px -2px var(--shadow-popover-contact);
-  -webkit-backdrop-filter: blur(var(--blur-glass-toolbar));
-  backdrop-filter: blur(var(--blur-glass-toolbar));
-  color: var(--text-primary);
-}
-.action-button[data-style="glass"]:hover {
-  background-image: linear-gradient(var(--fill-hover), var(--fill-hover));
-}
-.action-button[data-style="glass"]:active {
-  background-image: linear-gradient(var(--fill-pressed), var(--fill-pressed));
-}
-.action-button[data-style="glass"]:focus-visible {
-  box-shadow: var(--focus-ring), inset 0 0 0 var(--stroke-hairline) var(--material-edge), 0 0 6px -2px var(--shadow-popover-contact);
-}
-/* المعطّل — أيًّا كان أسلوبه — كبسولة زجاجية خافتة بحافتها كبقية الشريط (Button ·
-   Glass · Disabled)، والتحميل مستثنى فيبقى بلون حالته */
-.action-button:disabled:not([aria-busy="true"]) {
-  background: var(--material-toolbar);
-  background-image: linear-gradient(var(--fill-disabled), var(--fill-disabled));
-  box-shadow: inset 0 0 0 var(--stroke-hairline) var(--material-edge), 0 0 6px -2px var(--shadow-popover-contact);
-  -webkit-backdrop-filter: blur(var(--blur-glass-toolbar));
-  backdrop-filter: blur(var(--blur-glass-toolbar));
-  color: var(--text-disabled);
-}
-/* التحميل يبقى بلون حالته لا بلون التعطيل: المؤشر مكان الأيقونة */
-.action-button[aria-busy="true"] .spinner {
-  display: block;
-}
-.action-button[aria-busy="true"] .action-icon {
-  display: none;
-}
-.action-button[data-style="primary"][aria-busy="true"] {
-  --spinner-arc: var(--text-on-accent);
-  --spinner-track: var(--fill-pressed);
-  background: var(--module-strong);
-  color: var(--text-on-accent);
-}
-.action-button[data-style="glass"][aria-busy="true"] {
-  background-image: none;
-  color: var(--text-primary);
-}
-
-/* مبدّل الوحدتين: كل مقطع يحمل هوية وحدته ولو كانت الأخرى فعّالة */
-.module-switcher {
-  display: flex;
-  flex: none;
-  align-items: center;
-  block-size: var(--size-control-lg);
-  padding: var(--space-4);
-  border-radius: var(--radius-full);
-}
-.module-switcher[hidden] {
-  display: none;
-}
-#mode-nasaq-btn {
-  --segment-strong: var(--accent-nasaq-strong);
-  --segment-glyph: var(--accent-nasaq-glyph);
-}
-#mode-shadhb-btn {
-  --segment-strong: var(--accent-shadhb-strong);
-  --segment-glyph: var(--accent-shadhb-glyph);
-}
-.module-segment {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-8);
-  block-size: var(--size-control-md);
-  padding-inline: var(--space-12);
-  border-radius: var(--radius-full);
-  font: var(--type-label-default);
-  color: var(--text-secondary);
-}
-.module-segment .icon {
-  color: var(--segment-glyph);
-}
-.module-segment:not(.active):hover {
-  background: var(--fill-hover);
-  color: var(--text-primary);
-}
-.module-segment:not(.active):active {
-  background: var(--fill-pressed);
-  color: var(--text-primary);
-}
-.module-segment.active {
-  background: var(--segment-strong);
-  color: var(--text-on-accent);
-}
-.module-segment.active .icon {
-  color: var(--text-on-accent);
-}
-[data-ready] .module-segment {
-  transition: background-color var(--motion-duration-module-switch) var(--motion-easing-standard),
-    color var(--motion-duration-module-switch) var(--motion-easing-standard);
-}
-
-/* ================= المحتوى ================= */
-.content {
-  position: relative;
-  /* سياق تكديس: حالة البداية تحت النص (z-index: -1) وفوق خلفية المحتوى */
-  isolation: isolate;
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  min-inline-size: 0;
-  background: var(--surface-content);
-  container: content / inline-size;
-}
-
-.scroll-view {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-24);
-  min-block-size: 0;
-  /* الزمرة ترتفع: حشوةٌ بمقدار الشريط وفجوته لا أكثر */
-  padding: calc(var(--size-toolbar) + var(--space-8)) var(--space-32) var(--space-32);
-  overflow-y: auto;
-}
-
-.scroll-edge {
-  position: absolute;
-  inset-block-start: 0;
-  inset-inline: 0;
-  z-index: 5;
-  block-size: var(--size-toolbar);
-  background: linear-gradient(var(--material-scroll-edge), var(--material-scroll-edge-clear));
-  -webkit-backdrop-filter: blur(calc(var(--blur-scroll-edge) / 2));
-  backdrop-filter: blur(calc(var(--blur-scroll-edge) / 2));
-  mask: linear-gradient(black 40%, transparent);
-  pointer-events: none;
-}
-
-.view-picker {
-  display: flex;
-  flex: none;
-  align-items: center;
-  block-size: var(--size-control-md);
-  padding: var(--space-2);
-  border-radius: var(--radius-full);
-  background: var(--fill-control);
-}
-.view-segment {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  block-size: 100%;
-  padding-inline: var(--space-12);
-  border-radius: var(--radius-full);
-  font: var(--type-label-default);
-  color: var(--text-secondary);
-}
-.view-segment:hover {
-  background: var(--fill-hover);
-}
-/* المقطع غير المحدد تحت الضغط (Segmented Control · Pressed، فحص m4-13) */
-.view-segment:not([aria-selected="true"]):active {
-  background: var(--fill-pressed);
-  color: var(--text-primary);
-}
-.view-segment[aria-selected="true"],
-.view-segment.active {
-  background: var(--fill-control-raised);
-  box-shadow: inset 0 0 0 var(--stroke-hairline) var(--border-hairline);
-  color: var(--text-primary);
-}
-.view-segment[aria-selected="true"]:focus-visible,
-.view-segment.active:focus-visible {
-  box-shadow: var(--focus-ring), inset 0 0 0 var(--stroke-hairline) var(--border-hairline);
-}
-
-/* منطقة المحتوى هدفًا لإفلات ملفٍّ نصّي: حلقة التركيز داخلها (Figma 355:22800، فحص m4-12) */
+/* منطقة المحتوى هدفًا لإفلات ملفٍّ نصّي: حلقة التركيز داخلها (File-Drop-Hover 2352:3173، فحص m4-12) */
 .content[data-drop-target] {
-  box-shadow: inset 0 0 0 var(--stroke-focus) var(--module-focus-ring);
+  box-shadow: inset 0 0 0 var(--stroke-emphasis) var(--focus-ring);
 }
 
-/* ================= رأس عمود النص وكتلة أدواته =================
-   كل ما يخصّ النص يسكن عمود النص فيتحرّك معه حين يُطوى لوح: مبدّل العرض في طرف
-   الرأس والمبدّل بين الوحدتين في وسطه، وكتلة الأدوات تحت النص. ولا يبقى في شريط
-   النافذة إلا ما يخصّ النافذة. قيس أن مركز الشريط ليس مركز النص حين يُفتح
-   المفتّش — فرقٌ ١٨٠ — فلذلك سكن المبدّل العمود لا الشريط (Figma «Editor Tools») */
-/* مبدّل العرض يعلو في مستوى الشريط، لكن على حافة عمود النص لا حافة النافذة:
-   الشريط يمتدّ فوق المفتّش أيضًا، فحافته ليست حافة النص */
-.content > .view-picker {
+/* ---- Empty State 27:1169 — عرض ٥٢٠، فجوة ١٦، شارة ٦٤ بقطر ١٦ ---- */
+.empty-state {
   position: absolute;
-  inset-block-start: calc((var(--size-toolbar) - var(--size-control-md)) / 2);
-  inset-inline-end: var(--space-32);
-  z-index: 15;
-}
-.content > .view-picker .view-segment {
-  white-space: nowrap;
-}
-
-/* فوق النص لا تحته (قرار المالك m5)، ولاصقةٌ بأعلى منطقة التمرير تحت الشريط
-   فلا تغيب عن العين حين يطول النص ويُمرَّر */
-.editor-tools {
-  /* إزاحة اللصق صفر: حشوة منطقة التمرير تحسب الشريط أصلًا، وأيّ إزاحةٍ فوقها
-     تُضاف إليها فتدفع الكتلة على النص (قيس: ١٢٠ بدل ٦٠) */
-  position: sticky;
-  inset-block-start: 0;
-  z-index: 20;
-  display: flex;
-  align-items: center;
-  block-size: var(--size-control-lg);
-  padding-inline: var(--space-4);
-  border-radius: var(--radius-full);
-  /* أخفّ تعبئةٍ في العائلة (٣٪ بدل ٦٪): الكتلة تعلو النص فلا تزاحمه */
-  background: var(--fill-form-group);
-}
-/* نحيفة: مقاييس المبدّل نفسها — مِضمار ٢٨ بحشوة ٢ وعناصر ٢٤ وأيقونات ١٦. الكتلة
-   تعلو النص فحقّها أن تخفّ، ولا قيمة مخترعة: control-md وcontrol-regular وicon-16 */
-.editor-tools {
-  block-size: var(--size-control-md);
-  padding-inline: var(--space-2);
-}
-/* مسافةٌ محسوبة بين الأزرار: space-4 داخل المجموعة الواحدة، والفواصل بهامشها
-   نفسه — فالإيقاع الأفقي من السلّم لا من التقدير */
-.editor-tools,
-.editor-tools .glass-group {
-  gap: var(--space-4);
-}
-.editor-tools .toolbar-item {
-  min-inline-size: var(--size-control-regular);
-  block-size: var(--size-control-regular);
-}
-.editor-tools .toolbar-item .icon-20 {
-  width: var(--size-icon-16);
-  height: var(--size-icon-16);
-}
-.editor-tools .action-button {
-  block-size: var(--size-control-regular);
-  padding-inline: var(--space-10);
-}
-/* أدواتها هادئة بلون الأيقونة الثانوي، وتستردّ حضورها تحت المؤشر. والفعل الرئيس
-   وحده يبقى بلونه كاملًا (قرار المالك m5) */
-.editor-tools .toolbar-item {
-  color: var(--icon-secondary);
-}
-.editor-tools .toolbar-item:hover:not(:disabled) {
-  color: var(--icon-primary);
-}
-
-/* داخل الكتلة تذوب كبسولة كل مجموعة: الكتلة واحدة، وبين المجموعات خطٌّ شعري */
-.editor-tools .glass-group {
-  background: none;
-  box-shadow: none;
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
-}
-.editor-tools .glass-group::before {
-  content: "";
-  flex: none;
-  inline-size: var(--stroke-hairline);
-  block-size: var(--size-icon-12);
-  margin-inline: var(--space-2);
-  margin-block: 0;
-  background: var(--border-hairline);
-}
-
-.compare {
+  inset: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--space-24);
-  inline-size: 100%;
+  justify-content: center;
+  gap: var(--layout-group-gap);
+  padding: var(--space-40);
+  pointer-events: none;
+  text-align: center;
 }
-
-.column {
+.empty-state > * {
+  max-inline-size: 520px;
+}
+.empty-badge {
   display: flex;
-  flex-direction: column;
-  gap: var(--space-16);
-  inline-size: min(var(--layout-editor-measure), 100%);
+  align-items: center;
+  justify-content: center;
+  inline-size: var(--space-64);
+  block-size: var(--space-64);
+  border-radius: var(--radius-16);
+  background: var(--module-accent-subtle);
+  color: var(--text-primary);
 }
-.column-header,
-.compare-divider {
-  display: none;
+/* العلامة قناعٌ يُلوَّن بلون النص، فتتبع المظهر كما في الملف (fill = text/primary) */
+.empty-badge .mark {
+  inline-size: var(--space-40);
+  block-size: var(--space-40);
+  background: currentColor;
+  -webkit-mask: url("mark.svg") center / contain no-repeat;
+  mask: url("mark.svg") center / contain no-repeat;
 }
-.column-header {
-  font: var(--type-caption-emphasis);
+.empty-title {
+  font: var(--type-caption);
+  color: var(--text-primary);
+}
+.empty-body {
+  font: var(--type-caption);
   color: var(--text-secondary);
 }
-
-/* عمود واحد: «الأصل» يعرض المحرر، وتظهر تحته حالة البداية ما دامت الوحدة في
-   حالتها الأولى — كل برج بآلة حالاته (Figma 99:557 و108:410) */
-.content[data-view="source"] .column-result,
-.content[data-view="result"] .column-source {
+.empty-state-compact {
+  position: static;
+  padding: var(--component-padding-lg) 0;
+  gap: var(--space-4);
+}
+/* حالة البداية تعلو الخانة ما دامت فارغة، وتزول عند أول حرف */
+[data-has-text] .column-source .empty-state,
+[data-module="nasaq"][data-nasaq-state="error"] #output-placeholder,
+[data-module="shadhb"][data-shadhb-state="error"] #shadhb-placeholder {
   display: none;
 }
-:root:not([data-module="shadhb"])[data-nasaq-state="empty"] .content[data-view="source"] .column-result[data-for="nasaq"] {
-  display: flex;
-}
-:root[data-module="shadhb"]:is([data-shadhb-state="before"], [data-shadhb-state="ready"]) .content[data-view="source"] .column-result[data-for="shadhb"] {
-  display: flex;
+:root:not([data-has-text]) .column-source .panel-header {
+  visibility: hidden;
 }
 
-/* عمود واحد والأصل ظاهر وتحته عمود النتيجة (حالة البداية): التنبيه فوق الأصل وحده */
-@container content (max-width: 991px) {
-  .content[data-view="source"] .column-result [data-error-slot] {
-    display: none;
-  }
-  /* حالة البداية في العرض الواحد خارج جريان الصفحة (طلب المالك، المرحلة ٩): كانت
-     تحت المحرر فيدفعها كل سطر إلى أسفل. الآن تثبت في وسط منطقة المحتوى — لا في
-     الجزء المتمرّر — علامةً خافتة خلف النص، لا تلتقط نقرة */
-  #output-placeholder,
-  #shadhb-placeholder {
-    position: absolute;
-    inset-block-start: 50%;
-    inset-inline: 0;
-    z-index: -1;
-    translate: 0 -50%;
-    pointer-events: none;
-  }
+/* ================= نَسَق: حالات اللوحة ================= */
+/* قبل النتيجة (Empty 2008:30 وReady 2009:281): عمود الكتابة وحده بهامش الصفحة ٣٢ */
+[data-module="nasaq"] .column-source {
+  padding: var(--layout-page-margin);
 }
-/* خافتة ٣٠٪ في العرضين (طلب المالك، المرحلة ٩) */
-#output-placeholder,
-#shadhb-placeholder {
-  opacity: 0.3;
+[data-module="nasaq"] .column-source .panel-title {
+  font: var(--type-button-label);
 }
-/* حاوية خانتَي التنبيه فوق الأصل لا تشغل مكانًا بنفسها */
-.banner-stack {
-  display: contents;
+.when-after,
+[data-module="nasaq"][data-nasaq-state="result"] .when-before,
+[data-module="nasaq"][data-nasaq-state="review"] .when-before {
+  display: none;
+}
+[data-module="nasaq"][data-nasaq-state="result"] .when-after,
+[data-module="nasaq"][data-nasaq-state="review"] .when-after {
+  display: inline;
+}
+[data-module="nasaq"]:not([data-nasaq-state="result"], [data-nasaq-state="review"], [data-nasaq-state="processing"]) .column-result[data-for="nasaq"],
+[data-module="nasaq"]:not([data-nasaq-state="result"], [data-nasaq-state="review"]) .compare-divider {
+  display: none;
 }
 
-/* عمودان جنبًا إلى جنب حين يتسع المحتوى (وصف «نَسَق / Content»: ٩٩٢) */
-@container content (min-width: 992px) {
-  .view-picker {
-    display: none;
-  }
-  .compare {
-    flex-direction: row;
-    align-items: stretch;
-    justify-content: center;
-    gap: var(--space-32);
-  }
-  /* يتقدم على قاعدتي العرض الواحد أعلاه (الوزن نفسه والموضع لاحق)، ويتنازل
-     العمودان عن ٤٤٨ قليلًا بين ٩٩٢ و١٠٢٥ بدل أن يفيضا */
-  .content[data-view] .column {
-    display: flex;
-    flex: 0 1 var(--layout-editor-measure);
-    min-inline-size: 0;
-  }
-  .column-header {
-    display: block;
-  }
-  /* حالة البداية في عمود النتيجة تثبت في موضعها ولو طال الأصل وتمرّر (المرحلة ٩):
-     عمود النتيجة يمتدّ بطول الأصل، فتبقى لاصقةً تحت شريط الأدوات حيث بدأت */
-  #output-placeholder,
-  #shadhb-placeholder {
-    position: sticky;
-    inset-block-start: var(--placeholder-pin);
-  }
-  .compare-divider {
-    display: block;
-    flex: none;
-    inline-size: var(--stroke-hairline);
-    background: var(--border-hairline);
-  }
-  /* عمودان: التنبيه والملاحظة في عمود النتيجة وحده (Figma 99:669 و108:748) */
-  .column-source [data-error-slot],
-  #no-cuts-source {
-    display: none;
-  }
+/* أثناء التنسيق (Processing 2009:342): لوحة التحميل وحدها بحشو ٤٠ وفجوة ٢٤ */
+[data-module="nasaq"][data-nasaq-state="processing"] .column-source {
+  display: none;
 }
-
-.editor {
-  display: block;
-  inline-size: 100%;
-  min-block-size: var(--font-line-height-reading);
+[data-module="nasaq"][data-nasaq-state="processing"] .column-result[data-for="nasaq"] {
+  padding: var(--space-40);
+}
+[data-module="nasaq"][data-nasaq-state="processing"] .column-result[data-for="nasaq"] > :not(.text-container) {
+  display: none;
+}
+[data-module="nasaq"][data-nasaq-state="processing"] .text-container,
+[data-module="shadhb"][data-shadhb-state="checking"] .text-container {
   padding: 0;
   border: 0;
   background: none;
-  outline: none;
-  font: var(--type-body-reading);
-  color: var(--text-primary);
-  resize: none;
-  overflow: hidden;
-  field-sizing: content;
 }
-.editor::placeholder {
-  color: var(--text-tertiary);
+.result-progress {
+  display: flex;
+  flex-direction: column;
+  gap: var(--layout-section-gap);
 }
-.editor:focus-visible {
-  box-shadow: none;
+.loading-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--layout-element-gap);
+}
+.loading-title {
+  font: var(--type-section-title);
+  color: var(--module-accent-text);
+}
+.loading-note {
+  font: var(--type-body-ui);
+  color: var(--text-secondary);
+}
+.skeleton-paragraph {
+  display: flex;
+  flex-direction: column;
+  gap: var(--layout-component-gap);
+}
+.skeleton-paragraph + .skeleton-paragraph {
+  padding-block-start: var(--component-padding-xl);
+}
+.skeleton-line {
+  display: block;
+  block-size: var(--space-16);
+  border-radius: var(--radius-4);
+  background: var(--fill-pressed);
+  opacity: 0.6;
+}
+.skeleton-line:last-child {
+  opacity: 0.4;
+}
+.skeleton-paragraph .skeleton-line:nth-child(2) { inline-size: 46.7%; }
+.skeleton-paragraph .skeleton-line:nth-child(3) { inline-size: 40%; }
+.skeleton-paragraph .skeleton-line:nth-child(4) { inline-size: 26.7%; }
+.skeleton-paragraph + .skeleton-paragraph .skeleton-line:nth-child(2) { inline-size: 50%; }
+.skeleton-paragraph + .skeleton-paragraph .skeleton-line:nth-child(3) { inline-size: 33.3%; }
+
+/* بعد النتيجة (Result-Ready 2008:328): «الأصل» لوحٌ ٤٤٠ مرتفع السطح يمينًا، والنتيجة تملأ */
+[data-module="nasaq"][data-nasaq-state="result"] .column-source,
+[data-module="nasaq"][data-nasaq-state="review"] .column-source {
+  flex: none;
+  inline-size: 440px;
+  padding: var(--component-padding-2xl);
+  background: var(--surface-elevated);
+}
+[data-module="nasaq"][data-nasaq-state="result"] .column-source .panel-title,
+[data-module="nasaq"][data-nasaq-state="review"] .column-source .panel-title {
+  font: var(--type-caption);
+}
+[data-module="nasaq"][data-nasaq-state="result"] .column-source .panel-header,
+[data-module="nasaq"][data-nasaq-state="review"] .column-source .panel-header {
+  min-block-size: 0;
+}
+[data-module="nasaq"][data-nasaq-state="result"] .column-source .editor-stack,
+[data-module="nasaq"][data-nasaq-state="review"] .column-source .editor-stack {
+  padding: var(--component-padding-md);
+  border: var(--stroke-hairline) solid var(--border-default);
+  border-radius: var(--radius-8);
+  background: var(--surface-reading);
+}
+[data-module="nasaq"][data-nasaq-state="result"] .column-source .editor,
+[data-module="nasaq"][data-nasaq-state="review"] .column-source .editor {
+  font: var(--type-body-ui);
+  color: var(--text-secondary);
+}
+.column-result {
+  padding: var(--component-padding-2xl);
 }
 
+/* الخطأ (Error 2008:223): اللافتة ثم النص المحفوظ في صندوق مرتفع بقطر ١٢ */
+[data-module="nasaq"][data-nasaq-state="error"] .column-source {
+  gap: var(--layout-content-gap);
+}
+[data-module="nasaq"][data-nasaq-state="error"] .column-source .panel-header {
+  display: none;
+}
+[data-module="nasaq"][data-nasaq-state="error"] .column-source .editor-stack {
+  padding: var(--component-padding-2xl);
+  border: var(--stroke-hairline) solid var(--border-default);
+  border-radius: var(--radius-12);
+  background: var(--surface-elevated);
+}
+
+/* ---- صفّ أدوات النتيجة (result-tools-row): ٤٤، حشو ٨، فجوة ٨، حدّ، قطر ٨ ---- */
+.editor-tools {
+  display: flex;
+  flex: none;
+  gap: var(--layout-element-gap);
+  padding: var(--component-padding-sm);
+  border: var(--stroke-hairline) solid var(--border-default);
+  border-radius: var(--radius-8);
+  background: var(--surface-reading);
+  overflow: hidden;
+  /* الأدوات في الملف تبدأ من حافة الصفّ اليسرى (MIN في إحداثيات Figma) */
+  justify-content: flex-end;
+}
+.toolbar-module {
+  display: flex;
+  gap: var(--layout-element-gap);
+}
+.tool-group {
+  display: flex;
+  gap: var(--space-4);
+}
+[data-collapsed] {
+  display: none;
+}
+/* Editor Tool 2397:43 — ٢٨، حشو ٦/١٢، فجوة ٤، قطر ٦، نص Caption */
+.editor-tool {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: var(--space-4);
+  block-size: var(--target-min);
+  padding: var(--component-padding-tight) var(--component-padding-md);
+  border: var(--stroke-hairline) solid var(--border-default);
+  border-radius: var(--radius-6);
+  background: var(--surface-elevated);
+  font: var(--type-caption);
+  color: var(--text-secondary);
+  white-space: nowrap;
+  transition: background-color var(--motion-fast), border-color var(--motion-fast), color var(--motion-fast);
+}
+.editor-tool:hover {
+  background: var(--fill-hover);
+  color: var(--text-primary);
+}
+.editor-tool:active {
+  background: var(--fill-pressed);
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+}
+.editor-tool[aria-pressed="true"] {
+  background: var(--module-accent-subtle);
+  border-color: var(--accent-clay);
+  color: var(--module-accent-text);
+}
+.editor-tool:disabled {
+  background: var(--fill-disabled);
+  border-color: var(--border-subtle);
+  color: var(--text-disabled);
+}
+
+/* ---- صندوق النتيجة (text-container): حشو ١٦، حدّ، قطر ٨ ---- */
+.text-container {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-block-size: 0;
+  padding: var(--component-padding-lg);
+  border: var(--stroke-hairline) solid var(--border-default);
+  border-radius: var(--radius-8);
+  background: var(--surface-elevated);
+  overflow-y: auto;
+}
 .result-text {
   font: var(--type-body-reading);
   color: var(--text-primary);
@@ -1002,301 +727,806 @@ textarea.empty-bidi {
 .result-text:empty {
   display: none;
 }
+/* نوت سابستاك يُقرأ من اليسار */
 .note-face {
   direction: ltr;
   text-align: left;
 }
-
+/* تطابقات البحث بالطين: الخافت للكل، والمصمت للتطابق الحالي (Search-Match 2277:1861) */
 ::highlight(nsq-search) {
-  background-color: var(--module-highlight);
+  background-color: var(--editor-mark-bg);
 }
 ::highlight(nsq-search-current) {
-  background-color: var(--module-tint-strong);
-  color: var(--text-primary);
+  background-color: var(--accent-clay);
+  color: var(--text-on-accent);
 }
 
-.empty-state:not(.empty-state-compact) {
+/* ---- الأفعال الهادئة أسفل النتيجة: نصّان Metadata بلون text/tertiary ---- */
+.bottom-info-row {
   display: flex;
-  flex-direction: column;
+  flex: none;
   align-items: center;
-  gap: var(--space-12);
-  padding: var(--space-24);
-  text-align: center;
+  justify-content: flex-end;
 }
-.empty-illustration {
+.quiet-actions {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  inline-size: var(--size-app-icon-md);
-  block-size: var(--size-app-icon-md);
-  margin-block-end: var(--space-16);
-  border-radius: var(--radius-20);
-  background: var(--module-tint);
-  box-shadow: inset 0 0 0 var(--stroke-hairline) var(--border-hairline);
-  color: var(--module-glyph);
+  gap: var(--layout-element-gap);
 }
-.empty-illustration .icon {
-  inline-size: var(--size-spinner-lg);
-  block-size: var(--size-spinner-lg);
+.quiet-action {
+  border-radius: var(--radius-2);
+  font: var(--type-metadata);
+  color: var(--text-tertiary);
 }
-.empty-state:not(.empty-state-compact) .empty-title {
-  font: var(--type-heading-h3);
+.quiet-action:hover {
   color: var(--text-primary);
 }
-.empty-state:not(.empty-state-compact) .empty-body {
-  max-inline-size: 400px;
-  font: var(--type-body-small);
-  color: var(--text-secondary);
+.quiet-action:disabled {
+  color: var(--text-disabled);
 }
 
-/* التنبيه داخل العمود (Banner · Danger, Figma 71:334): أيقونة الخطر يمينًا، ثم
-   العنوان والرسالة والفعل، وزر الإغلاق يسارًا — على سطح مرتفع بخط شعري */
+/* ================= Banner 27:1094 ولافتة الخطأ (error-banner في 2008:223) ================= */
+.banner-stack {
+  display: contents;
+}
 .banner {
   display: flex;
   flex: none;
-  align-items: flex-start;
-  gap: var(--space-12);
-  inline-size: 100%;
-  padding: var(--space-12);
-  border-radius: var(--radius-12);
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--layout-component-gap);
+  padding: var(--component-padding-lg);
+  border: var(--stroke-hairline) solid var(--status-info);
+  border-radius: var(--radius-8);
+  background: var(--status-info-subtle);
+}
+.banner-error {
+  border-color: var(--status-danger);
+  background: var(--status-danger-subtle);
+}
+.banner-lead {
+  display: flex;
+  align-items: center;
+  gap: var(--layout-element-gap);
+}
+.banner-title {
+  font: var(--type-button-label);
+  color: var(--text-primary);
+}
+.banner-error .banner-title,
+.banner-error .banner-icon {
+  color: var(--status-danger);
+}
+.banner-tail {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--layout-component-gap);
+}
+.banner-message {
+  font: var(--type-caption);
+  color: var(--text-secondary);
+}
+.banner-actions {
+  display: flex;
+  gap: var(--layout-element-gap);
+}
+.status-dot {
+  flex: none;
+  inline-size: var(--space-6);
+  block-size: var(--space-6);
+  border-radius: var(--radius-full);
+  background: var(--status-info);
+}
+
+/* عمودان ظاهران: التنبيه والملاحظة في عمود النتيجة وحده، فلا يتكرران فوق «الأصل».
+   وفي العمود الواحد (الضيّق، أو قبل النتيجة) لكل عمود خانته */
+@media (min-width: 1024px) {
+  [data-module="nasaq"][data-nasaq-state="result"] .column-source [data-error-slot],
+  [data-module="nasaq"][data-nasaq-state="review"] .column-source [data-error-slot],
+  [data-module="shadhb"][data-shadhb-state="polished"] .column-source [data-error-slot],
+  [data-module="shadhb"][data-shadhb-state="polished"] #no-cuts-source {
+    display: none;
+  }
+}
+
+/* ================= شريط البحث (search-overlay-bar في 2009:869) ================= */
+.find-bar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--layout-group-gap);
+  padding: var(--component-padding-md);
+  border: var(--stroke-hairline) solid var(--border-default);
+  border-radius: var(--radius-8);
   background: var(--surface-elevated);
-  box-shadow: inset 0 0 0 var(--stroke-hairline) var(--border-hairline);
 }
-.banner-icon {
-  color: var(--status-danger-fg);
+.find-field {
+  flex: none;
+  inline-size: 280px;
+  background: var(--surface-reading);
 }
-.banner-text {
+.find-count {
+  order: 2;
+  font: var(--type-caption);
+  color: var(--text-tertiary);
+  white-space: nowrap;
+}
+.find-nav {
+  display: flex;
+  gap: var(--space-4);
+}
+.find-bar #output-search-close {
+  margin-inline-start: auto;
+}
+
+/* ================= عروض اللوحة: مفترق الإيقاع والتقرير ================= */
+.canvas-view {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: none;
+  flex-direction: column;
+  gap: var(--layout-section-gap);
+  padding: var(--space-40);
+  background: var(--surface-reading);
+  overflow-y: auto;
+}
+.content[data-canvas="report"] .report-view,
+[data-module="nasaq"][data-nasaq-state="review"] .crossroads-view:not([hidden]) {
+  display: flex;
+}
+.view-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--layout-group-gap);
+}
+.view-heading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--layout-element-gap);
+}
+.view-title {
+  font: var(--type-window-title);
+  color: var(--text-primary);
+}
+.view-note {
+  font: var(--type-body-ui);
+  color: var(--text-secondary);
+}
+.crossroads-view .view-header {
+  flex-direction: column;
+  gap: var(--layout-element-gap);
+}
+.crossroads-options {
+  display: flex;
+  flex: 1;
+  gap: var(--layout-section-gap);
+  min-block-size: 0;
+}
+.suggestion-card {
   display: flex;
   flex: 1;
   flex-direction: column;
-  align-items: flex-start;
-  gap: var(--space-4);
+  gap: var(--layout-group-gap);
   min-inline-size: 0;
+  padding: var(--component-padding-2xl);
+  border: var(--stroke-hairline) solid var(--border-default);
+  border-radius: var(--radius-12);
+  background: var(--surface-elevated);
 }
-.banner-title {
-  font: var(--type-body-emphasis);
-  color: var(--text-primary);
+.suggestion-card[data-state="selected"],
+.suggestion-card[data-state="accepted"] {
+  border: var(--stroke-emphasis) solid var(--accent-clay);
 }
-.banner-message {
-  font: var(--type-body-small);
-  color: var(--text-secondary);
-}
-.banner-close {
-  color: var(--icon-secondary);
-}
-
-/* أثناء التنسيق (Figma 99:592): سطر تقدّم بمؤشر ١٦، وهيكل نائب يحترم شكل الفقرات */
-.result-progress {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--space-16);
-}
-.progress-row {
+.card-header {
   display: flex;
   align-items: center;
-  gap: var(--space-8);
-  font: var(--type-body-small);
-  color: var(--text-secondary);
+  justify-content: space-between;
+  gap: var(--layout-element-gap);
 }
-.skeleton-paragraph {
+.card-title {
+  font: var(--type-section-title);
+  color: var(--text-primary);
+}
+.card-quote {
+  padding: var(--component-padding-lg);
+  border-radius: var(--radius-8);
+  background: var(--surface-reading);
+  font: var(--type-body-reading);
+  color: var(--text-primary);
+  white-space: pre-wrap;
+}
+.card-actions {
+  display: flex;
+  gap: var(--layout-element-gap);
+  margin-block-start: auto;
+}
+.report-view .section-content {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: var(--space-16);
-  inline-size: 100%;
+  gap: var(--layout-group-gap);
+  padding: var(--component-padding-2xl);
+  border: var(--stroke-hairline) solid var(--border-default);
+  border-radius: var(--radius-12);
+  background: var(--surface-elevated);
 }
-.skeleton-paragraph + .skeleton-paragraph {
-  margin-block-start: var(--space-32);
+.stacked-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--layout-element-gap);
 }
-.skeleton-line {
-  display: block;
+.row-label {
+  font: var(--type-caption-strong);
+  color: var(--text-secondary);
+}
+.row-value {
+  font: var(--type-caption);
+  color: var(--text-primary);
+}
+.stacked-row .row-value {
   flex: none;
-  inline-size: 100%;
-  max-inline-size: 100%;
-  block-size: var(--size-skeleton-line);
-  border-radius: var(--radius-4);
-  background: var(--fill-control);
+  overflow: visible;
+  white-space: normal;
+  text-overflow: clip;
 }
-.skeleton-paragraph:first-of-type .skeleton-line:nth-child(1) { inline-size: 300px; }
-.skeleton-paragraph:first-of-type .skeleton-line:nth-child(2) { inline-size: 220px; }
-.skeleton-paragraph:first-of-type .skeleton-line:nth-child(3) { inline-size: 360px; }
-.skeleton-paragraph:last-of-type .skeleton-line:nth-child(1) { inline-size: 260px; }
-.skeleton-paragraph:last-of-type .skeleton-line:nth-child(2) { inline-size: 320px; }
-.skeleton-paragraph:last-of-type .skeleton-line:nth-child(3) { inline-size: 200px; }
+#notes-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--layout-element-gap);
+}
+/* Report Row 27:1223 — حشو ١٢، surface/reading، قطر ٦، ونقطة ٨ بلون الوحدة */
+#notes-list li {
+  position: relative;
+  padding: var(--component-padding-md);
+  padding-inline-start: calc(var(--component-padding-md) + var(--space-8) + var(--layout-component-gap));
+  border-radius: var(--radius-6);
+  background: var(--surface-reading);
+}
+#notes-list li::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: var(--component-padding-md);
+  inset-block-start: calc(50% - var(--space-4));
+  inline-size: var(--space-8);
+  block-size: var(--space-8);
+  border-radius: var(--radius-full);
+  background: var(--module-accent-on-dark);
+}
+.report-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--layout-component-gap);
+}
 
-/* ================= شريط الحالة ================= */
+/* ================= صفّ التلميح (hint-row في 2009:281) ================= */
+.hint-row {
+  display: flex;
+  flex: none;
+  align-items: center;
+  min-block-size: 34px;
+  padding: var(--component-padding-sm) var(--component-padding-2xl);
+}
+.level-hint {
+  font: var(--type-caption);
+  color: var(--text-secondary);
+}
+.level-hint:empty,
+[data-module="nasaq"][data-nasaq-state="processing"] .hint-row,
+[data-module="nasaq"][data-nasaq-state="result"] .hint-row,
+[data-module="nasaq"][data-nasaq-state="review"] .hint-row,
+:root:not([data-has-text]) .hint-row {
+  display: none;
+}
+
+/* ================= شريط الأفعال (action-bar) =================
+   ٦٥ = ٤٠ + حشو ١٢×٢ + حدّ علوي؛ فجوة ١٢ وحشو أفقي ٢٤. من اليمين: النمط، المستوى،
+   (المنصة)، التوجيهات تملأ، ثم الملاحظة، فالفعل الثانوي، فالفعل الرئيس ٢٠٠ في أقصى اليسار */
+.action-bar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--layout-component-gap);
+  padding: var(--component-padding-md) var(--component-padding-2xl);
+  background: var(--surface-elevated);
+  border-block-start: var(--stroke-hairline) solid var(--border-default);
+}
+.action-settings {
+  display: flex;
+  flex: none;
+  gap: var(--layout-component-gap);
+}
+.popup-control {
+  position: relative;
+  display: flex;
+}
+.popup-control > .row-label,
+.popup-control > select {
+  display: none;
+}
+/* Popup Button 2390:36 — ٤٠، حشو ٦/١٢، حدّ، قطر ٦، نص Caption، وسهم ٨×٤ بخطّ ١ */
+.dd-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--layout-component-gap);
+  min-inline-size: 160px;
+  block-size: var(--space-40);
+  padding: var(--component-padding-tight) var(--component-padding-md);
+  border: var(--stroke-hairline) solid var(--border-default);
+  border-radius: var(--radius-6);
+  background: var(--surface-elevated);
+  font: var(--type-caption);
+  color: var(--text-primary);
+  white-space: nowrap;
+  transition: background-color var(--motion-fast), border-color var(--motion-fast);
+}
+#settings-content .popup-control:nth-child(2) .dd-btn {
+  min-inline-size: 180px;
+}
+.dd-btn:hover {
+  background: var(--fill-hover);
+}
+.dd-btn:active,
+.dd-btn[aria-expanded="true"] {
+  background: var(--fill-pressed);
+  border-color: var(--border-strong);
+}
+.dd-btn:disabled {
+  background: var(--fill-disabled);
+  border-color: var(--border-subtle);
+  color: var(--text-disabled);
+}
+.dd-chevron {
+  flex: none;
+  inline-size: var(--space-6);
+  block-size: var(--space-6);
+  margin-block-end: var(--space-4);
+  border: solid var(--icon-secondary);
+  border-width: 0 var(--stroke-hairline) var(--stroke-hairline) 0;
+  transform: rotate(45deg);
+}
+.dd-btn:disabled .dd-chevron {
+  border-color: var(--icon-disabled);
+}
+
+/* Dropdown Menu 30:39 وMenu Item 26:151 — للقوائم المنبثقة كلها */
+.dd-popup,
+.menu,
+.picker-menu {
+  position: fixed;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-inline-size: 200px;
+  padding: var(--component-padding-sm);
+  border: var(--stroke-hairline) solid var(--border-default);
+  border-radius: var(--radius-12);
+  background: var(--surface-reading);
+  box-shadow: var(--elevation-menu);
+  overflow-y: auto;
+}
+.dd-popup[hidden] {
+  display: none;
+}
+.dd-option,
+.menu-item,
+.picker-menu-item {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--layout-element-gap);
+  block-size: var(--target-min);
+  padding-inline: var(--component-padding-md);
+  border-radius: var(--radius-4);
+  font: var(--type-caption);
+  color: var(--text-primary);
+  text-align: start;
+  white-space: nowrap;
+}
+.dd-option:hover,
+.dd-option:focus-visible,
+.menu-item:hover:not(:disabled),
+.menu-item:focus:not(:disabled),
+.picker-menu-item:hover,
+.picker-menu-item[data-active] {
+  background: var(--fill-hover);
+  outline: none;
+}
+.menu:focus-visible {
+  outline: none;
+}
+.menu-item:disabled {
+  color: var(--text-disabled);
+}
+.menu-item.is-destructive {
+  color: var(--status-danger);
+}
+.menu-separator,
+.picker-menu-separator {
+  flex: none;
+  block-size: var(--stroke-hairline);
+  background: var(--border-default);
+}
+.menu-check {
+  order: 2;
+  margin-inline-start: auto;
+  visibility: hidden;
+}
+[aria-selected="true"] > .menu-check {
+  visibility: visible;
+}
+
+/* حقل التوجيهات: يملأ ×٤٠، حشو ٨/١٢، حدّ، قطر ٦، نائبه Body UI بلون text/tertiary */
+.directives-field {
+  flex: 1;
+  min-inline-size: 0;
+  block-size: var(--space-40);
+  padding: var(--component-padding-sm) var(--component-padding-md);
+  border: var(--stroke-hairline) solid var(--border-default);
+  border-radius: var(--radius-6);
+  background: var(--surface-elevated);
+  font: var(--type-body-ui);
+  color: var(--text-primary);
+  resize: none;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.directives-field::placeholder {
+  color: var(--text-tertiary);
+}
+.directives-field:focus-visible {
+  outline-offset: calc(-1 * var(--stroke-hairline));
+}
+.directives-field:disabled {
+  background: var(--surface-reading);
+  opacity: 0.6;
+}
+.provider-note {
+  flex: none;
+  font: var(--type-metadata);
+  color: var(--text-tertiary);
+}
+
+/* Primary Action 2120:64 — ٤٠ في الشريط بعرض ٢٠٠، حشو ١٢/١٦، قطر ٨، ظل Shadow/Button */
+.primary-action {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  gap: var(--layout-element-gap);
+  inline-size: 200px;
+  block-size: var(--space-40);
+  padding: var(--component-padding-md) var(--component-padding-lg);
+  border-radius: var(--radius-8);
+  background: var(--module-accent);
+  box-shadow: var(--elevation-button);
+  font: var(--type-button-label);
+  color: var(--text-on-accent);
+  white-space: nowrap;
+  transition: background-color var(--motion-fast);
+}
+.primary-action:hover,
+.primary-action:active {
+  background: var(--module-accent-hover);
+}
+
+/* التعطيل يقوله fill/disabled وtext/disabled وحدهما: شفافية ٦٠٪ التي كانت على التنويعة في
+   الملف تُسقط النص تحت ٣:١ خلاف Q7، فصُحّحت في Figma (2120:62) ثم هنا (فحص m6) */
+.primary-action:disabled {
+  background: var(--fill-disabled);
+  box-shadow: none;
+  color: var(--text-disabled);
+}
+.primary-action:disabled .shortcut {
+  display: none;
+}
+.primary-action[aria-busy="true"] {
+  background: var(--module-accent);
+  box-shadow: var(--elevation-button);
+  color: var(--text-on-accent);
+  opacity: 0.8;
+}
+.primary-action:focus-visible,
+.primary-action[aria-busy="true"]:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+.primary-action .spinner,
+.when-busy,
+.when-result {
+  display: none;
+}
+.primary-action[aria-busy="true"] .spinner,
+.primary-action[aria-busy="true"] .when-busy {
+  display: inline;
+}
+.primary-action[aria-busy="true"] .spinner {
+  display: block;
+}
+.primary-action[aria-busy="true"] .when-idle {
+  display: none;
+}
+
+/* بعد النتيجة: «نسخ النتيجة» هو الفعل الرئيس، و«أعد التنسيق» Secondary Small قبله */
+#copy-btn {
+  display: none;
+}
+[data-module="nasaq"][data-nasaq-state="result"] #copy-btn,
+[data-module="nasaq"][data-nasaq-state="review"] #copy-btn {
+  display: inline-flex;
+}
+[data-module="nasaq"][data-nasaq-state="result"] #format-btn,
+[data-module="nasaq"][data-nasaq-state="review"] #format-btn {
+  inline-size: auto;
+  block-size: var(--space-24);
+  gap: var(--space-4);
+  padding: var(--space-2) var(--component-padding-sm);
+  border: var(--stroke-hairline) solid var(--border-default);
+  border-radius: var(--radius-4);
+  background: none;
+  box-shadow: none;
+  color: var(--text-primary);
+  opacity: 1;
+}
+[data-module="nasaq"][data-nasaq-state="result"] #format-btn:hover,
+[data-module="nasaq"][data-nasaq-state="review"] #format-btn:hover {
+  background: var(--fill-hover);
+}
+[data-module="nasaq"][data-nasaq-state="result"] #format-btn:active,
+[data-module="nasaq"][data-nasaq-state="review"] #format-btn:active {
+  background: var(--fill-pressed);
+  border-color: var(--border-strong);
+}
+[data-module="nasaq"][data-nasaq-state="result"] #format-btn:disabled,
+[data-module="nasaq"][data-nasaq-state="review"] #format-btn:disabled {
+  border-color: var(--border-subtle);
+  color: var(--text-disabled);
+}
+[data-module="nasaq"][data-nasaq-state="result"] #format-btn:focus-visible,
+[data-module="nasaq"][data-nasaq-state="review"] #format-btn:focus-visible {
+  outline: var(--stroke-emphasis) solid var(--focus-ring);
+  box-shadow: none;
+}
+[data-module="nasaq"][data-nasaq-state="result"] #format-btn .when-idle,
+[data-module="nasaq"][data-nasaq-state="review"] #format-btn .when-idle {
+  display: none;
+}
+[data-module="nasaq"][data-nasaq-state="result"] #format-btn .when-result,
+[data-module="nasaq"][data-nasaq-state="review"] #format-btn .when-result {
+  display: inline;
+}
+
+/* ================= Status Bar 2408:59 =================
+   ٣٢، حشو ٨/٢٠، surface/sunken، وحدّ علوي. يمينًا الحالة بنقطة ٦، ويسارًا العدّادات */
 .status-bar {
   display: flex;
   flex: none;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-16);
-  block-size: var(--size-statusbar);
-  padding-inline: var(--space-16);
-  border-block-start: var(--stroke-hairline) solid var(--border-hairline);
-  font: var(--type-caption-default);
+  gap: var(--layout-group-gap);
+  block-size: var(--space-32);
+  padding: var(--component-padding-sm) var(--component-padding-xl);
+  background: var(--surface-sunken);
+  border-block-start: var(--stroke-hairline) solid var(--border-default);
+  font: var(--type-metadata);
   color: var(--text-secondary);
 }
 .status-start,
-.status-counts {
+.status-counts,
+.polish-status,
+.status-toast {
   display: flex;
   align-items: center;
   min-inline-size: 0;
-  white-space: nowrap;
 }
 .status-counts {
-  overflow: hidden;
-  text-overflow: ellipsis;
+  gap: var(--layout-group-gap);
+  white-space: nowrap;
 }
-/* في نَسَق: عدّاد النتيجة ما دامت النتيجة هي المعروضة، وإلا عدّاد الأصل */
-:root:not([data-module="shadhb"]):is([data-nasaq-state="result"], [data-nasaq-state="review"]) #input-count {
-  display: none;
-}
-#output-count.over-limit {
-  color: var(--status-warning-fg);
-}
-
 .polish-status,
 .status-toast {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-8);
-  font: var(--type-caption-emphasis);
+  gap: var(--layout-tight-gap);
 }
-/* الرسالة العابرة تحلّ محل مؤشر الحالة لحظةً (Figma 263:7739) */
 .status-start[data-feedback] .polish-status {
   display: none;
 }
 .status-indicator {
   flex: none;
-  inline-size: var(--size-status-dot);
-  block-size: var(--size-status-dot);
-  border-radius: 50%;
-  box-shadow: inset 0 0 0 var(--stroke-hairline) var(--border-strong);
+  inline-size: var(--space-6);
+  block-size: var(--space-6);
+  border-radius: var(--radius-full);
+  background: var(--module-accent);
 }
-.status-label {
-  color: var(--text-secondary);
+.status-label,
+#toast-message {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
-
-/* حالة نَسَق من آلة الحالات (Polish Status, Figma 71:400): لم يُنسَّق بعد، جارٍ
-   التنسيق…، بانتظار اختيارك، منسَّق، تعذّر التنسيق — اللون للحالة وحدها */
-#nasaq-status[data-status="processing"] .status-indicator {
-  box-shadow: inset 0 0 0 1.5px var(--module-glyph);
+.polish-status[data-status="processing"] .status-indicator,
+.polish-status[data-status="checking"] .status-indicator {
+  background: var(--status-info);
 }
-#nasaq-status[data-status="review"] .status-indicator {
-  background: var(--module-glyph);
-  box-shadow: none;
-}
-#nasaq-status[data-status="review"] .status-label {
-  color: var(--module-strong);
-}
-#nasaq-status[data-status="result"] .status-indicator,
+.polish-status[data-status="result"] .status-indicator,
+.polish-status[data-status="polished"] .status-indicator,
 .status-toast[data-tone="success"] .status-indicator {
-  background: var(--status-success-solid);
-  box-shadow: none;
+  background: var(--status-success);
 }
-#nasaq-status[data-status="result"] .status-label,
-.status-toast[data-tone="success"] {
-  color: var(--status-success-fg);
-}
-#nasaq-status[data-status="error"] .status-indicator,
+.polish-status[data-status="error"] .status-indicator,
 .status-toast[data-tone="danger"] .status-indicator {
-  background: var(--status-danger-solid);
-  box-shadow: none;
+  background: var(--status-danger);
 }
-#nasaq-status[data-status="error"] .status-label,
-.status-toast[data-tone="danger"] {
-  color: var(--status-danger-fg);
-}
+.polish-status[data-status="review"] .status-indicator,
 .status-toast[data-tone="warning"] .status-indicator {
-  background: var(--status-warning-solid);
-  box-shadow: none;
+  background: var(--status-warning);
 }
-.status-toast[data-tone="warning"] {
-  color: var(--status-warning-fg);
-}
-
-/* حالة شَذْب من آلة الحالات (Polish Status, Figma 71:400): لم يُفحص بعد، جارٍ
-   الفحص…، بانتظار قرارك، حُسمت كل القصّات، لا قصّات مقترحة، تعذّر التحقق */
-#shadhb-status[data-status="checking"] .status-indicator {
-  box-shadow: inset 0 0 0 1.5px var(--module-glyph);
-}
-#shadhb-status[data-status="review"] .status-indicator {
-  background: var(--module-glyph);
-  box-shadow: none;
-}
-#shadhb-status[data-status="review"] .status-label {
-  color: var(--module-strong);
-}
-#shadhb-status[data-status="polished"] .status-indicator,
-#outcome-status .status-indicator {
-  background: var(--status-success-solid);
-  box-shadow: none;
-}
-#shadhb-status[data-status="polished"] .status-label,
-#outcome-status {
-  color: var(--status-success-fg);
-}
-#shadhb-status[data-status="error"] .status-indicator {
-  background: var(--status-danger-solid);
-  box-shadow: none;
-}
-#shadhb-status[data-status="error"] .status-label {
-  color: var(--status-danger-fg);
-}
-/* عدّاد شَذْب مستقل عن عدّاد نَسَق: كلمات الشذرة وحدها (Figma 108:712) */
 :root[data-module="shadhb"] #input-count {
   display: none;
 }
+.over-limit {
+  color: var(--status-danger);
+}
 
-.status-toast {
-  min-inline-size: 0;
+/* ================= شريط العرض في العمود الواحد (view-switcher-strip) ================= */
+.view-strip {
+  display: none;
+  flex: none;
+  align-items: center;
+  justify-content: flex-start;
+  padding: var(--component-padding-tight) var(--component-padding-lg);
+  background: var(--surface-reading);
+  border-block-end: var(--stroke-hairline) solid var(--border-default);
+}
+/* View Switch 26:94 — حشو ٢، fill/pressed، قطر ٤؛ شريحتان بحشو ٤/١٢ وقطر ٢ */
+.view-picker {
+  display: flex;
+  padding: var(--space-2);
+  border-radius: var(--radius-4);
+  background: var(--fill-pressed);
+}
+.view-segment {
+  padding: var(--component-padding-xs) var(--component-padding-md);
+  border-radius: var(--radius-2);
+  font: var(--type-metadata);
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+.view-segment[aria-selected="true"] {
+  background: var(--accent-clay-subtle);
+  font: var(--type-metadata-strong);
+  color: var(--accent-clay-text);
+}
+
+/* ================= لوح شَذْب (Review-Decision 2009:1632) ================= */
+.inspector {
+  display: none;
+  flex: none;
+  flex-direction: column;
+  inline-size: 420px;
+  min-block-size: 0;
+  background: var(--surface-reading);
+  border-inline-start: var(--stroke-hairline) solid var(--border-default);
+  overflow-y: auto;
+}
+[data-module="shadhb"]:not([data-shadhb-state="before"]) .window[data-inspector="open"] .inspector {
+  display: flex;
+}
+.inspector-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--layout-group-gap);
+  padding: var(--component-padding-2xl);
+}
+[data-module="shadhb"] .content {
+  background: var(--surface-elevated);
+}
+[data-module="shadhb"] .column {
+  padding: var(--layout-page-margin);
+}
+[data-module="shadhb"] .panel-title {
+  font: var(--type-button-label);
+}
+[data-module="shadhb"]:not([data-shadhb-state="polished"], [data-shadhb-state="checking"]) .column-result[data-for="shadhb"],
+[data-module="shadhb"]:not([data-shadhb-state="polished"]) .compare-divider {
+  display: none;
+}
+[data-module="shadhb"][data-shadhb-state="checking"] .column-source {
+  display: none;
+}
+[data-module="shadhb"][data-shadhb-state="checking"] .column-result[data-for="shadhb"] > :not(.text-container) {
+  display: none;
+}
+[data-module="shadhb"][data-shadhb-state="polished"] .editor-stack {
+  padding: var(--component-padding-lg);
+  border: var(--stroke-hairline) solid var(--border-default);
+  border-radius: var(--radius-8);
+  background: var(--surface-reading);
+}
+.cuts-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.cuts-title {
+  font: var(--type-button-label);
+  color: var(--text-primary);
+}
+.section-note {
+  font: var(--type-caption);
   color: var(--text-secondary);
 }
-#toast-message {
-  overflow: hidden;
-  text-overflow: ellipsis;
+/* Cut Row 27:1013 — شريحة ٣٢، حشو ٨/١٢، قطر ٤، نص Caption */
+.cuts-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--layout-element-gap);
 }
-
-/* ================= المفتّش ================= */
+.cuts-list:empty {
+  display: none;
+}
+.cut-row {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: var(--space-4);
+  max-inline-size: 100%;
+  min-block-size: var(--space-32);
+  padding: var(--component-padding-sm) var(--component-padding-md);
+  border: var(--stroke-hairline) solid transparent;
+  border-radius: var(--radius-4);
+  background: var(--surface-sunken);
+  font: var(--type-caption);
+  color: var(--text-secondary);
+}
+.cut-row > .icon {
+  display: none;
+}
+.cut-row .row-subtitle {
+  display: none;
+}
+.cut-row:hover {
+  background: var(--fill-hover);
+  color: var(--text-primary);
+}
+.cut-row.is-selected,
+.cut-row[aria-selected="true"] {
+  background: var(--accent-clay-subtle);
+  border-color: var(--accent-clay);
+  color: var(--accent-clay-text);
+}
+.cut-row[data-status="cut"] {
+  background: var(--status-danger-subtle);
+  color: var(--status-danger);
+}
+.cut-row[data-status="kept"] {
+  background: var(--status-success-subtle);
+  color: var(--status-success);
+}
 .inspector-section {
   display: flex;
   flex-direction: column;
-  gap: var(--space-12);
-  padding: var(--space-12);
+  gap: var(--layout-element-gap);
 }
-.inspector-section:not([hidden]) ~ .inspector-section {
-  border-block-start: var(--stroke-hairline) solid var(--border-hairline);
-}
-
 .section-header {
   display: flex;
   align-items: center;
-  gap: var(--space-8);
-  inline-size: 100%;
-  font: var(--type-label-default);
-  color: var(--text-primary);
-  text-align: start;
-}
-/* الرأس تحت الضغط (Inspector Section · Header=Pressed، فحص m4-13): تعبئة مدوّرة ٤
-   تمتدّ ٤ بظلٍّ صلب من اللون نفسه — الزاوية الخارجية ٨، والتخطيط لا يتحرك */
-.section-header:active {
-  background: var(--fill-pressed);
+  justify-content: space-between;
   border-radius: var(--radius-4);
-  box-shadow: 0 0 0 var(--space-4) var(--fill-pressed);
 }
-.section-header .icon {
-  color: var(--icon-secondary);
-}
-.section-header .section-icon.is-primary {
-  color: var(--icon-primary);
-}
-.section-header .section-title {
-  flex: 1;
+.section-title {
+  font: var(--type-caption-strong);
+  color: var(--text-secondary);
 }
 .section-header .disclosure {
-  transition: transform var(--motion-duration-hover) var(--motion-easing-standard);
+  color: var(--text-tertiary);
+  transition: transform var(--motion-normal);
+}
+.section-header:active {
+  background: var(--fill-pressed);
 }
 .section-header[aria-expanded="false"] .disclosure {
   transform: rotate(90deg);
@@ -1304,1031 +1534,522 @@ textarea.empty-bidi {
 .section-header[aria-expanded="false"] + .section-content {
   display: none;
 }
-
 .section-content {
   display: flex;
   flex-direction: column;
-  gap: var(--space-8);
+  gap: var(--layout-element-gap);
 }
-
+/* Decision Card 2413:94 — حشو ١٦، فجوة ١٦، حدّ، قطر ٨، ظل Shadow/Menu */
+.decision-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--layout-group-gap);
+  padding: var(--component-padding-lg);
+  border: var(--stroke-hairline) solid var(--border-default);
+  border-radius: var(--radius-8);
+  background: var(--surface-elevated);
+  box-shadow: var(--elevation-menu);
+}
+.decision-card .card-title {
+  font: var(--type-button-label);
+}
+.decision-card .card-quote {
+  padding: var(--component-padding-md);
+  border: var(--stroke-hairline) solid var(--border-subtle);
+  border-radius: var(--radius-6);
+  background: var(--surface-elevated);
+  font: var(--type-button-label);
+  color: var(--text-secondary);
+}
+.card-meta,
+.card-effect {
+  font: var(--type-caption);
+  color: var(--text-primary);
+}
+/* Cut Decision 2124:32 — زران يملآن بارتفاع ٤٤، فجوة ١٢، حدّ module/accent، قطر ٦ */
+.cut-decision {
+  display: flex;
+  gap: var(--layout-component-gap);
+}
+.decision-button {
+  flex: 1;
+  block-size: 44px;
+  padding: var(--component-padding-md) var(--component-padding-lg);
+  border: var(--stroke-hairline) solid var(--module-accent);
+  border-radius: var(--radius-6);
+  font: var(--type-button-label);
+  color: var(--text-primary);
+  transition: background-color var(--motion-fast);
+}
+.decision-button:hover {
+  background: var(--fill-hover);
+}
+.decision-button:active {
+  background: var(--fill-pressed);
+}
+.decision-button:disabled {
+  border-color: var(--border-subtle);
+  color: var(--text-disabled);
+}
+.guarantee-note,
+.covenant-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  font: var(--type-caption);
+  color: var(--text-secondary);
+}
+.guarantee-note .sf,
+.covenant-bar-icon {
+  color: var(--accent-clay);
+}
+.covenant-bar.fail,
+.covenant-bar.fail .covenant-bar-icon {
+  color: var(--status-danger);
+}
 .inspector-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-8);
-  min-block-size: var(--size-row);
-}
-.inspector-row .row-label,
-.field-label {
-  font: var(--type-body-small);
-  color: var(--text-secondary);
+  gap: var(--layout-element-gap);
+  padding-block: var(--component-padding-sm);
+  border-block-end: var(--stroke-hairline) solid var(--border-subtle);
 }
 .inspector-row .row-label {
-  flex: none;
-  white-space: nowrap;
+  font: var(--type-caption);
 }
-/* المرحلة ٩: بعرض ٣٦٠ صار الزرّ الصغير في طرفٍ والتسمية في طرف وبينهما فراغ؛
-   فالقائمة تملأ عمود قيمتها كقوائم مفتّش Pages، حتى ٢٠٠ — فتبدأ القوائم
-   المتجاورة على خط واحد مهما اختلف طول تسمياتها */
-.inspector-row.control .dd-btn {
-  flex: 1;
-  justify-content: space-between;
-  max-inline-size: 200px;
+.inspector-row .row-value {
+  font: var(--type-caption-strong);
 }
-.field-hint {
-  font: var(--type-caption-default);
-  color: var(--text-tertiary);
-}
-.field-hint:empty {
-  display: none;
-}
-.section-note {
-  font: var(--type-body-small);
-  color: var(--text-secondary);
-}
-
-.stacked-row {
+.reading-card {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--layout-element-gap);
 }
-.stacked-row .row-label {
-  font: var(--type-caption-emphasis);
-  color: var(--text-secondary);
-}
-/* `.row-value` في forms.css مصمَّمة لصفٍّ أفقي: تسريحة `flex: 1 0 0` تملأ ما
-   بقي من العرض، و`nowrap` مع `overflow: hidden` تقصّ بثلاث نقاط. و«التقرير»
-   صفٌّ عمودي، فالأساس صفرًا على المحور الرأسي يطوي الارتفاع إلى صفر والقصّ
-   يبتلع النص — فتُردّ الثلاثة هنا (المرحلة ٨) */
-.stacked-row .row-value {
-  font: var(--type-body-small);
-  color: var(--text-primary);
-  white-space: pre-line;
-  flex: 0 0 auto;
-  overflow: visible;
-  text-overflow: clip;
-}
-/* «١. كُسرت الفقرة…» — الرقم جزء من السطر نفسه كما في Figma (98:313) */
-#notes-list {
-  padding: 0;
-  list-style: arabic-indic inside;
-}
-
-/* التقرير أثناء التنسيق: هيكل نائب مكان ما تغيّر وبصمة الإيقاع (Figma 98:400) */
-.report-skeleton {
+.reading-card-skeleton {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: var(--space-8);
+  gap: var(--layout-component-gap);
 }
-.report-skeleton .skeleton-line:last-child {
-  inline-size: 180px;
-}
-:root[data-nasaq-state="processing"] :is(#notes-box, #rhythm-box) {
-  display: none;
-}
-
-/* القائمة المنبثقة فوق الـ select (تبنيها nasaq.js) بمقاس Popup Button الصغير */
-.dd-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-8);
-  block-size: var(--size-control-regular);
-  padding-inline: 13px var(--space-8);
-  border-radius: var(--radius-control-regular);
-  background: var(--fill-control);
-  font: var(--type-body-small);
-  color: var(--text-primary);
-  white-space: nowrap;
-}
-.dd-btn .icon {
-  color: var(--icon-secondary);
-}
-.dd-btn {
-  min-inline-size: 0;
-}
-.dd-value {
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.dd-btn:hover {
-  background-image: linear-gradient(var(--fill-hover), var(--fill-hover));
-}
-/* الضغط كالمفتوح (Popup Button · Pressed، فحص m4-13): يظهر من لحظة الضغط */
-.dd-btn:active:not(:disabled),
-.dd-btn[aria-expanded="true"] {
-  background-image: linear-gradient(var(--fill-pressed), var(--fill-pressed));
-}
-.dd-btn:disabled {
-  background: var(--fill-disabled);
-  color: var(--text-disabled);
-}
-
-/* بطاقة الاقتراح (Suggestion Card, Figma 73:641): محايدة كمجموعات نماذج الإعدادات
-   — تعبئة المجموعة وحدٌّ شعري (المرحلة ٩: كانت ذهبًا فوق ذهب وصندوقًا في صندوق).
-   شكل المنعطف المحدد وحده بحدٍّ رفيع بلون الوحدة، لأن بين شكلين ما يُختار */
-.suggestion-card {
+.panel-actions {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: var(--space-8);
-  padding: var(--space-12);
-  border-radius: var(--radius-12);
-  background: var(--fill-form-group);
-  box-shadow: inset 0 0 0 var(--stroke-hairline) var(--border-hairline);
+  gap: var(--layout-element-gap);
+  margin-block-start: auto;
 }
-.suggestion-card[data-state="undecided"]:hover {
-  background: var(--fill-hover);
-}
-.suggestion-card[data-state="selected"] {
-  box-shadow: inset 0 0 0 var(--stroke-hairline) var(--module-accent);
-}
-/* العنوان يمينًا والوسم يسارًا على سطر واحد بلا فجوة ثابتة (Figma 98:364: ١٢٨ + ٦٠
-   في ١٨٨)، والعنوان وحده يتنازل عند الضيق */
-.card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  align-self: stretch;
-}
-.suggestion-card .card-title {
-  min-inline-size: 0;
-  overflow: hidden;
-  font: var(--type-label-default);
-  color: var(--text-primary);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-/* الزر الأساسي في نهاية السطر (يسارًا) كما يصف المكوّن */
-.card-actions {
-  display: flex;
-  align-items: center;
-  align-self: stretch;
-  justify-content: flex-end;
-  gap: var(--space-8);
-}
-/* المرحلة ٩: بعرض ٣٦٠ بقي الزرّان صغيرين في الزاوية؛ فيقتسمان عرض البطاقة */
-.card-actions > .button {
-  flex: 1;
-}
-
-/* الوسم (Tag, Figma 57:40): اللون للحالة وحدها، والأيقونة للمعتمدة */
-.tag {
-  display: inline-flex;
-  flex: none;
-  align-items: center;
-  gap: var(--space-4);
-  block-size: var(--size-control-sm);
-  padding-inline: var(--space-8);
-  border-radius: var(--radius-full);
-  background: var(--fill-control);
-  font: var(--type-caption-emphasis);
-  color: var(--text-secondary);
-  white-space: nowrap;
-}
-.tag .icon {
-  display: none;
-}
-.tag[data-tone="module"] {
-  background: var(--module-tint);
-  color: var(--module-strong);
-}
-.tag[data-tone="module"] .icon {
-  display: block;
-}
-.tag[data-tone="success"] {
-  background: var(--status-success-bg);
-  color: var(--status-success-fg);
-}
-.tag[data-tone="warning"] {
-  background: var(--status-warning-bg);
-  color: var(--status-warning-fg);
-}
-.tag[data-tone="danger"] {
-  background: var(--status-danger-bg);
-  color: var(--status-danger-fg);
-}
-.card-quote {
-  align-self: stretch;
-  padding: var(--space-8);
-  border-radius: var(--radius-8);
-  background: var(--surface-content);
-  box-shadow: inset 0 0 0 var(--stroke-hairline) var(--border-hairline);
-  font: var(--type-body-small);
-  color: var(--text-primary);
-  white-space: pre-wrap;
-}
-
-/* ================= القوائم ================= */
-.menu,
-.dd-popup {
-  position: fixed;
-  z-index: 300;
-  display: flex;
-  flex-direction: column;
-  min-inline-size: 160px;
-  padding: var(--space-5);
-  overflow-y: auto;
-  border-radius: var(--radius-12);
-  background: var(--material-popover);
-  box-shadow: inset 0 0 0 var(--stroke-hairline) var(--material-edge), var(--elevation-popover);
-  -webkit-backdrop-filter: blur(var(--radius-20));
-  backdrop-filter: blur(var(--radius-20));
-}
-.menu-item,
-.dd-option {
-  display: flex;
-  flex: none;
-  align-items: center;
-  gap: var(--space-8);
-  block-size: var(--size-menu-item);
-  padding-inline: var(--space-9);
-  border-radius: var(--radius-7);
-  font: var(--type-body-small);
-  color: var(--text-primary);
-  text-align: start;
-  white-space: nowrap;
-}
-.menu-item:focus:not(:disabled),
-.dd-option:is(:hover, :focus-visible) {
-  background: var(--module-strong);
-  box-shadow: none;
-  color: var(--text-on-accent);
-}
-.menu-item:disabled {
-  color: var(--text-disabled);
-}
-.menu {
-  min-inline-size: 212px;
-}
-/* البند المدمّر بلون الخطر، ويصير أبيض فوق التمييز كبقية البنود (Menu Item, Figma 70:312) */
-.menu-item.is-destructive {
-  color: var(--status-danger-fg);
-}
-.menu-item.is-destructive:focus:not(:disabled) {
-  color: var(--text-on-accent);
-}
-.menu-separator {
-  flex: none;
-  block-size: var(--size-menu-separator);
-  margin-inline: var(--space-row-inset);
-  background: linear-gradient(var(--border-hairline), var(--border-hairline)) center / 100% var(--stroke-hairline) no-repeat;
-}
-.dd-option .menu-check {
-  visibility: hidden;
-}
-.dd-option[aria-selected="true"] .menu-check {
-  visibility: visible;
-}
-
-/* ================= المسودات في الشريط الجانبي (Figma 97:116) =================
-   مسودة ٤٤ بسهم طي ومقتطف ونوع وعدد صيغ ووقت، وصيغها تحتها صفوفًا ٣٢ بإزاحة ٢٤
-   وشارة «± أسطر». إطار بلون الوحدة حول الصف ما دامت قائمته السياقية مفتوحة */
-/* البحث و«الجلسة الحالية» ثابتان والمسودات وحدها تتمرّر */
-.sidebar-body[data-for="nasaq"] {
-  overflow: hidden;
-}
-.drafts-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  min-block-size: 0;
-  overflow-y: auto;
-}
-.draft-row,
-.version-row {
-  display: flex;
-  flex: none;
-  align-items: center;
-  gap: var(--space-10);
-  padding-inline: var(--space-row-inset);
-  border-radius: var(--radius-8);
-  font: var(--type-body-small);
-  color: var(--text-primary);
-}
-.draft-row {
-  block-size: var(--size-row-2line);
-}
-.version-row {
-  block-size: var(--size-sidebar-row);
-}
-.draft-row:hover,
-.version-row:hover {
-  background: var(--fill-hover);
-}
-.draft-row[data-context-target],
-.version-row[data-context-target] {
-  box-shadow: inset 0 0 0 2px var(--module-accent);
-}
-.draft-row .row-disclosure {
-  color: var(--text-secondary);
-}
-.draft-row .row-icon,
-.version-row .row-icon {
-  color: var(--module-glyph);
-}
-.row-text {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  min-inline-size: 0;
-}
-.draft-row .row-title,
-.version-row .row-title,
-.row-subtitle {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.version-row .row-title {
-  flex: 1;
-  min-inline-size: 0;
-}
-.row-subtitle {
-  font: var(--type-caption-default);
-  color: var(--text-secondary);
-}
-.row-meta {
-  flex: none;
-  font: var(--type-caption-footnote);
-  color: var(--text-secondary);
-}
-.draft-versions {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  padding-inline: var(--space-24);
-}
-
-/* ================= شَذْب (Figma 51:9) ================= */
-/* الشريط الجانبي: صفّ القصّة ٤٤pt بسطرين، ورمز قرارها في بدايته (Sidebar Row،
-   Figma 66:300 و105:525): منقّطة لم تُحسم، مقص للمحذوفة، صح للمُبقاة. المحددة
-   بتعبئة لون الوحدة ونص أبيض عريض كبقية صفوف الشريط */
-.cuts-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-}
-.cut-row {
-  block-size: var(--size-row-2line);
-}
-.cut-row .row-title {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.cut-row[data-status="cut"] .row-title {
-  color: var(--text-secondary);
-  text-decoration: line-through;
-}
-/* قصّة تعذّرت: الصف معطّل كما رُسم (Sidebar Row · Cut · Disabled, Figma 66:290) */
-.cut-row[data-status="stale"] {
-  color: var(--text-disabled);
-}
-.cut-row[data-status="stale"] :is(.icon, .row-subtitle) {
-  color: var(--text-disabled);
-}
-.cut-row:not([data-status="stale"]):hover {
-  background: var(--fill-hover);
-}
-.cut-row.is-selected .row-subtitle {
-  color: var(--text-on-accent);
-}
-[data-inactive] .cut-row.is-selected .row-subtitle {
-  color: var(--text-primary);
-}
-
-/* علامات القصّ داخل الشذرة (Figma 108:711): الخانة وطبقة العلامات في موضع واحد،
-   والطبقة فوقها فلا يحجب تحديدُ الخانة حروفَها. نصّ الخانة يصير شفافًا ومؤشره
-   ظاهر، فتبقى الشذرة قابلة للتحرير كما هي قبل الفحص */
-.editor-stack {
-  position: relative;
+.panel-actions .primary-action {
   inline-size: 100%;
 }
-.marked-text {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  font: var(--type-body-reading);
-  color: var(--text-primary);
-  white-space: pre-wrap;
-  overflow-wrap: break-word;
+[data-module="shadhb"]:not([data-shadhb-state="polished"]) #send-to-nasaq-btn,
+[data-module="shadhb"]:not([data-shadhb-state="polished"]) #copy-pruned-btn,
+[data-module="shadhb"][data-shadhb-state="polished"] #prune-btn {
+  display: none;
 }
-:root[data-module="shadhb"][data-shadhb-marks] #input-text {
-  color: transparent;
-  caret-color: var(--text-primary);
-}
-/* أثناء الفحص: النص معتم قليلًا ومقروء (Figma 108:687) */
-:root[data-module="shadhb"][data-shadhb-state="checking"] #input-text {
-  color: var(--text-secondary);
-}
-.mark-pending,
-.mark-selected {
-  text-decoration-thickness: 2px;
-  text-underline-offset: 2px;
-}
+/* علامات القصّات فوق الشذرة: لم تُحسم، ومحددة بالطين، ومحذوفة مشطوبة */
 .mark-pending {
-  text-decoration: underline dotted var(--module-accent);
+  border-radius: var(--radius-2);
+  background: var(--editor-mark-bg);
+  color: var(--accent-clay-text);
 }
 .mark-selected {
-  color: var(--module-strong);
-  text-decoration: underline solid var(--module-strong);
+  border-radius: var(--radius-2);
+  background: var(--accent-clay-subtle);
+  box-shadow: 0 0 0 var(--stroke-hairline) var(--accent-clay);
+  color: var(--accent-clay-text);
 }
 .mark-cut {
   color: var(--text-tertiary);
   text-decoration: line-through;
 }
 
-/* بطاقة القراءة: صفوف مركومة (Inspector Row · Stacked)، وهيكلها النائب أربعة
-   أسطر أثناء الفحص (Figma 107:276) */
-.reading-card,
-.reading-card-skeleton {
+/* قبل الفحص (Before 2008:189): لا لوح، والفعل في قلب حالة البداية */
+[data-module="shadhb"][data-shadhb-state="before"] .panel-actions,
+[data-module="shadhb"][data-shadhb-state="ready"] .window[data-inspector="hidden"] .panel-actions {
+  display: none;
+}
+
+/* ================= الطبقات: حجاب، وAlert 30:26، وSheet 30:27، وPopover 30:36 ================= */
+.window[inert] {
+  filter: none;
+}
+body:has([aria-modal="true"]:not([hidden]))::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  background: var(--material-scrim);
+}
+.alert,
+.sheet,
+.popover {
+  position: fixed;
+  z-index: 30;
   display: flex;
   flex-direction: column;
-  gap: var(--space-8);
+  border: var(--stroke-hairline) solid var(--border-default);
+  border-radius: var(--radius-16);
+  background: var(--surface-reading);
 }
-.reading-card-skeleton .skeleton-line:nth-child(2) { inline-size: 200px; }
-.reading-card-skeleton .skeleton-line:nth-child(4) { inline-size: 160px; }
-
-/* بطاقة القصّة المحددة (Suggestion Card · Cut, Figma 73:641): هي القصّة الوحيدة
-   المعروضة فلا تحتاج حدّ اختيار. الاقتباس الحرفي بلا صندوق، وخطٌّ رفيع بلون الوحدة
-   في بدايته يردّد خطّ القصّة تحت النص — ثم السبب، ثم الأثر المتوقع */
-#cut-card[data-state="selected"] {
-  box-shadow: inset 0 0 0 var(--stroke-hairline) var(--border-hairline);
+.alert[hidden],
+.sheet[hidden],
+.popover[hidden] {
+  display: none;
 }
-#cut-card .card-quote {
-  padding-block: var(--space-2);
-  padding-inline: var(--space-10) 0;
-  border-inline-start: 2px solid var(--module-accent);
-  border-radius: 0;
-  background: none;
-  box-shadow: none;
-  font: var(--type-body-default);
+.alert,
+.sheet {
+  inset-inline-start: 50%;
+  inset-block-start: 50%;
+  transform: translate(50%, -50%);
+  max-block-size: calc(100% - 2 * var(--space-24));
 }
-#cut-card-tag .icon:not([hidden]) {
-  display: block;
+.alert {
+  gap: var(--layout-content-gap);
+  inline-size: 400px;
+  max-inline-size: calc(100% - 2 * var(--space-24));
+  padding: var(--component-padding-2xl);
+  box-shadow: var(--elevation-sheet);
 }
-.card-meta {
-  align-self: stretch;
-  font: var(--type-caption-default);
-  color: var(--text-secondary);
-}
-.card-effect {
+.alert-body {
   display: flex;
-  align-self: stretch;
-  gap: var(--space-4);
-  font: var(--type-caption-default);
-  color: var(--text-secondary);
+  flex-direction: column;
+  gap: var(--layout-component-gap);
 }
-.card-effect .icon {
-  flex: none;
-  color: var(--icon-secondary);
+.alert-app-icon {
+  inline-size: var(--space-48);
+  block-size: var(--space-48);
 }
-
-/* الضمانة: الحكم بخط عريض ورمز الخاتم في بدايته (Figma 107:425 و107:499) */
-.covenant-bar {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-8);
-  font: var(--type-body-emphasis);
-  color: var(--status-success-fg);
-}
-.covenant-bar.fail {
-  color: var(--status-danger-fg);
-}
-.covenant-bar-icon {
-  flex: none;
-  margin-block-start: 2px;
-}
-
-/* ملاحظة «لا قصّات» (Banner · Info, Figma 200:17546): رمز محايد بلا إغلاق ولا فعل */
-.banner-icon.is-info {
-  color: var(--icon-secondary);
-}
-
-/* ================= شريط البحث في النتيجة (Figma 262:7032 و73:701) =================
-   شريط ٣٢ تحت شريط الأدوات بعرض المحتوى: الحقل يمينًا ثم السابق والتالي ثم «تم»،
-   بمقاسات عناصر macOS 27 الصغيرة (٢٠ بخط ١١)، ويدفع المحتوى تحته */
-.find-bar {
-  position: absolute;
-  inset-block-start: var(--size-toolbar);
-  inset-inline: 0;
-  z-index: 6;
-  display: flex;
-  align-items: center;
-  gap: var(--space-8);
-  block-size: var(--size-find-bar);
-  padding-inline: var(--space-8);
-  background: var(--surface-find-bar);
-  box-shadow: inset 0 calc(-1 * var(--stroke-hairline)) 0 var(--border-default);
-}
-:root:not([data-module="shadhb"]) .find-bar:not([hidden]) + .scroll-view {
-  padding-block-start: calc(var(--size-toolbar) + var(--size-find-bar) + var(--space-8) + var(--space-24));
-}
-.find-field {
-  display: flex;
-  flex: 1;
-  align-items: center;
-  gap: var(--space-4);
-  min-inline-size: 0;
-  block-size: var(--size-control-small);
-  padding-inline: var(--space-5);
-  border-radius: var(--radius-control-small);
-  background: var(--fill-field);
-  box-shadow: inset 0 0 0 var(--stroke-hairline) var(--border-default);
-  color: var(--icon-secondary);
-}
-.find-field:focus-within {
-  box-shadow: inset 0 0 0 var(--stroke-hairline) var(--border-default), var(--focus-ring);
-}
-.find-field input {
-  flex: 1;
-  min-inline-size: 0;
-  padding: 0;
-  border: 0;
-  background: none;
-  outline: none;
-  font: var(--type-caption-footnote);
+.alert-title {
+  font: var(--type-section-title);
   color: var(--text-primary);
 }
-.find-field input::placeholder {
-  color: var(--text-tertiary);
-}
-.find-field input::-webkit-search-decoration,
-.find-field input::-webkit-search-cancel-button {
-  -webkit-appearance: none;
-}
-.find-field input:focus-visible {
-  box-shadow: none;
-}
-.find-count {
-  flex: none;
-  font: var(--type-caption-footnote);
+.alert-message {
+  font: var(--type-body-ui);
   color: var(--text-secondary);
 }
-.find-nav {
+/* الأزرار عند الحافة اليسرى: الأساسي في أقصاها ثم الثانوي إلى يمينه (Alert Actions). ترتيب
+   المستند «إلغاء ثم الفعل» يعطيه اتجاه RTL مع الرصّ إلى نهاية الصفّ */
+.alert-buttons {
   display: flex;
-  flex: none;
-  align-items: center;
-  block-size: var(--size-control-small);
-  border-radius: var(--radius-control-small);
-  background: var(--fill-control);
+  justify-content: flex-end;
+  gap: var(--layout-element-gap);
 }
-.find-step {
+.alert-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  inline-size: 21px;
-  block-size: 100%;
-  border-radius: var(--radius-control-small);
-  color: var(--icon-primary);
-}
-.find-step:hover:not(:disabled) {
-  background: var(--fill-hover);
-}
-.find-step:disabled {
-  color: var(--text-disabled);
-}
-.find-step-back {
-  transform: rotate(180deg);
-}
-.find-nav-divider {
-  flex: none;
-  inline-size: var(--stroke-hairline);
-  block-size: var(--space-12);
-  background: var(--border-default);
-}
-.find-done {
-  flex: none;
-  block-size: var(--size-control-small);
-  padding-inline: var(--space-10);
-  border-radius: var(--radius-control-small);
-  background: var(--fill-control);
-  font: var(--type-caption-footnote);
+  padding: var(--component-padding-sm) var(--component-padding-lg);
+  border: var(--stroke-hairline) solid var(--border-default);
+  border-radius: var(--radius-6);
+  font: var(--type-button-label);
   color: var(--text-primary);
 }
-.find-done:hover {
-  background-image: linear-gradient(var(--fill-hover), var(--fill-hover));
+.alert-button:hover {
+  background: var(--fill-hover);
 }
-
-/* ================= فوق النافذة: الورقة والتنبيه والنافذة المنبثقة =================
-   خارج #window، وما تحت الورقة والتنبيه خامل حتى يُغلقا. لا تعتيم تحتهما كما في
-   macOS 27، والظهور تلاشٍ قصير بمدة Motion */
-@keyframes overlay-in {
-  from {
-    opacity: 0;
-    scale: 0.98;
-  }
+.alert-button:active {
+  background: var(--fill-pressed);
+  border-color: var(--border-strong);
 }
-@keyframes popover-in {
-  from {
-    opacity: 0;
-    translate: 0 calc(-1 * var(--motion-distance-slide) / 2);
-  }
+.alert-button.is-default {
+  border-color: transparent;
+  background: var(--module-accent);
+  color: var(--text-on-accent);
 }
-@media (prefers-reduced-motion: reduce) {
-  @keyframes overlay-in {
-    from { opacity: 0; }
-  }
-  @keyframes popover-in {
-    from { opacity: 0; }
-  }
+.alert-button.is-default:hover,
+.alert-button.is-default:active {
+  background: var(--module-accent-hover);
 }
-
-/* الورقة (Sheet, Figma 78:615): في وسط النافذة بزاوية ١٦، شريط علوي ٤٧٫٥ وسفلي ٦٥ */
-.sheet {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  z-index: 200;
+.alert-button.is-destructive {
+  border-color: var(--status-danger);
+  color: var(--status-danger);
+}
+.alert-button.is-destructive:hover,
+.alert-button.is-destructive:active {
+  background: var(--status-danger-subtle);
+}
+.update-progress {
   display: flex;
   flex-direction: column;
-  inline-size: min(var(--size-sheet-width), calc(100vw - 2 * var(--space-20)));
-  max-block-size: calc(100vh - 2 * var(--space-20));
+  gap: var(--layout-element-gap);
+}
+.update-progress-track {
+  block-size: var(--space-6);
+  border-radius: var(--radius-full);
+  background: var(--fill-pressed);
   overflow: hidden;
-  border-radius: var(--radius-16);
-  background: var(--surface-sheet);
-  box-shadow: inset 0 0 0 var(--stroke-hairline) var(--material-edge), var(--elevation-popover);
-  transform: translate(-50%, -50%);
-  animation: overlay-in var(--motion-duration-popover) var(--motion-easing-standard);
+}
+.update-progress-fill {
+  block-size: 100%;
+  border-radius: var(--radius-full);
+  background: var(--module-accent);
+  transition: inline-size var(--motion-normal);
+}
+.update-progress-caption {
+  font: var(--type-metadata);
+  color: var(--text-secondary);
+}
+
+.sheet {
+  gap: var(--layout-content-gap);
+  inline-size: 720px;
+  max-inline-size: calc(100% - 2 * var(--space-24));
+  padding: var(--component-padding-2xl);
+  box-shadow: var(--elevation-window);
+}
+.sheet-narrow {
+  inline-size: 440px;
 }
 .sheet-topbar {
   display: flex;
-  flex: none;
-  align-items: center;
-  block-size: var(--size-sheet-topbar);
-  padding-inline: var(--space-20);
+  flex-direction: column;
+  gap: var(--layout-tight-gap);
+  padding-block-end: var(--layout-tight-gap);
+  border-block-end: var(--stroke-hairline) solid var(--border-default);
 }
 .sheet-title {
-  font: var(--type-label-default);
+  font: var(--type-window-title);
   color: var(--text-primary);
 }
 .sheet-body {
   display: flex;
+  flex: 1;
   flex-direction: column;
-  gap: var(--space-16);
+  gap: var(--layout-group-gap);
   min-block-size: 0;
-  padding: var(--space-4) var(--space-20) var(--space-20);
   overflow-y: auto;
 }
 .sheet-subtitle {
-  font: var(--type-body-small);
+  font: var(--type-body-ui);
   color: var(--text-secondary);
 }
 .sheet-bottombar {
   display: flex;
-  flex: none;
-  align-items: center;
   justify-content: flex-end;
-  gap: var(--space-8);
-  block-size: var(--size-sheet-bottombar);
-  padding-inline: var(--space-20);
-  box-shadow: inset 0 var(--stroke-hairline) 0 var(--border-default);
+  gap: var(--layout-element-gap);
+  padding-block-start: var(--layout-component-gap);
+  border-block-start: var(--stroke-hairline) solid var(--border-default);
 }
 
-/* أعمدة التنويعات (Variation Column, Figma 73:751): جاهز، جارٍ التوليد، تعذّر */
-.variations-grid {
+/* ورقة أول تشغيل: الخطوة من data-step */
+.sheet[data-step="welcome"] [data-step-pane="connect"],
+.sheet[data-step="connect"] [data-step-pane="welcome"] {
+  display: none;
+}
+.welcome-hero {
   display: flex;
-  gap: var(--space-12);
+  flex-direction: column;
+  align-items: center;
+  gap: var(--layout-element-gap);
+  text-align: center;
+}
+.welcome-app-icon {
+  inline-size: var(--space-64);
+  block-size: var(--space-64);
+}
+.welcome-heading {
+  font: var(--type-section-title);
+  color: var(--text-primary);
+}
+.welcome-tagline {
+  font: var(--type-body-ui);
+  color: var(--text-secondary);
+}
+.welcome-features {
+  display: flex;
+  flex-direction: column;
+  gap: var(--layout-component-gap);
+}
+.welcome-feature {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--layout-component-gap);
+}
+.welcome-feature-icon {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  inline-size: var(--space-32);
+  block-size: var(--space-32);
+  border-radius: var(--radius-8);
+  background: var(--module-accent-subtle);
+  color: var(--text-primary);
+}
+.welcome-feature-icon svg {
+  inline-size: var(--icon-20);
+  block-size: var(--icon-20);
+  fill: currentColor;
+}
+.welcome-feature-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.welcome-feature-title {
+  font: var(--type-button-label);
+  color: var(--text-primary);
+}
+.welcome-feature-note {
+  font: var(--type-caption);
+  color: var(--text-secondary);
+}
+.welcome-connect {
+  display: flex;
+  flex-direction: column;
+  gap: var(--layout-component-gap);
+}
+.welcome-help {
+  align-self: flex-start;
+  border-radius: var(--radius-2);
+  font: var(--type-caption);
+  color: var(--module-accent-text);
+}
+.welcome-help:hover {
+  text-decoration: underline;
+}
+
+/* ورقة التنويعات */
+.variations-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--layout-component-gap);
 }
 .variation {
   display: flex;
-  flex: 1 1 0;
   flex-direction: column;
-  gap: var(--space-12);
-  min-inline-size: 0;
-  block-size: 320px;
-  padding: var(--space-16);
-  border-radius: var(--radius-12);
-  background: var(--surface-content);
-  box-shadow: inset 0 0 0 var(--stroke-hairline) var(--border-default);
+  gap: var(--layout-component-gap);
+  min-block-size: 280px;
+  padding: var(--component-padding-lg);
+  border: var(--stroke-hairline) solid var(--border-default);
+  border-radius: var(--radius-8);
+  background: var(--surface-elevated);
 }
 .variation-header {
   display: flex;
-  flex: none;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-8);
+  gap: var(--layout-element-gap);
 }
 .variation-title {
-  font: var(--type-label-default);
+  font: var(--type-button-label);
   color: var(--text-primary);
 }
 .variation-body {
   display: flex;
   flex: 1;
   flex-direction: column;
-  align-items: flex-start;
-  gap: var(--space-8);
+  gap: var(--layout-component-gap);
   min-block-size: 0;
   overflow-y: auto;
 }
-.variation[data-state="generating"] .skeleton-line:nth-child(3) { inline-size: 140px; }
-.variation[data-state="generating"] .skeleton-line:nth-child(5) { inline-size: 100px; }
-.variation[data-state="failed"] .variation-body {
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-}
-.variation-failed-icon {
-  color: var(--status-danger-fg);
-}
-.variation-message {
-  font: var(--type-body-emphasis);
-  color: var(--text-primary);
-}
 .variation-text {
-  inline-size: 100%;
-  font: var(--type-body-small);
+  font: var(--type-body-ui);
   color: var(--text-primary);
   white-space: pre-wrap;
-  overflow-wrap: anywhere;
+}
+.variation-message {
+  font: var(--type-caption);
+  color: var(--text-secondary);
 }
 .variation-adopt {
-  align-self: flex-start;
-}
-
-/* التنبيه (Alert · Destructive, Figma 263:7635): ٢٦٩ بزاوية ٢٦، فوق الوسط قليلًا،
-   «إلغاء» يمينًا و«حذف» يسارًا كبسولتين متساويتين */
-.alert {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  z-index: 210;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-20);
-  inline-size: var(--size-alert-width);
-  padding: var(--space-20) var(--space-16) var(--space-16);
-  border-radius: var(--radius-26);
-  background: var(--material-popover);
-  box-shadow: inset 0 0 0 var(--stroke-hairline) var(--material-edge), var(--elevation-popover);
-  -webkit-backdrop-filter: blur(var(--radius-20));
-  backdrop-filter: blur(var(--radius-20));
-  transform: translate(-50%, calc(-50% - 40px));
-  animation: overlay-in var(--motion-duration-popover) var(--motion-easing-standard);
-}
-.alert-body {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-10);
-  padding-inline: var(--space-4);
-}
-.alert-title {
-  font: var(--type-label-default);
-  color: var(--text-primary);
-}
-.alert-message {
-  font: var(--type-body-small);
-  color: var(--text-primary);
-}
-.alert-buttons {
-  display: flex;
-  gap: var(--space-8);
-}
-.alert-button {
-  flex: 1 1 0;
-  block-size: var(--size-alert-button);
-  padding-inline: var(--space-14);
-  border-radius: var(--radius-full);
-  background: var(--fill-control);
-  font: var(--type-label-default);
-  color: var(--text-primary);
-}
-.alert-button:hover {
-  background-image: linear-gradient(var(--fill-hover), var(--fill-hover));
-}
-.alert-button:active {
-  background-image: linear-gradient(var(--fill-pressed), var(--fill-pressed));
-}
-.alert-button.is-destructive {
-  background-color: var(--status-danger-bg);
-  color: var(--status-danger-fg);
-}
-/* الزر الافتراضي في تنبيهات التطبيق: ممتلئ بلون الهوية (Figma 258:18774) */
-.alert-button.is-default {
-  background-color: var(--accent-nasaq-strong);
-  color: var(--text-on-accent);
-}
-
-/* ================= أول تشغيل والتحديثات (Figma 255:521 و258:18771) =================
-   طبقتان على مستوى التطبيق لا على مستوى برج: لونهما لون الهوية ثابتًا
-   (accent-nasaq) لا لون الوحدة الظاهرة، فهما عن التطبيق نفسه وأيقونته. */
-
-/* ورقة ٤٨٠ لا ٧٢٠: مقاس مكتوب في نسخة الورقة بالتصميم لا متغيّرٌ فيه */
-.sheet-narrow {
-  inline-size: min(480px, calc(100vw - 2 * var(--space-20)));
-}
-
-/* الخطوتان في ورقة واحدة: ما لا يخصّ الخطوة الجارية لا يُرسم */
-#welcome-sheet[data-step="welcome"] :is(#welcome-subtitle, [data-step-pane="connect"], #welcome-skip),
-#welcome-sheet[data-step="connect"] :is([data-step-pane="welcome"]),
-#welcome-sheet[data-step="welcome"] .sheet-title {
-  display: none;
-}
-
-/* الترحيب: بطل ٦٤ ثم عنوان وسطر، ثم ثلاث ميزات — الفجوات ٢٨ و١٨ و١٠ و١٤ */
-.welcome-intro {
-  display: flex;
-  flex-direction: column;
-  gap: 28px;
-  padding-block-end: var(--space-8);
-  padding-inline: var(--space-20);
-}
-.welcome-hero {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-10);
-  text-align: center;
-}
-.welcome-app-icon {
-  inline-size: var(--size-app-icon-md);
-  block-size: var(--size-app-icon-md);
-}
-.welcome-heading {
-  font: var(--type-heading-h2);
-  color: var(--text-primary);
-}
-.welcome-tagline {
-  font: var(--type-body-default);
-  color: var(--text-secondary);
-}
-.welcome-features {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
-.welcome-feature {
-  display: flex;
-  gap: var(--space-14);
-}
-/* الرمز ٢٤ داخل مربّع ٢٨: مكتبة التصميم فيها ٢٠ فحسب، والورقة تكبّره */
-.welcome-feature-icon {
-  flex: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  inline-size: 28px;
-  block-size: 28px;
-  color: var(--icon-secondary);
-}
-.welcome-feature-icon svg {
-  inline-size: 24px;
-  block-size: 24px;
-  fill: currentColor;
-}
-.welcome-feature-icon[data-tint="nasaq"] {
-  color: var(--accent-nasaq-glyph);
-}
-.welcome-feature-icon[data-tint="shadhb"] {
-  color: var(--accent-shadhb-glyph);
-}
-.welcome-feature-text {
-  display: flex;
-  flex: 1 1 auto;
-  flex-direction: column;
-  /* ٢ بين العنوان ١٨ والشرح ٢٠: يجعل الصفّ ٤٠ كما رُسم */
-  gap: var(--space-2);
-  min-inline-size: 0;
-}
-.welcome-feature-title {
-  font: var(--type-label-default);
-  color: var(--text-primary);
-}
-.welcome-feature-note {
-  font: var(--type-body-small);
-  color: var(--text-secondary);
-}
-
-/* ربط النموذج: القسم ثم رابط المساعدة على بُعد ١٢ */
-.welcome-connect {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-12);
-}
-.welcome-help {
-  align-self: flex-start;
-  font: var(--type-body-small);
-  color: var(--accent-nasaq-glyph);
-  text-align: start;
-}
-.welcome-help:hover {
-  text-decoration: underline;
-}
-
-/* تنبيه التطبيق: أيقونته ٦٤ في بداية العمود (يمينه) فوق العنوان */
-.alert-app .alert-body {
-  align-items: flex-start;
-}
-/* «ثبّت وأعد التشغيل» ١٠٢ في نصف صفٍّ ١١٣٫٥: إزاحته ٥ كما قِيست من الإطار،
-   لا ١٤ كإزاحة تنبيه الحذف — وسطرٌ واحد دائمًا، فالتصميم لا يلفّ زرًّا */
-.alert-app .alert-button {
-  padding-inline: var(--space-5);
-  white-space: nowrap;
-}
-.alert-app-icon {
-  inline-size: var(--size-app-icon-md);
-  block-size: var(--size-app-icon-md);
-  /* الإطار ٧٠ لأيقونة ٦٤: ٦ تحتها قبل فجوة العمود ١٠ — و٦ ليست توكنًا */
-  margin-block-end: 6px;
-}
-.alert-app .alert-title,
-.alert-app .alert-message {
   align-self: stretch;
 }
 
-/* شريط التنزيل ٤ بزاوية كاملة، يمتلئ من جهة البداية، وتحته سطر ١١ */
-.update-progress {
-  display: flex;
-  align-self: stretch;
-  flex-direction: column;
-  gap: var(--space-10);
-}
-.update-progress-track {
-  block-size: var(--size-progress-bar);
-  border-radius: var(--radius-full);
-  background: var(--fill-control);
-  overflow: hidden;
-}
-.update-progress-fill {
-  block-size: 100%;
-  inline-size: 0;
-  border-radius: var(--radius-full);
-  background: var(--accent-nasaq-strong);
-  transition: inline-size var(--motion-duration-hover) linear;
-}
-.update-progress-caption {
-  font: var(--type-caption-footnote);
-  color: var(--text-secondary);
-}
-
-/* النافذة المنبثقة (Popover, Figma 70:356): زاوية ٢٠ وسهم ٢٥×١٠ يشير إلى وسط زرها،
-   وعدسة القراءة داخلها بعرض هاتف ٣٧٥ */
+/* Popover 30:36 — ٣٦٠، حشو ٢٠، فجوة ١٦، ظل Shadow/Sheet، وسهم ١٦ إلى مرساته */
 .popover {
-  position: fixed;
-  z-index: 150;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-12);
-  padding: var(--space-16);
-  border-radius: var(--radius-20);
-  background: var(--material-popover);
-  box-shadow: inset 0 0 0 var(--stroke-hairline) var(--material-edge), var(--elevation-popover);
-  -webkit-backdrop-filter: blur(var(--radius-20));
-  backdrop-filter: blur(var(--radius-20));
-  animation: popover-in var(--motion-duration-popover) var(--motion-easing-standard);
+  gap: var(--layout-group-gap);
+  inline-size: 360px;
+  padding: var(--component-padding-xl);
+  box-shadow: var(--elevation-sheet);
+  overflow: visible;
 }
 .popover::before {
   content: "";
   position: absolute;
-  inset-block-start: -10px;
-  left: var(--arrow-x, 50%);
-  inline-size: 25px;
-  block-size: 11px;
-  background: var(--material-popover);
-  clip-path: path("M0 11 C5 11 9.5 2.5 12.5 0 C15.5 2.5 20 11 25 11 Z");
-  transform: translateX(-50%);
+  inset-block-start: calc(-1 * var(--space-8));
+  inset-inline-end: calc(100% - var(--arrow-x, 50%) - var(--space-8));
+  inline-size: var(--space-16);
+  block-size: var(--space-16);
+  border: solid var(--border-default);
+  border-width: var(--stroke-hairline) 0 0 var(--stroke-hairline);
+  background: var(--surface-reading);
+  transform: rotate(45deg);
 }
 .lens-header {
   display: flex;
-  flex: none;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--space-4);
+  padding-block-end: var(--layout-group-gap);
+  border-block-end: var(--stroke-hairline) solid var(--border-default);
 }
 .lens-title {
-  font: var(--type-label-default);
+  font: var(--type-section-title);
   color: var(--text-primary);
 }
 .lens-note {
-  font: var(--type-caption-footnote);
-  color: var(--text-secondary);
+  font: var(--type-metadata-strong);
+  color: var(--module-accent-text);
 }
 .lens-phone {
-  inline-size: 375px;
-  max-inline-size: calc(100vw - 2 * var(--space-24));
-  min-block-size: 0;
-  padding: var(--space-20) var(--space-16) var(--space-24);
+  max-block-size: 320px;
   overflow-y: auto;
-  border-radius: var(--radius-12);
-  background: var(--surface-content);
-  box-shadow: inset 0 0 0 var(--stroke-hairline) var(--border-hairline);
 }
 .lens-text {
   font: var(--type-body-reading);
   color: var(--text-primary);
   white-space: pre-wrap;
-  overflow-wrap: anywhere;
 }
 
-/* ================= معاينة المتصفح وحدها ================= */
-/* خارج التطبيق لا يرسم النظام إشارات النافذة، فتُرسم هنا للمطابقة مع Figma */
-[data-preview] .window-controls {
-  background:
-    radial-gradient(circle at 53px 7px, var(--system-window-close) 6.5px, transparent 7px),
-    radial-gradient(circle at 30px 7px, var(--system-window-minimize) 6.5px, transparent 7px),
-    radial-gradient(circle at 7px 7px, var(--system-window-zoom) 6.5px, transparent 7px);
-  background-repeat: no-repeat;
-  background-size: 60px 14px;
-  background-position: right center;
+/* ================= الحركة عند تبديل الوحدة ================= */
+[data-module-switching] .content,
+[data-module-switching] .action-bar {
+  animation: module-fade var(--motion-enter) ease-out;
+}
+@keyframes module-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+/* ================= النافذة الضيقة: عمود واحد بمبدّل العرض (إطارات ٧٦٠) ================= */
+@media (max-width: 1023px) {
+  [data-module="nasaq"][data-nasaq-state="result"] .view-strip,
+  [data-module="nasaq"][data-nasaq-state="review"] .view-strip,
+  [data-module="shadhb"][data-shadhb-state="polished"] .view-strip {
+    display: flex;
+  }
+  .compare-divider {
+    display: none !important;
+  }
+  [data-module="nasaq"][data-nasaq-state="result"] .content[data-view="result"] .column-source,
+  [data-module="nasaq"][data-nasaq-state="review"] .content[data-view="result"] .column-source,
+  [data-module="nasaq"][data-nasaq-state="result"] .content[data-view="source"] .column-result,
+  [data-module="nasaq"][data-nasaq-state="review"] .content[data-view="source"] .column-result,
+  [data-module="shadhb"][data-shadhb-state="polished"] .content[data-view="result"] .column-source,
+  [data-module="shadhb"][data-shadhb-state="polished"] .content[data-view="source"] .column-result {
+    display: none;
+  }
+  [data-module="nasaq"][data-nasaq-state="result"] .column-source,
+  [data-module="nasaq"][data-nasaq-state="review"] .column-source {
+    flex: 1;
+    inline-size: auto;
+  }
+  .action-bar {
+    flex-wrap: wrap;
+    padding-inline: var(--component-padding-lg);
+  }
+  .directives-field {
+    order: 5;
+    flex-basis: 100%;
+  }
+  .primary-action {
+    inline-size: auto;
+    flex: 1;
+  }
+  .inspector {
+    inline-size: 320px;
+  }
+  .variations-grid {
+    grid-template-columns: 1fr;
+  }
 }

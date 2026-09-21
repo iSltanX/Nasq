@@ -10,199 +10,129 @@
     <link rel="stylesheet" href="secondary.css" />
   </head>
   <body data-window="settings">
-    <!-- الهيئة ٨٨: صفّ عنوان ٣٢ عنوانه اسم التبويب، وشريط تبويبات ٥٦ -->
+    <!-- نافذة الإعدادات كما في Figma «NsqV272» (Settings / General 2128:576 وUpdates
+         2128:625): حشو ٢٠ وفجوة ١٦؛ صفّ عنوان ١٨ عنوانه «الإعدادات» دائمًا، ثم مضمار
+         تبويبين ٣٤، ثم اللوح وتذييله. الهيئة فوق اللوح وتحته ١٢٤ (secondary.rs) -->
     <header class="titlebar" data-tauri-drag-region>
-      <div class="title-row" data-tauri-drag-region>
-        <h1 id="window-title">عام</h1>
-      </div>
-      <div class="tabs" role="tablist" aria-label="أقسام الإعدادات" data-tauri-drag-region>
-        <button
-          class="tab"
-          type="button"
-          role="tab"
-          id="tab-general"
-          data-tab="general"
-          aria-selected="true"
-          aria-controls="pane-general"
-        >
-          <svg aria-hidden="true"><use href="#gearshape.20r"></use></svg>
-          <span>عام</span>
-        </button>
-        <button
-          class="tab"
-          type="button"
-          role="tab"
-          id="tab-updates"
-          data-tab="updates"
-          aria-selected="false"
-          aria-controls="pane-updates"
-          tabindex="-1"
-        >
-          <svg aria-hidden="true"><use href="#arrow.clockwise.20r"></use></svg>
-          <span>التحديثات</span>
-        </button>
-      </div>
+      <h1 id="window-title" data-tauri-drag-region>الإعدادات</h1>
     </header>
+    <div class="tabs" role="tablist" aria-label="أقسام الإعدادات">
+      <button class="tab" type="button" role="tab" id="tab-general" data-tab="general" aria-selected="true" aria-controls="pane-general">
+        <span>عام</span>
+      </button>
+      <button class="tab" type="button" role="tab" id="tab-updates" data-tab="updates" aria-selected="false" aria-controls="pane-updates" tabindex="-1">
+        <span>التحديثات</span>
+      </button>
+    </div>
 
     <main>
       <section class="pane" id="pane-general" role="tabpanel" aria-labelledby="tab-general">
         <div class="form-section">
-          <h2 class="section-header">النموذج</h2>
+          <h2 class="section-header">إعدادات مزوّد التنسيق</h2>
           <div class="section-rows">
             <div class="form-row" data-control="picker">
-              <span class="row-label" id="label-provider">المزوّد</span>
-              <span class="row-spacer"></span>
-              <button
-                class="row-picker"
-                type="button"
-                id="provider-picker"
-                aria-labelledby="label-provider"
-                aria-haspopup="menu"
-                aria-expanded="false"
-              >
+              <span class="row-label" id="label-provider">مزوّد الخدمة:</span>
+              <button class="row-picker" type="button" id="provider-picker" aria-labelledby="label-provider" aria-haspopup="menu" aria-expanded="false">
                 <span id="provider-value">Gemini</span>
-                <span class="picker-chevron" aria-hidden="true">
-                  <svg><use href="#chevron.up.chevron.down.16m"></use></svg>
-                </span>
+                <span class="picker-chevron" aria-hidden="true"></span>
               </button>
             </div>
             <div class="form-row" data-control="field">
-              <label class="row-label" for="api-key">مفتاح API</label>
-              <input
-                class="row-field"
-                id="api-key"
-                type="password"
-                dir="ltr"
-                autocomplete="off"
-                spellcheck="false"
-                placeholder="الصق المفتاح هنا"
-              />
-              <!-- زر العين (Figma 248:6427 و348:22148): يُظهر المفتاح المحفوظ بطلب صريح -->
-              <button class="row-reveal" type="button" id="reveal-key" aria-pressed="false" aria-controls="api-key" title="إظهار المفتاح" aria-label="إظهار المفتاح" hidden>
-                <svg class="icon" aria-hidden="true"><use id="reveal-key-icon" href="#eye.16r"></use></svg>
-              </button>
+              <label class="row-label" for="api-key">مفتاح <bdi dir="ltr">API</bdi>:</label>
+              <span class="row-input">
+                <input class="row-field" id="api-key" type="password" dir="ltr" autocomplete="off" spellcheck="false" placeholder="الصق المفتاح هنا" />
+                <!-- زر العين (Secure Field 26:228): يُظهر المفتاح المحفوظ بطلب صريح -->
+                <button class="row-reveal" type="button" id="reveal-key" aria-pressed="false" aria-controls="api-key" title="إظهار المفتاح" aria-label="إظهار المفتاح" hidden>
+                  <svg class="icon" aria-hidden="true"><use id="reveal-key-icon" href="#eye.16r"></use></svg>
+                </button>
+              </span>
             </div>
             <div class="form-row" data-control="field">
-              <label class="row-label" for="model-name">النموذج</label>
-              <input
-                class="row-field"
-                id="model-name"
-                type="text"
-                dir="ltr"
-                autocomplete="off"
-                spellcheck="false"
-              />
+              <label class="row-label" for="model-name">النموذج النشط:</label>
+              <span class="row-input">
+                <input class="row-field" id="model-name" type="text" dir="ltr" autocomplete="off" spellcheck="false" />
+              </span>
             </div>
-          </div>
-          <p class="section-footer" id="key-footer" aria-live="polite">
-            <svg class="icon" aria-hidden="true" hidden><use href="#checkmark.circle.16m"></use></svg>
-            <span id="key-footer-text">يُحفظ المفتاح في سلسلة المفاتيح على جهازك، ولا يُرسَل نصّك إلا حين تطلب التنسيق أو الفحص.</span>
-          </p>
-        </div>
-
-        <div class="form-section">
-          <h2 class="section-header">الاتصال</h2>
-          <div class="section-rows">
             <div class="form-row" data-control="field">
-              <label class="row-label" for="base-url">عنوان الخادم</label>
-              <input
-                class="row-field"
-                id="base-url"
-                type="text"
-                dir="ltr"
-                autocomplete="off"
-                spellcheck="false"
-              />
+              <label class="row-label" for="base-url">عنوان الخادم:</label>
+              <span class="row-input">
+                <input class="row-field" id="base-url" type="text" dir="ltr" autocomplete="off" spellcheck="false" />
+              </span>
             </div>
             <div class="form-row" data-control="button">
-              <span class="row-label">اختبار الاتصال</span>
-              <span class="row-spacer"></span>
+              <span class="row-label"></span>
+              <button class="button button-secondary" type="button" id="test-connection">اختبر الاتصال</button>
               <span class="row-status" id="connection-status" role="status" aria-live="polite" hidden>
                 <span id="connection-message"></span>
                 <svg aria-hidden="true"><use id="connection-icon" href="#checkmark.circle.16m"></use></svg>
               </span>
-              <button class="row-button" type="button" id="test-connection">اختبر</button>
             </div>
           </div>
         </div>
 
         <div class="form-section">
-          <h2 class="section-header">المظهر</h2>
+          <h2 class="section-header">مظهر التطبيق</h2>
           <div class="section-rows">
             <div class="form-row" data-control="picker">
-              <span class="row-label" id="label-appearance">المظهر</span>
-              <span class="row-spacer"></span>
-              <button
-                class="row-picker"
-                type="button"
-                id="appearance-picker"
-                aria-labelledby="label-appearance"
-                aria-haspopup="menu"
-                aria-expanded="false"
-              >
+              <span class="row-label" id="label-appearance">نمط المظهر:</span>
+              <button class="row-picker" type="button" id="appearance-picker" aria-labelledby="label-appearance" aria-haspopup="menu" aria-expanded="false">
                 <span id="appearance-value">تلقائي</span>
-                <span class="picker-chevron" aria-hidden="true">
-                  <svg><use href="#chevron.up.chevron.down.16m"></use></svg>
-                </span>
+                <span class="picker-chevron" aria-hidden="true"></span>
               </button>
             </div>
           </div>
-          <p class="section-footer">«تلقائي» يتبع مظهر النظام ويتبدّل معه فورًا.</p>
         </div>
+
+        <footer class="pane-footer">
+          <p class="section-footer" id="key-footer" aria-live="polite">
+            <svg class="icon" aria-hidden="true" hidden><use href="#checkmark.circle.16m"></use></svg>
+            <span id="key-footer-text">يُحفظ المفتاح في سلسلة المفاتيح على جهازك، ولا يُرسَل نصّك إلا حين تطلب التنسيق أو الفحص.</span>
+          </p>
+        </footer>
       </section>
 
       <section class="pane" id="pane-updates" role="tabpanel" aria-labelledby="tab-updates" hidden>
         <div class="form-section">
+          <h2 class="section-header">تحديث البرمجية</h2>
           <div class="section-rows">
             <div class="form-row" data-control="switch">
-              <span class="row-label" id="label-auto-updates">التحقق من التحديثات تلقائيًا</span>
-              <span class="row-spacer"></span>
-              <button
-                class="row-switch"
-                type="button"
-                id="auto-updates"
-                role="switch"
-                aria-checked="true"
-                aria-labelledby="label-auto-updates"
-              ></button>
+              <span class="row-label" id="label-auto-updates">التحقق التلقائي من وجود تحديثات</span>
+              <button class="row-switch" type="button" id="auto-updates" role="switch" aria-checked="true" aria-labelledby="label-auto-updates"></button>
             </div>
-            <div class="form-row" data-control="value">
-              <span class="row-label">الإصدار الحالي</span>
-              <span class="row-value" id="app-version" dir="ltr"></span>
-            </div>
-            <div class="form-row" data-control="button">
-              <span class="row-label">آخر تحقق</span>
-              <span class="row-spacer"></span>
-              <span class="row-status" id="update-status" role="status" aria-live="polite" hidden>
-                <span id="update-message"></span>
-              </span>
-              <button class="row-button" type="button" id="check-updates">تحقّق الآن</button>
+            <div class="update-card">
+              <div class="form-row" data-control="value">
+                <span class="row-label">الإصدار الحالي</span>
+                <span class="row-value" id="app-version" dir="ltr"></span>
+              </div>
+              <div class="form-row" data-control="button">
+                <span class="row-label">آخر تحقق</span>
+                <span class="row-status" id="update-status" role="status" aria-live="polite" hidden>
+                  <span id="update-message"></span>
+                </span>
+                <button class="button button-secondary" type="button" id="check-updates">تحقّق الآن</button>
+              </div>
+              <div class="form-row" data-control="button">
+                <span class="row-label" id="label-project">صفحة المشروع</span>
+                <span class="row-value" id="project-url" dir="ltr"></span>
+                <button class="button button-secondary button-small" type="button" id="open-project" aria-labelledby="label-project">افتح</button>
+              </div>
             </div>
           </div>
-          <p class="section-footer">لا يُنزَّل أي تحديث قبل موافقتك.</p>
         </div>
 
-        <!-- المشروع ونسبته (Figma 252:606 و252:777): العنوان معرّف لاتيني
-             فيُقرأ من اليسار، والزرّ يفتحه في المتصفح عبر النواة -->
-        <div class="form-section">
-          <div class="section-rows">
-            <div class="form-row" data-control="button">
-              <span class="row-label" id="label-project">صفحة المشروع</span>
-              <span class="row-value" id="project-url" dir="ltr"></span>
-              <button class="row-button" type="button" id="open-project" aria-labelledby="label-project">افتح</button>
-            </div>
-          </div>
+        <footer class="pane-footer">
+          <p class="section-footer">لا يُنزَّل أي تحديث قبل موافقتك.</p>
           <p class="section-footer">
             تطوير وتصميم: سلطان ·
             <button type="button" class="link" id="site-link" dir="ltr"></button>
           </p>
-        </div>
+        </footer>
       </section>
     </main>
 
     <div id="sprite" hidden aria-hidden="true"></div>
 
-    <!-- قائمة اختيار واحدة تخدم المزوّد والمظهر معًا -->
+    <!-- قائمة اختيار واحدة تخدم المزوّد والمظهر معًا (Dropdown Menu 30:39) -->
     <div class="picker-menu" id="picker-menu" role="menu" hidden></div>
 
     <script src="app-links.js"></script>

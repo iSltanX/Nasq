@@ -22,8 +22,10 @@ window.NasaqSecondary = (() => {
       : Promise.resolve();
     const fonts = document.fonts
       ? Promise.all([
-          document.fonts.load('400 13px "Almarai"'),
-          document.fonts.load('700 13px "Almarai"'),
+          document.fonts.load('400 14px "Cairo"'),
+          document.fonts.load('500 13px "Cairo"'),
+          document.fonts.load('600 13px "Cairo"'),
+          document.fonts.load('400 13px "JetBrains Mono"'),
         ]).catch(() => {})
       : Promise.resolve();
     return Promise.all([icons, fonts, extra ?? Promise.resolve()]).then(() => {

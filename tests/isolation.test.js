@@ -261,17 +261,21 @@ test("الهيكل: كل برج في مناطقه، وCSS لا يُظهر منط
   }
 });
 
-test("الهيكل: فعل شَذْب وجسره في كتلة الأدوات، والضمانة في المفتّش — خارج منطقة التمرير", () => {
-  for (const id of ["prune-btn", "send-to-nasaq-btn"]) {
-    assert.ok(regions[id].within.includes("editor-tools"), `${id} ليس في كتلة الأدوات`);
+test("الهيكل: فعل شَذْب وجسره في لوح المراجعة، والضمانة معهما — خارج منطقة التمرير", () => {
+  // NsqV272 (m6): لا شريط أفعال لشَذْب؛ فعله وجسره في لوحه (Review-Decision 2009:1632 وPolished 2009:1937)
+  for (const id of ["prune-btn", "send-to-nasaq-btn", "copy-pruned-btn"]) {
+    assert.ok(regions[id].within.includes("inspector"), `${id} ليس في لوح المراجعة`);
+    assert.ok(regions[id].classes.includes("panel-actions"), `${id} ليس في أفعال اللوح`);
   }
   assert.ok(regions["covenant-bar"].within.includes("inspector"), "الضمانة ليست في المفتّش");
   assert.ok(!regions["covenant-bar"].within.includes("scroll-view"), "الضمانة داخل منطقة التمرير");
-  // الكتلة فوق النص داخل المجرى، فحقّها ألا تغيب عن العين حين يُمرَّر: لاصقةٌ
-  // بأعلى المنطقة تحت الشريط (قرار المالك m5)
-  assert.match(css.slice(css.indexOf(".editor-tools {"), css.indexOf(".editor-tools {") + 320), /position: sticky/);
+  // صفّ أدوات النتيجة لا يغيب عن العين حين يُمرَّر النص: التمرير داخل صندوق النص وحده
+  // (text-container)، والصفّ فوقه خارج الصندوق (قرار المالك m5 بصيغة NsqV272)
+  assert.ok(!regions["editor-tools"].classes.includes("text-container"), "صفّ الأدوات داخل صندوق التمرير");
+  assert.ok(regions["output-text"].classes.includes("text-container"), "النتيجة ليست في صندوق التمرير");
+  assert.match(css, /\n\.text-container \{[^}]*overflow-y: auto/);
   assert.ok(regions["prune-preview"].classes.includes("column-result"), "«بعد التشذيب» ليس عمود النتيجة");
-  assert.ok(/<h2 class="column-header">بعد التشذيب<\/h2>/.test(html), "عنوان عمود «بعد التشذيب» غائب");
+  assert.ok(/<h2 class="panel-title">الشذرة المشذَّبة النهائية<\/h2>/.test(html), "عنوان عمود الشذرة المشذَّبة غائب");
 });
 
 test("الهيكل: data-module يكتبه شَذْب وحده، والهيكل لا يعرف برجًا ولا ينادي النواة إلا للجاهزية", () => {
@@ -360,7 +364,7 @@ test("المرحلة ٣: لا نافذة منبثقة داخل الصفحة لن
   // الخطأ داخل العمود لا شريطًا أعلى المحتوى، وشريط البحث تحت شريط الأدوات لا داخل التمرير
   assert.ok(regions["error-bar"].classes.includes("column-source"), "خانات التنبيه ليست فوق الأصل");
   assert.ok(regions["nasaq-error"].classes.includes("column-result"), "تنبيه نسق ليس في عمود النتيجة");
-  assert.ok(!regions["output-search-bar"].within.includes("scroll-view"), "شريط البحث داخل منطقة التمرير");
+  assert.ok(!regions["output-search-bar"].classes.includes("text-container"), "شريط البحث داخل صندوق التمرير");
 });
 
 test("المرحلة ٣: لكل حالة من حالات نَسَق عنصرها وتسميتها", () => {
@@ -381,8 +385,9 @@ test("المرحلة ٣: لكل حالة من حالات نَسَق عنصرها
   assert.strictEqual(regions["output-placeholder"].owner, "nasaq");
   assert.ok(regions["loading"].classes.includes("result-progress"), "لا هيكل نائب للنتيجة");
   const progress = html.slice(html.indexOf('id="loading"'), html.indexOf('id="output-text"'));
-  assert.strictEqual((progress.match(/class="skeleton-line"/g) || []).length, 6, "الهيكل النائب ليس ستة أسطر");
-  assert.ok(progress.includes('class="spinner spinner-16"'), "لا مؤشر في سطر التقدّم");
+  assert.strictEqual((progress.match(/class="skeleton-line"/g) || []).length, 7, "الهيكل النائب ليس سبعة أسطر كما في Processing 2009:342");
+  const formatButton = html.slice(html.indexOf('id="format-btn"'), html.indexOf('id="copy-btn"'));
+  assert.ok(formatButton.includes('class="spinner spinner-16"'), "لا مؤشر في زر الفعل أثناء التنسيق (Primary Action · Busy)");
   assert.strictEqual(regions["output-text"].owner, "nasaq");
   for (const id of ["turn-card-broken", "turn-card-joined", "adopt-broken", "adopt-joined", "revert-broken", "revert-joined"]) {
     assert.ok(regions[id]?.within.includes("fragment-card"), `${id} ليس في قسم المراجعة`);
@@ -554,26 +559,28 @@ test("المرحلة ٣: ورقة التنويعات تعرض دفعتها لل�
   );
 });
 
-test("المرحلة ٣: كبسولات الشريط واحدة — فعل كل وحدة بمقاس «نسّق»، والمحدَّد يبقى بحافته", () => {
-  assert.match(openTag("prune-btn"), /class="action-button"/, "فعل شَذْب بغير كبسولة الفعل الرئيس");
-  assert.ok(!css.includes(".glass-button"), "بقيت كبسولة ثانية بمقاس مختلف");
-  const disabled = css.slice(css.indexOf('.action-button:disabled:not([aria-busy="true"]) {'), css.indexOf("}", css.indexOf('.action-button:disabled:not([aria-busy="true"]) {')));
-  assert.ok(disabled.includes("box-shadow: inset 0 0 0 var(--stroke-hairline) var(--material-edge)"), "الفعل المعطّل مسطح بلا حافة الزجاج");
-  assert.ok(!/\.action-button\[data-style="primary"\]:disabled/.test(css), "قاعدة تعطيل مسطحة للأسلوب البارز");
-  const pressed = css.slice(css.indexOf('.toolbar-item[aria-pressed="true"] {'), css.indexOf("}", css.indexOf('.toolbar-item[aria-pressed="true"] {')));
-  assert.ok(pressed.includes("box-shadow: inset 0 0 0 var(--stroke-hairline) var(--material-edge)"), "الزر المحدَّد بلا حافة الزجاج");
+test("المرحلة ٣: الفعل الرئيس واحد في الوحدتين (Primary Action)، والمفعَّل بالطين لا بلون الوحدة", () => {
+  // NsqV272 (m6): لون الوحدة للفعل الرئيس وحده، والطين لكل مختار (DM7-04)
+  for (const id of ["format-btn", "copy-btn", "prune-btn", "send-to-nasaq-btn"]) {
+    assert.match(openTag(id), /class="primary-action"/, `${id} بغير مكوّن الفعل الرئيس`);
+  }
+  const at = (selector) => css.slice(css.indexOf(selector + " {"), css.indexOf("}", css.indexOf(selector + " {")));
+  assert.ok(at(".primary-action").includes("background: var(--module-accent)"), "الفعل الرئيس بغير لون الوحدة");
+  assert.ok(at(".primary-action:disabled").includes("background: var(--fill-disabled)"), "الفعل المعطّل بغير fill/disabled");
+  const active = at('.editor-tool[aria-pressed="true"]');
+  assert.ok(active.includes("var(--module-accent-subtle)") && active.includes("border-color: var(--accent-clay)"), "الأداة المفعَّلة بغير الطين");
+  const selected = at('.module-segment[aria-checked="true"]');
+  assert.ok(selected.includes("var(--accent-clay-subtle)") && selected.includes("var(--accent-clay-text)"), "الوحدة المختارة بغير الطين");
+  assert.ok(!/\.module-segment\[aria-checked="true"\][^}]*var\(--module-accent\)/.test(css), "لون الوحدة على المختار");
 });
 
-test("المرحلة ٣: زر الإعدادات الصغير أسفل الشريط الجانبي في الوحدتين", () => {
-  const footers = Object.fromEntries(
-    [...html.matchAll(/<footer class="sidebar-footer[^"]*" data-for="(nasaq|shadhb)">([\s\S]*?)<\/footer>/g)].map((m) => [m[1], m[2]])
-  );
-  for (const module of ["nasaq", "shadhb"]) {
-    const f = footers[module] || "";
-    assert.ok(/data-open-settings[^>]*aria-label="الإعدادات"/.test(f) && f.includes('href="#gearshape.16r"'), `لا ترس في ذيل ${module}`);
-  }
-  assert.strictEqual((html.match(/data-open-settings/g) || []).length, 2);
-  assert.ok(shell.includes('document.querySelectorAll("[data-open-settings]")'), "زر الترس لا يفتح الإعدادات");
+test("المرحلة ٣: مدخل الإعدادات زرٌّ في شريط العنوان للوحدتين", () => {
+  // NsqV272 (قرار المالك D1): «زر في title-bar + شريط القوائم» — واحد مشترك بلا data-for
+  const bar = html.slice(html.indexOf('class="title-bar"'), html.indexOf("</header>"));
+  assert.ok(/data-open-settings[^>]*title="الإعدادات ⌘،"/.test(bar) && bar.includes("الإعدادات</span>"), "لا مدخل للإعدادات في شريط العنوان");
+  assert.strictEqual((html.match(/data-open-settings/g) || []).length, 1);
+  assert.strictEqual(regions["mode-switch"].owner, null);
+  assert.ok(shell.includes('document.querySelectorAll("[data-open-settings]")'), "زر الإعدادات لا يفتح الإعدادات");
 });
 
 // ---------- حرّاس المرحلة ٤ — شَذْب كاملًا (Figma nasq-v10، صفحة 51:9) ----------
@@ -615,8 +622,9 @@ test("المرحلة ٤: لكل حالة من حالات شَذْب السبع �
   assert.ok(regions["shadhb-progress"].classes.includes("result-progress"), "لا هيكل نائب لشَذْب");
   const progress = html.slice(html.indexOf('id="shadhb-progress"'), html.indexOf('id="prune-preview"'));
   assert.strictEqual((progress.match(/class="skeleton-line"/g) || []).length, 5, "هيكل شَذْب النائب ليس خمسة أسطر");
-  assert.ok(progress.includes('class="spinner spinner-16"'), "لا مؤشر في سطر التقدّم");
-  assert.ok(progress.includes("جارٍ فحص الشذرة… نصّك لن يتغيّر"), "سطر التقدّم لا يطمئن أن النص لن يتغيّر");
+  // NsqV272 (m6): المؤشر في زر الفعل (Primary Action · Busy)، وفي اللوحة عنوانٌ وطمأنة كما في Processing
+  assert.ok(html.slice(html.indexOf('id="prune-btn"'), html.indexOf('id="send-to-nasaq-btn"')).includes('class="spinner spinner-16"'), "لا مؤشر في فعل شَذْب أثناء الفحص");
+  assert.ok(progress.includes("جارٍ فحص الشذرة…") && progress.includes("نصّك لن يتغيّر"), "لوحة التقدّم لا تطمئن أن النص لن يتغيّر");
   const skeleton = html.slice(html.indexOf('id="reading-card-skeleton"'), html.indexOf('id="reading-card"'));
   assert.strictEqual((skeleton.match(/class="skeleton-line"/g) || []).length, 4, "هيكل بطاقة القراءة ليس أربعة أسطر");
   // «افحص الشذرة» بلون الوحدة دائمًا، معطّلًا بلا نص وبحالة تحميل أثناء الفحص
@@ -658,9 +666,11 @@ test("المرحلة ٤: حالة شَذْب صريحة من آلة الحالا
   }
 });
 
-test("المرحلة ٤: القصّات في الشريط الجانبي والقرار في المفتّش", () => {
-  assert.ok(regions["cuts-list"].within.includes("sidebar"), "القصّات ليست في الشريط الجانبي");
-  assert.ok(regions["cuts-count"].within.includes("sidebar"), "عدد القصّات ليس في الشريط الجانبي");
+test("المرحلة ٤: القصّات والقرار معًا في لوح المراجعة", () => {
+  // NsqV272 (m6): «قائمة القصّات المقترحة» شرائحُ فوق بطاقة القرار في اللوح نفسه (2009:1632)
+  assert.ok(regions["cuts-list"].within.includes("inspector"), "القصّات ليست في لوح المراجعة");
+  assert.ok(regions["cuts-count"].within.includes("inspector"), "عدد القصّات ليس في لوح المراجعة");
+  assert.ok(!regions["cuts-list"].within.includes("sidebar"), "القصّات في لوحة المسودات");
   for (const id of ["cut-card", "cut-card-quote", "cut-card-tag", "apply-cut-btn", "keep-cut-btn"]) {
     assert.ok(regions[id]?.within.includes("inspector"), `${id} ليس في المفتّش`);
     assert.strictEqual(regions[id].owner, "shadhb", `${id} ليس في منطقة شَذْب`);
@@ -668,7 +678,8 @@ test("المرحلة ٤: القصّات في الشريط الجانبي وال�
   // صفّ القصّة هو صفّ الشريط الجانبي المشترك بسطرين، وخيارٌ قابل للتحديد
   assert.ok(shadhb.includes('row.className = "sidebar-row cut-row"'), "صف القصّة ليس صفَّ الشريط المشترك");
   assert.ok(shadhb.includes('row.setAttribute("role", "option")'), "الصفوف ليست خيارات قابلة للتحديد");
-  assert.ok(css.includes("block-size: var(--size-row-2line)"), "صفّ القصّة ليس بمقاس السطرين");
+  // Cut Row 27:1013: شريحة ارتفاعها ٣٢ بحشو ٨/١٢
+  assert.ok(/\.cut-row \{[^}]*min-block-size: var\(--space-32\)/.test(css), "صفّ القصّة ليس شريحة Cut Row");
   // الأزرار داخل الصف والترقيم وحالتا الفراغ في القائمة: كلها زالت
   for (const gone of [
     "cut-entry",
@@ -731,14 +742,15 @@ test("المرحلة ٤: تنبيه شَذْب بتصميم Banner في خانت
     assert.strictEqual(regions[id]?.owner, "shadhb", `${id} ليس في منطقة شَذْب`);
     const slot = html.slice(html.indexOf(`id="${id}"`), html.indexOf(`id="${id}"`) + 1200);
     assert.ok(/data-error-close/.test(slot), `${id} بلا إغلاق`);
-    assert.ok(/xmark\.octagon\.20r/.test(slot), `${id} بلا رمز الخطر`);
+    assert.ok(slot.includes("􀇾"), `${id} بلا رمز الإخفاق (DM9-08)`);
   }
   assert.ok(regions["shadhb-error"].classes.includes("column-result"), "تنبيه شَذْب ليس في عمود النتيجة");
   assert.ok(regions["shadhb-error-source"].classes.includes("column-source"), "خانة التنبيه ليست فوق الشذرة");
   for (const id of ["no-cuts-source", "no-cuts-result"]) {
     const note = html.slice(html.indexOf(`id="${id}"`), html.indexOf(`id="${id}"`) + 700);
-    assert.ok(/class="banner"/.test(note), `${id} ليس بتصميم Banner`);
-    assert.ok(/info\.circle\.20r/.test(note), `${id} بلا رمز المعلومات`);
+    // Banner 27:1094 · Type=Info: نقطة بلون الحالة ثم الرسالة
+    assert.ok(/class="banner banner-info"/.test(note), `${id} ليس بتصميم Banner`);
+    assert.ok(/class="status-dot"/.test(note), `${id} بلا نقطة الحالة`);
     assert.ok(!/data-error-close|data-error-slot|data-error-action/.test(note), `${id} تنبيه خطأ لا ملاحظة`);
   }
   assert.ok(css.includes("#no-cuts-source"), "الملاحظة تتكرر في العمودين");
@@ -777,8 +789,8 @@ test("المرحلة ٤: الأرقام الهندية في كل ما يعرضه
 });
 
 test("المرحلة ٤: النصّ النائب يسمّي خامَ كل وحدة، والهيكل يقرأه بلا معرفة ببرج", () => {
-  assert.ok(/data-placeholder-shadhb="الصق الشذرة هنا أو اكتبها مباشرة…"/.test(html), "نصّ شَذْب النائب غائب");
-  assert.ok(/data-placeholder-nasaq="الصق نصّك هنا أو ابدأ الكتابة مباشرة…"/.test(html), "نصّ نَسَق النائب غائب");
+  assert.ok(/data-placeholder-shadhb="الصق شذرتك هنا — فقرة أو اثنتان تريد تشذيبهما"/.test(html), "نصّ شَذْب النائب غائب");
+  assert.ok(/data-placeholder-nasaq="الصق نصّك هنا أو ابدأ الكتابة"/.test(html), "نصّ نَسَق النائب غائب");
   const fn = functionBody(layout, "applyModulePlaceholders");
   assert.ok(fn, "الهيكل لا يطبّق النصّ النائب");
   assert.ok(fn.includes("`data-placeholder-${root.dataset.module}`"), "الهيكل لا يقرأ السمة بالوحدة الفعّالة");
@@ -811,7 +823,7 @@ test("المرحلة ٥: نافذة الإعدادات كما رُسمت — ت�
   assert.deepStrictEqual(tabs, ["general", "updates"], "التبويبان ليسا كما في اللوحة");
 
   const headers = [...settingsHtml.matchAll(/class="section-header">([^<]+)</g)].map((m) => m[1]);
-  assert.deepStrictEqual(headers, ["النموذج", "الاتصال", "المظهر"], "أقسام «عام» ليست كما رُسمت");
+  assert.deepStrictEqual(headers, ["إعدادات مزوّد التنسيق", "مظهر التطبيق", "تحديث البرمجية"], "أقسام الإعدادات ليست كما رُسمت في NsqV272");
 
   for (const id of ["api-key", "model-name", "base-url", "provider-picker", "appearance-picker", "test-connection", "auto-updates", "app-version", "check-updates"]) {
     assert.ok(settingsHtml.includes(`id="${id}"`), `صفّ ${id} غائب عن الصفحة`);
@@ -822,7 +834,7 @@ test("المرحلة ٥: نافذة الإعدادات كما رُسمت — ت�
     settingsHtml.includes("يُحفظ المفتاح في سلسلة المفاتيح على جهازك، ولا يُرسَل نصّك إلا حين تطلب التنسيق أو الفحص."),
     "تذييل قسم النموذج ليس نصّ التصميم"
   );
-  assert.ok(settingsHtml.includes("«تلقائي» يتبع مظهر النظام ويتبدّل معه فورًا."), "تذييل المظهر ليس نصّ التصميم");
+  // قسم «مظهر التطبيق» في NsqV272 (2128:576) بلا تذييل
   assert.ok(settingsHtml.includes("لا يُنزَّل أي تحديث قبل موافقتك."), "تذييل التحديثات ليس نصّ التصميم");
 });
 
@@ -909,13 +921,14 @@ test("المرحلة ٥: المزوّدات نفسها في الواجهة وف�
 });
 
 test("المرحلة ٥: لوحة «حول» بنصوص التصميم ومقاسه", () => {
-  for (const text of ["نَسَق", "كلماتك كما هي، بنَسَقٍ أوضح.", "© ٢٠٢٦ سلطان"]) {
+  for (const text of ["نَسَق", "صوتك محفوظ، وشكل نصك أوضح. رفيقك لتنسيق العربية.", "© ٢٠٢٦ سلطان"]) {
     assert.ok(aboutHtml.includes(text), `نصّ «${text}» غائب عن لوحة «حول»`);
   }
   assert.ok(aboutHtml.includes('src="app-icon.png"'), "أيقونة التطبيق غائبة");
   assert.ok(fs.existsSync(srcPath("app-icon.png")), "ملف الأيقونة غير موجود في src");
   const rust = fs.readFileSync(path.join(__dirname, "..", "src-tauri", "src", "app", "secondary.rs"), "utf8");
-  assert.ok(rust.includes("ABOUT_WIDTH: f64 = 284.0") && rust.includes("ABOUT_HEIGHT: f64 = 213.0"), "مقاس «حول» ليس مقاس التصميم");
+  // About-Window 2009:2911 في NsqV272
+  assert.ok(rust.includes("ABOUT_WIDTH: f64 = 320.0") && rust.includes("ABOUT_HEIGHT: f64 = 300.0"), "مقاس «حول» ليس مقاس التصميم");
 });
 
 // ---------- حرّاس المرحلة ٦: أول تشغيل والتحديثات (Figma 255:521 و258:18771) ----------

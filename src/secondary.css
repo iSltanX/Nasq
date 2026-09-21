@@ -1,249 +1,137 @@
-/* نوافذ التطبيق الثانوية: الإعدادات و«حول».
-   منفصلة عن app.css لأن تلك للنافذة الرئيسية وحدها. المقاييس من لوحة
-   «نوافذ التطبيق» في التصميم، ومن قياس macOS 27 نفسه:
-   - نافذة الإعدادات ٥٠٠ عرضًا، وهيئتها ٨٨ = صفّ عنوان ٣٢ + شريط تبويبات ٥٦.
-   - لوح بهامش ٢٠ جانبيًا و٢٠ أعلى و٢٤ أسفل، والأقسام تتباعد ٢٨.
-   - لوحة «حول» ٢٨٤×٢١٣ بزر إغلاق وحده.
-   ولا لون مثبت هنا: كل شيء من التوكنز، ويحرسه اختبار. */
-
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
-
-html,
-body {
-  height: 100%;
-  margin: 0;
-}
+/* secondary.css — نافذتا التطبيق الثانويتان كما في Figma «NsqV272»: الإعدادات
+   (Settings / General 2128:576 وUpdates 2128:625) و«حول» (About-Window 2009:2911).
+   كل قيمة من tokens.css. */
 
 body {
-  background: var(--surface-window);
-  color: var(--text-primary);
-  font: var(--type-body-small);
-  -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
-  cursor: default;
-  user-select: none;
+  background: var(--surface-reading);
+}
+
+/* ================= الإعدادات: حشو ٢٠ وفجوة ١٦ ================= */
+body[data-window="settings"] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--layout-group-gap);
+  padding: var(--component-padding-xl);
   overflow: hidden;
 }
-
-/* ================= هيئة النافذة ================= */
-
+/* صفّ العنوان ١٨: «الإعدادات» في الوسط بنمط Button Label، وإشارات النظام يسارًا */
 .titlebar {
-  block-size: calc(var(--size-titlebar) + var(--size-settings-tabbar));
-  flex-shrink: 0;
-}
-
-.title-row {
-  block-size: var(--size-titlebar);
   display: flex;
+  flex: none;
   align-items: center;
   justify-content: center;
+  block-size: var(--type-button-label-lh);
 }
-
-.title-row h1 {
-  margin: 0;
-  font: var(--type-label-default);
+.titlebar h1 {
+  font: var(--type-button-label);
   color: var(--text-primary);
 }
-
-/* شريط التبويبات: تتلاصق في الوسط */
+/* مضمار التبويبين ٣٤: حشو ٢، surface/sunken، قطر ٨؛ Settings Tab 26:110 يملأ بارتفاع ٣٠ */
 .tabs {
-  block-size: var(--size-settings-tabbar);
   display: flex;
-  align-items: flex-start;
-  justify-content: center;
-}
-
-.tab {
-  appearance: none;
-  border: var(--stroke-hairline) solid transparent;
-  background: none;
-  font: inherit;
-  color: inherit;
-  cursor: default;
-  block-size: var(--size-settings-tab);
-  min-inline-size: var(--size-settings-tab-min);
-  padding: var(--space-2) var(--space-8) 6px;
+  flex: none;
+  padding: var(--space-2);
   border-radius: var(--radius-8);
-  display: flex;
-  flex-direction: column;
+  background: var(--surface-sunken);
+}
+.tab {
+  display: inline-flex;
+  flex: 1;
   align-items: center;
-  gap: var(--space-4);
+  justify-content: center;
+  block-size: 30px;
+  padding: var(--component-padding-tight) var(--component-padding-2xl);
+  border-radius: var(--radius-4);
+  font: var(--type-caption);
+  color: var(--module-accent-text);
+  transition: background-color var(--motion-fast), color var(--motion-fast);
 }
-
-.tab svg {
-  inline-size: var(--size-icon-20);
-  block-size: var(--size-icon-20);
-  color: var(--text-secondary);
-}
-
-.tab span {
-  font: var(--type-caption-footnote);
-  color: var(--text-secondary);
-}
-
-/* المرور والضغط لغير المحدد (Settings Tab · Hover وPressed، فحص m4-13) */
-.tab:not([aria-selected="true"]):hover {
+.tab:hover {
   background: var(--fill-hover);
-}
-.tab:not([aria-selected="true"]):active {
-  background: var(--fill-pressed);
-}
-.tab:not([aria-selected="true"]):active span {
   color: var(--text-primary);
 }
-
+.tab:active {
+  background: var(--fill-pressed);
+  color: var(--text-primary);
+}
 .tab[aria-selected="true"] {
-  background: var(--fill-tab-selected);
-  border-color: var(--border-hairline);
+  background: var(--module-accent-subtle);
+  color: var(--text-primary);
+}
+.tab:disabled {
+  color: var(--text-disabled);
 }
 
-.tab[aria-selected="true"] svg,
-.tab[aria-selected="true"] span {
-  color: var(--module-strong);
+main {
+  min-block-size: 0;
+  overflow-y: auto;
 }
-
-.tab:focus-visible {
-  outline: none;
-  box-shadow: var(--focus-ring);
-}
-
-/* ================= اللوح والأقسام ================= */
-
 .pane {
-  padding: var(--space-20) var(--space-20) var(--space-24);
   display: flex;
   flex-direction: column;
-  gap: 28px;
-  overflow: hidden;
+  gap: var(--layout-group-gap);
+}
+/* تذييل اللوح: خطّ ثم سطر Metadata */
+.pane-footer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding-block-start: var(--layout-element-gap);
+  border-block-start: var(--stroke-hairline) solid var(--border-default);
+}
+/* بطاقة التحديث: حشو ١٦، فجوة ١٢، حدّ، قطر ٨ */
+.update-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--layout-component-gap);
+  padding: var(--component-padding-lg);
+  border: var(--stroke-hairline) solid var(--border-default);
+  border-radius: var(--radius-8);
+  background: var(--surface-elevated);
+}
+.update-card > * {
+  min-block-size: 0;
+}
+.update-card .row-label {
+  flex: 1;
+  inline-size: auto;
 }
 
-.pane[hidden] {
-  display: none;
-}
-
-
-/* ================= لوحة «حول» ================= */
-
-/* الكتلة تبدأ عند ٤٠ كما رُسمت، لا موسَّطة رأسيًا */
+/* ================= حول: ٣٢٠×٣٠٠، حشو ٢٤ وفجوة ١٦ ================= */
 body[data-window="about"] {
-  display: grid;
-  align-content: start;
-  justify-items: center;
-  padding-block-start: 40px;
-  text-align: center;
+  padding: var(--component-padding-2xl);
 }
-
 .about {
   display: flex;
   flex-direction: column;
   align-items: center;
+  gap: var(--layout-element-gap);
+  /* صفّ إشارات النظام ١٤ ثم فجوة ١٦ فوق الهوية */
+  padding-block-start: calc(14px + var(--layout-group-gap));
+  text-align: center;
 }
-
 .about img {
-  inline-size: var(--size-app-icon-md);
-  block-size: var(--size-app-icon-md);
-  margin-block-end: var(--space-5);
+  inline-size: 80px;
+  block-size: 80px;
+  margin-block-end: var(--space-4);
 }
-
-.about .app-name {
-  font: var(--type-body-emphasis);
+.app-name {
+  font: var(--type-window-title);
   color: var(--text-primary);
 }
-
-.about .app-version {
-  font: var(--type-caption-small);
-  color: var(--text-primary);
-  margin-block-start: var(--space-4);
+.app-version {
+  font: var(--type-control-label);
+  color: var(--module-accent-text);
 }
-
-.about .app-promise {
-  font: var(--type-caption-footnote);
+.app-promise {
+  align-self: stretch;
+  padding-block: var(--layout-element-gap);
+  border-block-end: var(--stroke-hairline) solid var(--border-default);
+  font: var(--type-caption);
   color: var(--text-secondary);
-  margin-block-start: 7px;
+  text-align: start;
 }
-
-.about .app-rights {
-  font: var(--type-caption-small);
-  color: var(--text-primary);
-  margin-block-start: 7px;
-}
-
-/* رابطٌ بهيئة نصّ: زرٌّ لأن الفتح يمرّ بالنواة لا بملاحة الصفحة. لونه لون
-   الهوية ثابتًا — لوحة «حول» على مستوى التطبيق لا على مستوى برج */
-.link {
-  appearance: none;
-  padding: 0;
-  border: 0;
-  background: none;
-  font: inherit;
-  color: var(--accent-nasaq-strong);
-  cursor: pointer;
-  border-radius: var(--radius-4);
-}
-
-.link:hover {
-  text-decoration: underline;
-}
-
-.link:focus-visible {
-  outline: none;
-  box-shadow: var(--focus-ring);
-}
-
-/* ================= حقل المفتاح (المرحلة ٩) ================= */
-/* زر العين في طرف الحقل (Figma 248:6427 و348:22148): أيقونة ١٦ ثانوية بمساحة
-   لمس ٢٤، وتشتدّ حين يكون المفتاح ظاهرًا */
-.row-reveal {
-  appearance: none;
-  display: inline-flex;
-  flex: none;
-  align-items: center;
-  justify-content: center;
-  inline-size: var(--size-hit-min);
-  block-size: var(--size-hit-min);
-  padding: 0;
-  border: 0;
-  border-radius: var(--radius-control-small);
-  background: none;
-  color: var(--icon-secondary);
-}
-.row-reveal[hidden] {
-  display: none;
-}
-.row-reveal:hover {
-  background: var(--fill-hover);
-  color: var(--icon-primary);
-}
-.row-reveal[aria-pressed="true"] {
-  color: var(--icon-primary);
-}
-.row-reveal:focus-visible {
-  outline: none;
-  box-shadow: var(--focus-ring);
-}
-.row-reveal .icon {
-  inline-size: var(--size-icon-16);
-  block-size: var(--size-icon-16);
-}
-
-/* سطر الملاحظة يعلن الحفظ ثلاث ثوانٍ بلون النجاح ورمزه، ثم يعود */
-#key-footer {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-4);
-}
-#key-footer[data-tone="success"] {
-  color: var(--status-success-fg);
-}
-#key-footer .icon {
-  flex: none;
-  inline-size: var(--size-icon-16);
-  block-size: var(--size-icon-16);
-}
-#key-footer .icon[hidden] {
-  display: none;
+.app-rights {
+  font: var(--type-metadata);
+  color: var(--text-tertiary);
 }

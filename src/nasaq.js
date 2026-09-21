@@ -167,10 +167,7 @@ function enhanceSelectAsDropdown(sel) {
   const valueSpan = document.createElement("span");
   valueSpan.className = "dd-value";
   btn.appendChild(valueSpan);
-  btn.insertAdjacentHTML(
-    "beforeend",
-    '<svg class="icon" aria-hidden="true"><use href="#chevron.up.chevron.down.16m" /></svg>'
-  );
+  btn.insertAdjacentHTML("beforeend", '<span class="dd-chevron" aria-hidden="true"></span>');
 
   const popup = document.createElement("div");
   popup.className = "dd-popup";
@@ -201,7 +198,9 @@ function enhanceSelectAsDropdown(sel) {
 
   function refresh() {
     const current = sel.options[sel.selectedIndex];
-    valueSpan.textContent = current ? current.textContent : "";
+    // التسمية وقيمتها معًا في الزر كما في Popup Button (NsqV272): «النمط: مقال»
+    const value = current ? current.textContent : "";
+    valueSpan.textContent = labelText ? `${labelText}: ${value}` : value;
     for (const item of popup.children) {
       item.setAttribute("aria-selected", String(item.dataset.value === sel.value));
     }
@@ -1629,10 +1628,10 @@ function renderState() {
   reportSkeleton.hidden = !busy;
   reportSection.hidden = state === "review" && !reportHasContent;
   if (transition || reportHasContent !== reportHadContent) {
-    reportHeader.setAttribute("aria-expanded", String(busy || reportHasContent));
+    reportHeader?.setAttribute("aria-expanded", String(busy || reportHasContent));
   }
   if (transition && (state === "review" || renderedState === "review")) {
-    settingsHeader.setAttribute("aria-expanded", String(state !== "review"));
+    settingsHeader?.setAttribute("aria-expanded", String(state !== "review"));
   }
 
   // شريط الحالة: مؤشر الحالة، وعدّاد النتيجة ما دامت النتيجة هي المعروضة

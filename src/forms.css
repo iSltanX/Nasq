@@ -1,311 +1,296 @@
-/* forms.css — مكوّن «Form Section» ومنتقيه، مشتركًا بين نافذة الإعدادات
-   وورقة «اربط نموذجًا» في النافذة الرئيسية: الصفّ نفسه والقائمة نفسها
-   بمصدر واحد لا نسختين. مقاييسه من لوحة «المكوّنات» في التصميم.
-   خطّه مثبت على الصفّ لا موروثًا من الصفحة، فالنافذتان لا تتفقان على خطّ
-   الجسم. وقائمته تُسمّى picker-menu لا menu، فاسم menu محجوز لقوائم
-   النافذة الرئيسية في app.css. */
+/* forms.css — صفوف النماذج المشتركة بين نافذة الإعدادات وورقة أول تشغيل، بمكوّنات
+   Figma «NsqV272»: Select 26:420 وSecure Field 26:228 وToggle 26:449 وInline Status
+   27:1029 وDropdown Menu 30:39. كل قيمة من tokens.css. */
 
+/* قسم النموذج: عنوان Button Label ثم خطّ، ثم صفوفه بفجوة ١٢ (Settings / General 2128:576) */
 .form-section {
   display: flex;
   flex-direction: column;
+  gap: var(--layout-element-gap);
 }
-
-.section-header {
-  padding: 0 var(--space-10) var(--space-10);
-  font: var(--type-label-default);
+.form-section > .section-header {
+  padding-block-end: var(--layout-element-gap);
+  border-block-end: var(--stroke-hairline) solid var(--border-default);
+  font: var(--type-button-label);
   color: var(--text-primary);
 }
-
 .section-rows {
-  background: var(--fill-form-group);
-  border-radius: var(--radius-12);
-  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: var(--layout-component-gap);
 }
 
-.section-footer {
-  padding: var(--space-8) var(--space-10) 0;
-  font: var(--type-caption-footnote);
-  color: var(--text-secondary);
-}
-
-/* ================= صفوف النموذج ================= */
-
+/* الصفّ: التسمية ١٢٠ يمينًا بنمط Caption Strong، ثم العنصر ٢٢٠، وما بعده إلى يساره */
 .form-row {
-  position: relative;
-  font: var(--type-body-small);
-  block-size: var(--size-form-row);
   display: flex;
   align-items: center;
-  gap: var(--space-16);
-  padding-inline: var(--space-10);
+  gap: var(--layout-component-gap);
+  min-block-size: var(--space-40);
 }
-
-/* حقول النص تقترب من الحافة ٨ لا ١٠ */
-.form-row[data-control="field"] {
-  padding-inline-start: var(--space-8);
-}
-
-.form-row[data-control="button"] {
-  block-size: var(--size-form-row-button);
-}
-
-.form-row:not(:last-child)::after {
-  content: "";
-  position: absolute;
-  inset-block-end: 0;
-  inset-inline: var(--space-10);
-  block-size: var(--stroke-hairline);
-  background: var(--border-form-separator);
-}
-
-.row-label {
-  flex-shrink: 0;
-  color: var(--text-primary);
-  white-space: nowrap;
-}
-
-.row-spacer {
-  flex: 1 0 0;
-  min-inline-size: 0;
-}
-
-/* حقل نصّي بلا إطار، يمتدّ ونصّه إلى جهة البداية */
-.row-field {
-  flex: 1 0 0;
-  min-inline-size: 0;
-  appearance: none;
-  border: 0;
-  background: none;
-  padding: 0;
-  font: inherit;
-  color: var(--text-primary);
-  text-overflow: ellipsis;
-  user-select: text;
-  cursor: text;
-}
-
-.row-field::placeholder {
+.form-row > .row-label {
+  flex: none;
+  inline-size: 120px;
+  font: var(--type-caption-strong);
   color: var(--text-secondary);
 }
-
-.row-field:focus-visible {
-  outline: none;
-  box-shadow: var(--focus-ring);
-  border-radius: var(--radius-4);
+.row-spacer {
+  display: none;
 }
 
-/* قائمة اختيار داخل صفّ: القيمة وبجانبها زر دائري بسهمين */
+/* Select 26:420 وSecure Field 26:228 — ٤٠، حشو ٨/١٢، حدّ، قطر ٦، نص Body UI */
+.row-picker,
+.row-input {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--layout-element-gap);
+  inline-size: 220px;
+  block-size: var(--space-40);
+  padding: var(--component-padding-sm) var(--component-padding-md);
+  border: var(--stroke-hairline) solid var(--border-default);
+  border-radius: var(--radius-6);
+  background: var(--surface-elevated);
+  font: var(--type-body-ui);
+  color: var(--text-primary);
+}
 .row-picker {
-  appearance: none;
+  justify-content: space-between;
+  text-align: start;
+}
+.row-picker:hover,
+.row-input:hover {
+  border-color: var(--border-strong);
+}
+.row-picker:active {
+  background: var(--fill-pressed);
+  border-color: var(--border-strong);
+}
+.row-picker:focus-visible,
+.row-input:focus-within {
+  outline: var(--stroke-emphasis) solid var(--focus-ring);
+  outline-offset: calc(-1 * var(--stroke-emphasis));
+}
+.row-picker:disabled {
+  background: var(--fill-disabled);
+  color: var(--text-disabled);
+}
+/* سهم لأسفل ٨×٤ بخطّ icon/secondary ١ */
+.picker-chevron {
+  flex: none;
+  inline-size: var(--space-6);
+  block-size: var(--space-6);
+  margin-block-end: var(--space-4);
+  border: solid var(--icon-secondary);
+  border-width: 0 var(--stroke-hairline) var(--stroke-hairline) 0;
+  transform: rotate(45deg);
+}
+.picker-chevron svg {
+  display: none;
+}
+.row-picker:disabled .picker-chevron {
+  border-color: var(--icon-disabled);
+}
+.row-field {
+  flex: 1;
+  min-inline-size: 0;
+  padding: 0;
   border: 0;
   background: none;
-  font: inherit;
-  color: var(--text-primary);
-  cursor: default;
-  flex-shrink: 0;
-  block-size: var(--size-control-regular);
-  display: flex;
-  align-items: center;
-  gap: var(--space-10);
-  padding: 0;
-}
-
-.row-picker .picker-chevron {
-  inline-size: var(--size-picker-chevron);
-  block-size: var(--size-picker-chevron);
-  border-radius: var(--radius-full);
-  background: var(--fill-control);
-  display: grid;
-  place-items: center;
-}
-
-.row-picker .picker-chevron svg {
-  inline-size: var(--size-icon-12);
-  block-size: var(--size-icon-12);
+  font: var(--type-code-ltr);
   color: var(--text-primary);
 }
-
-/* زرّ السهمين تحت الضغط (Form Picker · Pressed، فحص m4-13) */
-.row-picker:active .picker-chevron {
-  background-image: linear-gradient(var(--fill-pressed), var(--fill-pressed));
-}
-
-.row-picker:focus-visible {
-  outline: none;
-  box-shadow: var(--focus-ring);
-  border-radius: var(--radius-control-regular);
-}
-
-/* زر داخل صفّ: مقاس macOS العادي */
-.row-button {
-  appearance: none;
-  flex-shrink: 0;
-  block-size: var(--size-control-regular);
-  padding-inline: var(--space-12);
-  border: 0;
-  border-radius: var(--radius-control-regular);
-  background: var(--fill-control);
-  font: var(--type-label-default);
-  color: var(--text-primary);
-  cursor: default;
-}
-
-/* تحت الضغط كزرّ ثانوي (Button · Secondary · Pressed، فحص m4-13) */
-.row-button:active:not(:disabled) {
-  background-image: linear-gradient(var(--fill-pressed), var(--fill-pressed));
-}
-
-.row-button:disabled {
+.row-field::placeholder {
+  font: var(--type-body-ui);
   color: var(--text-tertiary);
 }
-
-.row-button:focus-visible {
+.row-field:focus-visible {
   outline: none;
-  box-shadow: var(--focus-ring);
 }
-
-/* مفتاح تبديل: ٣٦×١٦ ومقبض ٢١×١٣ بإزاحة ١٫٥ */
-.row-switch {
-  appearance: none;
-  flex-shrink: 0;
-  inline-size: var(--size-toggle-width);
-  block-size: var(--size-toggle-height);
-  border: 0;
-  border-radius: var(--radius-full);
-  background: var(--fill-control);
-  padding: 0;
-  position: relative;
-  cursor: default;
+/* حقل بلا غلاف (ورقة أول تشغيل): الغلاف نفسه */
+.form-row > .row-field {
+  flex: none;
+  inline-size: 220px;
+  block-size: var(--space-40);
+  padding: var(--component-padding-sm) var(--component-padding-md);
+  border: var(--stroke-hairline) solid var(--border-default);
+  border-radius: var(--radius-6);
+  background: var(--surface-elevated);
 }
-
-.row-switch::after {
-  content: "";
-  position: absolute;
-  inset-block-start: 1.5px;
-  inset-inline-start: 1.5px;
-  inline-size: var(--size-toggle-knob-width);
-  block-size: var(--size-toggle-knob-height);
-  border-radius: var(--radius-full);
-  background: var(--fill-knob);
-  box-shadow: 0 0.5px 1.5px var(--shadow-window-key);
+.form-row > .row-field:hover {
+  border-color: var(--border-strong);
 }
-
-.row-switch[aria-checked="true"] {
-  background: var(--module-accent);
+.form-row > .row-field:focus-visible {
+  outline: var(--stroke-emphasis) solid var(--focus-ring);
+  outline-offset: calc(-1 * var(--stroke-emphasis));
 }
-
-.row-switch[aria-checked="true"]::after {
-  inset-inline-start: auto;
-  inset-inline-end: 1.5px;
+.row-reveal {
+  display: inline-flex;
+  flex: none;
+  order: 2;
+  border-radius: var(--radius-2);
+  color: var(--icon-secondary);
 }
-
-.row-switch:focus-visible {
-  outline: none;
-  box-shadow: var(--focus-ring);
-}
-
-/* حالة بجانب الزر: نصّ ورمز */
-.row-status {
-  flex-shrink: 1;
-  min-inline-size: 0;
-  display: flex;
-  align-items: center;
-  gap: var(--space-4);
-  color: var(--text-secondary);
-}
-
-/* رسالة الفشل قد تحمل ردّ المزوّد في سطر ثانٍ (المرحلة ٩): تلتفّ ولا تفيض،
-   والأيقونة تبقى بحجمها */
-.row-status > span {
-  white-space: pre-line;
-  overflow-wrap: anywhere;
-}
-
-.row-status svg {
-  inline-size: var(--size-icon-16);
-  block-size: var(--size-icon-16);
-  flex-shrink: 0;
-}
-
-.row-status[data-tone="success"] svg {
-  color: var(--status-success-fg);
-}
-
-.row-status[data-tone="danger"] svg {
-  color: var(--status-danger-fg);
-}
-
-.row-status[hidden] {
-  display: none;
+.row-reveal:hover,
+.row-reveal[aria-pressed="true"] {
+  color: var(--icon-primary);
 }
 
 .row-value {
-  flex: 1 0 0;
-  min-inline-size: 0;
-  color: var(--text-secondary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font: var(--type-caption);
+  color: var(--text-primary);
+}
+.form-row[data-control="value"] > .row-label,
+.form-row[data-control="switch"] > .row-label {
+  flex: 1;
+  inline-size: auto;
+}
+.form-row[data-control="switch"] > .row-label {
+  color: var(--text-primary);
+}
+.form-row[data-control="switch"] {
+  min-block-size: var(--space-20);
 }
 
-/* ================= قائمة المزوّد ================= */
+/* زرّ الصفّ (ورقة أول تشغيل): Button · Secondary · Regular */
+.row-button {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  padding: var(--component-padding-sm) var(--component-padding-lg);
+  border: var(--stroke-hairline) solid var(--border-default);
+  border-radius: var(--radius-6);
+  font: var(--type-button-label);
+  color: var(--text-primary);
+}
+.row-button:hover {
+  background: var(--fill-hover);
+}
+.row-button:active {
+  background: var(--fill-pressed);
+  border-color: var(--border-strong);
+}
+.row-button:disabled {
+  border-color: var(--border-subtle);
+  color: var(--text-disabled);
+}
 
+/* Inline Status 27:1029 — التسمية Metadata Strong ثم العلامة بلون الحالة، فجوة ٤ */
+.row-status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  min-inline-size: 0;
+  font: var(--type-metadata-strong);
+  color: var(--text-primary);
+}
+.row-status svg {
+  flex: none;
+  inline-size: var(--icon-16);
+  block-size: var(--icon-16);
+  fill: var(--status-success);
+}
+.row-status[data-tone="danger"] svg {
+  fill: var(--status-danger);
+}
+.row-status[data-tone="warning"] svg {
+  fill: var(--status-warning);
+}
+
+/* Toggle 26:449 — مضمار ٣٦×٢٠ بقطر كامل، وإبهام ١٦ يبعد ٢ عن الحافة */
+.row-switch {
+  position: relative;
+  flex: none;
+  inline-size: 36px;
+  block-size: var(--space-20);
+  border-radius: var(--radius-full);
+  background: var(--border-default);
+  transition: background-color var(--motion-normal);
+}
+.row-switch::after {
+  content: "";
+  position: absolute;
+  inset-block-start: var(--space-2);
+  inset-inline-end: var(--space-2);
+  inline-size: var(--space-16);
+  block-size: var(--space-16);
+  border-radius: var(--radius-full);
+  background: var(--surface-elevated);
+  transition: inset-inline-end var(--motion-normal);
+}
+.row-switch[aria-checked="true"] {
+  background: var(--module-accent);
+}
+.row-switch[aria-checked="true"]::after {
+  inset-inline-end: calc(100% - var(--space-16) - var(--space-2));
+}
+.row-switch:disabled {
+  background: var(--fill-disabled);
+}
+
+.section-footer {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  font: var(--type-metadata);
+  color: var(--text-tertiary);
+}
+.section-footer[data-tone="success"] {
+  font: var(--type-metadata-strong);
+  color: var(--text-primary);
+}
+.section-footer[data-tone="success"] .icon {
+  fill: var(--status-success);
+}
+
+.link {
+  border-radius: var(--radius-2);
+  font: inherit;
+  color: var(--status-info);
+}
+.link:hover {
+  text-decoration: underline;
+}
+
+/* Dropdown Menu 30:39 لقائمة المنتقي */
 .picker-menu {
   position: fixed;
-  z-index: 300;
-  inline-size: 180px;
-  padding: var(--space-5);
-  border: var(--stroke-hairline) solid var(--material-edge);
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-inline-size: 200px;
+  padding: var(--component-padding-sm);
+  border: var(--stroke-hairline) solid var(--border-default);
   border-radius: var(--radius-12);
-  background: var(--material-popover);
-  -webkit-backdrop-filter: blur(var(--blur-glass-toolbar));
-  backdrop-filter: blur(var(--blur-glass-toolbar));
-  box-shadow: var(--elevation-popover);
+  background: var(--surface-reading);
+  box-shadow: var(--elevation-menu);
+  overflow-y: auto;
 }
-
 .picker-menu[hidden] {
   display: none;
 }
-
 .picker-menu-item {
-  appearance: none;
-  inline-size: 100%;
-  border: 0;
-  background: none;
-  font: inherit;
-  color: var(--text-primary);
-  cursor: default;
-  block-size: var(--size-menu-item);
-  padding-inline: var(--space-9);
-  border-radius: var(--radius-7);
   display: flex;
+  flex: none;
   align-items: center;
-  gap: var(--space-8);
+  gap: var(--layout-element-gap);
+  block-size: var(--target-min);
+  padding-inline: var(--component-padding-md);
+  border-radius: var(--radius-4);
+  font: var(--type-caption);
+  color: var(--text-primary);
   text-align: start;
+  white-space: nowrap;
 }
-
-.picker-menu-item span {
-  flex: 1 0 0;
-  min-inline-size: 0;
+.picker-menu-item:hover,
+.picker-menu-item:focus-visible,
+.picker-menu-item[data-active] {
+  background: var(--fill-hover);
+  outline: none;
 }
-
-.picker-menu-item svg {
-  inline-size: var(--size-icon-16);
-  block-size: var(--size-icon-16);
-  visibility: hidden;
-}
-
-.picker-menu-item[aria-checked="true"] svg {
-  visibility: visible;
-}
-
-.picker-menu-item[data-active="true"] {
-  background: var(--module-strong);
-  color: var(--text-on-accent);
-}
-
 .picker-menu-separator {
+  flex: none;
   block-size: var(--stroke-hairline);
-  margin: var(--space-5) var(--space-row-inset);
   background: var(--border-default);
 }

@@ -67,19 +67,24 @@ test("التوكنز: الأوضاع كلها حاضرة وقيم الهوية �
   }
   assert.ok(tokens.includes('[data-module="shadhb"] {'), "كتلة شَذْب غائبة");
   assert.ok(tokens.includes(':root[data-appearance="dark"] { color-scheme: dark; }'));
-  assert.ok(tokens.includes("--surface-window: light-dark(#ffffff, #1e1e1e);"));
-  assert.ok(tokens.includes("--accent-nasaq-base: light-dark(#8c7bb0, #a89ac7);"));
-  assert.ok(tokens.includes("--accent-shadhb-base: light-dark(#b09055, #c4ab78);"));
+  // قيم NsqV272 (m6): سطح القراءة، ولونا الوحدتين للفعل الرئيس، والطين للمختار
+  assert.ok(tokens.includes("--surface-reading: light-dark(#f5f5f7, #242426);"));
+  assert.ok(tokens.includes("--accent-nasaq: light-dark(#0a6e72, #1f7f83);"));
+  assert.ok(tokens.includes("--accent-shadhb: light-dark(#4a6a4d, #4f7a53);"));
+  assert.ok(tokens.includes("--accent-clay: #ad6236;"));
+  assert.ok(tokens.includes("--fill-selected: var(--accent-clay-subtle);"), "المختار بالطين لا بلون الوحدة (DM7-04)");
 });
 
-test("الخطوط: أربعة أوجه فقط، وملفاتها موجودة، وعائلاتها هي عائلات التوكنز", () => {
+// سلّم NsqV272 (m6): Cairo للواجهة بأوزانه الأربعة (٤٠٠ و٥٠٠ و٦٠٠ و٧٠٠)، وAlmarai للقراءة
+// (٤٠٠ و٧٠٠)، وJetBrains Mono للشيفرة — سبعة أوجه، لا أكثر
+test("الخطوط: سبعة أوجه فقط، وملفاتها موجودة، وعائلاتها هي عائلات التوكنز", () => {
   const faces = [...base.matchAll(/@font-face\s*{([^}]*)}/g)].map((m) => m[1]);
-  assert.strictEqual(faces.length, 4);
+  assert.strictEqual(faces.length, 7);
   for (const face of faces) {
     const url = /url\("([^"]+)"\)/.exec(face)[1];
     assert.ok(fs.existsSync(srcPath(url)), `ملف الخط غائب: ${url}`);
     const family = /font-family:\s*"([^"]+)"/.exec(face)[1];
-    assert.ok(tokens.includes(`"${family}", system-ui`), `العائلة ${family} ليست في التوكنز`);
+    assert.ok(tokens.includes(`: "${family}", `), `العائلة ${family} ليست في التوكنز`);
   }
 });
 
@@ -183,82 +188,53 @@ test("m5: لا لون خام في أي ورقة أنماط — الألوان ك
 // كل طولٍ بـpx خارج var() له سببه. الإضافة بلا سبب تُسقط الاختبار: استعمل توكنًا،
 // أو أضف البند هنا تحت سببه. والبند الذي يزول من الكود يُحذف من القائمة.
 const RAW_PX_ALLOWED = {
-  "خط شعري أو شكل هندسي — لا توكن له ولا ينبغي": [
+  "مقاس تقني لا تصميمي: للقارئ الصوتي وحده، ومرآة قياس مؤشر السطر الفارغ خارج الشاشة": [
     "base|.visually-hidden|width|1",
     "base|.visually-hidden|height|1",
-    "app|.rtl-caret|inline-size|2",
-    "app|.rtl-caret|border-radius|1",
     "app|.rtl-caret-mirror|inset-inline-start|-10000",
-    "app|.spinner|mask|0.5",
-    "app|.glass-group|padding-inline|1",
-    "app|.toolbar-item.has-label .label-icon|margin|2",
-    "app|#nasaq-status[data-status=\"processing\"] .status-indicator|box-shadow|1.5",
-    "app|#shadhb-status[data-status=\"checking\"] .status-indicator|box-shadow|1.5",
-    "app|.draft-row[data-context-target], .version-row[data-context-target]|box-shadow|2",
-    "app|.mark-pending, .mark-selected|text-decoration-thickness|2",
-    "app|.mark-pending, .mark-selected|text-underline-offset|2",
-    "app|#cut-card .card-quote|border-inline-start|2",
-    "app|.covenant-bar-icon|margin-block-start|2",
-    "app|.lens-header|gap|2",
-    "app|.alert-app-icon|margin-block-end|6",
-    "app|.popover::before|inset-block-start|-10",
-    "app|.popover::before|inline-size|25",
-    "app|.popover::before|block-size|11",
-    "app|.glass-group, .module-switcher|box-shadow|6 -2",
-    "app|.action-button[data-style=\"glass\"]|box-shadow|6 -2",
-    "app|.action-button[data-style=\"glass\"]:focus-visible|box-shadow|6 -2",
-    "app|.action-button:disabled:not([aria-busy=\"true\"])|box-shadow|6 -2",
-    "app|.alert|transform|40",
-    "forms|.row-switch::after|inset-block-start|1.5",
-    "forms|.row-switch::after|inset-inline-start|1.5",
-    "forms|.row-switch::after|box-shadow|0.5 1.5",
-    "forms|.row-switch[aria-checked=\"true\"]::after|inset-inline-end|1.5",
-    "secondary|.tab|padding|6",
-    "secondary|.about .app-promise|margin-block-start|7",
-    "secondary|.about .app-rights|margin-block-start|7",
   ],
-  "أطوال هيكل التحميل — مقاسات غير منتظمة عمدًا لتشبه سطورًا حقيقية": [
-    "app|.skeleton-paragraph:first-of-type .skeleton-line:nth-child(1)|inline-size|300",
-    "app|.skeleton-paragraph:first-of-type .skeleton-line:nth-child(2)|inline-size|220",
-    "app|.skeleton-paragraph:first-of-type .skeleton-line:nth-child(3)|inline-size|360",
-    "app|.skeleton-paragraph:last-of-type .skeleton-line:nth-child(1)|inline-size|260",
-    "app|.skeleton-paragraph:last-of-type .skeleton-line:nth-child(2)|inline-size|320",
-    "app|.skeleton-paragraph:last-of-type .skeleton-line:nth-child(3)|inline-size|200",
-    "app|.report-skeleton .skeleton-line:last-child|inline-size|180",
-    "app|.reading-card-skeleton .skeleton-line:nth-child(2)|inline-size|200",
-    "app|.reading-card-skeleton .skeleton-line:nth-child(4)|inline-size|160",
-    "app|.variation[data-state=\"generating\"] .skeleton-line:nth-child(3)|inline-size|140",
-    "app|.variation[data-state=\"generating\"] .skeleton-line:nth-child(5)|inline-size|100",
-  ],
-  "مقيس من إطارات Figma ولا متغيّر له هناك — يُرفع إلى Figma ثم يصير توكنًا": [
-    "app|:root|--window-controls|60",
-    "app|:root|--window-controls-inset|19",
+  "مقاس مكوّنٍ مقيس من NsqV272 ولا متغيّر له في الملف (عرض ثابت أو ارتفاع مكوّن) — يُرفع إلى Figma ثم يصير توكنًا": [
+    // Title Bar 2164:3821: إشارات النظام ١٤، وSidebar Toggle 2408:10618 ارتفاعه ٢٦
+    "app|.window-controls|inline-size|14",
     "app|.window-controls|block-size|14",
-    "app|.sidebar-top|gap|17",
-    "app|.text-area|min-block-size|64",
-    "app|.text-area|max-block-size|98",
-    "app|.dd-btn|padding-inline|13",
-    "app|.menu, .dd-popup|min-inline-size|160",
-    "app|.menu|min-inline-size|212",
-    "forms|.picker-menu|inline-size|180",
-    "app|.inspector-row.control .dd-btn|max-inline-size|200",
-    "app|.find-step|inline-size|21",
-    "app|.variation|block-size|320",
-    "app|.sheet-narrow|inline-size|480",
-    "app|.welcome-intro|gap|28",
-    "app|.welcome-features|gap|18",
-    "app|.welcome-feature-icon|inline-size|28",
-    "app|.welcome-feature-icon|block-size|28",
-    "app|.welcome-feature-icon svg|inline-size|24",
-    "app|.welcome-feature-icon svg|block-size|24",
-    "app|.empty-state:not(.empty-state-compact) .empty-body|max-inline-size|400",
-    "secondary|.pane|gap|28",
-    "secondary|body[data-window=\"about\"]|padding-block-start|40",
-    "app|.lens-phone|inline-size|375",
-  ],
-  "أداة معاينة الأسس لا واجهة التطبيق": [
-    "app|[data-preview] .window-controls|background|53 7 6.5 7 30 7 6.5 7 7 7 6.5 7",
-    "app|[data-preview] .window-controls|background-size|60 14",
+    "app|.title-toggle|block-size|26",
+    // Search Field 26:388 ارتفاعه ٣٤ وعرضه في شريط البحث ٢٨٠، وصفّ التلميح ٣٤ (2009:281)
+    "app|.search-field, .find-field|block-size|34",
+    "app|.find-field|inline-size|280",
+    "app|.hint-row|min-block-size|34",
+    // Empty State 27:1169 عرضه ٥٢٠، ولوح «الأصل» ٤٤٠ (Result-Ready 2008:328)
+    "app|.empty-state > *|max-inline-size|520",
+    "app|[data-module=\"nasaq\"][data-nasaq-state=\"result\"] .column-source, [data-module=\"nasaq\"][data-nasaq-state=\"review\"] .column-source|inline-size|440",
+    // Popup Button 2390:36: «النمط» ١٦٠ و«المستوى» ١٨٠، وPrimary Action في الشريط ٢٠٠
+    "app|.dd-btn|min-inline-size|160",
+    "app|#settings-content .popup-control:nth-child(2) .dd-btn|min-inline-size|180",
+    "app|.primary-action|inline-size|200",
+    // حلقة تركيز Primary Action 2120:64: ظلّ منتشر ٣ بلون focus/ring
+    "app|.primary-action:focus-visible, .primary-action[aria-busy=\"true\"]:focus-visible|box-shadow|3",
+    // Dropdown Menu 30:39 عرضه ٢٢٠ (أدناه ٢٠٠ حتى لا تضيق عن أقصر بند)
+    "app|.dd-popup, .menu, .picker-menu|min-inline-size|200",
+    "forms|.picker-menu|min-inline-size|200",
+    // لوح شَذْب (Review-Decision 2009:1632) ٤٢٠، وفي الضيّق ٣٢٠؛ وCut Decision 2124:32 ارتفاعه ٤٤
+    "app|.inspector|inline-size|420",
+    "app|.inspector|inline-size|320",
+    "app|.decision-button|block-size|44",
+    // Alert 30:26 عرضه ٤٠٠، وSheet 30:27 ٤٤٠ (وورقة التنويعات ٧٢٠)، وPopover 30:36 ٣٦٠
+    "app|.alert|inline-size|400",
+    "app|.sheet|inline-size|720",
+    "app|.sheet-narrow|inline-size|440",
+    "app|.popover|inline-size|360",
+    "app|.variation|min-block-size|280",
+    "app|.lens-phone|max-block-size|320",
+    // Settings / General 2128:576: التسمية ١٢٠ والعنصر ٢٢٠، وToggle 26:449 مضماره ٣٦، وSettings Tab 26:110 ارتفاعه ٣٠
+    "forms|.form-row > .row-label|inline-size|120",
+    "forms|.row-picker, .row-input|inline-size|220",
+    "forms|.form-row > .row-field|inline-size|220",
+    "forms|.row-switch|inline-size|36",
+    "secondary|.tab|block-size|30",
+    // About-Window 2009:2911: صفّ إشارات النظام ١٤، والأيقونة ٨٠
+    "secondary|.about|padding-block-start|14",
+    "secondary|.about img|inline-size|80",
+    "secondary|.about img|block-size|80",
   ],
 };
 

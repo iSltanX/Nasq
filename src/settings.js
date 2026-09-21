@@ -14,7 +14,6 @@
 
   const tabs = [...document.querySelectorAll(".tab")];
   const panes = { general: el("pane-general"), updates: el("pane-updates") };
-  const windowTitle = el("window-title");
   const menu = el("picker-menu");
 
   const apiKeyInput = el("api-key");
@@ -118,7 +117,6 @@
       tab.setAttribute("aria-selected", String(selected));
       tab.tabIndex = selected ? 0 : -1;
       panes[tab.dataset.tab].hidden = !selected;
-      if (selected) windowTitle.textContent = tab.querySelector("span").textContent;
     }
     measure();
   }

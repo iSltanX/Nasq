@@ -26,17 +26,19 @@ const SETTINGS_PAGE: &str = "settings.html";
 
 /// صفحة «حول» تأتي مع واجهة المرحلة ٥ كذلك
 const ABOUT_PAGE: &str = "about.html";
-/// لوحة «حول» كما رُسمت ٢٨٤×٢١٣، بزر إغلاق وحده
-const ABOUT_WIDTH: f64 = 284.0;
-const ABOUT_HEIGHT: f64 = 213.0;
+/// لوحة «حول» كما رُسمت في NsqV272 (About-Window 2009:2911) ٣٢٠×٣٠٠، بزر إغلاق وحده
+const ABOUT_WIDTH: f64 = 320.0;
+const ABOUT_HEIGHT: f64 = 300.0;
 
-const SETTINGS_WIDTH: f64 = 500.0;
-/// صفّ العنوان ٣٢ + شريط التبويبات ٥٦
-const SETTINGS_CHROME: f64 = 88.0;
-/// لوح «عام» في التصميم — ارتفاع أول فتح قبل أن تقيس الصفحة نفسها
-const SETTINGS_INITIAL_PANE: f64 = 464.5;
-/// ألوح لوح مرسوم (التحديثات) — أقصر ما يجوز أن تصير إليه النافذة
-const SETTINGS_MIN_PANE: f64 = 185.0;
+/// نافذة الإعدادات في NsqV272 (Settings / General 2128:576) عرضها ٥٢٠
+const SETTINGS_WIDTH: f64 = 520.0;
+/// ما يحيط باللوح: حشو ٢٠ + صفّ العنوان ١٨ + فجوة ١٦ + مضمار التبويبين ٣٤ + فجوة ١٦،
+/// ثم حشو ٢٠ تحته
+const SETTINGS_CHROME: f64 = 124.0;
+/// لوح «عام» بتذييله في التصميم (٣٠٤ + ١٦ + ٣٢) — ارتفاع أول فتح قبل أن تقيس الصفحة نفسها
+const SETTINGS_INITIAL_PANE: f64 = 352.0;
+/// أقصر لوح مرسوم (التحديثات بتذييله: ٢٧٢ + ١٦ + ٢٤) — أقصر ما يجوز أن تصير إليه النافذة
+const SETTINGS_MIN_PANE: f64 = 312.0;
 /// سقف مطلق حتى لا تطول النافذة على شاشة كبيرة بلا داعٍ
 const SETTINGS_MAX_HEIGHT: f64 = 900.0;
 /// وحتى على شاشة صغيرة تبقى النافذة داخل المساحة المرئية
@@ -259,27 +261,28 @@ mod tests {
 
     #[test]
     fn the_general_pane_gives_the_height_the_design_draws() {
-        // ٤٦٤٫٥ لوحًا + ٨٨ هيئةً = ٥٥٢٫٥ في الإطار، و٥٥٣ نقطةً على الشاشة
-        assert_eq!(settings_height(SETTINGS_INITIAL_PANE, ROOMY_SCREEN), 553.0);
+        // ٣٥٢ لوحًا + ١٢٤ هيئةً = ٤٧٦ كما في الإطار 2128:576
+        assert_eq!(settings_height(SETTINGS_INITIAL_PANE, ROOMY_SCREEN), 476.0);
     }
 
     #[test]
     fn the_updates_pane_gives_the_shortest_drawn_window() {
-        assert_eq!(settings_height(185.0, ROOMY_SCREEN), 273.0);
+        // ٣١٢ لوحًا + ١٢٤ = ٤٣٦ كما في الإطار 2128:625
+        assert_eq!(settings_height(312.0, ROOMY_SCREEN), 436.0);
     }
 
     #[test]
     fn the_connection_error_pane_keeps_its_own_height() {
-        // حالة تعذّر الاتصال في التصميم: ٤٥٠ لوحًا = ٥٣٨
-        assert_eq!(settings_height(450.0, ROOMY_SCREEN), 538.0);
+        // لوحٌ أطول من «عام» (رسالة خطأ اتصال متعددة الأسطر): ٤٥٠ لوحًا = ٥٧٤
+        assert_eq!(settings_height(450.0, ROOMY_SCREEN), 574.0);
     }
 
     #[test]
     fn a_pane_shorter_than_the_shortest_never_shrinks_the_window_further() {
-        assert_eq!(settings_height(40.0, ROOMY_SCREEN), 273.0);
-        assert_eq!(settings_height(0.0, ROOMY_SCREEN), 273.0);
-        assert_eq!(settings_height(-200.0, ROOMY_SCREEN), 273.0);
-        assert_eq!(settings_height(f64::NAN, ROOMY_SCREEN), 273.0);
+        assert_eq!(settings_height(40.0, ROOMY_SCREEN), 436.0);
+        assert_eq!(settings_height(0.0, ROOMY_SCREEN), 436.0);
+        assert_eq!(settings_height(-200.0, ROOMY_SCREEN), 436.0);
+        assert_eq!(settings_height(f64::NAN, ROOMY_SCREEN), 436.0);
     }
 
     #[test]
@@ -295,19 +298,20 @@ mod tests {
     #[test]
     fn a_short_screen_never_pushes_the_window_below_the_shortest_pane() {
         // شاشة ٢٠٠pt: أربعة أخماسها أقصر من أقصر نافذة مرسومة، فالأرضية تغلب
-        assert_eq!(settings_height(SETTINGS_INITIAL_PANE, 200.0), 273.0);
+        assert_eq!(settings_height(SETTINGS_INITIAL_PANE, 200.0), 436.0);
     }
 
     #[test]
     fn the_about_panel_keeps_the_measured_size_of_the_system_one() {
-        assert_eq!((ABOUT_WIDTH, ABOUT_HEIGHT), (284.0, 213.0));
+        // About-Window 2009:2911 في NsqV272
+        assert_eq!((ABOUT_WIDTH, ABOUT_HEIGHT), (320.0, 300.0));
         // أصغر من أقصر نافذة إعدادات: لوحة لا نافذة عمل
         assert!(ABOUT_HEIGHT < settings_height(SETTINGS_MIN_PANE, ROOMY_SCREEN));
     }
 
     #[test]
     fn the_window_opens_on_the_general_pane_height() {
-        assert_eq!(initial_settings_height(), 552.5);
-        assert_eq!(settings_height(SETTINGS_INITIAL_PANE, ROOMY_SCREEN), 553.0);
+        assert_eq!(initial_settings_height(), 476.0);
+        assert_eq!(settings_height(SETTINGS_INITIAL_PANE, ROOMY_SCREEN), 476.0);
     }
 }

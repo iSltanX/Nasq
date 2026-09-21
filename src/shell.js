@@ -222,14 +222,14 @@ const PRODUCT_IDENTITY = {
     statement: "كلماتك كما هي، بنَسَقٍ أوضح",
     documentTitle: "نَسَق",
     actionLabel: "نسّق",
-    editorPlaceholder: "الصق نصّك هنا أو ابدأ الكتابة مباشرة…",
+    editorPlaceholder: "الصق نصّك هنا أو ابدأ الكتابة",
   },
   shadhb: {
     name: "شَذْب",
     statement: "وظيفة تنقية الشذرات داخل نَسَق",
     documentTitle: "شَذْب — نَسَق",
     actionLabel: "افحص الشذرة",
-    editorPlaceholder: "الصق الشذرة هنا أو اكتبها مباشرة…",
+    editorPlaceholder: "الصق شذرتك هنا — فقرة أو اثنتان تريد تشذيبهما",
   },
 };
 
@@ -1306,7 +1306,15 @@ async function writeSession() {
   }
 }
 
+// «في الخانة نص» حالةٌ صريحة على الجذر تكتبها القشرة مالكةُ الخانة المشتركة، فيقرؤها
+// الهيكل (حالة البداية فوق الخانة الفارغة، ورأس العمود، وصفّ التلميح) بلا اشتقاق في
+// CSS. تُحدَّث مع كل لمسة جلسة: كل كتابة، وكل رسم حالةٍ في البرجين يمرّ من هنا
+function syncHasText() {
+  document.documentElement.toggleAttribute("data-has-text", Boolean(el("input-text").value.trim()));
+}
+
 function touchSession() {
+  syncHasText();
   if (!sessionRestored) return;
   clearTimeout(sessionTimer);
   sessionTimer = setTimeout(writeSession, SESSION_DELAY);
@@ -1333,6 +1341,7 @@ async function restoreSession() {
     }
   }
   sessionRestored = true;
+  syncHasText();
 }
 
 el("input-text").addEventListener("input", touchSession);

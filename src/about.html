@@ -8,16 +8,17 @@
     <link rel="stylesheet" href="base.css" />
     <link rel="stylesheet" href="secondary.css" />
   </head>
-  <!-- لوحة «حول» ٢٨٤×٢١٣: أيقونة ٦٤ ثم الاسم ١٤ عريضًا، فالإصدار والوعد والحقوق -->
+  <!-- لوحة «حول» ٣٢٠×٣٠٠ (About-Window 2009:2911): أيقونة ٨٠، فالاسم Window Title،
+       فالإصدار بلون الوحدة، فالوعد، فخطّ، فالحقوق -->
   <body data-window="about" data-tauri-drag-region>
-    <!-- الدوران لا الوسوم: اللوحة مقيسة ٢٨٤×٢١٣ بالنقطة، وتبديل <p> بـ<h1>
+    <!-- الدوران لا الوسوم: اللوحة مقيسة ٣٢٠×٣٠٠ بالنقطة، وتبديل <p> بـ<h1>
          يجرّ مقاسًا وهوامش افتراضية تزحزح القياس. الدور يعطي المعلمَ والعنوان
          لقارئ الشاشة وحده -->
     <div class="about" role="main">
-      <img src="app-icon.png" alt="أيقونة نَسَق" width="64" height="64" />
+      <img src="app-icon.png" alt="أيقونة نَسَق" width="80" height="80" />
       <p class="app-name" role="heading" aria-level="1">نَسَق</p>
       <p class="app-version">الإصدار <span id="app-version" dir="ltr"></span></p>
-      <p class="app-promise">كلماتك كما هي، بنَسَقٍ أوضح.</p>
+      <p class="app-promise">صوتك محفوظ، وشكل نصك أوضح. رفيقك لتنسيق العربية.</p>
       <p class="app-rights">
         © ٢٠٢٦ سلطان ·
         <button type="button" class="link" id="site-link" dir="ltr"></button>

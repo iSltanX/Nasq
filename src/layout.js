@@ -1,30 +1,29 @@
 // هيكل النافذة الرئيسية — ما يخص النافذة نفسها لا برجًا ولا عقدًا: حقن الأيقونات
-// وإعلان الجاهزية، وإظهار الألواح وطيّها، والعرض «الأصل | النتيجة»، وأقسام
-// المفتّش، وطيّ شريط الأدوات عند الضيق، والقوائم والأوراق والتنبيهات والنوافذ
-// المنبثقة داخل النافذة. لا يعرف دالة من دوال الأبراج: يقرأ السمات والعناصر
+// وإعلان الجاهزية، وإظهار لوحة المسودات ولوح المراجعة، والعرض «الأصل | النتيجة»،
+// وعروض اللوحة (التقرير)، وطيّ صفّ الأدوات عند الضيق، والقوائم والأوراق
+// والتنبيهات والنوافذ المنبثقة داخل النافذة. لا يعرف دالة من دوال الأبراج: يقرأ السمات والعناصر
 // المعلَّمة فقط، ويعطي القشرة والأبراج واجهة عامة للنوافذ (NasaqWindow) لا
 // تحمل منطق أي منها.
 (() => {
   const root = document.documentElement;
   const win = document.getElementById("window");
   const content = document.getElementById("content");
-  const toolbar = document.getElementById("toolbar");
   const tauri = window.__TAURI__;
 
   // خارج التطبيق لا يحقن إطار النافذة اتجاه شريط العنوان، فيُفترض نظام عربي
   if (!tauri) root.dataset.preview = "";
   if (!root.dataset.titlebar) root.dataset.titlebar = "rtl";
 
-  const px = (name) => parseFloat(getComputedStyle(root).getPropertyValue(name)) || 0;
   const MARGIN = 8;
   const clamp = (value, min, max) => Math.max(min, Math.min(value, max));
   const modalOpen = () => Boolean(document.querySelector('[aria-modal="true"]:not([hidden])'));
 
-  // ---------- الألواح: الشريط الجانبي والمفتّش ----------
-  // التفضيل ما اختاره الكاتب، والظاهر يُشتق منه ومن العرض: إن ضاقت النافذة عن
-  // اللوحين والمحتوى معًا طُوي الأقدم فتحًا، ويعود حين تتسع (Figma 100:1047)
-  const PANELS_KEY = "nasaq-panels";
-  const prefs = { sidebar: true, inspector: true, last: "inspector" };
+  // ---------- الألواح: لوحة المسودات ولوح المراجعة ----------
+  // التفضيل ما اختاره الكاتب. لوحة المسودات مغلقة حتى تُطلب (NsqV272: «المسودات»
+  // في شريط العنوان تفتحها)، ولوح المراجعة يتبع حالة وحدته ما لم يطوِه الكاتب.
+  // والمفتاح جديد: تفضيل الهيكل السابق (لوحان مفتوحان) لا يُورَّث
+  const PANELS_KEY = "nasaq-panels-v272";
+  const prefs = { sidebar: false, inspector: true, last: "inspector" };
   try {
     Object.assign(prefs, JSON.parse(localStorage.getItem(PANELS_KEY)) || {});
   } catch {
@@ -32,13 +31,8 @@
   }
 
   function applyPanels() {
-    let sidebar = prefs.sidebar;
-    let inspector = prefs.inspector;
-    const needed = px("--layout-sidebar") + px("--layout-inspector") + px("--layout-content-min");
-    if (sidebar && inspector && window.innerWidth < needed) {
-      if (prefs.last === "sidebar") inspector = false;
-      else sidebar = false;
-    }
+    const sidebar = prefs.sidebar;
+    const inspector = prefs.inspector;
     // لوحٌ يُطوى والتركيز فيه يُسقطه إلى الصفحة (inert)، فيبدأ Tab من رأسها. في
     // الماك ينتقل التركيز إلى المحتوى: أول ما يقبله في العمود الظاهر (فحص m4-07)
     const leaving = [["sidebar", sidebar], ["inspector", inspector]].some(
@@ -55,8 +49,8 @@
         [...content.querySelectorAll("button, [tabindex='0']")].find(usable);
       target?.focus();
     }
-    for (const b of document.querySelectorAll('[data-command="toggle-inspector"]')) {
-      b.setAttribute("aria-pressed", String(inspector));
+    for (const b of document.querySelectorAll("[data-command][aria-pressed]")) {
+      b.setAttribute("aria-pressed", String(b.dataset.command === "toggle-sidebar" ? sidebar : inspector));
     }
     window.NasaqMenu.sync();
   }
@@ -155,10 +149,36 @@
     attributeFilter: ["hidden"],
   });
 
-  // ---------- أقسام المفتّش ----------
+  // ---------- أقسام لوح المراجعة ----------
   document.getElementById("inspector").addEventListener("click", (e) => {
     const header = e.target.closest(".section-header");
     if (header) header.setAttribute("aria-expanded", String(header.getAttribute("aria-expanded") !== "true"));
+  });
+
+  // ---------- عروض اللوحة: عرضٌ يملأ اللوحة حين يُطلب (التقرير) ----------
+  // الزر يسمّي عرضه بـ data-canvas-open، والعرض يُغلق بـ data-canvas-close أو Esc،
+  // ويعود التركيز إلى الزر الذي فتحه. تبديل الوحدة يُغلقه: العرض يخصّ وحدته
+  let canvasOpener = null;
+  function setCanvas(name, opener = null) {
+    if (name) content.dataset.canvas = name;
+    else delete content.dataset.canvas;
+    if (name) {
+      canvasOpener = opener;
+      content.querySelector(".canvas-view:not([hidden]) [data-canvas-close]")?.focus();
+    } else if (canvasOpener && canvasOpener.isConnected && !canvasOpener.disabled) {
+      canvasOpener.focus();
+      canvasOpener = null;
+    }
+  }
+  document.addEventListener("click", (e) => {
+    const open = e.target.closest("[data-canvas-open]");
+    if (open) return setCanvas(open.dataset.canvasOpen, open);
+    if (e.target.closest("[data-canvas-close]")) setCanvas(null);
+  });
+  content.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape" || !content.dataset.canvas || modalOpen()) return;
+    e.preventDefault();
+    setCanvas(null);
   });
 
   // ---------- المحرر: يتمدد مع نصه حين لا يدعم المحرك field-sizing ----------
@@ -435,12 +455,9 @@
     isModalOpen: modalOpen,
   };
 
-  // ---------- كتلة الأدوات: الطي عند الضيق ----------
-  // الكتلة تسكن عمود النص، فقاعدتها أن تتّسع فيه: تُطوى المجموعات بترتيب
-  // data-collapse وتختفي التسميات بترتيب data-collapse-labels حتى يبقى بين
-  // طرفيها وحافتي العمود هامشٌ لا يقل عن ٢٠. وكانت القاعدة قبل النقل مسافةً
-  // مرنة في الشريط لا تقل عن ١٤٠
-  const MIN_MARGIN = 20;
+  // ---------- صفّ أدوات النتيجة: الطي عند الضيق ----------
+  // الصفّ يملأ عرض لوح النتيجة، فقاعدته أن تتّسع أدواته فيه: تُطوى المجموعات
+  // بترتيب data-collapse حتى لا يفيض محتواه عن حدّه، وما طُوي يصير في «⋯»
   const tools = document.getElementById("editor-tools");
   const overflowGroup = tools.querySelector(".overflow-group");
   const overflowButton = overflowGroup.querySelector("[data-overflow-button]");
@@ -459,7 +476,7 @@
       ...[...module.querySelectorAll("[data-collapse-labels]")].map((n) => ({ order: +n.dataset.collapseLabels, node: n, attr: "data-labels-hidden" })),
     ].sort((a, b) => a.order - b.order);
 
-    const fits = () => tools.getBoundingClientRect().width <= content.clientWidth - 2 * MIN_MARGIN;
+    const fits = () => tools.scrollWidth <= tools.clientWidth + 1;
     for (const step of steps) {
       if (fits()) break;
       step.node.setAttribute(step.attr, "");
@@ -503,6 +520,7 @@
     if (records.some((r) => r.attributeName === "data-module")) {
       applyModulePlaceholders();
       markModuleSwitch();
+      setCanvas(null);
     }
   }).observe(root, { attributes: true, attributeFilter: ["data-module", "data-titlebar", "data-fullscreen"] });
 
@@ -522,7 +540,7 @@
   // لأن الحساب هو من يكتبه
   new MutationObserver((records) => {
     if (records.some((r) => r.target !== overflowGroup)) scheduleLayout();
-  }).observe(toolbar, { subtree: true, attributes: true, attributeFilter: ["hidden"] });
+  }).observe(tools, { subtree: true, attributes: true, attributeFilter: ["hidden"] });
 
   // ---------- ملء الشاشة: لا إشارات نافذة فلا حجز لها ----------
   const currentWindow = tauri?.window?.getCurrentWindow?.();
@@ -558,9 +576,12 @@
     .catch(() => {});
   const fonts = document.fonts
     ? Promise.all([
-        document.fonts.load('400 13px "Almarai"'),
-        document.fonts.load('700 13px "Almarai"'),
-        document.fonts.load('600 17px "Cairo"'),
+        document.fonts.load('400 16px "Almarai"'),
+        document.fonts.load('700 16px "Almarai"'),
+        document.fonts.load('400 14px "Cairo"'),
+        document.fonts.load('500 13px "Cairo"'),
+        document.fonts.load('600 13px "Cairo"'),
+        document.fonts.load('700 28px "Cairo"'),
       ]).catch(() => {})
     : Promise.resolve();
 
