@@ -17,6 +17,8 @@
 
   const alertEl = el("update-alert");
   const titleEl = el("update-alert-title");
+  const glyphEl = el("update-alert-glyph");
+  const noteEl = el("update-alert-note");
   const messageEl = el("update-alert-message");
   const progressEl = el("update-alert-progress");
   const fillEl = el("update-progress-fill");
@@ -41,8 +43,13 @@
   const mb = (bytes) =>
     window.NasaqShell.formatNumber(Math.max(0, Math.round(bytes / 1e6)));
 
-  function show({ title, message, caption, progress, cancel, confirm, onConfirm }) {
+  function show({ title, message, caption, note, progress, cancel, confirm, onConfirm, failed = false, cancelTone = "" }) {
     titleEl.textContent = title;
+    // رمز الإخفاق في صفّ العنوان لتنبيهَي الفشل وحدهما (Alert-Check-Failed 2009:2883)
+    glyphEl.hidden = !failed;
+    noteEl.textContent = note ?? "";
+    noteEl.hidden = !note;
+    cancelEl.classList.toggle("is-destructive", cancelTone === "destructive");
     messageEl.textContent = message ?? "";
     messageEl.hidden = !message;
     progressEl.hidden = !progress;
@@ -83,18 +90,20 @@
 
   function showAvailable(version, current) {
     show({
-      title: `يتوفّر نَسَق ${version}`,
-      message: `لديك الإصدار ${current}. يُعاد تشغيل نَسَق بعد التثبيت، وتبقى مسوداتك كما هي.`,
+      // Alert-Update-Available 2009:2839. الزرّ «نزّل التحديث» موافقةٌ واحدة على التنزيل فالتثبيت فإعادة
+      // التشغيل، فالرسالة تقول ذلك صراحةً؛ ولا وصف لمحتوى الإصدار فهو لا يُعرف هنا
+      title: "تحديث جديد متاح",
+      message: `الإصدار ${version} متوفر الآن${current ? ` ولديك ${current}` : ""}. مسوداتك الحالية وإعداداتك لن تتأثر بهذا التحديث، ويُعاد تشغيل نَسَق بعد تثبيته.`,
       cancel: "لاحقًا",
-      confirm: "ثبّت وأعد التشغيل",
+      confirm: "نزّل التحديث",
       onConfirm: install,
     });
   }
 
   function showUpToDate(current) {
     show({
-      title: "نَسَق محدَّث",
-      message: `أنت تستخدم أحدث إصدار (${current}).`,
+      title: "أحدث إصدار مثبت",
+      message: `نَسَق يعمل حاليًا بأحدث إصدار متوفر (${current}).`,
       confirm: "حسنًا",
       onConfirm: close,
     });
@@ -106,29 +115,35 @@
   function showCheckFailure(reason) {
     console.warn("تعذّر التحقق من التحديثات:", reason);
     show({
-      title: "تعذّر التحقق من التحديثات",
-      message: "تأكّد من اتصالك بالإنترنت ثم أعد المحاولة. يبقى نَسَق على إصداره الحالي.",
-      confirm: "حسنًا",
-      onConfirm: close,
+      title: "فشل التحقق من التحديثات",
+      message: "تعذّر الاتصال بخادم التحديثات. يُرجى التحقق من اتصالك بالإنترنت ثم إعادة المحاولة.",
+      failed: true,
+      cancel: "إلغاء",
+      confirm: "حاول مجددًا",
+      onConfirm: retryCheck,
     });
   }
 
   function showDownloadFailure(reason) {
     console.warn("تعذّر تنزيل التحديث:", reason);
     show({
-      title: "تعذّر تنزيل التحديث",
-      message: "لم يكتمل التنزيل ولم يُثبَّت منه شيء. مسوداتك كما هي، ويمكنك المحاولة لاحقًا.",
-      confirm: "حسنًا",
-      onConfirm: close,
+      title: "فشل تنزيل التحديث",
+      message: "لم يكتمل تنزيل التحديث ولم يُثبَّت منه شيء. مسوداتك الحالية وإعداداتك لم تتأثر.",
+      failed: true,
+      cancel: "إلغاء",
+      confirm: "حاول مجددًا",
+      onConfirm: install,
     });
   }
 
   function showDownloading(done, total) {
     show({
-      title: `جارٍ تنزيل نَسَق ${version}`.trim(),
+      title: "جارٍ تنزيل التحديث",
       progress: { percent: total ? Math.min(100, (done / total) * 100) : 0 },
       caption: total ? `${mb(done)} م.ب من ${mb(total)} م.ب` : "جارٍ التحضير…",
+      note: "الإلغاء يمنع التثبيت التلقائي بعد اكتمال التنزيل على جهازك.",
       cancel: "إلغاء",
+      cancelTone: "destructive",
     });
   }
 
@@ -136,7 +151,7 @@
   // فحص m3-01). والشريط ممتلئ، والسطر يقول ما سيحدث بعده
   function showInstalling() {
     show({
-      title: `جارٍ تثبيت نَسَق ${version}`.trim(),
+      title: "جارٍ تثبيت التحديث",
       progress: { percent: 100 },
       caption: "يُعاد تشغيل نَسَق حين يكتمل التثبيت.",
     });
@@ -191,6 +206,12 @@
       if (!cancelled) pendingManual = false;
       settle();
     }
+  }
+
+  // «حاول مجددًا» بعد فشل الفحص: التنبيه يُغلق ثم يجري الفحص اليدوي نفسه
+  function retryCheck() {
+    close();
+    check(MANUAL);
   }
 
   function settle() {

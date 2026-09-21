@@ -699,7 +699,23 @@ textarea.empty-bidi {
 [data-module="nasaq"][data-nasaq-state="error"] .column-source .panel-header {
   display: none;
 }
+.preserved-header {
+  display: none;
+}
+[data-module="nasaq"][data-nasaq-state="error"] .preserved-header {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--layout-element-gap);
+}
+.preserved-title {
+  font: var(--type-button-label);
+  color: var(--text-secondary);
+}
 [data-module="nasaq"][data-nasaq-state="error"] .column-source .editor-stack {
+  flex-direction: column;
+  gap: var(--layout-group-gap);
   padding: var(--component-padding-2xl);
   border: var(--stroke-hairline) solid var(--border-default);
   border-radius: var(--radius-12);
@@ -1735,11 +1751,22 @@ div.scope-card {
   font: var(--type-button-label);
   color: var(--text-secondary);
 }
-.summary-card .inspector-row {
-  border-block-end-color: var(--fill-pressed);
+.summary-card .scope-head {
+  padding-block-end: var(--layout-element-gap);
 }
-.summary-card .inspector-row:last-child {
+.summary-card .scope-head .summary-title {
+  padding-block-end: 0;
+}
+/* الفاصل بين الصفوف لا تحت آخرها: الصف المخفيّ لا يترك خطًّا */
+.summary-card .inspector-row {
   border-block-end: 0;
+}
+.summary-card .inspector-row + .inspector-row {
+  border-block-start: var(--stroke-hairline) solid var(--fill-pressed);
+}
+.summary-card > .tag {
+  align-self: flex-start;
+  margin-block-start: var(--layout-group-gap);
 }
 .summary-card .row-label {
   font: var(--type-body-ui);
@@ -1931,6 +1958,13 @@ div.scope-card {
   font: var(--type-button-label);
   color: var(--text-secondary);
 }
+/* Decision Card · Type=Stale (2412:9444): الوسم سطرُ Metadata بلا خلفية، والصندوق يحمل السبب */
+.decision-card .tag[data-tone="plain"] {
+  padding: 0;
+  background: none;
+  font: var(--type-metadata);
+  color: var(--text-tertiary);
+}
 .card-meta,
 .card-effect {
   font: var(--type-caption);
@@ -2096,9 +2130,18 @@ body:has([aria-modal="true"]:not([hidden]))::before {
   flex-direction: column;
   gap: var(--layout-component-gap);
 }
-.alert-app-icon {
-  inline-size: var(--space-48);
-  block-size: var(--space-48);
+/* Title Row: العنوان يملأ، ورمز الإخفاق في طرف الصفّ بلون status/warning */
+.alert-title-row {
+  display: flex;
+  align-items: center;
+  gap: var(--layout-element-gap);
+}
+.alert-title-row .alert-title {
+  flex: 1;
+}
+.alert-glyph {
+  flex: none;
+  color: var(--status-warning);
 }
 .alert-title {
   font: var(--type-section-title);
@@ -2149,15 +2192,16 @@ body:has([aria-modal="true"]:not([hidden]))::before {
 .alert-button.is-destructive:active {
   background: var(--status-danger-subtle);
 }
+/* Progress Bar 2855: مضمار ٨ على surface/sunken، وفجوة ٦ إلى سطر الأرقام (Caption) */
 .update-progress {
   display: flex;
   flex-direction: column;
-  gap: var(--layout-element-gap);
+  gap: var(--layout-tight-gap);
 }
 .update-progress-track {
-  block-size: var(--space-6);
+  block-size: var(--space-8);
   border-radius: var(--radius-full);
-  background: var(--fill-pressed);
+  background: var(--surface-sunken);
   overflow: hidden;
 }
 .update-progress-fill {
@@ -2167,7 +2211,7 @@ body:has([aria-modal="true"]:not([hidden]))::before {
   transition: inline-size var(--motion-normal);
 }
 .update-progress-caption {
-  font: var(--type-metadata);
+  font: var(--type-caption);
   color: var(--text-secondary);
 }
 

@@ -45,6 +45,7 @@
     const readingCard = el("reading-card");
 
     const cutSection = el("cut-card-section");
+    const cutCard = el("cut-card");
     const cutTitle = el("cut-card-title");
     const cutTag = el("cut-card-tag");
     const cutQuote = el("cut-card-quote");
@@ -64,6 +65,11 @@
     const outcomeKept = el("outcome-kept");
     const outcomeWords = el("outcome-words");
     const outcomeCovenant = el("outcome-covenant");
+    const outcomePartial = el("outcome-partial");
+    const outcomeStatusLabel = el("outcome-status").querySelector(".status-label");
+    const outcomeStaleRow = el("outcome-stale-row");
+    const outcomeStale = el("outcome-stale");
+    const outcomeShorter = el("outcome-shorter");
 
     const statusBadge = el("shadhb-status");
     const statusLabel = el("shadhb-status-label");
@@ -150,14 +156,15 @@
       pending: { label: "لم تُحسم", tone: "neutral", icon: "circle.dotted.16m" },
       cut: { label: "حُذفت", tone: "module", icon: "scissors.16m" },
       kept: { label: "أُبقيت", tone: "success", icon: "checkmark.16m" },
-      stale: { label: "تعذّرت", tone: "warning", icon: null },
+      // بطاقة «تعذّرت» (Decision Card · Type=Stale): وسمها سطرُ Metadata بلا خلفية
+      stale: { label: "تعذّرت المراجعة", tone: "plain", icon: null },
     };
     // رمز قرار القصّة في صفّها بالشريط الجانبي (Figma 105:344)
     const CUT_ICONS = {
       pending: "circle.dotted.16r",
       cut: "scissors.16r",
       kept: "checkmark.16r",
-      stale: "circle.dotted.16r",
+      stale: "info.circle.16r",
     };
 
     function shadhbState() {
@@ -191,7 +198,10 @@
     // السبب جملة من النموذج تنتهي بنقطة غالبًا، فتُنزع خاتمته قبل الفاصلة —
     // كان السطر «مباشرة.، ٤ كلمات» (المرحلة ٩)
     // القصّة تتعذّر حين لا يبقى اقتباسها في النص بعد قصّةٍ سبقتها (لا بتحرير الكاتب: ذاك «اقتراحات قديمة»).
-    // شريحتها لا تُحدَّد فلا بطاقة لها؛ فسببها تلميحُ الشريحة وتسميتها لقارئ الشاشة (Review-Stale 2009:1826)
+    // شريحتها تُحدَّد فتُظهر بطاقة «تعذّرت» بسببها (Decision Card · Type=Stale في Review-Stale 2009:1826)،
+    // والسبب نفسه تلميحُ الشريحة وتسميتها لقارئ الشاشة. لا قرار عليها: لا «احذف» ولا «أبقِ»
+    const STALE_TITLE = "تعذّرت: لم يعد اقتباسها في النص";
+    const STALE_BODY = "حذفُ قصّةٍ سبقتها أزال موضع هذا الاقتباس، فلم يعد في النص حرفيًا. لا اجتهاد ولا تقريب: بقي نصّك بلا هذا الحذف.";
     const STALE_NOTE = "تعذّرت: لم يعد اقتباسها في النص بعد قصّةٍ سبقتها. افحص من جديد إن أردت اقتراحات تطابق النص الحالي.";
     function cutMetaText(cut) {
       const reason = String(cut.reason || "").trim().replace(/[.۔،؛\s]+$/u, "") || "بلا سبب";
@@ -264,7 +274,6 @@
       // وكانت القائمة لا تُبلغ بلوحة المفاتيح (فحص m4-06)
       row.tabIndex = index === (selected >= 0 ? selected : 0) ? 0 : -1;
       if (index === selected) row.classList.add("is-selected");
-      if (cut.status === "stale") row.setAttribute("aria-disabled", "true");
 
       const text = document.createElement("span");
       text.className = "row-text";
@@ -298,6 +307,20 @@
       if (!state || selected < 0 || !state.cuts[selected]) return;
       const cut = state.cuts[selected];
       const tag = CUT_TAGS[cut.status];
+      const stale = cut.status === "stale";
+      cutCard.dataset.state = stale ? "stale" : "selected";
+      cutMeta.hidden = stale;
+      if (stale) {
+        // بطاقة «تعذّرت»: رأسها الحكم، وصندوق الاقتباس يحمل السبب لا نصًّا لم يعد في الخانة
+        cutTitle.textContent = STALE_TITLE;
+        cutTag.dataset.tone = tag.tone;
+        cutTag.querySelector(".icon").toggleAttribute("hidden", true);
+        cutTag.querySelector(".tag-label").textContent = tag.label;
+        cutQuote.textContent = STALE_BODY;
+        cutEffect.hidden = true;
+        cutActions.hidden = true;
+        return;
+      }
       cutTitle.textContent = `القصّة ${AR(selected + 1)} من ${AR(state.cuts.length)}`;
       cutTag.dataset.tone = tag.tone;
       const tagIcon = cutTag.querySelector(".icon");
@@ -505,6 +528,13 @@
         const total = words(state.original);
         outcomeCut.textContent = `${AR(applied)} من ${AR(state.cuts.length)}`;
         outcomeKept.textContent = AR(state.cuts.filter((c) => c.status === "kept").length);
+        const staleCount = state.cuts.filter((c) => c.status === "stale").length;
+        outcomePartial.hidden = staleCount === 0;
+        // السطر المخفيّ لقارئ الشاشة يقول ما يراه المبصر في الوسم (ملاحظة حارس شَذْب)
+        outcomeStatusLabel.textContent = staleCount === 0 ? "حُسمت كل القصّات" : "حُسمت القصّات، وتعذّر بعضها";
+        outcomeStaleRow.hidden = staleCount === 0;
+        outcomeStale.textContent = AR(staleCount);
+        outcomeShorter.hidden = applied === 0;
         outcomeWords.textContent = `${AR(total - words(state.currentText))} من ${AR(total)}`;
         paintCovenant(
           outcomeCovenant,
@@ -516,7 +546,13 @@
       // شريط الحالة: المؤشر وتسميته، وعدّاد كلمات الشذرة (Figma 71:471)
       statusBadge.dataset.status = now;
       // نصّ الحالة كما في إطارات شَذْب في NsqV272، وعدد ما لم يُحسم في رأس اللوح («٠ من ٣ محسومة»)
-      statusLabel.textContent = stalled ? "شَذْب — الاقتراحات لم تعد تطابق النص" : STATUS_LABELS[now];
+      // After-Trim 2009:1883: حُسمت كلها وفيها ما تعذّر — الحالة تقوله ولا تَعِد بتصحيحٍ لم يُبنَ (m6-23)
+      const partial = now === "polished" && state.cuts.some((c) => c.status === "stale");
+      statusLabel.textContent = stalled
+        ? "شَذْب — الاقتراحات لم تعد تطابق النص"
+        : partial
+          ? "شَذْب — حُسمت القصّات، وتعذّر بعضها"
+          : STATUS_LABELS[now];
       // العدّاد بصيغة شريط الحالة المشتركة: كلمات النص الجاري وحروفه
       shell.updateCount(countBox, state ? state.currentText : inputText.value, { withLines: false });
 
@@ -545,7 +581,7 @@
 
     // ---------- تحديد القصّة: صفٌّ واحد محدد، وقرارها في المفتّش ----------
     function selectCut(index, { focus = false } = {}) {
-      if (!state || !state.cuts[index] || state.cuts[index].status === "stale") return;
+      if (!state || !state.cuts[index]) return;
       selected = index;
       renderCuts();
       renderState();
@@ -572,7 +608,6 @@
       const step = e.key === "ArrowDown" ? 1 : -1;
       for (let i = at + step; i >= 0 && i < rows.length; i += step) {
         const index = Number(rows[i].dataset.cut);
-        if (state.cuts[index].status === "stale") continue;
         e.preventDefault();
         selectCut(index, { focus: true });
         return;

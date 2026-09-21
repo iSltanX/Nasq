@@ -614,6 +614,21 @@ test("m6-21: «انسخ النص» في «لا قصّات» لا ينسخ نصً
   assert.ok(/copyBtn\.disabled = busy \|\| \(now === "no-cuts" \? gone : applied === 0\)/.test(shadhb), "النسخ في «لا قصّات» لا يُمنع حين تتغيّر الخانة");
 });
 
+// m6-24: بطاقة «تعذّرت» (Decision Card · Type=Stale) عرضٌ لا قرار — لا «احذف» ولا «أبقِ» عليها،
+// والحسم نفسه يبقى للمعلّقة وحدها؛ و«مكتمل جزئيًا» لا يظهر إلا وفي القصّات ما تعذّر
+test("m6-24: القصّة المتعذّرة تُعرض بسببها ولا قرار عليها", () => {
+  const card = functionBody(shadhb, "renderCutCard");
+  assert.ok(card, "renderCutCard غائبة");
+  const stale = card.slice(card.indexOf("if (stale) {"), card.indexOf("return;", card.indexOf("if (stale) {")));
+  assert.ok(stale.includes("cutActions.hidden = true"), "بطاقة «تعذّرت» تعرض زرَّي القرار");
+  assert.ok(stale.includes("STALE_BODY") && !stale.includes("cut.quote"), "بطاقة «تعذّرت» تعرض اقتباسًا لم يعد في النص");
+  for (const fn of ["applyCutAt", "keepCutAt"]) {
+    assert.ok(/cut\.status !== "pending"\) return;/.test(functionBody(shadhb, fn)), `${fn} تحسم قصّةً غير معلّقة`);
+  }
+  assert.ok(/outcomePartial\.hidden = staleCount === 0;/.test(shadhb), "«مكتمل جزئيًا» لا يتبع وجود قصّةٍ تعذّرت");
+  assert.ok(/id="outcome-partial"[^>]*hidden/.test(html), "«مكتمل جزئيًا» ظاهرٌ قبل أن يُحسب");
+});
+
 test("المرحلة ٤: لكل حالة من حالات شَذْب السبع عنصرها وتسميتها", () => {
   // نصوص شريط الحالة في إطارات شَذْب في NsqV272 (m6): Before وReady وChecking وReview-Decision
   // وPolished وNo-Cuts وError
@@ -979,16 +994,19 @@ test("المرحلة ٦: لا بايت يُنزَّل قبل موافقة صري
   assert.ok(!/download|install|restart/.test(check), "مسار الفحص يذكر التنزيل");
 });
 
-test("المرحلة ٦: الحالات الثلاث المرسومة بنصوصها، ولا رابعة", () => {
-  // التصميم رسم ثلاثًا: متاح، جارٍ التنزيل، لا تحديث — والخطأ غير مرسوم
-  assert.ok(updatesJs.includes("يتوفّر نَسَق ${version}"), "عنوان «تحديث متاح» ليس نصّ التصميم");
-  assert.ok(
-    updatesJs.includes("يُعاد تشغيل نَسَق بعد التثبيت، وتبقى مسوداتك كما هي."),
-    "رسالة «تحديث متاح» ليست نصّ التصميم"
-  );
-  assert.ok(updatesJs.includes("ثبّت وأعد التشغيل"), "زر التثبيت ليس نصّ التصميم");
-  assert.ok(updatesJs.includes("جارٍ تنزيل نَسَق ${version}"), "عنوان التنزيل ليس نصّ التصميم");
-  assert.ok(updatesJs.includes("نَسَق محدَّث"), "عنوان «لا تحديث» ليس نصّ التصميم");
+test("المرحلة ٦: حالات تنبيه التحديث بنصوصها كما في NsqV272، ولا «جاهز للتثبيت»", () => {
+  // m6: Alert-Update-Available 2009:2839 وDownloading 2009:2855 وUp-To-Date 2009:2871 وCheck-Failed
+  // 2009:2883 وDownload-Failed 2009:2897. الموافقة واحدة، فرسالتها تذكر إعادة التشغيل صراحةً
+  for (const text of ["تحديث جديد متاح", "نزّل التحديث", "جارٍ تنزيل التحديث", "أحدث إصدار مثبت", "فشل التحقق من التحديثات", "فشل تنزيل التحديث", "حاول مجددًا",
+    "الإلغاء يمنع التثبيت التلقائي بعد اكتمال التنزيل على جهازك."]) {
+    assert.ok(updatesJs.includes(text), `«${text}» ليس في تنبيه التحديث`);
+  }
+  const available = functionBody(updatesJs, "showAvailable");
+  assert.ok(available.includes("يُعاد تشغيل نَسَق بعد تثبيته"), "موافقة «نزّل التحديث» لا تذكر إعادة التشغيل");
+  // لا وصف لمحتوى الإصدار: لا يُعرف هنا (كان في الملف «تحسينات في سرعة الأداء»)
+  assert.ok(!/تحسينات|سرعة الأداء|متوافق/.test(updatesJs), "التنبيه يصف الإصدار بما لا يعرفه");
+  // «حاول مجددًا» بعد فشل التنزيل هو الموافقة نفسها، وبعد فشل الفحص فحصٌ يدويّ لا تنزيل
+  assert.ok(/function retryCheck\(\) \{\s*close\(\);\s*check\(MANUAL\);\s*\}/.test(updatesJs), "«حاول مجددًا» بعد فشل الفحص لا يعيد الفحص وحده");
   // «جاهز للتثبيت» ليس في التصميم: زرٌّ واحد يغطّي التنزيل والتثبيت
   assert.ok(!/جاهز للتثبيت/.test(updatesJs), "حالة رابعة لم يرسمها التصميم");
 });

@@ -13,7 +13,7 @@ function element() {
   const listeners = {};
   return {
     hidden: true, textContent: "", style: {}, onclick: null,
-    setAttribute() {}, querySelector: () => element(),
+    setAttribute() {}, querySelector: () => element(), classList: { toggle() {} },
     addEventListener: (type, fn) => { listeners[type] = fn; },
     click() { listeners.click?.(); },
   };
@@ -50,6 +50,7 @@ function boot({ delays = {}, autoUpdates = false } = {}) {
   const alert = () => ({
     open: !elements["update-alert"].hidden,
     title: elements["update-alert-title"].textContent,
+    message: elements["update-alert-message"].textContent,
     confirm: () => elements["update-alert-confirm"].onclick(),
     cancel: () => elements["update-alert-cancel"].click(),
     cancelShown: !elements["update-alert-cancel"].hidden,
@@ -70,7 +71,7 @@ test("فحص m3-01: بعد اكتمال التنزيل لا «إلغاء»، وE
   app.alert().confirm();
   await tick(15); // التنزيل انتهى، والتثبيت جارٍ
   assert.deepStrictEqual(app.calls, ["check", "download", "install"]);
-  assert.match(app.alert().title, /جارٍ تثبيت نَسَق 27\.1\.0/);
+  assert.match(app.alert().title, /جارٍ تثبيت التحديث/);
   assert.strictEqual(app.alert().cancelShown, false, "«إلغاء» ظاهرٌ أثناء تثبيتٍ لا يُلغى");
   assert.strictEqual(app.escape(), false, "Esc يُغلق حالة التثبيت");
   await tick(60);
@@ -111,7 +112,9 @@ test("فحص m3: «ابحث عن تحديثات» أثناء تنزيلٍ مُل
   await tick(60);
   assert.deepStrictEqual(app.calls, ["check", "download", "check"]);
   assert.strictEqual(app.alert().open, true, "لا جواب للطلب اليدوي");
-  assert.match(app.alert().title, /27\.1\.0/);
+  // NsqV272: العنوان «تحديث جديد متاح» ورقم الإصدار في الرسالة (Alert-Update-Available 2009:2839)
+  assert.match(app.alert().title, /تحديث جديد متاح/);
+  assert.match(app.alert().message, /27\.1\.0/);
 });
 
 test("فحص m3: «ابحث عن تحديثات» أثناء فحصٍ تلقائي يُجاب حين ينتهي", async () => {

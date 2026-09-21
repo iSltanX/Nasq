@@ -137,10 +137,12 @@
                     </div>
                     <div class="banner-tail">
                       <p class="banner-message" data-error-message></p>
+                      <button class="button button-secondary button-small" type="button" data-error-close>إغلاق</button>
+                      <!-- Error 2008:223: «إعدادات المزوّد» بجانب «أعد المحاولة»، والفعل في طرف اللافتة -->
+                      <button class="button button-secondary button-small" type="button" data-open-settings>إعدادات المزوّد</button>
                       <div class="banner-actions" data-error-actions hidden>
                         <button class="button button-destructive" type="button" data-error-action></button>
                       </div>
-                      <button class="button button-secondary button-small" type="button" data-error-close>إغلاق</button>
                     </div>
                   </div>
                   <div id="shadhb-error-source" class="banner banner-error" data-for="shadhb" data-error-slot role="alert" hidden>
@@ -174,6 +176,11 @@
                 <!-- الخانة مشتركة، ونصّها النائب يسمّي خامَ كل وحدة. طبقة العلامات فوقها
                      لشَذْب وحده: منقّطة لم تُحسم، متصلة للمحددة، شطب للمحذوفة -->
                 <div class="editor-stack">
+                  <!-- Error 2008:223: رأس الصندوق الذي يحفظ النص كما أُدخل — يظهر في حال الخطأ وحدها -->
+                  <div class="preserved-header" data-for="nasaq">
+                    <span class="preserved-title">النص الأصلي (المحفوظ)</span>
+                    <span class="tag">لم يتغيّر</span>
+                  </div>
                   <textarea id="input-text" class="editor" dir="rtl" rows="1" placeholder="الصق نصّك هنا أو ابدأ الكتابة" spellcheck="false" aria-label="النص" data-placeholders data-placeholder-nasaq="الصق نصّك هنا أو ابدأ الكتابة" data-placeholder-shadhb="الصق شذرتك هنا — فقرة أو اثنتان تريد تشذيبهما"></textarea>
                   <div id="shard-marks" class="marked-text" data-for="shadhb" dir="rtl" aria-hidden="true" hidden></div>
                 </div>
@@ -523,7 +530,11 @@
               </button>
               <div class="section-content" id="outcome-content">
                 <div class="summary-card">
-                  <h3 class="summary-title">ملخص نتائج التشذيب البنيوي</h3>
+                  <div class="scope-head">
+                    <h3 class="summary-title">ملخص نتائج التشذيب البنيوي</h3>
+                    <!-- After-Trim 2009:1883: حُسمت كلها وفيها قصّة تعذّرت -->
+                    <span id="outcome-partial" class="tag" data-tone="success" hidden>مكتمل جزئيًا</span>
+                  </div>
                   <span id="outcome-status" class="polish-status visually-hidden" data-status="polished">
                     <span class="status-indicator" aria-hidden="true"></span>
                     <span class="status-label">حُسمت كل القصّات</span>
@@ -540,6 +551,12 @@
                     <span class="row-label">المقاطع المُبقاة اختيارًا:</span>
                     <span id="outcome-kept" class="row-value"></span>
                   </div>
+                  <div class="inspector-row" id="outcome-stale-row" hidden>
+                    <span class="row-label">المقاطع المتعذّرة:</span>
+                    <span id="outcome-stale" class="row-value"></span>
+                  </div>
+                  <!-- saving-badge في Polished 2009:1937: يظهر بعد حذفٍ فعلي وحده -->
+                  <span id="outcome-shorter" class="tag" data-tone="success" hidden>النص أقصر بعد القصّات المعتمدة</span>
                 </div>
                 <div id="outcome-covenant" class="covenant-bar guarantee-badge"></div>
               </div>
@@ -853,12 +870,14 @@
   <!-- قائمة المنتقي للورقة: خارجها لتبقى فوقها (Picker, لوحة المكوّنات) -->
   <div class="picker-menu" id="welcome-picker-menu" role="menu" hidden></div>
 
-  <!-- تنبيه التحديث بحالاته الثلاث المرسومة (Figma 258:18774 و258:18810 و258:18835):
-       تحديث متاح، جارٍ التنزيل، لا تحديث. ولا تنزيل قبل «ثبّت وأعد التشغيل» -->
-  <div id="update-alert" class="alert alert-app" role="alertdialog" aria-modal="true" aria-labelledby="update-alert-title" aria-describedby="update-alert-message" hidden>
+  <!-- تنبيه التحديث كما في NsqV272: Alert-Update-Available 2009:2839 وDownloading 2009:2855 وUp-To-Date
+       2009:2871 وCheck-Failed 2009:2883 وDownload-Failed 2009:2897. بلا أيقونة؛ ولا تنزيل قبل «نزّل التحديث» -->
+  <div id="update-alert" class="alert" role="alertdialog" aria-modal="true" aria-labelledby="update-alert-title" aria-describedby="update-alert-message" hidden>
     <div class="alert-body">
-      <img class="alert-app-icon" src="app-icon.png" alt="" width="64" height="64" />
-      <h2 id="update-alert-title" class="alert-title"></h2>
+      <div class="alert-title-row">
+        <h2 id="update-alert-title" class="alert-title"></h2>
+        <span id="update-alert-glyph" class="sf sf-20 alert-glyph" aria-hidden="true" hidden>􀇾</span>
+      </div>
       <p id="update-alert-message" class="alert-message"></p>
       <div id="update-alert-progress" class="update-progress" hidden>
         <div class="update-progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-labelledby="update-alert-title">
@@ -866,10 +885,11 @@
         </div>
         <p id="update-progress-caption" class="update-progress-caption"></p>
       </div>
+      <p id="update-alert-note" class="alert-message" hidden></p>
     </div>
     <div class="alert-buttons">
       <button id="update-alert-cancel" class="alert-button" type="button">لاحقًا</button>
-      <button id="update-alert-confirm" class="alert-button is-default" type="button">ثبّت وأعد التشغيل</button>
+      <button id="update-alert-confirm" class="alert-button is-default" type="button">نزّل التحديث</button>
     </div>
   </div>
 
