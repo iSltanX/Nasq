@@ -1374,11 +1374,26 @@ textarea.empty-bidi {
 .view-strip {
   display: none;
   flex: none;
+  flex-direction: row-reverse;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: space-between;
   padding: var(--component-padding-tight) var(--component-padding-lg);
   background: var(--surface-reading);
   border-block-end: var(--stroke-hairline) solid var(--border-default);
+}
+/* formatted-success-badge: حشو ٢/٨، قطر ٤، status/success-subtle، ونص Metadata Strong */
+.ready-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-2) var(--component-padding-sm);
+  border-radius: var(--radius-4);
+  background: var(--status-success-subtle);
+  font: var(--type-metadata-strong);
+  color: var(--status-success);
+}
+.ready-badge .status-dot {
+  background: var(--status-success);
 }
 /* View Switch 26:94 — حشو ٢، fill/pressed، قطر ٤؛ شريحتان بحشو ٤/١٢ وقطر ٢ */
 .view-picker {
@@ -2011,8 +2026,93 @@ body:has([aria-modal="true"]:not([hidden]))::before {
   }
 }
 
-/* ================= النافذة الضيقة: عمود واحد بمبدّل العرض (إطارات ٧٦٠) ================= */
+/* ================= النافذة الضيقة (إطارات ٧٦٠ في NsqV272) =================
+   شريط الإعداد أعلى اللوحة بدل شريط الأفعال (config-strip في 2287:2042)، والفعل الرئيس في
+   قلب اللوحة تحت النص، وبعد النتيجة عمودٌ واحد بمبدّل العرض وشريط أفعال سفلي
+   (2009:2199). العناصر المنقولة يضعها الهيكل في مواضعها (data-narrow-slot) */
+.narrow-action-slot,
+.narrow-result-bar {
+  display: none;
+}
 @media (max-width: 1023px) {
+  /* config-strip: ٤٠، حشو ٠/١٦، surface/elevated، وحدّ سفلي؛ «المستوى» يمينًا و«النمط» يسارًا بارتفاع ٣٢ */
+  .action-bar {
+    order: -1;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    min-block-size: var(--space-40);
+    padding: var(--component-padding-xs) var(--component-padding-lg);
+    border-block-start: 0;
+    border-block-end: var(--stroke-hairline) solid var(--border-default);
+  }
+  .action-settings {
+    display: contents;
+  }
+  .popup-control:nth-child(1) {
+    order: 3;
+  }
+  .popup-control:nth-child(2) {
+    order: 1;
+  }
+  .popup-control:nth-child(3) {
+    order: 2;
+  }
+  .dd-btn {
+    block-size: var(--space-32);
+  }
+  /* التوجيهات ليست في إطارات ٧٦٠؛ فتغيب فارغةً، وتبقى ظاهرة إن كان فيها ما سيُرسَل —
+     لا شيء يُطبَّق على النص بصمت */
+  .directives-field {
+    order: 4;
+    flex-basis: 100%;
+  }
+  .directives-field:placeholder-shown,
+  .provider-note {
+    display: none;
+  }
+
+  /* focus-canvas: حشو ٣٢/٤٠/٤٠/٤٠ وفجوة ٢٨، والفعل الرئيس ٢٠٠×٤٠ في الوسط تحت النص */
+  [data-module="nasaq"] .column-source {
+    gap: var(--space-28);
+    padding: var(--layout-page-margin) var(--space-40) var(--space-40);
+  }
+  .narrow-action-slot {
+    display: flex;
+    flex: none;
+    justify-content: center;
+  }
+  :root:not([data-has-text]) .narrow-action-slot,
+  [data-module="nasaq"][data-nasaq-state="result"] .narrow-action-slot,
+  [data-module="nasaq"][data-nasaq-state="review"] .narrow-action-slot {
+    display: none;
+  }
+  /* الخانة بارتفاع نصّها ليقع الفعل تحته مباشرةً؛ وحيث لا يدعم المحرك field-sizing يتولاه
+     الهيكل (layout.js) */
+  [data-module="nasaq"] .column-source .editor-stack {
+    flex: 0 1 auto;
+    min-block-size: var(--type-body-reading-lh);
+  }
+  [data-module="nasaq"] .column-source .editor {
+    field-sizing: content;
+  }
+  [data-module="nasaq"] .column-source .panel-header,
+  .hint-row {
+    display: none;
+  }
+  /* أثناء التنسيق يبقى النص والفعل المشغول في مكانهما كما في 2288:2096 */
+  [data-module="nasaq"][data-nasaq-state="processing"] .column-source {
+    display: flex;
+  }
+  [data-module="nasaq"][data-nasaq-state="processing"] .column-result[data-for="nasaq"] {
+    display: none;
+  }
+
+  /* بعد النتيجة: لا شريط إعداد في الإطار (2009:2199)؛ view-switcher-strip ثم عمود واحد بحشو
+     ٢٤، ثم bottom-action-bar. وتغيير النمط والمستوى يعود مع «جلسة جديدة» أو ⌘↩ من القائمة */
+  [data-module="nasaq"][data-nasaq-state="result"] .action-bar,
+  [data-module="nasaq"][data-nasaq-state="review"] .action-bar {
+    display: none;
+  }
   [data-module="nasaq"][data-nasaq-state="result"] .view-strip,
   [data-module="nasaq"][data-nasaq-state="review"] .view-strip,
   [data-module="shadhb"][data-shadhb-state="polished"] .view-strip {
@@ -2033,19 +2133,89 @@ body:has([aria-modal="true"]:not([hidden]))::before {
   [data-module="nasaq"][data-nasaq-state="review"] .column-source {
     flex: 1;
     inline-size: auto;
+    gap: var(--layout-component-gap);
+    padding: var(--component-padding-2xl);
+    background: none;
   }
-  .action-bar {
-    flex-wrap: wrap;
-    padding-inline: var(--component-padding-lg);
-  }
-  .directives-field {
-    order: 5;
-    flex-basis: 100%;
-  }
-  .primary-action {
-    inline-size: auto;
+  [data-module="nasaq"][data-nasaq-state="result"] .column-source .editor-stack,
+  [data-module="nasaq"][data-nasaq-state="review"] .column-source .editor-stack {
     flex: 1;
+    padding: 0;
+    border: 0;
+    background: none;
   }
+  [data-module="nasaq"][data-nasaq-state="result"] .column-source .editor,
+  [data-module="nasaq"][data-nasaq-state="review"] .column-source .editor {
+    font: var(--type-body-reading);
+    color: var(--text-primary);
+  }
+  .column-result[data-for="nasaq"] {
+    gap: var(--layout-component-gap);
+    padding: var(--component-padding-2xl) var(--component-padding-2xl) 0;
+  }
+  .column-result[data-for="nasaq"] > .panel-header,
+  .column-result[data-for="nasaq"] > .editor-tools,
+  .column-result[data-for="nasaq"] > .bottom-info-row {
+    display: none;
+  }
+  .column-result[data-for="nasaq"] > .text-container {
+    padding: 0;
+    border: 0;
+    background: none;
+  }
+  /* bottom-action-bar: ٣٨، حشو ٨/١٦، وحدّ علوي؛ أفعاله بهيئة Tag · Neutral */
+  .narrow-result-bar {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: var(--layout-element-gap);
+    margin-inline: calc(-1 * var(--component-padding-2xl));
+    padding: var(--component-padding-sm) var(--component-padding-lg);
+    border-block-start: var(--stroke-hairline) solid var(--border-default);
+  }
+  .narrow-result-bar > * {
+    inline-size: auto;
+    block-size: auto;
+    gap: var(--space-4);
+    padding: var(--space-2) var(--component-padding-sm);
+    border: 0;
+    border-radius: var(--radius-4);
+    background: var(--surface-sunken);
+    box-shadow: none;
+    font: var(--type-caption);
+    color: var(--text-secondary);
+    opacity: 1;
+  }
+  .narrow-result-bar > *:hover {
+    background: var(--fill-hover);
+    color: var(--text-primary);
+  }
+  .narrow-result-bar > *:active {
+    background: var(--fill-pressed);
+  }
+  .narrow-result-bar > *:disabled {
+    background: var(--fill-disabled);
+    color: var(--text-disabled);
+  }
+  .narrow-result-bar > *:focus-visible {
+    outline: var(--stroke-emphasis) solid var(--focus-ring);
+    box-shadow: none;
+  }
+  /* «حفظ» في الطرف الأيمن، و«نسخ النتيجة» ثم «تراجع» في الأيسر */
+  .narrow-result-bar #save-draft-btn {
+    margin-inline-end: auto;
+  }
+  .narrow-result-bar #copy-btn {
+    order: 2;
+  }
+  .narrow-result-bar #undo-btn {
+    order: 3;
+  }
+  .narrow-result-bar #copy-btn .shortcut,
+  .narrow-result-bar #undo-btn .shortcut {
+    display: none;
+  }
+
   .inspector {
     inline-size: 320px;
   }

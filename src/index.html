@@ -88,6 +88,8 @@
         <section class="content" id="content" data-view="source" role="main" aria-label="النص">
           <!-- شريط العرض في العمود الواحد (view-switcher-strip في إطارات ٧٦٠) -->
           <div class="view-strip">
+            <!-- شارة النجاح في طرف الشريط الأيسر (formatted-success-badge في 2009:2199) -->
+            <span class="ready-badge" data-for="nasaq"><span class="status-dot" aria-hidden="true"></span><span>جاهز</span></span>
             <div class="view-picker" role="tablist" aria-label="العرض">
               <button class="view-segment" type="button" role="tab" data-view-target="result" aria-selected="false" title="⌥⌘2">
                 <span data-for="nasaq">النتيجة المنسقة</span><span data-for="shadhb">بعد التشذيب</span>
@@ -152,6 +154,9 @@
                   <textarea id="input-text" class="editor" dir="rtl" rows="1" placeholder="الصق نصّك هنا أو ابدأ الكتابة" spellcheck="false" aria-label="النص" data-placeholders data-placeholder-nasaq="الصق نصّك هنا أو ابدأ الكتابة" data-placeholder-shadhb="الصق شذرتك هنا — فقرة أو اثنتان تريد تشذيبهما"></textarea>
                   <div id="shard-marks" class="marked-text" data-for="shadhb" dir="rtl" aria-hidden="true" hidden></div>
                 </div>
+                <!-- في النافذة الضيقة يسكن الفعل الرئيس هنا تحت النص (Narrow / Nasaq-Ready 2287:2042):
+                     الهيكل ينقل ما عُلِّم بـ data-narrow-slot إلى موضعه ويعيده حين تتسع -->
+                <div class="narrow-action-slot" id="narrow-action-slot" data-for="nasaq"></div>
                 <!-- حالة البداية لكل وحدة فوق الخانة الفارغة (Empty State 27:1169) -->
                 <div id="output-placeholder" class="empty-state" data-for="nasaq">
                   <span class="empty-badge" aria-hidden="true"><span class="mark"></span></span>
@@ -221,10 +226,10 @@
                       <button id="fewer-lines-btn" class="editor-tool" type="button" title="سطور أقل ⌘[" disabled>سطور أقل</button>
                       <button id="more-lines-btn" class="editor-tool" type="button" title="سطور أكثر ⌘]" disabled>سطور أكثر</button>
                     </div>
-                    <button id="save-draft-btn" class="editor-tool" type="button" title="حفظ في المسودات ⌘S" aria-label="حفظ في المسودات" disabled>
+                    <button id="save-draft-btn" class="editor-tool" type="button" data-narrow-slot="narrow-result-bar" title="حفظ في المسودات ⌘S" aria-label="حفظ في المسودات" disabled>
                       <span>حفظ</span><kbd class="shortcut" dir="ltr">⌘S</kbd>
                     </button>
-                    <button id="undo-btn" class="editor-tool" type="button" title="تراجع ⌘Z — حتى ٢٠ خطوة" aria-label="تراجع" disabled>
+                    <button id="undo-btn" class="editor-tool" type="button" data-narrow-slot="narrow-result-bar" title="تراجع ⌘Z — حتى ٢٠ خطوة" aria-label="تراجع" disabled>
                       <span>تراجع</span><kbd class="shortcut" dir="ltr">⌘Z</kbd>
                     </button>
                   </div>
@@ -247,6 +252,7 @@
                   </div>
                   <div id="output-text" class="result-text selectable" dir="rtl" data-reveals-result></div>
                 </div>
+                <div class="narrow-result-bar" id="narrow-result-bar"></div>
                 <div class="bottom-info-row">
                   <div class="quiet-actions">
                     <button id="clean-btn" class="quiet-action" type="button" title="حذف السطور الفارغة ⌥⌘⌫" disabled>حذف السطور الفارغة</button>
@@ -479,14 +485,14 @@
         <textarea id="custom-directives" class="directives-field" dir="rtl" rows="1" placeholder="مثال: حافظ على الضمائر الصريحة" spellcheck="false" aria-label="توجيهات إضافية (اختياري)"></textarea>
         <button id="variations-btn" class="button button-secondary button-small" type="button" title="أرِني تنويعات… ⇧⌘↩" aria-haspopup="dialog" hidden>تنويعات…</button>
         <p class="provider-note" id="provider-note" hidden>يتطلب اتصالًا بمزوّد التنسيق</p>
-        <button id="format-btn" class="primary-action" type="button" data-style="primary" title="نسّق ⌘↩" disabled>
+        <button id="format-btn" class="primary-action" type="button" data-style="primary" data-narrow-slot="narrow-action-slot" title="نسّق ⌘↩" disabled>
           <span class="spinner spinner-16" aria-hidden="true"></span>
           <span class="when-idle">نسّق النصّ</span>
           <span class="when-busy">جارٍ التنسيق…</span>
           <span class="when-result">أعد التنسيق</span>
           <kbd class="shortcut when-idle" dir="ltr">⌘↩</kbd>
         </button>
-        <button id="copy-btn" class="primary-action" type="button" title="نسخ النتيجة ⇧⌘C" aria-label="نسخ" disabled>
+        <button id="copy-btn" class="primary-action" type="button" data-narrow-slot="narrow-result-bar" title="نسخ النتيجة ⇧⌘C" aria-label="نسخ" disabled>
           <span>نسخ النتيجة</span>
           <kbd class="shortcut" dir="ltr">⇧⌘C</kbd>
         </button>

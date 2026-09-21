@@ -455,6 +455,34 @@
     isModalOpen: modalOpen,
   };
 
+  // ---------- مواضع النافذة الضيقة ----------
+  // في إطارات ٧٦٠ من NsqV272 يسكن الفعل الرئيس قلبَ اللوحة تحت النص، وأفعال النتيجة
+  // شريطًا أسفلها — مواضعُ غير مواضعها في النافذة الواسعة. العنصر يسمّي موضعه الضيّق
+  // بـ data-narrow-slot، فيُنقل إليه حين تضيق النافذة ويعود إلى مكانه حين تتسع.
+  // النقل يُبقي العقدة نفسها بمستمعاتها وتركيزها، ولا يعرف الهيكل صاحبها
+  const narrow = window.matchMedia("(max-width: 1023px)");
+  const movable = [...document.querySelectorAll("[data-narrow-slot]")].map((node) => ({
+    node,
+    home: node.parentElement,
+    next: node.nextElementSibling,
+  }));
+  function applyNarrowSlots() {
+    root.toggleAttribute("data-narrow", narrow.matches);
+    const focused = document.activeElement;
+    // العودة بترتيب معكوس: الأخ اللاحق يعود قبل سابقه فيجد كلٌّ موضعه
+    for (const { node, home, next } of narrow.matches ? movable : [...movable].reverse()) {
+      const slot = narrow.matches ? document.getElementById(node.dataset.narrowSlot) : null;
+      if (slot) {
+        if (node.parentElement !== slot) slot.appendChild(node);
+      } else if (node.parentElement !== home) {
+        home.insertBefore(node, next && next.parentElement === home ? next : null);
+      }
+    }
+    if (focused && focused !== document.activeElement && focused.isConnected) focused.focus();
+  }
+  narrow.addEventListener("change", applyNarrowSlots);
+  applyNarrowSlots();
+
   // ---------- صفّ أدوات النتيجة: الطي عند الضيق ----------
   // الصفّ يملأ عرض لوح النتيجة، فقاعدته أن تتّسع أدواته فيه: تُطوى المجموعات
   // بترتيب data-collapse حتى لا يفيض محتواه عن حدّه، وما طُوي يصير في «⋯»
