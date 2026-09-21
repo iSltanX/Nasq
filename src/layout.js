@@ -473,6 +473,10 @@
   }
 
   window.addEventListener("resize", positionPopover);
+  // زرّ الإغلاق في رأس النافذة المنبثقة (Popover 30:36) يغلقها أيًّا كان صاحبها
+  document.addEventListener("click", (e) => {
+    if (popover && e.target.closest("[data-popover-close]")) dismissPopover();
+  });
 
   window.NasaqWindow = {
     showView: setView,

@@ -894,10 +894,40 @@ function syncPlatformLimitWarning() {
   }
 }
 
+// بصمة الإيقاع والتدفق في التقرير (Report 2009:741): أطوال الجمل بالكلمات على ترتيبها، ومداها
+// ومعدّلها. عرضٌ محسوب من النتيجة المعروضة نفسها، فلا يصير وصفًا قديمًا بعد تعديلٍ محلي، ولا
+// يمسّ النص ولا ما يُرسَل إلى النموذج
+const RHYTHM_BARS_MAX = 40;
+function renderRhythmCard(text) {
+  const lengths = text
+    .split(/[.!؟?…\n]+/)
+    .map((sentence) => sentence.split(/\s+/).filter(Boolean).length)
+    .filter((n) => n > 0);
+  el("rhythm-card").hidden = lengths.length === 0;
+  if (!lengths.length) return;
+  const min = Math.min(...lengths);
+  const max = Math.max(...lengths);
+  const mean = Math.round((lengths.reduce((a, b) => a + b, 0) / lengths.length) * 10) / 10;
+  el("rhythm-range").textContent = min === max ? `${arabicDigits.format(max)} كلمة` : `${arabicDigits.format(min)} – ${arabicDigits.format(max)} كلمة`;
+  el("rhythm-average").textContent = `${arabicDigits.format(mean)} كلمة`;
+  const chart = el("rhythm-chart");
+  chart.replaceChildren(
+    ...lengths.slice(0, RHYTHM_BARS_MAX).map((n, i) => {
+      const bar = document.createElement("span");
+      bar.className = "rhythm-bar";
+      bar.style.setProperty("--bar", String(n / max));
+      bar.dataset.index = arabicDigits.format(i + 1);
+      bar.title = `الجملة ${arabicDigits.format(i + 1)}: ${arabicDigits.format(n)} كلمة`;
+      return bar;
+    })
+  );
+}
+
 function syncResultTools() {
   const face = metaSubstackFace();
   const text = outputText.textContent;
   syncPlatformLimitWarning();
+  renderRhythmCard(text);
 
   // بطاقة الشذرة: نمط شذرة على وجهة سابستاك، وفي النص منعطف تختلف به الصورتان
   fragmentForms =

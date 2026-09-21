@@ -367,18 +367,32 @@
                 <span class="sf" aria-hidden="true">􀆄</span>
               </button>
             </header>
-            <div class="section-content" id="report-content">
-              <div id="report-skeleton" class="report-skeleton" aria-hidden="true" hidden>
-                <span class="skeleton-line"></span><span class="skeleton-line"></span><span class="skeleton-line"></span>
-              </div>
-              <div id="notes-box" class="stacked-row" hidden>
-                <span class="row-label">ما تغيّر</span>
-                <ol id="notes-list" class="row-value"></ol>
-              </div>
-              <div id="rhythm-box" class="stacked-row" hidden>
-                <span class="row-label">بصمة الإيقاع</span>
-                <p id="rhythm-fingerprint" class="row-value" hidden></p>
-              </div>
+            <div class="section-content report-cards" id="report-content">
+              <!-- بصمة الإيقاع والتدفق: تُحسب محليًا من النتيجة المعروضة، فتبقى صادقة بعد كل تعديل -->
+              <article class="report-card" id="rhythm-card" hidden>
+                <h3 class="report-card-title">بصمة الإيقاع والتدفق</h3>
+                <div class="rhythm-tiles">
+                  <div class="rhythm-tile"><span class="tile-label">تفاوت أطوال الجمل</span><span class="tile-value" id="rhythm-range"></span></div>
+                  <div class="rhythm-tile"><span class="tile-label">معدّل طول الجملة</span><span class="tile-value" id="rhythm-average"></span></div>
+                </div>
+                <p class="chart-caption">توزيع أطوال الجمل وتسلسلها عبر النص</p>
+                <div class="rhythm-chart" id="rhythm-chart" role="img" aria-label="أطوال الجمل بالكلمات على ترتيبها في النص"></div>
+                <div id="rhythm-box" class="stacked-row" hidden>
+                  <span class="row-label">بصمة الإيقاع</span>
+                  <p id="rhythm-fingerprint" class="row-value" hidden></p>
+                </div>
+              </article>
+              <article class="report-card">
+                <h3 class="report-card-title">ما تغيّر في المعالجة الأخيرة</h3>
+                <div id="report-skeleton" class="report-skeleton" aria-hidden="true" hidden>
+                  <span class="skeleton-line"></span><span class="skeleton-line"></span><span class="skeleton-line"></span>
+                </div>
+                <div id="notes-box" class="stacked-row" hidden>
+                  <span class="row-label visually-hidden">ما تغيّر</span>
+                  <ol id="notes-list" class="row-value"></ol>
+                </div>
+                <p class="report-empty">لا ملاحظات على هذه المعالجة.</p>
+              </article>
             </div>
           </section>
 
@@ -585,11 +599,17 @@
   <div id="reading-lens" class="popover" data-for="nasaq" role="dialog" aria-labelledby="reading-lens-title" aria-describedby="reading-lens-note" hidden>
     <header class="lens-header">
       <h2 id="reading-lens-title" class="lens-title">عدسة القراءة</h2>
-      <p id="reading-lens-note" class="lens-note">بعرض هاتف ٣٧٥ نقطة، للمعاينة فقط</p>
+      <button class="icon-button" type="button" data-popover-close title="إغلاق" aria-label="إغلاق عدسة القراءة">
+        <span class="sf" aria-hidden="true">􀆄</span>
+      </button>
     </header>
     <div class="lens-phone">
       <div id="reading-lens-text" class="lens-text selectable" dir="rtl"></div>
     </div>
+    <footer class="lens-footer">
+      <p id="reading-lens-note" class="lens-note">العرض: ٣٧٥ نقطة — للمعاينة فقط</p>
+      <p class="lens-meta">الخط: المراعي • حجم ١٦</p>
+    </footer>
   </div>
 
   <!-- تأكيد الحذف: تنبيه في وسط النافذة (Figma 263:7635 و303:21344) -->

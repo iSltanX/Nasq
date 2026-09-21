@@ -1003,7 +1003,14 @@ textarea.empty-bidi {
   gap: var(--layout-element-gap);
   margin-block-start: auto;
 }
-.report-view .section-content {
+/* Report 2009:741: بطاقتان متجاورتان — «بصمة الإيقاع والتدفق» يمينًا و«ما تغيّر» يسارًا —، حشو ٢٤، قطر ١٢ */
+.report-view .report-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  align-items: start;
+  gap: var(--layout-content-gap);
+}
+.report-card {
   display: flex;
   flex-direction: column;
   gap: var(--layout-group-gap);
@@ -1011,6 +1018,76 @@ textarea.empty-bidi {
   border: var(--stroke-hairline) solid var(--border-default);
   border-radius: var(--radius-12);
   background: var(--surface-elevated);
+}
+.report-card-title {
+  font: var(--type-section-title);
+  color: var(--text-primary);
+}
+.rhythm-tiles {
+  display: flex;
+  gap: var(--layout-component-gap);
+}
+.rhythm-tile {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--component-padding-md);
+  border-radius: var(--radius-8);
+  background: var(--surface-reading);
+}
+.tile-label {
+  font: var(--type-metadata);
+  color: var(--text-secondary);
+}
+.tile-value {
+  font: var(--type-section-title);
+  color: var(--text-primary);
+}
+.chart-caption {
+  font: var(--type-caption);
+  color: var(--text-secondary);
+}
+/* الأعمدة: ارتفاع كلٍّ منها نسبةُ طول جملته إلى أطول جملة، ورقمها تحتها */
+.rhythm-chart {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: var(--layout-element-gap);
+  block-size: 96px;
+  padding: var(--component-padding-md) var(--component-padding-md) var(--component-padding-xl);
+  border-radius: var(--radius-8);
+  background: var(--surface-reading);
+}
+.rhythm-bar {
+  position: relative;
+  flex: 0 1 var(--space-12);
+  min-inline-size: var(--space-4);
+  block-size: max(var(--space-4), calc(var(--bar) * 100%));
+  border-radius: var(--radius-2);
+  background: var(--neutral-500);
+}
+.rhythm-bar::after {
+  content: attr(data-index);
+  position: absolute;
+  inset-block-start: 100%;
+  inset-inline: calc(-1 * var(--space-8));
+  padding-block-start: var(--space-2);
+  font: var(--type-metadata);
+  color: var(--text-tertiary);
+  text-align: center;
+}
+.rhythm-bar:nth-child(n + 13)::after {
+  content: none;
+}
+.report-empty {
+  font: var(--type-caption);
+  color: var(--text-tertiary);
+}
+#notes-box:not([hidden]) ~ .report-empty,
+#report-skeleton:not([hidden]) ~ .report-empty {
+  display: none;
 }
 .stacked-row {
   display: flex;
@@ -1398,8 +1475,29 @@ textarea.empty-bidi {
 .status-toast {
   gap: var(--layout-tight-gap);
 }
-.status-start[data-feedback] .polish-status {
+/* Toast 27:1073: حبّة عائمة فوق شريط الحالة في وسط النافذة — حشو ١٢/١٦، فجوة ٨، قطر ١٢، حدّ،
+   ظل Shadow/Menu، ونصّها Body UI. وحالة الوحدة تبقى ظاهرة في الشريط تحتها */
+.status-toast {
+  position: fixed;
+  inset-block-end: calc(var(--space-32) + var(--space-64) + var(--layout-group-gap));
+  inset-inline-start: 50%;
+  z-index: 35;
+  transform: translateX(50%);
+  gap: var(--component-padding-sm);
+  padding: var(--component-padding-md) var(--component-padding-lg);
+  border: var(--stroke-hairline) solid var(--border-default);
+  border-radius: var(--radius-12);
+  background: var(--surface-reading);
+  box-shadow: var(--elevation-menu);
+  font: var(--type-body-ui);
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+.status-toast[hidden] {
   display: none;
+}
+.status-toast[data-tone="info"] .status-indicator {
+  background: var(--status-info);
 }
 .status-indicator {
   flex: none;
@@ -2247,12 +2345,24 @@ body:has([aria-modal="true"]:not([hidden]))::before {
   inset-block-end: calc(-1 * var(--space-8));
   border-width: 0 var(--stroke-hairline) var(--stroke-hairline) 0;
 }
+/* رأس Popover: العنوان يمينًا وزر الإغلاق يسارًا، ثم خطّ */
 .lens-header {
   display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
+  align-items: center;
+  justify-content: space-between;
   padding-block-end: var(--layout-group-gap);
   border-block-end: var(--stroke-hairline) solid var(--border-default);
+}
+/* تذييله: «العرض» يمينًا Metadata Strong بلون الوحدة، و«الخط» يسارًا Metadata */
+.lens-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--layout-element-gap);
+}
+.lens-meta {
+  font: var(--type-metadata);
+  color: var(--text-tertiary);
 }
 .lens-title {
   font: var(--type-section-title);

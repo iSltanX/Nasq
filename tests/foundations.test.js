@@ -230,6 +230,9 @@ const RAW_PX_ALLOWED = {
     "app|.sheet-narrow|inline-size|440",
     "app|.popover|inline-size|360",
     "app|.original-box|max-block-size|120",
+    // Report 2009:741: أدنى عرض لبطاقة التقرير قبل أن تنزل تحت أختها، وارتفاع مخطط الأعمدة
+    "app|.report-view .report-cards|grid-template-columns|320",
+    "app|.rhythm-chart|block-size|96",
     "app|.lens-phone|max-block-size|320",
     // Settings / General 2128:576: التسمية ١٢٠ والعنصر ٢٢٠، وToggle 26:449 مضماره ٣٦، وSettings Tab 26:110 ارتفاعه ٣٠
     "forms|.form-row > .row-label|inline-size|120",
