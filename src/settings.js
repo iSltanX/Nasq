@@ -392,7 +392,8 @@
       const shown = window.NasaqVersion.display(value);
       const stable = /^\d+\.\d+\.\d+$/.test(String(value).trim());
       el("app-version").textContent = stable ? `${shown} (بنية مستقرة)` : shown;
-      el("footer-version").textContent = `نَسَق \u2066v\u2069${shown}`;
+      // الحرف والرقم في عزلٍ واحد من اليسار: وإلا رُسم «٢٧٫٠v» (فحص m7-06)
+      el("footer-version").textContent = `نَسَق \u2066v${shown}\u2069`;
     })
     .catch(() => {});
 
@@ -400,6 +401,11 @@
   // بالنواة — وقدرة هذه النافذة تسمح به بالاسم وحده. وموقع المؤلف في «حول»
   const links = window.NasaqLinks;
   el("open-project").addEventListener("click", () =>
+    invoke("plugin:opener|open_url", { url: links.PROJECT_URL }).catch(() => {})
+  );
+  // سطر الصنعة في تذييل «عام»: الرابط نفسه، ونصّه عنوانُ المستودع كما في المصدر المشترك
+  el("repo-label").textContent = links.PROJECT_LABEL;
+  el("open-repo").addEventListener("click", () =>
     invoke("plugin:opener|open_url", { url: links.PROJECT_URL }).catch(() => {})
   );
   // «حول نَسَق» (btn-about 2401:4162): النافذة نفسها التي تفتحها قائمة التطبيق

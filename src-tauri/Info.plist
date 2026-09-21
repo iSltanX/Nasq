@@ -5,5 +5,14 @@
 	<!-- الأيقونة الحديثة من Assets.car (tools/icon/build-app-icon.sh)، وicon.icns احتياط الأنظمة الأقدم -->
 	<key>CFBundleIconName</key>
 	<string>AppIcon</string>
+	<!-- فحص m7-05 وm7-11: بلا هذا يعامل النظامُ الحزمةَ تطبيقًا إنجليزيًا، فتأتي بنود القائمة
+	     النظامية (Hide/Quit/Services) ونوافذ الفتح والحفظ بالإنجليزية، واتجاه النافذة يتبع لغة
+	     النظام لا التطبيق. التطبيق عربيّ وحده: فالاتجاه من اليمين دائمًا، وإشارات النافذة يمينًا -->
+	<key>CFBundleDevelopmentRegion</key>
+	<string>ar</string>
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>ar</string>
+	</array>
 </dict>
 </plist>

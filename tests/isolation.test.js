@@ -1139,8 +1139,12 @@ test("m6-18: علامة بند المنتقي بمقاسها، والقائمة 
   assert.ok(rule, "علامة بند المنتقي بلا قاعدة في forms.css");
   assert.ok(/inline-size:\s*var\(--icon-16\)/.test(rule[1]) && /block-size:\s*var\(--icon-16\)/.test(rule[1]), "علامة بند المنتقي بلا مقاس");
   const formsJs = src("forms.js");
-  assert.ok(/window\.innerWidth - rect\.right/.test(formsJs), "القائمة تُوضع من اليسار في واجهةٍ من اليمين");
-  assert.ok(!/insetInlineStart = `\$\{Math\.max\(4, rect\.left/.test(formsJs), "القائمة تُوضع من rect.left");
+  // فحص m7-02: في WKWebView وُضعت القائمة الثابتة بـ inset-inline-start من اليسار ففاضت خارج
+  // النافذة. الموضع الآن فيزيائي: حافتها اليمنى على حافة زرّها في واجهةٍ من اليمين، ومحصورة في النافذة
+  assert.ok(/rtl \? rect\.right - box\.width : rect\.left/.test(formsJs), "القائمة لا تحاذي حافة زرّها اليمنى في واجهةٍ من اليمين");
+  assert.ok(/Math\.min\(Math\.max\(4, wanted\), window\.innerWidth - box\.width - 4\)/.test(formsJs), "القائمة غير محصورة داخل النافذة");
+  assert.ok(/menu\.style\.left = /.test(formsJs), "القائمة لا تُوضع بموضعٍ فيزيائي");
+  assert.ok(!/insetInlineStart = `/.test(formsJs), "القائمة تُوضع بخاصيةٍ منطقية تختلف المحرّكات في حلّها لعنصرٍ ثابت");
 });
 
 // المرحلة ٨: ملفٌّ مشترك تحمّله نافذتان يسري على الاثنتين — ولو كان مصمَّمًا
@@ -1268,6 +1272,33 @@ test("المرحلة ٦: صفحات المفاتيح مسموحة بالاسم �
     );
     assert.ok(!other.permissions.includes("updater:allow-download"), `${name} تملك التنزيل`);
     assert.ok(!other.permissions.includes("updater:allow-install"), `${name} تملك التثبيت`);
+  }
+});
+
+// فحص m7-05: بنود النظام في الشريط (تراجع، قص، إخفاء، إنهاء…) تأخذ عنوانها من المكتبة
+// بالإنجليزية ما لم يُمرَّر — وقد ظهرت كذلك في التطبيق الحقيقي. كل بندٍ بعنوانٍ عربي
+test("فحص m7-05: لا بند نظامٍ في شريط القوائم بعنوان المكتبة الإنجليزي", () => {
+  const menuRs = fs.readFileSync(path.join(__dirname, "..", "src-tauri", "src", "app", "menu.rs"), "utf8");
+  const items = [...menuRs.matchAll(/PredefinedMenuItem::(\w+)\(app, (None|Some\("([^"]*)"\))\)/g)];
+  assert.ok(items.length >= 16, `بنود النظام ${items.length}، والمنتظر ١٦ على الأقل`);
+  for (const [, kind, , title] of items) {
+    assert.ok(title && /[\u0600-\u06FF]/.test(title), `بند النظام ${kind} بلا عنوان عربي`);
+  }
+});
+
+// فحص m7-03: المستودع اسمه Nasq، و«Nasaq» لا وجود له على GitHub — فكانت «صفحة المشروع»
+// ونقطة التحديث تشيران إلى عدم. المواضع الثلاثة تتفق على مستودعٍ واحد هو مستودع الإصدارات
+test("فحص m7-03: رابط المشروع وإذنه ونقطة التحديث على المستودع iSltanX/Nasq نفسه", () => {
+  const read = (...p) => fs.readFileSync(path.join(__dirname, "..", ...p), "utf8");
+  const sources = {
+    "app-links.js": linksJs,
+    "capabilities/settings.json": read("src-tauri", "capabilities", "settings.json"),
+    "tauri.conf.json": read("src-tauri", "tauri.conf.json"),
+  };
+  for (const [name, text] of Object.entries(sources)) {
+    const repos = [...text.matchAll(/github\.com\/iSltanX\/([A-Za-z0-9_-]+)/g)].map((m) => m[1]);
+    assert.ok(repos.length > 0, `${name} لا يذكر المستودع`);
+    for (const repo of repos) assert.equal(repo, "Nasq", `${name} يشير إلى مستودع «${repo}»`);
   }
 });
 

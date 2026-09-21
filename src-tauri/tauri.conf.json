@@ -15,7 +15,7 @@
   "plugins": {
     "updater": {
       "endpoints": [
-        "https://github.com/iSltanX/Nasaq/releases/latest/download/latest.json"
+        "https://github.com/iSltanX/Nasq/releases/latest/download/latest.json"
       ],
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDFFNTYzMkNGRDFEMjI5OUYKUldTZktkTFJ6ekpXSG1aYTZ6czIrczkzcjNRR0p0S1NRdjNsYkxXUFUyN2ZHRUlnUm11RGlnTW8K"
     }

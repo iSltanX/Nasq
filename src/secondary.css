@@ -86,6 +86,13 @@ main {
   gap: var(--layout-component-gap);
   min-block-size: var(--type-metadata-lh);
 }
+/* صفّا التذييل بفجوة عناصر التذييل (8) كما في 2128:618 */
+.pane-footer {
+  gap: var(--layout-element-gap);
+}
+.credit-row .link {
+  color: var(--status-info);
+}
 .footer-note {
   min-inline-size: 0;
   font: var(--type-metadata);

@@ -8,10 +8,10 @@
 // نافذة تملك فتح رابطٍ لم يُذكر.
 (() => {
   window.NasaqLinks = {
-    PROJECT_URL: "https://github.com/iSltanX/Nasaq",
+    PROJECT_URL: "https://github.com/iSltanX/Nasq",
     SITE_URL: "https://www.bysltan.com",
     // ما يُعرض للقارئ: النطاق وحده بلا بروتوكول، وبحروف الموقع كما يكتبها صاحبه
     SITE_LABEL: "www.BySltan.com",
-    PROJECT_LABEL: "github.com/iSltanX/Nasaq",
+    PROJECT_LABEL: "github.com/iSltanX/Nasq",
   };
 })();

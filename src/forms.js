@@ -61,15 +61,19 @@
       menu.hidden = false;
       picker.setAttribute("aria-controls", menu.id);
       const rect = picker.getBoundingClientRect();
-      // القائمة بعرض زرّها على الأقل (Select 26:420 وقائمته ٢٢٠)، وحافتها الأولى على حافته:
-      // inset-inline-start في واجهةٍ من اليمين يُقاس من اليمين، لا من rect.left (فحص m6-18)
+      // القائمة بعرض زرّها على الأقل (Select 26:420 وقائمته ٢٢٠)، وحافتها الأولى على حافته.
+      // الموضع فيزيائي (left) محسوبٌ ومحصور داخل النافذة: inset-inline-start على عنصرٍ ثابت
+      // وضعته WebKit من اليسار ففاضت القائمة خارج النافذة في التطبيق الحقيقي (فحص m7-02،
+      // وكان m6-18 قد قاسه في Chromium وحده)
       menu.style.minInlineSize = `${Math.round(rect.width)}px`;
-      const height = menu.getBoundingClientRect().height;
-      const top = Math.min(Math.max(4, rect.top - 4), window.innerHeight - height - 4);
+      const box = menu.getBoundingClientRect();
+      const top = Math.min(Math.max(4, rect.top - 4), window.innerHeight - box.height - 4);
       const rtl = getComputedStyle(picker).direction === "rtl";
-      const start = rtl ? window.innerWidth - rect.right : rect.left;
+      const wanted = rtl ? rect.right - box.width : rect.left;
+      const left = Math.min(Math.max(4, wanted), window.innerWidth - box.width - 4);
       menu.style.insetBlockStart = `${top}px`;
-      menu.style.insetInlineStart = `${Math.max(4, start)}px`;
+      menu.style.insetInlineStart = "auto";
+      menu.style.left = `${left}px`;
       // التركيز على البند الحالي، وإلا فالأول: قائمة محدِّدات في querySelector تعيد الأسبق في
       // الشجرة لا الأسبق في القائمة، فكان التركيز يقع على البند الأول دائمًا
       (menu.querySelector(".picker-menu-item[data-active='true']") ?? menu.querySelector(".picker-menu-item"))?.focus();

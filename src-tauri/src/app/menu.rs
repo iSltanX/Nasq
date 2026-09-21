@@ -272,27 +272,29 @@ fn fill<'m, R: Runtime>(
     Ok(builder)
 }
 
+// فحص m7-05: بلا عنوانٍ تأتي هذه البنود بإنجليزية المكتبة (Undo/Hide/Quit…) في تطبيقٍ عربي.
+// العناوين كما في تعريب macOS نفسه، والسلوك يبقى للنظام
 fn system_item<R: Runtime>(
     app: &AppHandle<R>,
     system: System,
 ) -> tauri::Result<PredefinedMenuItem<R>> {
     match system {
-        Services => PredefinedMenuItem::services(app, None),
-        Hide => PredefinedMenuItem::hide(app, None),
-        HideOthers => PredefinedMenuItem::hide_others(app, None),
-        ShowAll => PredefinedMenuItem::show_all(app, None),
-        Quit => PredefinedMenuItem::quit(app, None),
-        Undo => PredefinedMenuItem::undo(app, None),
-        Redo => PredefinedMenuItem::redo(app, None),
-        Cut => PredefinedMenuItem::cut(app, None),
-        Copy => PredefinedMenuItem::copy(app, None),
-        Paste => PredefinedMenuItem::paste(app, None),
-        SelectAll => PredefinedMenuItem::select_all(app, None),
-        Minimize => PredefinedMenuItem::minimize(app, None),
-        Maximize => PredefinedMenuItem::maximize(app, None),
-        BringAllToFront => PredefinedMenuItem::bring_all_to_front(app, None),
-        CloseWindow => PredefinedMenuItem::close_window(app, None),
-        Fullscreen => PredefinedMenuItem::fullscreen(app, None),
+        Services => PredefinedMenuItem::services(app, Some("خدمات")),
+        Hide => PredefinedMenuItem::hide(app, Some("إخفاء نَسَق")),
+        HideOthers => PredefinedMenuItem::hide_others(app, Some("إخفاء الآخرين")),
+        ShowAll => PredefinedMenuItem::show_all(app, Some("إظهار الكل")),
+        Quit => PredefinedMenuItem::quit(app, Some("إنهاء نَسَق")),
+        Undo => PredefinedMenuItem::undo(app, Some("تراجع")),
+        Redo => PredefinedMenuItem::redo(app, Some("إعادة")),
+        Cut => PredefinedMenuItem::cut(app, Some("قص")),
+        Copy => PredefinedMenuItem::copy(app, Some("نسخ")),
+        Paste => PredefinedMenuItem::paste(app, Some("لصق")),
+        SelectAll => PredefinedMenuItem::select_all(app, Some("تحديد الكل")),
+        Minimize => PredefinedMenuItem::minimize(app, Some("تصغير")),
+        Maximize => PredefinedMenuItem::maximize(app, Some("تكبير/تصغير")),
+        BringAllToFront => PredefinedMenuItem::bring_all_to_front(app, Some("إحضار الكل إلى الأمام")),
+        CloseWindow => PredefinedMenuItem::close_window(app, Some("إغلاق النافذة")),
+        Fullscreen => PredefinedMenuItem::fullscreen(app, Some("دخول ملء الشاشة")),
     }
 }
 
