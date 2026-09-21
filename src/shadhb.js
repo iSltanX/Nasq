@@ -70,6 +70,7 @@
     const outcomeStaleRow = el("outcome-stale-row");
     const outcomeStale = el("outcome-stale");
     const outcomeShorter = el("outcome-shorter");
+    const outcomePact = el("outcome-pact");
 
     const statusBadge = el("shadhb-status");
     const statusLabel = el("shadhb-status-label");
@@ -535,6 +536,7 @@
         outcomeStaleRow.hidden = staleCount === 0;
         outcomeStale.textContent = AR(staleCount);
         outcomeShorter.hidden = applied === 0;
+        outcomePact.hidden = !check.ok || applied === 0;
         outcomeWords.textContent = `${AR(total - words(state.currentText))} من ${AR(total)}`;
         paintCovenant(
           outcomeCovenant,

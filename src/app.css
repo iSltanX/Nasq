@@ -511,8 +511,33 @@ textarea.empty-bidi {
 }
 
 /* منطقة المحتوى هدفًا لإفلات ملفٍّ نصّي: حلقة التركيز داخلها (File-Drop-Hover 2352:3173، فحص m4-12) */
-.content[data-drop-target] {
-  box-shadow: inset 0 0 0 var(--stroke-emphasis) var(--focus-ring);
+.drop-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--layout-group-gap);
+  padding: var(--space-40);
+  background: var(--surface-reading);
+  pointer-events: none;
+  text-align: center;
+}
+.content[data-drop-target] .drop-overlay {
+  display: flex;
+}
+/* drop-target-ring: داخل اللوحة بـ١٦، حدّ متقطّع ٢ بلون الوحدة، قطر ١٢، على fill/hover */
+.drop-ring {
+  position: absolute;
+  inset: var(--space-16);
+  border: var(--stroke-emphasis) dashed var(--module-accent);
+  border-radius: var(--radius-12);
+  background: var(--fill-hover);
+}
+.drop-overlay > :not(.drop-ring) {
+  position: relative;
 }
 
 /* ---- Empty State 27:1169 — عرض ٥٢٠، فجوة ١٦، شارة ٦٤ بقطر ١٦ ---- */
@@ -827,6 +852,36 @@ textarea.empty-bidi {
 .quiet-actions {
   display: flex;
   gap: var(--layout-element-gap);
+  margin-inline-start: auto;
+}
+.length-note {
+  font: var(--type-metadata);
+  color: var(--text-secondary);
+}
+/* Platform Post: فجوة ٨ إلى العدّاد، حشو سفلي ١٦ وخطّ border/subtle، وفجوة ١٦ بين المنشورات */
+.platform-post {
+  padding-block-end: var(--component-padding-lg);
+  border-block-end: var(--stroke-hairline) solid var(--border-subtle);
+}
+.platform-post + .post-gap + .platform-post {
+  margin-block-start: var(--layout-group-gap);
+}
+.platform-post::after {
+  content: attr(data-counter);
+  display: block;
+  margin-block-start: var(--layout-element-gap);
+  font: var(--type-metadata);
+  color: var(--text-tertiary);
+  user-select: none;
+}
+.platform-post:not([data-counter])::after {
+  display: none;
+}
+/* الفاصل بين منشورين باقٍ في النص (يُنسخ ويُبحث فيه) بلا ارتفاع */
+.post-gap {
+  display: block;
+  block-size: 0;
+  overflow: hidden;
 }
 .quiet-action {
   border-radius: var(--radius-2);
@@ -932,6 +987,11 @@ textarea.empty-bidi {
   display: flex;
   gap: var(--space-4);
 }
+.find-mode {
+  font: var(--type-caption);
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
 .find-bar #output-search-close {
   margin-inline-start: auto;
 }
@@ -975,9 +1035,12 @@ textarea.empty-bidi {
   flex-direction: column;
   gap: var(--layout-element-gap);
 }
-.crossroads-options {
+/* المحدِّد مقيَّد بأبيه: .section-content المعرَّفة لاحقًا عمودية وبخصوصية مساوية، فكانت البطاقتان
+   تتراكمان بدل أن تتجاورا (options-container في Crossroads 2009:1085؛ فحص m6-26) */
+.crossroads-view .crossroads-options {
   display: flex;
   flex: 1;
+  flex-direction: row;
   gap: var(--layout-section-gap);
   min-block-size: 0;
 }
@@ -1702,10 +1765,14 @@ div.scope-card {
   color: var(--status-warning);
 }
 /* تسمية الزرّ بحسب الحال: واحدةٌ ظاهرة دائمًا */
+/* زرّ الفحص يسكن قلب اللوحة في الضيّق (narrow-prune-slot)، فتسمياته تُحكم بمعرّفه لا بموضعه */
 .panel-actions .when-busy,
 .panel-actions .when-error,
 .panel-actions .when-diverged,
 .panel-actions .when-no-cuts,
+#prune-btn .when-busy,
+#prune-btn .when-error,
+#prune-btn .when-diverged,
 [data-module="shadhb"][data-shadhb-state="checking"] #prune-btn .when-idle,
 [data-module="shadhb"][data-shadhb-state="error"] #prune-btn .when-idle,
 [data-module="shadhb"][data-shadhb-diverged] #prune-btn .when-idle,
@@ -2630,6 +2697,10 @@ body:has([aria-modal="true"]:not([hidden]))::before {
   display: none;
 }
 @media (max-width: 1023px) {
+  /* في العمود الواحد تتراكم بطاقتا المفترق */
+  .crossroads-view .crossroads-options {
+    flex-direction: column;
+  }
   /* config-strip: ٤٠، حشو ٠/١٦، surface/elevated، وحدّ سفلي؛ «المستوى» يمينًا و«النمط» يسارًا بارتفاع ٣٢ */
   .action-bar {
     order: -1;
@@ -2818,7 +2889,142 @@ body:has([aria-modal="true"]:not([hidden]))::before {
     display: none;
   }
 
+  /* ---- شَذْب في الضيّق (Narrow / Shadhb-* 2009:2275…2288:6369) ---- */
+  /* بعد الحسم ولا قصّات: لوح جانبي ٢٨٠ بحشو ٢٠ (decision-sidebar في 2009:2364) */
   .inspector {
-    inline-size: 320px;
+    inline-size: 280px;
+  }
+  [data-module="shadhb"] .inspector-body,
+  [data-module="shadhb"][data-shadhb-state="polished"] .inspector-body {
+    padding: var(--component-padding-xl);
+  }
+  [data-module="shadhb"] .column {
+    padding: var(--component-padding-xl);
+  }
+  /* Ready وChecking: بلا لوح، والفعل في قلب اللوحة تحت النص بعرض ٢٤٠ */
+  [data-module="shadhb"][data-shadhb-state="ready"] .window[data-inspector="open"] .inspector,
+  [data-module="shadhb"][data-shadhb-state="checking"] .window[data-inspector="open"] .inspector {
+    display: none;
+  }
+  [data-module="shadhb"][data-shadhb-state="ready"] .column-source,
+  [data-module="shadhb"][data-shadhb-state="checking"] .column-source {
+    display: flex;
+    gap: var(--space-28);
+    padding: var(--layout-page-margin);
+  }
+  [data-module="shadhb"][data-shadhb-state="checking"] .column-result[data-for="shadhb"],
+  [data-module="shadhb"][data-shadhb-state="ready"] .column-source .panel-header,
+  [data-module="shadhb"][data-shadhb-state="checking"] .column-source .panel-header {
+    display: none;
+  }
+  [data-module="shadhb"] .column-source .editor-stack {
+    flex: 0 1 auto;
+    min-block-size: var(--type-body-reading-lh);
+  }
+  [data-module="shadhb"] .column-source .editor {
+    field-sizing: content;
+  }
+  #narrow-prune-slot .primary-action {
+    inline-size: 240px;
+    block-size: 42px;
+  }
+  /* المراجعة: لوح القرار مرسًى أسفل النص بعرض النافذة (bottom-decision-panel في 2009:2309) */
+  [data-module="shadhb"][data-shadhb-state="review"]:not([data-shadhb-diverged]) .workspace-row {
+    flex-direction: column;
+  }
+  [data-module="shadhb"][data-shadhb-state="review"]:not([data-shadhb-diverged]) .inspector {
+    inline-size: auto;
+    max-block-size: 55%;
+    border-inline-start: 0;
+    border-block-start: var(--stroke-hairline) solid var(--border-default);
+  }
+  [data-module="shadhb"][data-shadhb-state="review"]:not([data-shadhb-diverged]) .inspector-body {
+    flex-flow: row wrap;
+    align-items: center;
+    gap: var(--layout-component-gap);
+    padding: var(--component-padding-lg);
+  }
+  [data-module="shadhb"][data-shadhb-state="review"]:not([data-shadhb-diverged]) .inspector-body > * {
+    flex: 1 0 100%;
+  }
+  /* sheet-header: العنوان فالضمانة يمينًا، والشرائح يسارًا */
+  [data-module="shadhb"][data-shadhb-state="review"]:not([data-shadhb-diverged]) .inspector-body > .cuts-header,
+  [data-module="shadhb"][data-shadhb-state="review"]:not([data-shadhb-diverged]) .inspector-body > #covenant-section {
+    flex: none;
+  }
+  [data-module="shadhb"][data-shadhb-state="review"]:not([data-shadhb-diverged]) .inspector-body > .cuts-list {
+    flex: 1 1 0;
+    justify-content: flex-end;
+    gap: var(--space-4);
+    order: 0;
+  }
+  [data-module="shadhb"][data-shadhb-state="review"]:not([data-shadhb-diverged]) .cuts-header > .cuts-title,
+  [data-module="shadhb"][data-shadhb-state="review"]:not([data-shadhb-diverged]) .cuts-header > .count-badge {
+    display: none;
+  }
+  [data-module="shadhb"][data-shadhb-state="review"]:not([data-shadhb-diverged]) .cuts-header .card-title {
+    font: var(--type-button-label);
+  }
+  [data-module="shadhb"][data-shadhb-state="review"]:not([data-shadhb-diverged]) #covenant-bar {
+    gap: var(--layout-tight-gap);
+    padding: var(--component-padding-xs) var(--component-padding-sm);
+    border-radius: var(--radius-4);
+    background: var(--status-success-subtle);
+    color: var(--status-success);
+  }
+  [data-module="shadhb"][data-shadhb-state="review"]:not([data-shadhb-diverged]) #covenant-bar .covenant-bar-icon {
+    color: inherit;
+  }
+  [data-module="shadhb"][data-shadhb-state="review"]:not([data-shadhb-diverged]) #covenant-bar.fail {
+    background: var(--status-danger-subtle);
+    color: var(--status-danger);
+  }
+  /* الشريحة بهيئة Tag: ٢٢، حشو ٢/٨ */
+  [data-module="shadhb"][data-shadhb-state="review"]:not([data-shadhb-diverged]) .cut-row {
+    block-size: 22px;
+    padding: var(--space-2) var(--component-padding-sm);
+  }
+  [data-module="shadhb"][data-shadhb-state="review"]:not([data-shadhb-diverged]) #cut-card-section,
+  [data-module="shadhb"][data-shadhb-state="review"]:not([data-shadhb-diverged]) #reading-card-section {
+    order: 1;
+  }
+  /* decision-card-compact: حشو ١٢، قطر ٦، السياق يمينًا والقرار يسارًا بارتفاع ٣٦ */
+  [data-module="shadhb"][data-shadhb-state="review"]:not([data-shadhb-diverged]) .decision-card {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: var(--space-4) var(--layout-group-gap);
+    padding: var(--component-padding-md);
+    border-radius: var(--radius-6);
+    box-shadow: none;
+  }
+  [data-module="shadhb"][data-shadhb-state="review"]:not([data-shadhb-diverged]) .decision-card > * {
+    grid-column: 1;
+  }
+  /* العنوان انتقل إلى رأس اللوح؛ ويبقى رأس البطاقة لوسم «تعذّرت المراجعة» وحده */
+  [data-module="shadhb"][data-shadhb-state="review"]:not([data-shadhb-diverged]) .decision-card:not([data-state="stale"]) .card-header {
+    display: none;
+  }
+  [data-module="shadhb"][data-shadhb-state="review"]:not([data-shadhb-diverged]) .decision-card .card-quote {
+    padding: 0;
+    border: 0;
+    background: none;
+    font: var(--type-caption-strong);
+  }
+  [data-module="shadhb"][data-shadhb-state="review"]:not([data-shadhb-diverged]) .decision-card .card-meta,
+  [data-module="shadhb"][data-shadhb-state="review"]:not([data-shadhb-diverged]) .decision-card .card-effect {
+    font: var(--type-metadata);
+    color: var(--text-secondary);
+  }
+  [data-module="shadhb"][data-shadhb-state="review"]:not([data-shadhb-diverged]) .decision-card .cut-decision {
+    grid-column: 2;
+    grid-row: 1 / span 3;
+    gap: var(--layout-element-gap);
+  }
+  [data-module="shadhb"][data-shadhb-state="review"]:not([data-shadhb-diverged]) .decision-button {
+    flex: none;
+    inline-size: 84px;
+    block-size: 36px;
+    padding-block: var(--component-padding-sm);
   }
 }

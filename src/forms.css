@@ -155,7 +155,9 @@
   inline-size: 220px;
 }
 /* ملاحظة القسم تحت صفوفه، عند بداية عمود العناصر (بعد التسمية ١٢٠ وفجوتها) */
-.section-note {
+/* مقيَّدة بتذييل قسم النموذج: الصنف نفسه تحمله ملاحظات لوح شَذْب في النافذة الرئيسية (تحمّل forms.css
+   أيضًا)، فكانت تُزاح ١٣٢ عن حافتها (فحص m6-27) */
+.section-footer.section-note {
   padding-inline-start: calc(120px + var(--layout-component-gap));
 }
 .form-row[data-control="switch"] {

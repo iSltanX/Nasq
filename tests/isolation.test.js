@@ -507,14 +507,41 @@ test("المرحلة ٧-ب: صفر مستمع لوحة مفاتيح لأمرٍ �
   }
 });
 
+// m6-27: forms.css تُحمَّل في النافذة الرئيسية أيضًا؛ إزاحة ملاحظة قسم النموذج (١٢٠ + الفجوة) كانت تبلغ
+// ملاحظات لوح شَذْب التي تحمل الصنف نفسه فتُزاح عن حافتها
+test("m6-27: إزاحة ملاحظة النموذج لا تبلغ ملاحظات لوح شَذْب", () => {
+  const formsCss = src("forms.css");
+  assert.ok(!/(^|\n)\.section-note \{/.test(formsCss), "forms.css تزيح كل .section-note في أي نافذة");
+  assert.ok(/\.section-footer\.section-note \{\s*padding-inline-start:/.test(formsCss), "إزاحة ملاحظة قسم النموذج غائبة");
+  assert.ok(/class="section-footer section-note"/.test(src("settings.html")), "ملاحظة الإعدادات فقدت صنف تذييلها");
+});
+
+// m6-26: بطاقتا المفترق متجاورتان (options-container في Crossroads 2009:1085). الحاوية تحمل أيضًا
+// .section-content العمودية المعرَّفة لاحقًا بخصوصية مساوية، فلا بد أن يُقيَّد محدِّدها بأبيه وأن يصرّح بالاتجاه
+test("m6-26: بطاقتا مفترق الإيقاع متجاورتان في العرض الواسع", () => {
+  assert.ok(/\n\.crossroads-view \.crossroads-options \{[^}]*flex-direction: row;/.test(css), "حاوية المفترق لا تصرّح باتجاهها أو محدِّدها غير مقيَّد");
+  assert.ok(!/\n\.crossroads-options \{/.test(css), "محدِّد المفترق العاري تغلبه .section-content");
+});
+
+// m6-25: بطاقات المنشورات في نتائج المنصات عرضٌ لا يمسّ النص — العدّاد سمةٌ يرسمها CSS، فلا يدخل
+// textContent الذي يقرؤه النسخ والحفظ والبحث والعدسة (تحقّق التشغيل: m6/posts-check.cjs)
+test("m6-25: عدّاد المنشور لا يدخل نصّ النتيجة", () => {
+  const paint = functionBody(nasaq, "paintPosts");
+  assert.ok(paint, "paintPosts غائبة");
+  assert.ok(paint.includes("node.dataset.counter ="), "العدّاد ليس سمةً على المنشور");
+  assert.ok(paint.includes("node.textContent = part;") && !/textContent = [^;]*(counter|من \$)/.test(paint), "العدّاد يُكتب نصًّا داخل النتيجة");
+  assert.ok(/\.platform-post::after \{\s*content: attr\(data-counter\);/.test(css), "العدّاد لا يرسمه CSS من السمة");
+  assert.ok(/\.post-gap \{[^}]*block-size: 0;/.test(css) && !/\.post-gap \{[^}]*display: none/.test(css), "فاصل المنشورات يُخفى بما يسقطه من النسخ بالتحديد");
+});
+
 test("المرحلة ٣: الأرقام الهندية في كل ما يعرضه نَسَق والقشرة", () => {
   for (const [name, code] of [["nasaq.js", nasaq], ["shell.js", shell]]) {
     assert.ok(!/toLocaleString\(\s*"ar"\s*\)/.test(code), `${name} يعرض أرقامًا بـ toLocaleString("ar")`);
     assert.ok(!/Intl\.(?:DateTimeFormat|NumberFormat)\(\s*"ar"\s*[,)]/.test(code), `${name} ينسّق بـ "ar" بلا النظام الهندي`);
     assert.ok(!/\$\{DRAFTS_MAX\}/.test(code), `${name} يعرض السقف بأرقام لاتينية`);
   }
-  assert.ok(nasaq.includes("${arabicDigits.format(activeIndex + 1)} من ${arabicDigits.format(matches.length)}"), "عدّاد البحث ليس «١ من ٣»");
-  assert.ok(nasaq.includes('"لا تطابق"'), "حالة عدم التطابق في البحث غائبة");
+  assert.ok(nasaq.includes("resultsLabel(activeIndex + 1, matches.length)") && nasaq.includes("`${arabicDigits.format(at)} من ${arabicDigits.format(n)} ${"), "عدّاد البحث ليس «٤ من ٧ نتائج» بأرقام هندية");
+  assert.ok(nasaq.includes('"لا نتائج"'), "حالة «لا نتائج» في البحث غائبة (Search-No-Results 2352:3094)");
   assert.ok(/draftsCountBadge\.textContent = arabicDigits\.format/.test(shell), "شارة العدد ليست بالهندية");
   assert.ok(/new Intl\.DateTimeFormat\("ar-u-nu-arab"/.test(shell), "تواريخ المسودات ليست بالهندية");
   assert.ok(!/opt\.pct \+ "٪"/.test(shell), "نسبة التنزيل بأرقام لاتينية");
@@ -549,7 +576,10 @@ test("المرحلة ٣: التصدير لسابستاك وحدها، والنس
   const marked = functionBody(nasaq, "markedSelectionText");
   assert.ok(marked.includes("selection.containsNode(node, true)"), "تحديد يمتد إلى النتيجة من خارجها لا يُجرَّد");
   assert.ok(marked.includes("node.offsetParent !== null"), "نتيجة نَسَق المخفية تجرّد نسخ الوحدة الظاهرة");
-  assert.ok(marked.includes("stripSubstackMarkers(selection.toString())"), "نسخ التحديد لا يجرّد الرموز");
+  // m6: المجرَّد هو نصّ التحديد — من محتوى مداه حين يقع كله داخل نصٍّ واحد (بطاقات المنشورات عناصر كتلية
+  // وtoString يضيف عند حدودها أسطرًا)، ومن toString حين يمتد إليه من خارجه
+  assert.ok(marked.includes("let raw = selection.toString();") && marked.includes("return window.NasaqSubstackMarkers.stripSubstackMarkers(raw);"), "نسخ التحديد لا يجرّد الرموز");
+  assert.ok(marked.includes("cloneContents().textContent"), "نسخ تحديدٍ داخل النتيجة يقرأ toString فيخالف ما ينسخه الزر");
   assert.ok(nasaq.includes("document.getSelection().containsNode(e.target, true)"), "السحب يعترض عنصرًا غير التحديد");
 });
 

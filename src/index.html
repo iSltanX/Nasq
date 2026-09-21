@@ -110,6 +110,13 @@
             </div>
           </div>
 
+          <!-- File-Drop-Hover 2352:3173: حلقة متقطّعة داخل اللوحة ورسالة الإفلات، ما دام ملفٌّ فوقها -->
+          <div class="drop-overlay" aria-hidden="true">
+            <div class="drop-ring"></div>
+            <span class="empty-badge"><span class="mark"></span></span>
+            <p class="empty-title">أفلت الملف هنا</p>
+            <p class="empty-body">ملف نصّي بصيغة TXT أو MD — يُقرأ على جهازك ولا يُرسل.</p>
+          </div>
           <div class="scroll-view" id="scroll-view">
             <div class="compare">
               <!-- عمود الأصل: خانة الكتابة قبل النتيجة، و«الأصل» بجانبها بعدها -->
@@ -187,6 +194,8 @@
                 <!-- في النافذة الضيقة يسكن الفعل الرئيس هنا تحت النص (Narrow / Nasaq-Ready 2287:2042):
                      الهيكل ينقل ما عُلِّم بـ data-narrow-slot إلى موضعه ويعيده حين تتسع -->
                 <div class="narrow-action-slot" id="narrow-action-slot" data-for="nasaq"></div>
+                <!-- وفحصُ شَذْب كذلك في الضيّق (Narrow / Shadhb-Ready 2288:6327 وShadhb-Checking 2288:6369) -->
+                <div class="narrow-action-slot" id="narrow-prune-slot" data-for="shadhb"></div>
                 <!-- حالة البداية لكل وحدة فوق الخانة الفارغة (Empty State 27:1169) -->
                 <div id="output-placeholder" class="empty-state" data-for="nasaq">
                   <span class="empty-badge" aria-hidden="true"><span class="mark"></span></span>
@@ -231,6 +240,8 @@
                       <span class="sf" aria-hidden="true">←</span>
                     </button>
                   </div>
+                  <!-- البحث حرفيّ: لا يطبّع التشكيل ولا الهمزات، فالوسم يقول ذلك -->
+                  <span class="find-mode">مطابقة تامة</span>
                   <button id="output-search-close" class="icon-button" type="button" title="Esc" aria-label="إغلاق البحث">
                     <span class="sf" aria-hidden="true">􀆄</span>
                   </button>
@@ -290,6 +301,8 @@
                   <div class="narrow-slot" id="narrow-end-slot"></div>
                 </div>
                 <div class="bottom-info-row">
+                  <!-- length-counter في نتائج المنصات (2345:2268): عدد المنشورات وحدّ المنصة -->
+                  <span id="output-length-note" class="length-note" hidden></span>
                   <div class="quiet-actions">
                     <button id="clean-btn" class="quiet-action" type="button" title="حذف السطور الفارغة ⌥⌘⌫" disabled>حذف السطور الفارغة</button>
                     <button id="add-blank-lines-btn" class="quiet-action" type="button" title="إضافة سطور فارغة ⌥⌘↵ — على النتيجة، أو على الأصل قبلها" disabled>إضافة سطور فارغة</button>
@@ -348,7 +361,7 @@
             <div class="section-content crossroads-options" id="review-content">
               <article id="turn-card-broken" class="suggestion-card" data-state="undecided" aria-labelledby="turn-title-broken">
                 <header class="card-header">
-                  <h3 id="turn-title-broken" class="card-title">مكسورة عند المنعطف</h3>
+                  <h3 id="turn-title-broken" class="card-title">الخيار أ — مكسورة عند المنعطف</h3>
                   <span id="turn-tag-broken" class="tag" data-tone="neutral"><span class="tag-label"></span></span>
                 </header>
                 <div id="fragment-broken" class="card-quote selectable"></div>
@@ -359,7 +372,7 @@
               </article>
               <article id="turn-card-joined" class="suggestion-card" data-state="undecided" aria-labelledby="turn-title-joined">
                 <header class="card-header">
-                  <h3 id="turn-title-joined" class="card-title">موصولة</h3>
+                  <h3 id="turn-title-joined" class="card-title">الخيار ب — موصولة ومترابطة</h3>
                   <span id="turn-tag-joined" class="tag" data-tone="neutral"><span class="tag-label"></span></span>
                 </header>
                 <div id="fragment-joined" class="card-quote selectable"></div>
@@ -464,6 +477,8 @@
             <header class="cuts-header">
               <h2 class="cuts-title" id="cuts-heading">قائمة القصّات المقترحة</h2>
               <span id="cuts-count" class="count-badge" hidden></span>
+              <!-- في الضيّق يسكن عنوان القصّة المحددة رأسَ اللوح المرسى (sheet-header في Shadhb-Review 2009:2309) -->
+              <div class="narrow-slot" id="narrow-cut-title-slot"></div>
             </header>
             <!-- Diverged 2009:2100: الخانة تغيّرت أثناء المراجعة، فالاقتراحات لم تعد تصف ما فيها -->
             <div class="panel-intro" data-when="diverged">
@@ -485,7 +500,7 @@
               <div class="section-content" id="cut-card-content">
                 <article id="cut-card" class="decision-card" data-state="selected" aria-labelledby="cut-card-title">
                   <header class="card-header">
-                    <h3 id="cut-card-title" class="card-title"></h3>
+                    <h3 id="cut-card-title" class="card-title" data-narrow-slot="narrow-cut-title-slot"></h3>
                     <span id="cut-card-tag" class="tag" data-tone="neutral"><svg class="icon" aria-hidden="true"><use href="#circle.dotted.16m" /></svg><span class="tag-label"></span></span>
                   </header>
                   <div id="cut-card-quote" class="card-quote selectable" dir="rtl"></div>
@@ -559,11 +574,13 @@
                   <span id="outcome-shorter" class="tag" data-tone="success" hidden>النص أقصر بعد القصّات المعتمدة</span>
                 </div>
                 <div id="outcome-covenant" class="covenant-bar guarantee-badge"></div>
+                <!-- pact-guarantee-block في Polished 2009:1937: الفقرة تصف ما تحقّق، فتغيب إن لم تتحقق الضمانة -->
+                <p id="outcome-pact" class="section-note" hidden>الناتج كلماتُ نصّك بترتيبها: حُذف ما اعتمدتَ حذفه فقط، ولم تُضَف كلمة.</p>
               </div>
             </section>
 
             <div class="panel-actions">
-              <button id="prune-btn" class="primary-action" type="button" data-style="primary" title="افحص الشذرة ⌘↵ — فحص واحد يعيد بطاقة قراءة وقصّات مقترحة، ولا يغيّر نصك حتى تقرر" disabled>
+              <button id="prune-btn" class="primary-action" type="button" data-style="primary" data-narrow-slot="narrow-prune-slot" title="افحص الشذرة ⌘↵ — فحص واحد يعيد بطاقة قراءة وقصّات مقترحة، ولا يغيّر نصك حتى تقرر" disabled>
                 <span class="spinner spinner-16" aria-hidden="true"></span>
                 <span class="when-idle">افحص الشذرة الآن</span>
                 <span class="when-busy">جارٍ التحليل الإيجازي…</span>

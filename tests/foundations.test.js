@@ -217,12 +217,19 @@ const RAW_PX_ALLOWED = {
     // Dropdown Menu 30:39 عرضه ٢٢٠ (أدناه ٢٠٠ حتى لا تضيق عن أقصر بند)
     "app|.dd-popup, .menu, .picker-menu|min-inline-size|200",
     "forms|.picker-menu|min-inline-size|200",
-    // لوح شَذْب (Review-Decision 2009:1632) ٤٢٠، وفي الضيّق ٣٢٠؛ وCut Decision 2124:32 ارتفاعه ٤٤
+    // لوح شَذْب (Review-Decision 2009:1632) ٤٢٠، وفي الضيّق ٢٨٠ (decision-sidebar في 2009:2364)؛ وCut Decision 2124:32 ارتفاعه ٤٤
     "app|.inspector|inline-size|420",
     // ولوح «جاهز» ٤٠٠ (info-sidebar في Ready 2009:1548)، والفعل الرئيس في اللوح بارتفاع مكوّنه ٤٢ (Primary Action 2120:64)
     "app|[data-module=\"shadhb\"][data-shadhb-state=\"ready\"] .inspector, [data-module=\"shadhb\"][data-shadhb-state=\"checking\"] .inspector|inline-size|400",
     "app|.panel-actions .primary-action|block-size|42",
-    "app|.inspector|inline-size|320",
+    "app|.inspector|inline-size|280",
+    // شَذْب في الضيّق: الفعل في قلب اللوحة ٢٤٠×٤٢ (btn-start-check في 2288:6327)، والشريحة بهيئة Tag ٢٢،
+    // وCut Decision · Compact بارتفاع ٣٦ وزرّاه ٨٤ (decision-card-compact في 2009:2309)
+    "app|#narrow-prune-slot .primary-action|block-size|42",
+    "app|#narrow-prune-slot .primary-action|inline-size|240",
+    "app|[data-module=\"shadhb\"][data-shadhb-state=\"review\"]:not([data-shadhb-diverged]) .cut-row|block-size|22",
+    "app|[data-module=\"shadhb\"][data-shadhb-state=\"review\"]:not([data-shadhb-diverged]) .decision-button|block-size|36",
+    "app|[data-module=\"shadhb\"][data-shadhb-state=\"review\"]:not([data-shadhb-diverged]) .decision-button|inline-size|84",
     "app|.decision-button|block-size|44",
     // Alert 30:26 عرضه ٤٠٠، وSheet 30:27 ٤٤٠ (وورقة التنويعات ٧٢٠)، وPopover 30:36 ٣٦٠
     "app|.alert|inline-size|400",
@@ -243,7 +250,7 @@ const RAW_PX_ALLOWED = {
     "forms|.row-segments|inline-size|220",
     "forms|.form-row[data-control=\"switch\"] > .row-label|inline-size|220",
     "forms|.row-cell|inline-size|220",
-    "forms|.section-note|padding-inline-start|120",
+    "forms|.section-footer.section-note|padding-inline-start|120",
     "secondary|.tab|block-size|30",
     // About-Window 2009:2911: صفّ إشارات النظام ١٤، والأيقونة ٨٠
     "secondary|.about|padding-block-start|14",

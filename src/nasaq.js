@@ -16,6 +16,7 @@ const notesList = el("notes-list");
 const rhythmFingerprint = el("rhythm-fingerprint");
 const inputCount = el("input-count");
 const outputCount = el("output-count");
+const outputLengthNote = el("output-length-note");
 
 // علاج علّة مؤشر WebKit: plaintext مع وجود نص، وisolate عند الفراغ حتى يبقى المؤشر يمينًا دائمًا
 function syncCaretBidi() {
@@ -588,7 +589,18 @@ function markedSelectionText() {
   const touches = [...document.querySelectorAll(MARKED_TEXT)].some(
     (node) => node.offsetParent !== null && selection.containsNode(node, true)
   );
-  return touches ? window.NasaqSubstackMarkers.stripSubstackMarkers(selection.toString()) : null;
+  if (!touches) return null;
+  // تحديدٌ كله داخل نصٍّ واحد منها يُقرأ من محتوى مداه لا من toString: بطاقات المنشورات عناصر كتلية،
+  // وtoString يضيف عند حدودها أسطرًا ليست في النص — فيخالف المنسوخُ بالتحديد ما ينسخه الزر (ملاحظة حارس نَسَق، m6)
+  const host = [...document.querySelectorAll(MARKED_TEXT)].find(
+    (node) => node.contains(selection.anchorNode) && node.contains(selection.focusNode)
+  );
+  let raw = selection.toString();
+  if (host) {
+    raw = "";
+    for (let i = 0; i < selection.rangeCount; i++) raw += selection.getRangeAt(i).cloneContents().textContent;
+  }
+  return window.NasaqSubstackMarkers.stripSubstackMarkers(raw);
 }
 document.addEventListener("copy", (e) => {
   const text = markedSelectionText();
@@ -923,10 +935,73 @@ function renderRhythmCard(text) {
   );
 }
 
+// ---------- نتائج المنصات: بطاقةٌ لكل منشور وعدّادها (Platform Post في 2345:2268…2346:6912) ----------
+// عرضٌ فقط: نصّ النتيجة يبقى هو نفسه حرفًا بحرف في textContent (النسخ والبحث والعدسة والحفظ تقرؤه)،
+// فالمقاطع عناصر تلفّ النص كما هو، والفواصل بينها باقية في عناصر بلا ارتفاع، والعدّاد مولَّد في CSS
+// من data-counter فلا يدخل النص. إكس: منشور لكل مقطع يفصله سطر فارغ؛ وغيره منشور واحد
+const postsNoun = (n) =>
+  n === 1 ? "منشور واحد" : n === 2 ? "سلسلة من منشورَين" : `سلسلة من ${arabicDigits.format(n)} ${n % 100 >= 3 && n % 100 <= 10 ? "منشورات" : "منشورًا"}`;
+function lengthNoteFor(platform, posts, text) {
+  const limit = PLATFORM_LIMITS[platform];
+  const max = limit ? arabicDigits.format(limit) : "";
+  if (platform === "إكس") return `${postsNoun(posts)} · الحدّ ${max} حرفًا للمنشور`;
+  if (platform === "ثريدز") return `منشور واحد · الحدّ ${max} حرف للمنشور`;
+  if (platform === "إنستغرام") return `وصف واحد · الحدّ ${max} حرف`;
+  if (platform === SUBSTACK_ARTICLE) return "مقال سابستاك · بلا حدّ للطول";
+  if (platform === SUBSTACK_NOTE) return /\n\s*\n/.test(text.trim()) ? "نوت سابستاك" : "نوت سابستاك · فقرات متقاربة بلا سطر فارغ";
+  if (platform === "واتساب") return "واتساب · بلا حدّ عملي للطول";
+  return "";
+}
+
+function paintPosts() {
+  const meta = lastFormatMeta;
+  const text = outputText.textContent;
+  const platform = meta && meta.intervention === LEVELS.PLATFORM && text.trim() ? meta.platform : null;
+  outputLengthNote.textContent = platform ? lengthNoteFor(platform, 1, text) : "";
+  outputLengthNote.hidden = !outputLengthNote.textContent;
+  // العدسة معاينةُ عرض هاتف؛ وفي نتائج المنصات يسمّيها الملف بذلك («معاينة هاتف» في 2345:2268)
+  const lens = el("reading-lens-btn");
+  lens.textContent = platform && platform !== SUBSTACK_ARTICLE ? "معاينة هاتف" : "عدسة القراءة";
+  lens.title = `${lens.textContent} ⌥⌘R — للعرض فقط`;
+  if (!platform) {
+    // خارج مستوى «منصة» النتيجة نصٌّ واحد كما كانت
+    if (outputText.firstElementChild) outputText.textContent = text;
+    return;
+  }
+  const limit = PLATFORM_LIMITS[platform];
+  const unit = platform === "إكس" ? "حرفًا" : "حرف";
+  const parts = platform === "إكس" ? text.split(/(\n\s*\n+)/) : [text];
+  const blocks = parts.filter((_, i) => i % 2 === 0 && parts[i].trim()).length;
+  const nodes = [];
+  let at = 0;
+  parts.forEach((part, i) => {
+    if (!part) return;
+    const node = document.createElement(i % 2 || !part.trim() ? "span" : "div");
+    node.textContent = part;
+    if (node.tagName === "SPAN") {
+      node.className = "post-gap";
+    } else {
+      at += 1;
+      node.className = "platform-post";
+      const length = arabicDigits.format(part.trim().length);
+      if (limit) {
+        node.dataset.counter =
+          platform === "إنستغرام"
+            ? `${length} من ${arabicDigits.format(limit)} ${unit}`
+            : `${arabicDigits.format(at)} من ${arabicDigits.format(blocks)} · ${length} من ${arabicDigits.format(limit)} ${unit}`;
+      }
+    }
+    nodes.push(node);
+  });
+  outputText.replaceChildren(...nodes);
+  if (platform === "إكس") outputLengthNote.textContent = lengthNoteFor(platform, blocks, text);
+}
+
 function syncResultTools() {
   const face = metaSubstackFace();
   const text = outputText.textContent;
   syncPlatformLimitWarning();
+  paintPosts();
   renderRhythmCard(text);
 
   // بطاقة الشذرة: نمط شذرة على وجهة سابستاك، وفي النص منعطف تختلف به الصورتان
@@ -1460,12 +1535,19 @@ const outputSearch = (function initOutputSearch() {
     );
   }
 
-  // «١ من ٣» بأرقام هندية، و«لا تطابق» حين يخلو النص من الكلمة (Figma 73:701)
+  // «٤ من ٧ نتائج» بأرقام هندية، و«لا نتائج» حين يخلو النص من الكلمة (Search-Match-4 2277:1861 وSearch-No-Results 2352:3094)
+  // المعدود يوافق عدده: نتيجة، نتيجتين، ٣–١٠ نتائج، ١١ فأكثر نتيجة
+  const resultsLabel = (at, n) =>
+    n === 1
+      ? "نتيجة واحدة"
+      : n === 2
+        ? `${arabicDigits.format(at)} من نتيجتين`
+        : `${arabicDigits.format(at)} من ${arabicDigits.format(n)} ${n % 100 >= 3 && n % 100 <= 10 ? "نتائج" : "نتيجة"}`;
   function updateCount() {
     countEl.textContent = matches.length
-      ? `${arabicDigits.format(activeIndex + 1)} من ${arabicDigits.format(matches.length)}`
+      ? resultsLabel(activeIndex + 1, matches.length)
       : input.value.trim()
-      ? "لا تطابق"
+      ? "لا نتائج"
       : "";
     prevBtn.disabled = nextBtn.disabled = matches.length === 0;
     clearBtn.hidden = !input.value;
