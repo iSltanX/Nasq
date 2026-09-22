@@ -120,8 +120,16 @@ pub(crate) fn build_request_body(
         body["response_format"] = json!({ "type": "json_object" });
     }
     if is_gemini {
-        body["extra_body"] =
-            json!({ "google": { "thinking_config": { "thinking_budget": thinking_budget } } });
+        match gemini_reasoning_effort(model, thinking_budget) {
+            // Gemini 3.x (فحص m7-15): لا يقبل thinking_budget بل مستوى تفكير، ولا يُعطَّل فيه
+            // التفكير أصلًا. reasoning_effort القياسي يترجمه المزوّد لكل نموذج (minimal → أدنى
+            // ما يقبله)، ولا يُرسل معه thinking_config لأن المزوّد يرفض اجتماعهما
+            Some(effort) => body["reasoning_effort"] = json!(effort),
+            None => {
+                body["extra_body"] =
+                    json!({ "google": { "thinking_config": { "thinking_budget": thinking_budget } } });
+            }
+        }
     }
     if is_openrouter {
         body["reasoning"] = if thinking_budget == 0 {
@@ -131,6 +139,32 @@ pub(crate) fn build_request_body(
         };
     }
     body
+}
+
+/// ازدحام لحظي لدى المزوّد يستحق محاولةً ثانية واحدة: 503 (Gemini: «high demand»)
+/// و529 (Anthropic: overloaded). لا 500/502 — فقد يكون الطلب نفسه سببها
+const OVERLOAD_RETRY_DELAY: std::time::Duration = std::time::Duration::from_millis(1500);
+fn is_transient_overload(status: u16) -> bool {
+    matches!(status, 503 | 529)
+}
+
+/// ميزانية التفكير التي يقررها البرج مترجمةً لنماذج Gemini 3 فما فوق، التي لا تقبل
+/// `thinking_budget` (شَذْب على gemini-3.5-flash: انتهاء مهلة ثم 5xx — فحص m7-15)، ولا يُعطَّل
+/// فيها التفكير. الأعتاب من جدول المزوّد لـ Gemini 2.5 (minimal/low ≈ ١٠٢٤، medium ≈ ٨١٩٢):
+/// صفر البرج يصير أدنى ما يقبله النموذج، وميزانيته المحدودة تبقى في أدنى مستوى.
+/// None لنماذج 2.x وما دون، ولما لا يُعرف رقمه، فتبقى على صيغتها المختبَرة
+fn gemini_reasoning_effort(model: &str, thinking_budget: u64) -> Option<&'static str> {
+    let rest = model.rsplit('/').next().unwrap_or(model).strip_prefix("gemini-")?;
+    let major: u32 = rest.split(['.', '-']).next()?.parse().ok()?;
+    if major < 3 {
+        return None;
+    }
+    Some(match thinking_budget {
+        0 => "minimal",
+        1..=1024 => "low",
+        1025..=8192 => "medium",
+        _ => "high",
+    })
 }
 
 // هامش توكنات التفكير: حين يفكر النموذج فعلًا تُحسب توكنات تفكيره من سقف
@@ -345,6 +379,12 @@ async fn request_completion_detailed(
     let first_status = response.status().as_u16();
     if first_status == 400 || first_status == 422 {
         response = call_api(&client, &url, api_key, &body_for(false)).await?;
+    } else if is_transient_overload(first_status) {
+        // ازدحامٌ لحظي لدى المزوّد (503 «high demand»، 529): رسالته نفسها تقول «حاول بعد قليل» —
+        // محاولةٌ ثانية واحدة بعد مهلةٍ قصيرة، بالجسم نفسه؛ وإن استمرّ فالرسالة إلى الكاتب
+        // (فحص m7-15: شَذْب على gemini-3.5-flash رُدّ بـ503 مرتين والطلب سليم الصيغة)
+        let _ = tauri::async_runtime::spawn_blocking(|| std::thread::sleep(OVERLOAD_RETRY_DELAY)).await;
+        response = call_api(&client, &url, api_key, &body_for(true)).await?;
     }
 
     let status = response.status();
@@ -1161,11 +1201,37 @@ mod tests {
     }
 
     #[test]
+    fn gemini_3_gets_a_reasoning_effort_instead_of_a_budget_on_every_attempt() {
+        // فحص m7-15: gemini-3.5-flash رفض thinking_budget (مهلة ثم 5xx) ونَسَق بصفره عمل.
+        // النموذج الثالث فما فوق يأخذ مستوى، بلا thinking_config معه، وفي جسم الإعادة أيضًا
+        let messages = json!([{ "role": "user", "content": "نص" }]);
+        for (model, budget, effort) in [
+            ("gemini-3.5-flash", 0, "minimal"),
+            ("gemini-3.5-flash", 1024, "low"),
+            ("gemini-3-pro-preview", 1024, "low"),
+            ("gemini-3.1-flash-lite", 4096, "medium"),
+            ("gemini-4.0-pro", 20_000, "high"),
+        ] {
+            for include_rf in [true, false] {
+                let body = build_request_body(model, &messages, 3000, 0.85, include_rf, true, false, budget);
+                assert_eq!(body["reasoning_effort"], effort, "{model} بميزانية {budget}");
+                assert!(body.get("extra_body").is_none(), "{model} أُرسل له thinking_config مع المستوى");
+            }
+        }
+        // ولا يمسّ OpenRouter ولا غير Gemini
+        let or = build_request_body("google/gemini-3.5-flash", &messages, 3000, 0.85, true, false, true, 1024);
+        assert!(or.get("reasoning_effort").is_none());
+        assert_eq!(or["reasoning"]["max_tokens"], 1024);
+        assert_eq!(gemini_reasoning_effort("gemini-2.5-flash", 1024), None);
+        assert_eq!(gemini_reasoning_effort("gemini-exp-1206", 0), None);
+    }
+
+    #[test]
     fn thinking_budget_flows_untouched_on_every_attempt_regardless_of_model() {
         // الضمان الصلب: الميزانية التي يقررها الوضع تصل جسم الطلب كما هي في
         // كل محاولة وأيًّا كان النموذج — النقل لا يملك رأيًا في التكلفة
         let messages = json!([{ "role": "user", "content": "نص" }]);
-        for model in ["gemini-2.5-flash", "gemini-2.5-pro", "أي-نموذج-مستقبلي"] {
+        for model in ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-1.5-pro", "أي-نموذج-مستقبلي"] {
             for include_rf in [true, false] {
                 for budget in [0u64, 1024] {
                     let body = build_request_body(model, &messages, 3000, 0.85, include_rf, true, false, budget);
@@ -1950,6 +2016,46 @@ mod tests {
     // ===== المسار المتوافق مع OpenAI (request_completion_detailed) =====
 
     #[test]
+    fn a_503_is_retried_once_then_reported_as_server_fault() {
+        // فحص m7-15: Gemini ردّ بـ503 «high demand» على طلبٍ سليم الصيغة — محاولة ثانية واحدة
+        let ok = r#"{"choices":[{"finish_reason":"stop","message":{"content":"{\"ok\":1}"}}]}"#;
+        let (base, requests) = stub_seq(vec![
+            ("503 Service Unavailable", r#"{"error":{"code":503,"status":"UNAVAILABLE"}}"#),
+            ("200 OK", ok),
+        ]);
+        let started = std::time::Instant::now();
+        let out = futures_lite_block_on(request_completion_detailed(
+            &cloud_settings(&format!("{base}/generativelanguage.googleapis.com/v1beta/openai"), "gemini-3.5-flash"),
+            &json!([{ "role": "user", "content": "نص" }]),
+            100,
+            0.3,
+            1024,
+        ))
+        .unwrap_or_else(|e| panic!("{}", e.message));
+        assert!(out.contains("ok"));
+        assert!(started.elapsed() >= OVERLOAD_RETRY_DELAY, "الإعادة بلا مهلة");
+        let first = requests.recv().unwrap();
+        let second = requests.recv().unwrap();
+        // الجسم نفسه في المحاولتين: بصيغة Gemini 3 وبـresponse_format
+        for r in [&first, &second] {
+            assert!(r.contains(r#""reasoning_effort":"low""#), "المستوى غاب عن محاولة");
+            assert!(r.contains(r#""response_format""#));
+            assert!(!r.contains("thinking_budget"));
+        }
+        // ومع 503 مرتين: رسالة الخلل المؤقت لا غيرها، وبلا محاولة ثالثة
+        let (base, requests) = stub_seq(vec![
+            ("503 Service Unavailable", "{}"),
+            ("503 Service Unavailable", "{}"),
+            ("200 OK", ok),
+        ]);
+        let err = futures_lite_block_on(request_completion_detailed(&cloud_settings(&base, "gemini-3.5-flash"), &json!([]), 100, 0.3, 1024))
+            .unwrap_err();
+        assert_eq!(err.message, ERR_SERVER);
+        assert_eq!(requests.try_iter().count(), 2, "محاولة ثالثة");
+    }
+
+
+    #[test]
     fn openai_compat_html_200_is_unreadable() {
         let (base, _r) = stub_once("200 OK", "<html><body>captive portal</body></html>");
         let err = futures_lite_block_on(request_completion_detailed(
@@ -2071,8 +2177,8 @@ mod tests {
 
     #[test]
     fn openai_compat_status_codes_map_regardless_of_error_body_shape() {
-        // ٤٠٠ و٤٢٢ يعاد الطلب معهما دومًا (مُختبَر أعلاه) — البقية طلب واحد
-        let cases: [(&str, &str); 9] = [
+        // ٤٠٠ و٤٢٢ يعاد الطلب معهما دومًا (مُختبَر أعلاه)، و٥٠٣ و٥٢٩ مرةً بعد مهلة (فحص m7-15) — البقية طلب واحد
+        let cases: [(&str, &str); 7] = [
             ("401 Unauthorized", ERR_BAD_KEY),
             ("402 Payment Required", ERR_NO_CREDIT),
             ("403 Forbidden", ERR_BAD_KEY),
@@ -2080,8 +2186,6 @@ mod tests {
             ("429 Too Many Requests", ERR_RATE_LIMITED),
             ("500 Internal Server Error", ERR_SERVER),
             ("502 Bad Gateway", ERR_SERVER),
-            ("503 Service Unavailable", ERR_SERVER),
-            ("529 Overloaded", ERR_SERVER),
         ];
         for (status, expected) in cases {
             for body in [r#"{"error":{"message":"boom"}}"#, "<html>bad gateway</html>"] {
