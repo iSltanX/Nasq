@@ -15,6 +15,11 @@ mod shared;
 fn main() {
     app::window::mark_launch();
     tauri::Builder::default()
+        // أول ملحق يُسجَّل (كما توصي وثائق الملحق): إطلاقٌ ثانٍ لا يفتح نسخةً ثانية على
+        // ملفات البيانات نفسها بل يُحضر نافذة الأولى (فحص m7، m2-22 — قرار المالك المسبق)
+        .plugin(tauri_plugin_single_instance::init(|app, _argv, _cwd| {
+            crate::app::window::focus_main_window(app);
+        }))
         // شريط القوائم الأصلي من لوحة التصميم: يُبنى من مواصفته وحدها،
         // ويبثّ معرّف العنصر لتنفّذه الوحدة الظاهرة بمنطقها
         .menu(app::menu::build)

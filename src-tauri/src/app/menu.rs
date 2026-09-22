@@ -202,7 +202,6 @@ pub(crate) const MENU_BAR: &[MenuSpec] = &[
             Check { id: "view.pane.result", title: "النتيجة", accelerator: Some("Alt+Cmd+2"), checked: true },
             Separator,
             Action { id: "view.sidebar", title: "إظهار الشريط الجانبي", accelerator: Some("Ctrl+Cmd+S") },
-            Action { id: "view.inspector", title: "إظهار المفتّش", accelerator: Some("Alt+Cmd+I") },
             Separator,
             Entry::System(Fullscreen),
         ],
@@ -601,7 +600,7 @@ mod tests {
             ("file", 5, 2),
             ("edit", 9, 3),
             ("format", 8, 2), // المرحلة ٩: «إضافة سطور فارغة» (Figma 343:22143)
-            ("view", 7, 3),
+            ("view", 6, 3), // فحص m7-14: حُذف «إظهار المفتّش» — لا وجود له في NsqV272
             ("window", 3, 1),
             ("help", 1, 0), // المرحلة ٨: حُذفت «مساعدة نَسَق» من اللوحة ومن الشريط معًا
         ];

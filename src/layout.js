@@ -23,9 +23,12 @@
   // في شريط العنوان تفتحها)، ولوح المراجعة يتبع حالة وحدته ما لم يطوِه الكاتب.
   // والمفتاح جديد: تفضيل الهيكل السابق (لوحان مفتوحان) لا يُورَّث
   const PANELS_KEY = "nasaq-panels-v272";
+  // فحص m7-14: «إخفاء المفتّش» لا وجود له في NsqV272 — لوح شَذْب جزءٌ من حالته، وإخفاؤه في «جاهز»
+  // كان يُخفي «افحص الشذرة» و⌘↵ معه فلا مخرج. اللوح مفتوح دائمًا، وتفضيلٌ قديم مخزَّن لا يُطفئه
   const prefs = { sidebar: false, inspector: true, last: "inspector" };
   try {
     Object.assign(prefs, JSON.parse(localStorage.getItem(PANELS_KEY)) || {});
+    prefs.inspector = true;
   } catch {
     // تفضيل تالف أو تخزين محجوب: تبقى القيم الافتراضية
   }
@@ -78,7 +81,6 @@
   // حين يكون ظاهرًا — واللوحة رسمت حالة واحدة منهما
   const PANEL_ITEMS = {
     sidebar: { id: "view.sidebar", shown: "إخفاء الشريط الجانبي", hidden: "إظهار الشريط الجانبي" },
-    inspector: { id: "view.inspector", shown: "إخفاء المفتّش", hidden: "إظهار المفتّش" },
   };
 
   for (const [panel, item] of Object.entries(PANEL_ITEMS)) {

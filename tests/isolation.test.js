@@ -1284,6 +1284,29 @@ test("فحص m7-02: قائمة الاختيار في النافذة الرئيس
   assert.ok(/Math\.min\(Math\.max\(margin, wanted\), window\.innerWidth - w - margin\)/.test(nasaqJs), "القائمة غير محصورة داخل النافذة");
 });
 
+// فحص m7 (m2-22): نسختان من التطبيق على drafts.json نفسه — ثبت في التطبيق الحقيقي أن حفظ إحداهما
+// محا ما حفظته الأخرى (٢١ مسودة صارت واحدة). قفل النسخة الواحدة أول ملحقٍ يُسجَّل
+test("فحص m7 (m2-22): قفل النسخة الواحدة مسجَّل أول الملحقات ويُحضر النافذة الرئيسية", () => {
+  const cargo = fs.readFileSync(path.join(__dirname, "..", "src-tauri", "Cargo.toml"), "utf8");
+  assert.ok(/tauri-plugin-single-instance\s*=/.test(cargo), "الملحق ليس في Cargo.toml");
+  const main = fs.readFileSync(path.join(__dirname, "..", "src-tauri", "src", "main.rs"), "utf8");
+  const single = main.indexOf("tauri_plugin_single_instance::init");
+  assert.ok(single > 0, "الملحق غير مسجَّل");
+  for (const other of ["tauri_plugin_updater", "tauri_plugin_process::init", "tauri_plugin_opener::init"]) {
+    assert.ok(main.indexOf(other) > single, `${other} مسجَّل قبل قفل النسخة الواحدة`);
+  }
+  assert.ok(/focus_main_window\(app\)/.test(main), "الإطلاق الثاني لا يُحضر النافذة");
+});
+
+// فحص m7-14: لا «إظهار/إخفاء المفتّش» — لوح شَذْب جزء من حالته (NsqV272)، وإخفاؤه كان يُسقط الفعل الرئيس
+test("فحص m7-14: لا أمر لإخفاء المفتّش، واللوح مفتوح مهما كان التفضيل المخزَّن", () => {
+  const menuRs = fs.readFileSync(path.join(__dirname, "..", "src-tauri", "src", "app", "menu.rs"), "utf8");
+  assert.ok(!/view\.inspector/.test(menuRs), "الشريط ما زال يعرض «المفتّش»");
+  const layoutJs = src("layout.js");
+  assert.ok(!/view\.inspector/.test(layoutJs), "layout.js ما زال يسجّل أمر المفتّش");
+  assert.ok(/prefs\.inspector = true;/.test(layoutJs), "تفضيلٌ مخزَّن قد يُخفي لوح شَذْب");
+});
+
 // فحص m7-05: بنود النظام في الشريط (تراجع، قص، إخفاء، إنهاء…) تأخذ عنوانها من المكتبة
 // بالإنجليزية ما لم يُمرَّر — وقد ظهرت كذلك في التطبيق الحقيقي. كل بندٍ بعنوانٍ عربي
 test("فحص m7-05: لا بند نظامٍ في شريط القوائم بعنوان المكتبة الإنجليزي", () => {

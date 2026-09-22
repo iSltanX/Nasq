@@ -12,6 +12,7 @@
 use std::sync::OnceLock;
 use std::time::{Duration, Instant};
 
+use tauri::Manager;
 use tauri::window::Color;
 use tauri::{TitleBarStyle, WebviewUrl, WebviewWindowBuilder};
 
@@ -72,6 +73,16 @@ pub(crate) fn main_window_ready(window: tauri::WebviewWindow) {
     #[cfg(debug_assertions)]
     if let Some(t0) = LAUNCHED_AT.get() {
         eprintln!("[nasaq] main window shown {} ms after launch", t0.elapsed().as_millis());
+    }
+}
+
+/// إطلاقٌ ثانٍ للتطبيق (single-instance): تُحضر النافذة الرئيسية للنسخة الجارية وتُظهر إن
+/// كانت مصغَّرة — لا نسخة ثانية على ملفات البيانات نفسها (فحص m7، m2-22)
+pub(crate) fn focus_main_window(app: &tauri::AppHandle) {
+    if let Some(window) = app.get_webview_window("main") {
+        let _ = window.unminimize();
+        let _ = window.show();
+        let _ = window.set_focus();
     }
 }
 
