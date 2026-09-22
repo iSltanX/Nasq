@@ -105,7 +105,7 @@ test("الخطوط: لا ملف خط في الحزمة بلا وجه يحمّل�
 
 test("الأيقونات: معرّفات فريدة، ولكل رمز viewBox، ولا لون مثبّت", () => {
   const ids = [...icons.matchAll(/<symbol id="([^"]+)"/g)].map((m) => m[1]);
-  assert.ok(ids.length >= 50, "عدد الأيقونات أقل من المتوقع");
+  assert.ok(ids.length >= 10, "عدد الأيقونات أقل من المتوقع"); // فحص m8: بقي ما تستعمله الشاشات (١٧ من ٥٨)
   assert.strictEqual(new Set(ids).size, ids.length, "معرّفات مكررة");
   const symbols = [...icons.matchAll(/<symbol ([^>]*)>([\s\S]*?)<\/symbol>/g)];
   assert.strictEqual(symbols.length, ids.length);
@@ -298,4 +298,19 @@ test("m5: كل طول px خارج التوكنز مذكورٌ في القائم�
   );
   const gone = [...allowed.keys()].filter((e) => !found.includes(e));
   assert.deepStrictEqual(gone, [], `بنودٌ في القائمة البيضاء لم تعد في الكود — تُحذف منها:\n  ${gone.join("\n  ")}`);
+});
+
+// فحص m8 (البند ٢٣): بعد m6 صارت معظم الرموز أحرفًا من خط النظام، فبقيت ٤٥ من ٥٨ رمزًا في icons.svg
+// بلا مستعمل تُحمَّل مع كل نافذة. tools/figma/prune-icons.js يحذفها، وهذا يمنع عودتها
+test("فحص m8: كل رمزٍ في icons.svg تستعمله شاشة", () => {
+  const users = fs
+    .readdirSync(path.join(__dirname, "..", "src"))
+    .filter((f) => /\.(js|html|css)$/.test(f))
+    .map((f) => fs.readFileSync(srcPath(f), "utf8"))
+    .join("\n");
+  const ids = [...fs.readFileSync(srcPath("icons.svg"), "utf8").matchAll(/<symbol[^>]*\bid="([^"]+)"/g)].map((m) => m[1]);
+  assert.ok(ids.length > 0, "icons.svg بلا رموز");
+  const used = (id) => users.includes(`#${id}`) || new RegExp(`["'\`]${id.replace(/\./g, "\\.")}["'\`]`).test(users);
+  const unused = ids.filter((id) => !used(id));
+  assert.deepStrictEqual(unused, [], `رموز بلا مستعمل — شغّل tools/figma/prune-icons.js:\n  ${unused.join("\n  ")}`);
 });
