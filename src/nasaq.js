@@ -32,6 +32,8 @@ inputText.addEventListener("input", () => {
   if (sessionKey && window.NasaqDrafts.draftKey(inputText.value) !== sessionKey) {
     resetSession();
   }
+  // وصور التراجع والإعادة تخصّ نصًّا بعينه ولو بلا جلسة جمع («تنظيف فقط» لا يفتحها)
+  dropForeignOutputHistory();
   renderState();
 });
 
@@ -669,6 +671,18 @@ function pushOutputOnto(stack, snap) {
   if (stack.length > UNDO_MAX) stack.shift();
 }
 
+// صورةٌ لكلماتٍ غير كلمات الخانة لا تُستعاد فوقها: كان مسار «تنظيف فقط» لا يفتح جلسة جمع،
+// فيبقى المكدسان بعد تغيّر الكلمات ويعيد ⌘Z أو ⇧⌘Z نتيجة نصٍّ آخر (فحص m7-12، ملاحظة حارس نَسَق).
+// الصور كلها من نصٍّ واحد، فصورةٌ غريبة واحدة تُسقطهما معًا
+function dropForeignOutputHistory() {
+  const current = window.NasaqDrafts.draftKey(inputText.value);
+  const foreign = (snap) => window.NasaqDrafts.draftKey(snap.meta.original) !== current;
+  if (outputUndoStack.some(foreign) || outputRedoStack.some(foreign)) {
+    outputUndoStack = [];
+    outputRedoStack = [];
+  }
+}
+
 // كتابةٌ جديدة فوق النتيجة: صورتها قبلها تدخل التراجع، وما كان يُعاد يسقط
 function pushOutputUndo() {
   outputRedoStack = [];
@@ -691,9 +705,11 @@ function applyOutputSnapshot(snap) {
 }
 
 function undoOutput() {
+  dropForeignOutputHistory();
   const snap = outputUndoStack.pop();
   if (!snap) {
     showToast("لا تعديل للتراجع عنه.", "neutral");
+    renderState();
     return;
   }
   pushOutputOnto(outputRedoStack, outputSnapshot());
@@ -702,9 +718,11 @@ function undoOutput() {
 }
 
 function redoOutput() {
+  dropForeignOutputHistory();
   const snap = outputRedoStack.pop();
   if (!snap) {
     showToast("لا تعديل لإعادته.", "neutral"); // Toast-Nothing-To-Redo 2612:5112
+    renderState();
     return;
   }
   pushOutputOnto(outputUndoStack, outputSnapshot());

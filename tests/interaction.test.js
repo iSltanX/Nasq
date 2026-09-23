@@ -398,13 +398,14 @@ test("m7-12: ⌘Z ثم ⇧⌘Z يعيدان النتيجة وحالتها عبر
     const showRhythmFingerprint = (r) => { rhythmFingerprint.hidden = r == null; rhythmFingerprint.textContent = r || ""; };
     const recordSessionVersion = (o, m, t) => recorded.push(t);
     const syncResultTools = () => {};
+    const renderState = () => {};
     const showToast = (t) => toasts.push(t);
     ${block}
     const tool = (t) => { pushOutputUndo(); setOutput(t); showRhythmFingerprint(null); lastFormatMeta = { ...lastFormatMeta, linesAdjusted: true }; };
     const state = () => ({ text: outputText.textContent, undo: outputUndoStack.length, redo: outputRedoStack.length,
       lines: lastFormatMeta.linesAdjusted, rhythm: rhythmFingerprint.hidden ? null : rhythmFingerprint.textContent,
       decision: turnDecision && turnDecision.which, saved: recorded[recorded.length - 1] });
-    globalThis.api = { tool, undoOutput, redoOutput, state, toasts, set decision(v) { turnDecision = v ? { which: v, text: outputText.textContent, snapshot: outputUndoStack[outputUndoStack.length - 1] } : null; } };
+    globalThis.api = { tool, undoOutput, redoOutput, state, toasts, set input(v) { inputText.value = v; }, set decision(v) { turnDecision = v ? { which: v, text: outputText.textContent, snapshot: outputUndoStack[outputUndoStack.length - 1] } : null; } };
   `;
   const ctx = {};
   vm.runInNewContext(script, ctx);
@@ -440,6 +441,16 @@ test("m7-12: ⌘Z ثم ⇧⌘Z يعيدان النتيجة وحالتها عبر
   api.redoOutput(); assert.strictEqual(api.state().decision, "broken", "الإعادة أسقطت قرار المنعطف");
   api.tool("T2"); api.undoOutput();
   assert.strictEqual(api.state().decision, "broken", "التراجع إلى نصٍّ معتمد أسقط قراره");
+  // ملاحظة حارس نَسَق: كلماتٌ جديدة في الخانة (ولو بلا جلسة جمع) — لا تُستعاد فوقها نتيجة النص السابق
+  api.tool("T3"); api.undoOutput(); // في التراجع وفي الإعادة صورٌ لنص «أصل»
+  const shown = api.state().text;
+  api.input = "نصٌّ آخر تمامًا";
+  api.undoOutput();
+  assert.strictEqual(api.state().text, shown, "⌘Z أعاد نتيجة نصٍّ سابق فوق كلماتٍ أخرى");
+  assert.strictEqual(api.toasts[api.toasts.length - 1], "لا تعديل للتراجع عنه.");
+  api.redoOutput();
+  assert.strictEqual(api.state().text, shown, "⇧⌘Z أعاد نتيجة نصٍّ سابق فوق كلماتٍ أخرى");
+  assert.deepStrictEqual([api.state().undo, api.state().redo], [0, 0], "صور النص السابق بقيت في المكدسين");
 });
 
 test("m7-12: ⇧⌘Z مستمعٌ خارج الحقول وتحت نَسَق وحده، والمكدسان يُمحيان معًا", () => {
@@ -455,6 +466,10 @@ test("m7-12: ⇧⌘Z مستمعٌ خارج الحقول وتحت نَسَق وح
   const clears = [...nasaq.matchAll(/(?<!let )outputUndoStack = \[\];/g)].length; // الإعلان ليس محوًا
   assert.ok(clears >= 2);
   assert.strictEqual([...nasaq.matchAll(/outputUndoStack = \[\];\n\s+outputRedoStack = \[\];/g)].length, clears, "موضعٌ يمحو التراجع ويُبقي الإعادة");
+  // وتغيّر كلمات الخانة يُسقط صور نصٍّ آخر ولو بلا جلسة جمع (ملاحظة حارس نَسَق)
+  const inputAt = nasaq.indexOf('inputText.addEventListener("input"');
+  const onInput = nasaq.slice(inputAt, nasaq.indexOf("\n});", inputAt));
+  assert.ok(/dropForeignOutputHistory\(\);/.test(onInput), "تغيّر الكلمات يُبقي صور النص السابق");
 });
 
 // m4-12: الإفلات للصفحة لا لـ Tauri، وملفٌّ مُفلتٌ في أي موضع لا يُفتح، والإدراج عبر المحرّر
