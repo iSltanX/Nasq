@@ -1461,8 +1461,19 @@ window.NasaqShell.session.register("nasaq", {
     held: heldVersions,
     output: outputText.textContent,
     meta: lastFormatMeta,
+    // اختيارات الشريط السفلي (فحص m7-10): كانت تعود إلى افتراضها بعد إعادة الفتح والنصّ يعود
+    picks: { style: el("format-style").value, intervention: interventionSel.value, platform: platformSel.value },
   }),
   restore(saved) {
+    for (const [control, value] of [
+      [el("format-style"), saved.picks?.style],
+      [interventionSel, saved.picks?.intervention],
+      [platformSel, saved.picks?.platform],
+    ]) {
+      if (!value || control.value === value || ![...control.options].some((o) => o.value === value)) continue;
+      control.value = value;
+      control.dispatchEvent(new Event("change"));
+    }
     sessionKey = saved.sessionKey ?? null;
     sessionOriginal = saved.sessionOriginal ?? "";
     sessionVersions = new Map(Array.isArray(saved.versions) ? saved.versions : []);

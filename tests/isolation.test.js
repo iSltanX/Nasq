@@ -1298,6 +1298,24 @@ test("فحص m7 (m2-22): قفل النسخة الواحدة مسجَّل أول 
   assert.ok(/focus_main_window\(app\)/.test(main), "الإطلاق الثاني لا يُحضر النافذة");
 });
 
+// فحص m7-17: قراءة الإعدادات تسأل سلسلة المفاتيح، ومطالبتها كانت تحجب الخيط الرئيس قبل أول
+// نافذة — الأمر غير متزامن فيجري على خيط عمل وتُعرض النافذة أولًا
+test("فحص m7-17: load_settings غير متزامن ويقرأ على خيط عمل", () => {
+  const rs = fs.readFileSync(path.join(__dirname, "..", "src-tauri", "src", "shared", "settings.rs"), "utf8");
+  assert.ok(/pub\(crate\) async fn load_settings\(/.test(rs), "load_settings متزامن — يحجب الخيط الرئيس");
+  const body = rs.slice(rs.indexOf("async fn load_settings("));
+  assert.ok(/spawn_blocking/.test(body.slice(0, 400)), "القراءة لا تُنقل إلى خيط عمل");
+});
+
+// فحص m7-10: اختيارات النمط والمستوى والمنصة كانت تعود إلى افتراضها بعد إعادة الفتح والنصّ يعود
+test("فحص m7-10: اختيارات الشريط السفلي تُحفظ في جزء نَسَق من الجلسة وتُستعاد", () => {
+  const nasaqJs = src("nasaq.js");
+  const part = nasaqJs.slice(nasaqJs.indexOf('session.register("nasaq"'));
+  assert.ok(/picks: \{ style: el\("format-style"\)\.value, intervention: interventionSel\.value, platform: platformSel\.value \}/.test(part), "الاختيارات لا تُلتقط");
+  assert.ok(/saved\.picks\?\.style/.test(part) && /saved\.picks\?\.intervention/.test(part) && /saved\.picks\?\.platform/.test(part), "الاختيارات لا تُستعاد");
+  assert.ok(/control\.dispatchEvent\(new Event\("change"\)\)/.test(part), "الاستعادة لا تُعلم المنتقي والحالة");
+});
+
 // فحص m7-14: لا «إظهار/إخفاء المفتّش» — لوح شَذْب جزء من حالته (NsqV272)، وإخفاؤه كان يُسقط الفعل الرئيس
 test("فحص m7-14: لا أمر لإخفاء المفتّش، واللوح مفتوح مهما كان التفضيل المخزَّن", () => {
   const menuRs = fs.readFileSync(path.join(__dirname, "..", "src-tauri", "src", "app", "menu.rs"), "utf8");

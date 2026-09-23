@@ -241,9 +241,14 @@ fn fill_empty_defaults(settings: &mut Settings) {
     }
 }
 
+/// غير متزامن عمدًا (فحص m7-17): القراءة تسأل سلسلة المفاتيح، ومطالبتها قد تحجب الخيط حتى
+/// الجواب — وهذا الأمر أول ما تناديه الواجهة عند الإقلاع، فكان يحجب الخيط الرئيس قبل أن تُعرض
+/// أول نافذة (تطبيقٌ بلا نافذة حتى يُجاب). على خيط عمل تُعرض النافذة أولًا وتظهر المطالبة فوقها
 #[tauri::command]
-pub(crate) fn load_settings(app: tauri::AppHandle) -> Result<SettingsView, String> {
-    Ok(SettingsView::from(&read_settings(&app)?))
+pub(crate) async fn load_settings(app: tauri::AppHandle) -> Result<SettingsView, String> {
+    tauri::async_runtime::spawn_blocking(move || read_settings(&app).map(|s| SettingsView::from(&s)))
+        .await
+        .map_err(|_| "تعذّرت قراءة الإعدادات.".to_string())?
 }
 
 /// الدورة كاملة تحت القفل: تُقرأ الحالة، وتُدمج الرقعة، وتُكتب — فلا يمحو
