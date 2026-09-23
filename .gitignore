@@ -6,9 +6,21 @@ dist/
 
 # أسرار التوقيع — لا تُتتبَّع أبدًا (المفتاح الخاص يعيش خارج المستودع في ~/.tauri)
 *.key
+*.p8
+*.p12
+*.pem
+*.mobileprovision
 .env
 .env.*
 !.env.example
+
+# مخرجات الإصدار إن نُسخت خارج target — تُرفع إلى صفحة الإصدارات لا إلى الكود
+*.dmg
+*.app.tar.gz
+*.app.tar.gz.sig
+
+# إعدادات Claude Code المحلية على هذا الجهاز (أذونات ومسارات)
+.claude/settings.local.json
 
 # سجلّ تجربة شَذْب (أداة مؤقتة) — نصوص كاتب حقيقية، لا تُرفع
 data/shathb-trials/
