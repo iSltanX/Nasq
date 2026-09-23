@@ -323,7 +323,11 @@
 
   // ---------- اختبار الاتصال ----------
 
+  // رسالةٌ قصيرة إلى يسار الزرّ (Testing 2285:2016)، والطويلة — كردّ المزوّد — سطرًا كاملًا تحته
+  // (Test-Failed 2611:5144، فحص m7-08) بدل عمودٍ ضيق يبترها
+  const LONG_STATUS = 60;
   function showConnection(message, tone) {
+    el("connection-status").classList.toggle("row-status-wide", String(message).length > LONG_STATUS);
     setStatus(el("connection-status"), message, tone);
     measure();
   }

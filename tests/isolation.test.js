@@ -1316,6 +1316,17 @@ test("فحص m7-10: اختيارات الشريط السفلي تُحفظ في �
   assert.ok(/control\.dispatchEvent\(new Event\("change"\)\)/.test(part), "الاستعادة لا تُعلم المنتقي والحالة");
 });
 
+// فحص m7-08: رسالة «اختبر الاتصال» الطويلة كانت تُحشر في عمودٍ ضيق وتُبتر — تنزل سطرًا كاملًا تحت الزرّ
+// (Test-Failed 2611:5144)، والقصيرة إلى يساره كما رُسمت (2285:2016)
+test("فحص m7-08: رسالة الاختبار الطويلة سطرٌ كامل تحت الزرّ", () => {
+  const settingsJs = src("settings.js");
+  assert.ok(/classList\.toggle\("row-status-wide", String\(message\)\.length > LONG_STATUS\)/.test(settingsJs), "الرسالة الطويلة لا تُوسم");
+  const forms = src("forms.css");
+  assert.ok(/\.form-row\[data-control="button"\] \{[^}]*flex-wrap: wrap/.test(forms), "صفّ الاختبار لا يلتفّ");
+  assert.ok(/\.row-status\.row-status-wide \{[^}]*flex-basis: 100%/.test(forms), "الرسالة الطويلة لا تأخذ السطر كله");
+  assert.ok(/> \.row-status > \.row-status-label \{[^}]*white-space: normal/.test(forms), "الرسالة لا تلتفّ");
+});
+
 // فحص m7-14: لا «إظهار/إخفاء المفتّش» — لوح شَذْب جزء من حالته (NsqV272)، وإخفاؤه كان يُسقط الفعل الرئيس
 test("فحص m7-14: لا أمر لإخفاء المفتّش، واللوح مفتوح مهما كان التفضيل المخزَّن", () => {
   const menuRs = fs.readFileSync(path.join(__dirname, "..", "src-tauri", "src", "app", "menu.rs"), "utf8");

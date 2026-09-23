@@ -168,6 +168,24 @@
 .form-row[data-control="segments"] {
   min-block-size: 0;
 }
+/* صفّ الاختبار يلتفّ (Test-Failed 2611:5144، فحص m7-08): حالةٌ قصيرة إلى يسار الزرّ كما رُسمت،
+   ورسالةٌ طويلة تنزل سطرًا كاملًا تحته بعرض عمود العناصر، بدل عمودٍ ضيق يبترها ويدفع التذييل */
+.form-row[data-control="button"] {
+  flex-wrap: wrap;
+  row-gap: var(--layout-element-gap);
+}
+.form-row[data-control="button"] > .row-status {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+}
+.form-row[data-control="button"] > .row-status.row-status-wide {
+  flex-basis: 100%;
+  align-items: flex-start;
+}
+.form-row[data-control="button"] > .row-status > .row-status-label {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
 
 /* زرّ الصفّ (ورقة أول تشغيل): Button · Secondary · Regular */
 .row-button {
