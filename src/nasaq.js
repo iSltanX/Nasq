@@ -425,6 +425,9 @@ let sessionVersions = new Map(); // النوع ← { formatted، المحاور�
 // مكدس التراجع عن تعديلات النتيجة (v4.1) — عمره عمر جلسة النص:
 // نص بكلمات جديدة يعني أن صور النتيجة السابقة لم تعد تخص ما يُعمل عليه
 let outputUndoStack = [];
+// ومكدس الإعادة (فحص m7-12، Figma 2612:5116): ما تُرُوجع عنه بـ⌘Z يعود بـ⇧⌘Z، وأي كتابةٍ
+// جديدة فوق النتيجة تمحوه كسجلّ الماك. عمره عمر مكدس التراجع نفسه
+let outputRedoStack = [];
 
 // صيغٌ لم تُحفظ لنصوصٍ تُركت (تغيّرت كلماتها، أو استُعيدت مسودة فوقها): لا تسقط
 // بصمت، ولا تُحفظ بلا إذن — تنتظر «حفظ» التالي فيودعها كلًّا تحت أمّه
@@ -442,6 +445,7 @@ function resetSession() {
   sessionOriginal = "";
   sessionVersions = new Map();
   outputUndoStack = [];
+  outputRedoStack = [];
 }
 
 // النوع = المنصة تحت «تنسيق منصة»، وإلا المستوى — تعريف versionType نفسه المتبع
@@ -644,18 +648,46 @@ function setOutput(text) {
 const UNDO_MAX = 20;
 
 // لا يُحفظ إلا ما يخص النص قيد العمل: نتيجة نص سابق ما زالت معروضة لا تدخل
-// المكدس — جلستها انتهت ولا معنى لاستعادتها تحت نص آخر
-function pushOutputUndo() {
+// المكدس — جلستها انتهت ولا معنى لاستعادتها تحت نص آخر. والصورة تحمل قرار المنعطف
+// إن كان للنتيجة المعروضة، فتعود معه بالتراجع والإعادة (فحص m7-12)
+function outputSnapshot() {
   const text = outputText.textContent;
-  if (!text.trim() || !lastFormatMeta) return;
+  if (!text.trim() || !lastFormatMeta) return null;
   const key = window.NasaqDrafts.draftKey(lastFormatMeta.original);
-  if (key !== window.NasaqDrafts.draftKey(inputText.value)) return;
-  outputUndoStack.push({
+  if (key !== window.NasaqDrafts.draftKey(inputText.value)) return null;
+  return {
     text,
     meta: { ...lastFormatMeta },
     rhythm: rhythmFingerprint.hidden ? null : rhythmFingerprint.textContent,
-  });
-  if (outputUndoStack.length > UNDO_MAX) outputUndoStack.shift();
+    decision: turnDecision && turnDecision.text === text ? turnDecision.which : null,
+  };
+}
+
+function pushOutputOnto(stack, snap) {
+  if (!snap) return;
+  stack.push(snap);
+  if (stack.length > UNDO_MAX) stack.shift();
+}
+
+// كتابةٌ جديدة فوق النتيجة: صورتها قبلها تدخل التراجع، وما كان يُعاد يسقط
+function pushOutputUndo() {
+  outputRedoStack = [];
+  pushOutputOnto(outputUndoStack, outputSnapshot());
+}
+
+// الصورة المسحوبة تصير المعروضة: النص والمحاور والبصمة وقرار المنعطف. ما يُعرض هو ما
+// يُحفظ: تكتب فوق صيغة نوعها في ذاكرة الجلسة («تنظيف فقط» تستثني نفسها داخل
+// recordSessionVersion أصلًا). وقرارٌ مستعاد يشير إلى الصورة التي تسبقه أعلى المكدس،
+// فيبقى «تراجع عن القرار» يسحبها كما لو اعتُمد الآن
+function applyOutputSnapshot(snap) {
+  setOutput(snap.text);
+  lastFormatMeta = snap.meta;
+  showRhythmFingerprint(snap.rhythm);
+  recordSessionVersion(snap.meta.original, snap.meta, snap.text);
+  turnDecision = snap.decision
+    ? { which: snap.decision, text: snap.text, snapshot: outputUndoStack[outputUndoStack.length - 1] ?? null }
+    : null;
+  syncResultTools();
 }
 
 function undoOutput() {
@@ -664,14 +696,20 @@ function undoOutput() {
     showToast("لا تعديل للتراجع عنه.", "neutral");
     return;
   }
-  setOutput(snap.text);
-  lastFormatMeta = snap.meta;
-  showRhythmFingerprint(snap.rhythm);
-  // ما يُعرض هو ما يُحفظ: الصيغة المستعادة تكتب فوق صيغة نوعها في ذاكرة
-  // الجلسة («تنظيف فقط» تستثني نفسها داخل recordSessionVersion أصلًا)
-  recordSessionVersion(snap.meta.original, snap.meta, snap.text);
-  syncResultTools();
-  showToast("استُعيدت النتيجة السابقة.");
+  pushOutputOnto(outputRedoStack, outputSnapshot());
+  applyOutputSnapshot(snap);
+  showToast("استُعيدت النتيجة السابقة."); // Toast-Undone 2612:5104
+}
+
+function redoOutput() {
+  const snap = outputRedoStack.pop();
+  if (!snap) {
+    showToast("لا تعديل لإعادته.", "neutral"); // Toast-Nothing-To-Redo 2612:5112
+    return;
+  }
+  pushOutputOnto(outputUndoStack, outputSnapshot());
+  applyOutputSnapshot(snap);
+  showToast("أُعيد التعديل."); // Toast-Redone 2612:5108
 }
 
 const undoBtn = el("undo-btn");
@@ -1077,9 +1115,13 @@ el("adopt-joined").addEventListener("click", () => adoptTurnForm("joined"));
 function revertTurnDecision() {
   if (!turnDecision) return;
   const { snapshot } = turnDecision;
-  turnDecision = null;
-  if (snapshot && outputUndoStack[outputUndoStack.length - 1] === snapshot) undoOutput();
-  else syncResultTools();
+  // التراجع يلتقط القرار في صورة الإعادة قبل رفعه، فيعيده ⇧⌘Z معه (فحص m7-12)
+  if (snapshot && outputUndoStack[outputUndoStack.length - 1] === snapshot) {
+    undoOutput();
+  } else {
+    turnDecision = null;
+    syncResultTools();
+  }
 }
 el("revert-broken").addEventListener("click", revertTurnDecision);
 el("revert-joined").addEventListener("click", revertTurnDecision);
@@ -1830,6 +1872,7 @@ window.NasaqMenu.register(
       heldVersions = [];
       setOutput("");
       outputUndoStack = [];
+      outputRedoStack = [];
       lastFormatMeta = null;
       notesBox.hidden = true;
       showRhythmFingerprint(null);
@@ -1839,13 +1882,22 @@ window.NasaqMenu.register(
   { owner: "nasaq" }
 );
 
-// وتراجع النتيجة وحده يبقى مستمعًا: «تراجع ⌘Z» في «تحرير» عنصر نظامٍ يتراجع
-// عن الكتابة داخل الحقول، ولا معرّف في اللوحة لتراجع النتيجة خارجها
+// وتراجع النتيجة وإعادتها وحدهما يبقيان مستمعَين: «تراجع ⌘Z» و«إعادة ⇧⌘Z» في «تحرير»
+// عنصرا نظامٍ يعملان على الكتابة داخل الحقول، ولا معرّف في اللوحة للنتيجة خارجها
 document.addEventListener("keydown", (e) => {
-  if (!e.metaKey || e.shiftKey || e.altKey || e.ctrlKey || e.code !== "KeyZ") return;
+  if (!e.metaKey || e.altKey || e.ctrlKey || e.code !== "KeyZ") return;
   if (window.NasaqWindow.isModalOpen() || editable(e.target)) return;
   // زر «نسّق» لا يُطوى أبدًا: غيابه يعني أن وحدة أخرى تملأ الواجهة
-  if (formatBtn.offsetParent === null || undoBtn.hidden || undoBtn.disabled) return;
+  if (formatBtn.offsetParent === null) return;
+  if (e.shiftKey) {
+    // الإعادة لا تزاحم نداءً جاريًا وتحتاج نتيجةً معروضة؛ ومكدسٌ فارغ يقول ذلك بإشعار
+    // كما في شَذْب (فحص m7-12، Toast-Nothing-To-Redo 2612:5112)
+    if (modelCallActive || !outputText.textContent.trim()) return;
+    e.preventDefault();
+    redoOutput();
+    return;
+  }
+  if (undoBtn.hidden || undoBtn.disabled) return;
   e.preventDefault();
   undoOutput();
 });

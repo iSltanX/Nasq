@@ -381,6 +381,82 @@ test("m4-11: قرارا «احذف» و«أبقِ» يُسجَّلان، و⌘Z 
   assert.ok(/forgetDecisions\(\);\n\s+state = saved\.state;/.test(shadhb), "الجلسة المستعادة ترث سجلًّا");
 });
 
+// فحص m7-12 (Figma 2612:5104/5108/5112 و2612:5116): إعادة ما تُرُوجع عنه في أدوات النتيجة.
+// تُشغَّل دوال nasaq.js نفسها في vm: تطبيق أداة ← ⌘Z ← ⇧⌘Z، ودورات، وكتابةٌ جديدة تمحو
+// الإعادة، وقرار المنعطف يعود مع نصّه
+test("m7-12: ⌘Z ثم ⇧⌘Z يعيدان النتيجة وحالتها عبر دورات متعددة، وكتابةٌ جديدة تمحو الإعادة", () => {
+  const nasaq = src("nasaq.js");
+  const block = nasaq.slice(nasaq.indexOf("const UNDO_MAX"), nasaq.indexOf("const undoBtn"));
+  assert.ok(block.includes("function redoOutput()"), "لا دالة إعادة");
+  const script = `
+    let outputUndoStack = [], outputRedoStack = [], turnDecision = null, toasts = [], recorded = [];
+    let lastFormatMeta = { original: "أصل", linesAdjusted: false };
+    const outputText = { textContent: "R0" }, inputText = { value: "أصل" };
+    const rhythmFingerprint = { hidden: false, textContent: "بصمة R0" };
+    const window = { NasaqDrafts: { draftKey: (t) => t } };
+    const setOutput = (t) => { outputText.textContent = t; };
+    const showRhythmFingerprint = (r) => { rhythmFingerprint.hidden = r == null; rhythmFingerprint.textContent = r || ""; };
+    const recordSessionVersion = (o, m, t) => recorded.push(t);
+    const syncResultTools = () => {};
+    const showToast = (t) => toasts.push(t);
+    ${block}
+    const tool = (t) => { pushOutputUndo(); setOutput(t); showRhythmFingerprint(null); lastFormatMeta = { ...lastFormatMeta, linesAdjusted: true }; };
+    const state = () => ({ text: outputText.textContent, undo: outputUndoStack.length, redo: outputRedoStack.length,
+      lines: lastFormatMeta.linesAdjusted, rhythm: rhythmFingerprint.hidden ? null : rhythmFingerprint.textContent,
+      decision: turnDecision && turnDecision.which, saved: recorded[recorded.length - 1] });
+    globalThis.api = { tool, undoOutput, redoOutput, state, toasts, set decision(v) { turnDecision = v ? { which: v, text: outputText.textContent, snapshot: outputUndoStack[outputUndoStack.length - 1] } : null; } };
+  `;
+  const ctx = {};
+  vm.runInNewContext(script, ctx);
+  const { api } = ctx;
+  api.tool("R1"); api.tool("R2"); api.tool("R3");
+  const at = (text, undo, redo) => {
+    const s = api.state();
+    assert.strictEqual(s.text, text); assert.strictEqual(s.undo, undo); assert.strictEqual(s.redo, redo);
+  };
+  at("R3", 3, 0);
+  api.undoOutput(); at("R2", 2, 1); assert.strictEqual(api.state().saved, "R2", "المستعادة لا تُسجَّل للحفظ");
+  api.redoOutput(); at("R3", 3, 0); assert.strictEqual(api.state().saved, "R3", "المُعادة لا تُسجَّل للحفظ");
+  // تراجعٌ كامل: R0 ببصمته ومحاوره الأولى
+  api.undoOutput(); api.undoOutput(); api.undoOutput(); at("R0", 0, 3);
+  assert.deepStrictEqual([api.state().rhythm, api.state().lines], ["بصمة R0", false], "حالة R0 لم تعد كما كانت");
+  // إعادة كاملة، ثم لا شيء لإعادته
+  api.redoOutput(); at("R1", 1, 2); api.redoOutput(); at("R2", 2, 1); api.redoOutput(); at("R3", 3, 0);
+  assert.strictEqual(api.state().lines, true);
+  api.redoOutput(); at("R3", 3, 0);
+  assert.strictEqual(api.toasts[api.toasts.length - 1], "لا تعديل لإعادته.");
+  // دورات متقطعة
+  for (const [step, expect] of [["u", "R2"], ["u", "R1"], ["r", "R2"], ["u", "R1"], ["r", "R2"], ["r", "R3"]]) {
+    step === "u" ? api.undoOutput() : api.redoOutput();
+    assert.strictEqual(api.state().text, expect, `الدورة انحرفت عند ${step}`);
+  }
+  // كتابةٌ جديدة بعد التراجع تمحو ما يُعاد
+  api.undoOutput(); at("R2", 2, 1);
+  api.tool("R2b"); at("R2b", 3, 0);
+  api.redoOutput(); at("R2b", 3, 0);
+  // قرار المنعطف يعود مع نصّه بالإعادة، ويشير إلى الصورة التي تسبقه
+  api.tool("T"); api.decision = "broken";
+  api.undoOutput(); assert.strictEqual(api.state().decision, null);
+  api.redoOutput(); assert.strictEqual(api.state().decision, "broken", "الإعادة أسقطت قرار المنعطف");
+  api.tool("T2"); api.undoOutput();
+  assert.strictEqual(api.state().decision, "broken", "التراجع إلى نصٍّ معتمد أسقط قراره");
+});
+
+test("m7-12: ⇧⌘Z مستمعٌ خارج الحقول وتحت نَسَق وحده، والمكدسان يُمحيان معًا", () => {
+  const nasaq = src("nasaq.js");
+  const start = nasaq.lastIndexOf("\n", nasaq.indexOf('e.code !== "KeyZ"')); // من أول السطر: شرط المفاتيح كله
+  const handler = nasaq.slice(start, nasaq.indexOf("\n});", start));
+  assert.ok(handler.indexOf("editable(e.target)") < handler.indexOf("e.shiftKey"), "⇧⌘Z يسرق إعادة الكتابة في الحقول");
+  assert.ok(handler.indexOf("isModalOpen()") < handler.indexOf("e.shiftKey"), "⇧⌘Z يعمل تحت ورقة");
+  assert.ok(handler.indexOf("formatBtn.offsetParent === null") < handler.indexOf("e.shiftKey"), "⇧⌘Z يعمل خارج نَسَق");
+  assert.ok(/if \(e\.shiftKey\) \{[\s\S]*?modelCallActive[\s\S]*?redoOutput\(\);/.test(handler), "⇧⌘Z لا يعيد أو يزاحم نداءً جاريًا");
+  assert.ok(!/!e\.metaKey \|\| e\.shiftKey/.test(handler), "المستمع يُسقط ⇧⌘Z قبل أن يصل");
+  // كل موضعٍ يمحو التراجع يمحو الإعادة معه
+  const clears = [...nasaq.matchAll(/(?<!let )outputUndoStack = \[\];/g)].length; // الإعلان ليس محوًا
+  assert.ok(clears >= 2);
+  assert.strictEqual([...nasaq.matchAll(/outputUndoStack = \[\];\n\s+outputRedoStack = \[\];/g)].length, clears, "موضعٌ يمحو التراجع ويُبقي الإعادة");
+});
+
 // m4-12: الإفلات للصفحة لا لـ Tauri، وملفٌّ مُفلتٌ في أي موضع لا يُفتح، والإدراج عبر المحرّر
 test("m4-12: الإفلات مسموحٌ للصفحة، والملف لا يُفتح، والإدراج يُتراجع عنه", () => {
   const rs = fs.readFileSync(path.join(__dirname, "..", "src-tauri", "src", "app", "window.rs"), "utf8");
