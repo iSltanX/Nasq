@@ -19,14 +19,17 @@ dist/
 *.app.tar.gz
 *.app.tar.gz.sig
 
-# إعدادات Claude Code المحلية على هذا الجهاز (أذونات ومسارات)
-.claude/settings.local.json
+# أدوات العمل المحلية: إعدادات Claude Code ووكلاؤه وإعداد المعاينة
+.claude/
 
 # سجلّ تجربة شَذْب (أداة مؤقتة) — نصوص كاتب حقيقية، لا تُرفع
 data/shathb-trials/
 
-# ملفات عمل المراحل — محلية: التفصيل هنا، والمختصر في STATUS.md و docs/PHASES.md
+# ملفات عمل المراحل: تبقى على قرص المالك لا في المستودع العام، وإصداراتها السابقة في تاريخ git
 .local/
+/CLAUDE.md
+/STATUS.md
+/docs/PHASES.md
 
 # مخلّفات أدوات المعاينة والفحص
 .playwright-mcp/
