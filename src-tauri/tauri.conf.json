@@ -32,6 +32,7 @@
       "icons/icon.icns"
     ],
     "macOS": {
+      "signingIdentity": "-",
       "files": {
         "Resources/Assets.car": "icons/Assets.car"
       }
