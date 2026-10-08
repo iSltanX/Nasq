@@ -233,6 +233,8 @@
 
 الموقع: [bysltan.com](https://www.bysltan.com)
 
+للتواصل: [iSultanby@gmail.com](mailto:iSultanby@gmail.com)
+
 من الصانع نفسه<br>
 تطبيقات macOS: [بدّل](https://github.com/iSltanX/Baddel) · [رفّ](https://github.com/iSltanX/Raff) · [Luma](https://github.com/iSltanX/Luma) · [نفّذ](https://github.com/iSltanX/naffith)<br>
 إضافات المتصفح: [SnRead](https://github.com/iSltanX/SnRead) · [صَوْب](https://github.com/iSltanX/SAWB) · [جسور](https://github.com/iSltanX/Jusoor)
