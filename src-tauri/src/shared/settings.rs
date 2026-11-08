@@ -46,7 +46,7 @@ pub(crate) struct Settings {
     /// «تلقائي» يتبع النظام، و«فاتح»/«داكن» يفرضان مخططًا — لوحة الإعدادات
     #[serde(default = "default_appearance")]
     pub(crate) appearance: String,
-    /// التحقق من التحديثات تلقائيًا — تقرأه المرحلة ٦ حين يُبنى تدفّقها
+    /// التحقق من التحديثات تلقائيًا — يقرؤه src/updates.js عند الإقلاع
     #[serde(default = "default_true")]
     pub(crate) auto_updates: bool,
     /// آخر تحقق ناجح بالثواني منذ ١٩٧٠، وصفرٌ يعني «لم يحدث بعد»
